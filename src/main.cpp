@@ -15,10 +15,6 @@ fn main(int argc, char* argv[]) -> i32 {
     if (!tokens) PANIC(tokens.error());
 
     for (auto token : tokens.value()) {
-        // try {
-        std::cout << token_to_str(token) << "\ttype: " << (int)token.type << "\n";
-        // } catch (...) {
-        //     PANIC(std::format("parsing error at line: {}.", lexer.__FUMO_LINE_NUM__));
-        // }
+        std::cout << token_to_str(token) << "\t-> " << tokentype_name(token.type) << "\n";
     }
 }

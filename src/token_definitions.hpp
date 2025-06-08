@@ -1,7 +1,6 @@
 // clang-format off
 #pragma once
 #include "map-macro.hpp"
-#include <format>
 #include <optional>
 #include <string>
 #include <variant>
@@ -74,7 +73,7 @@ enum struct Symbol {
 int,                    \
 return
 
-#define operators       \
+#define __operators     \
 equals,                 \
 less,                   \
 greater,                \
@@ -83,6 +82,7 @@ plus,                   \
 minus,                  \
 asterisk                
 
+#define operators __operators,  MAP_LIST(add_equals, __operators)
 #define punctuations    \
 open_bracket,           \
 close_bracket,          \
@@ -97,41 +97,48 @@ space,                  \
 tab,                    \
 r_thing
 
-#define _literals _identifier, _keyword, _integer, _floating_point
+#define literals identifier, keyword, integer, floating_point
 
-#define add_(v_) _##v_
 #define add_equals(v_) v_##_equals
-#define _keywords MAP_LIST(add_, keywords)
-#define __operators_1 MAP_LIST(add_, operators)
-#define _operators __operators_1,  MAP_LIST(add_equals, __operators_1)
-#define _punctuations MAP_LIST(add_, punctuations)
 
 #define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
-#define _all_symbols _operators, _punctuations, _division, _comment, _literals
+#define all_symbols operators, punctuations, division, comment, literals
 
-#define make_enum(_v) _v,
-enum struct TokenType {map_macro(make_enum, _all_symbols)};
+#define make_enum(_v) _##_v,
+enum struct TokenType {map_macro(make_enum, all_symbols)};
 #undef make_enum
 
 using TokenValue = std::variant<int, double, std::string>;
 struct Token {
     TokenType type;
     std::optional<TokenValue> value;
+    i64 line_number, line_offset;
 };
 
-#define each_token(_v) case TokenType::_v: return _repr##_v;
+#define each_token(_v) case TokenType::_##_v: return _repr_##_v;
 
 [[nodiscard]] inline std::string token_to_str(const Token& token) {
     switch (token.type) {
-        map_macro(each_token, _operators, _punctuations, _division, _comment)
+        map_macro(each_token, operators, punctuations, division, comment)
         case TokenType::_identifier:
         case TokenType::_keyword:
         case TokenType::_integer:
         case TokenType::_floating_point:
             return std::get<std::string>(token.value.value());
         default:
-            PANIC("provided unknown TokenType.", token.type);
+            PANIC(fmt("provided unknown TokenType '{}'.", (int)token.type));
     }
 }
+
 #undef each_token
-#undef each_keyword
+
+
+#define tkntype(v_) case TokenType::_##v_: return #v_;
+
+[[nodiscard]] inline str tokentype_name(const TokenType& type) {
+    switch (type) {
+        map_macro(tkntype, all_symbols);
+        default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+    }
+}
+#undef tkntype

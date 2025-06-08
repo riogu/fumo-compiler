@@ -1,8 +1,9 @@
+// clang-format off
 int main() {
 
     // wowow wowow  thiashsdk !=!=1=1== 2=1=1=1=1
     int epic = 3369;
-    float wow = 69.5;
+    float woá = 69.5;
     // epic -= 1;
     // epic /= 3;
     // epic *= 2;
