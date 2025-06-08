@@ -39,7 +39,9 @@ struct Lexer {
 
     [[nodiscard]] Result<std::vector<Token>, str> tokenize_file(const str file_name);
     [[nodiscard]] Result<Token, str> parse_numeric_literal();
+    [[nodiscard]] Result<Token, str> parse_identifier();
     [[nodiscard]] str peek_line();
+    [[nodiscard]] bool is_keyword(const str identifier);
     [[nodiscard]] bool identifier_ended();
     [[nodiscard]] char get_curr();
 };

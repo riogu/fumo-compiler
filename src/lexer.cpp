@@ -1,4 +1,5 @@
 #include "lexer.hpp"
+#include "token_definitions.hpp"
 #include <fstream>
 #include <string>
 
@@ -43,7 +44,10 @@
             continue;
         }
         if (std::isalpha(curr)) {
-            //
+            auto token = parse_identifier();
+            if (token) tokens.push_back(token.value());
+            else
+                PANIC(token.error());
             continue;
         }
 
@@ -76,17 +80,40 @@
     return tokens;
 }
 
-#define symbol_case(v_) case static_cast<int>(Symbol::_##v_): return true;
-
 [[nodiscard]] bool Lexer::identifier_ended() {
+#define symbol_case(v_) case static_cast<int>(Symbol::_##v_): return true;
     switch (file_stream.peek()) {
         map_macro(symbol_case, __operators, punctuations, ignores);
         default:
             return false;
     }
+#undef symbol_case
 }
 
-#undef symbol_case
+[[nodiscard]] bool Lexer::is_keyword(const str identifier) {
+#define check_keyword(v_) if(identifier == #v_) return true;
+    map_macro(check_keyword, keywords);
+    return false;
+#undef check_keyword
+}
+
+[[nodiscard]] Result<Token, str> Lexer::parse_identifier() {
+    str value = std::format("{}", curr);
+    Token token {.type = TokenType::_integer};
+
+    while (!identifier_ended()) {
+        char next = get_curr();
+        if (std::isalpha(next) || std::isdigit(next)) value += next;
+        else
+            return Err(fmt_error(fmt("unknown character '{}'.", next)));
+    }
+
+    token.type = is_keyword(value) ? TokenType::_keyword : TokenType::_identifier;
+    token.value = value;
+    token.line_number = __FUMO_LINE_NUM__;
+    token.line_offset = __FUMO_LINE_OFFSET__;
+    return token;
+}
 
 [[nodiscard]] Result<Token, str> Lexer::parse_numeric_literal() {
     str value = std::format("{}", curr);
