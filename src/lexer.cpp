@@ -38,10 +38,8 @@
                     while (file_stream.peek() != EOF && file_stream.peek() != '\n')
                         curr = get_curr();
                 } else {
-                    tokens.push_back(Token {.type = TokenType::_division,
-                                            .value = std::nullopt,
-                                            .line_number = __FUMO_LINE_NUM__,
-                                            .line_offset = __FUMO_LINE_OFFSET__});
+                    tokens.push_back(
+                        Token {.type = TokenType::_division, add_token_info});
                 }
                 break;
             case '\n':

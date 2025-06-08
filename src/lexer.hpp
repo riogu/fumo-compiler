@@ -2,6 +2,11 @@
 #include <fstream>
 #include <vector>
 
+#define add_token_info                  \
+.value = std::nullopt,                  \
+.line_number = __FUMO_LINE_NUM__,       \
+.line_offset = __FUMO_LINE_OFFSET__
+
 #define fmt_error(error_msg)                                        \
  fmt("\n\t| error at line {}:\n\t| {}\n\t|{}{}",                    \
     __FUMO_LINE_NUM__,                                              \
@@ -13,9 +18,7 @@
 #define punctuation_case(v_)                                        \
 case static_cast<int>(Symbol::_##v_): {                             \
         tokens.push_back({.type = TokenType::_##v_,                 \
-                          .value = std::nullopt,                    \
-                          .line_number = __FUMO_LINE_NUM__,         \
-                          .line_offset = __FUMO_LINE_OFFSET__});    \
+                          add_token_info});                         \
         break;                                                      \
 }
 #define operator_case(v_)                                           \
@@ -23,13 +26,9 @@ case static_cast<int>(Symbol::_##v_): {                             \
     tokens.push_back(                                               \
         file_stream.peek() == '='                                   \
             ? Token {.type = TokenType::_##v_##_equals,             \
-                     .value = std::nullopt,                         \
-                     .line_number = __FUMO_LINE_NUM__,              \
-                     .line_offset = __FUMO_LINE_OFFSET__}           \
+                          add_token_info}                           \
             : Token {.type = TokenType::_##v_,                      \
-                     .value = std::nullopt,                         \
-                     .line_number = __FUMO_LINE_NUM__,              \
-                     .line_offset = __FUMO_LINE_OFFSET__});         \
+                          add_token_info});                         \
         break;                                                      \
 }
 #define ignore_case(v_)                                             \
