@@ -1,6 +1,7 @@
 // clang-format off
 #pragma once
 #include "map-macro.hpp"
+#include <format>
 #include <optional>
 #include <string>
 #include <variant>
@@ -11,6 +12,8 @@ template<typename Ok, typename Err>
 using Result = std::expected<Ok, Err>;
 template<typename T>
 using Err = std::unexpected<T>;
+using str = std::string;
+#define fmt std::format
 //---------------------------------
 // for switch case usage in lexer
 enum struct Symbol {

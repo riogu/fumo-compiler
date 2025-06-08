@@ -28,7 +28,7 @@ struct Lexer {
     char curr, start = 0;
     std::ifstream file_stream;
 
-    [[nodiscard]] std::vector<Token> tokenize_file(const std::string file_name);
-    [[nodiscard]] Result<Token, std::string> parse_numeric_literal();
+    [[nodiscard]] Result<std::vector<Token>, str> tokenize_file(const str file_name);
+    [[nodiscard]] Result<Token, str> parse_numeric_literal();
     [[nodiscard]] bool identifier_ended();
 };

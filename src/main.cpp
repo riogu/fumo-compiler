@@ -12,7 +12,9 @@ fn main(int argc, char* argv[]) -> i32 {
     Lexer lexer {};
     auto tokens = lexer.tokenize_file(test);
 
-    for (auto token : tokens) {
+    if (!tokens) PANIC(tokens.error());
+
+    for (auto token : tokens.value()) {
         // try {
         std::cout << token_to_str(token) << "\ttype: " << (int)token.type << "\n";
         // } catch (...) {

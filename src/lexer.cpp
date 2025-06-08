@@ -1,7 +1,7 @@
 #include "lexer.hpp"
 #include <fstream>
 
-[[nodiscard]] std::vector<Token> Lexer::tokenize_file(const std::string file_name) {
+[[nodiscard]] Result<std::vector<Token>, str> Lexer::tokenize_file(const str file_name) {
     file_stream = std::ifstream(file_name);
     std::vector<Token> tokens;
 
@@ -39,7 +39,7 @@
                 }
                 break;
             case '\n': __FUMO_LINE_NUM__++; break;
-            default: PANIC("provided unknown character.", char(curr));
+            default: return Err(fmt("provided unknown character '{}'.", char(curr)));
         }
     }
     return tokens;
