@@ -16,6 +16,6 @@ fn main(int argc, char* argv[]) -> i32 {
 
     for (auto token : tokens.value()) {
         std::cout << token_to_str(token) << "\t-> " << tokentype_name(token.type) << "\n";
+        // std::cout << token_to_str(token);
     }
-    std::cout << lexer.__FUMO_LINE__;
 }

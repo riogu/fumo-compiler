@@ -1,15 +1,11 @@
 // clang-format off
 int main() {
-
     // wowow wowow  thiashsdk !=!=1=1== 2=1=1=1=1
+    // comments work /n/n/n/n
     int epic = 3369;
-    float woá = 69.5;
-    epic -= 1;
-    epic /= 3;
-    epic *= 2;
-    epic += 5;
+    float var = 69.6969f;
     while (1) {
+        for(;;)
         if (epic) epic += 1;
-        break;
     }
 }

@@ -61,7 +61,7 @@
         char next = get_curr();
         if (std::isalpha(next) || std::isdigit(next)) value += next;
         else
-            return Err(fmt_error(fmt("unknown character '{}'.", next)));
+            return Err(fmt_error("Source file is not valid ASCII."));
     }
 
     token.type = is_keyword(value) ? TokenType::_keyword : TokenType::_identifier;
@@ -71,6 +71,7 @@
     return token;
 }
 
+// clang-format off
 [[nodiscard]] Result<Token, str> Lexer::parse_numeric_literal() {
     str value = std::format("{}", curr);
     Token token {.type = TokenType::_integer};
@@ -83,9 +84,10 @@
         } //
         else if (std::isdigit(next))
             value += next; // continue getting number
-        else if (std::isalpha(next))
-            return Err(fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
-        else
+        else if (std::isalpha(next)) {
+            if (next != 'f') 
+                return Err(fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
+        } else
             return Err(fmt_error(fmt("unknown character '{}'.", next)));
     }
 

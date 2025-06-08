@@ -71,7 +71,12 @@ enum struct Symbol {
 // language symbols and definitions
 #define keywords        \
 int,                    \
-return
+return,                 \
+float,                  \
+while,                  \
+if,                     \
+do,                     \
+for
 
 #define __operators     \
 equals,                 \
