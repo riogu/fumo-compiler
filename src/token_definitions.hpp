@@ -1,0 +1,122 @@
+// clang-format off
+#pragma once
+#include "map-macro.hpp"
+#include <optional>
+#include <string>
+#include <variant>
+#include <libassert/assert.hpp>
+//---------------------------------
+// for switch case usage in lexer
+enum struct Symbols {
+// operator
+    _equals        =   '=',
+    _less          =   '<',
+    _greater       =   '>',
+    _exclamation   =   '!',
+    _plus          =   '+',
+    _minus         =   '-',
+    _asterisk      =   '*',
+// punctuation
+    _open_bracket  =   '[',
+    _close_bracket =   ']',
+    _open_paren    =   '(',
+    _close_paren   =   ')',
+    _open_brace    =   '{',
+    _close_brace   =   '}',
+    _semicolon     =   ';',
+// ignore
+    _space         =   ' ',
+    _tab           =   '\t',
+    _r_thing       =   '\r',
+};
+//---------------------------------
+// macros for nice printing
+// operator
+#define _repr_equals                "="
+#define _repr_less                  "<"
+#define _repr_greater               ">"
+#define _repr_exclamation           "!"
+#define _repr_plus                  "+"
+#define _repr_minus                 "-"
+#define _repr_asterisk              "*"
+
+#define _repr_equals_equals         "=="
+#define _repr_greater_equals        ">="
+#define _repr_less_equals           "<="
+#define _repr_exclamation_equals    "!="
+#define _repr_plus_equals           "+="
+#define _repr_minus_equals          "-="
+#define _repr_asterisk_equals       "*="
+
+// punctuation
+#define _repr_open_paren            "("
+#define _repr_close_paren           ")"
+#define _repr_open_bracket          "["
+#define _repr_close_bracket         "]"
+#define _repr_open_brace            "{"
+#define _repr_close_brace           "}"
+#define _repr_semicolon             ";"
+// special
+#define _repr_division              "/"
+#define _repr_comment               "//"
+//---------------------------------
+// language symbols and definitions
+#define keywords        \
+int,                    \
+return
+
+#define operators       \
+equals,                 \
+less,                   \
+greater,                \
+exclamation,            \
+plus,                   \
+minus,                  \
+asterisk                
+
+#define punctuations    \
+open_bracket,           \
+close_bracket,          \
+open_paren,             \
+close_paren,            \
+open_brace,             \
+close_brace,            \
+semicolon               
+
+#define ignores         \
+space,                  \
+tab,                    \
+r_thing
+
+#define add_(v_) _##v_
+#define add_equals(v_) v_##_equals
+#define _keywords MAP_LIST(add_, keywords)
+#define __operators_1 MAP_LIST(add_, operators)
+#define _operators __operators_1,  MAP_LIST(add_equals, __operators_1)
+#define _punctuations MAP_LIST(add_, punctuations)
+
+#define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
+#define all_symbols _keywords, _operators, _punctuations, _division, _comment 
+
+#define make_enum(_v) _v,
+enum struct TokenType { map_macro(make_enum, all_symbols) };
+#undef make_enum
+
+struct Token {
+    using TokenValue = std::variant<int, float, std::string>;
+    TokenType type;
+    std::optional<TokenValue> value;
+};
+
+#define each_token(_v) case TokenType::_v: return _repr##_v; break;
+#define each_keyword(_v) case TokenType::_v: return #_v; break;
+[[nodiscard]] inline std::string token_to_str(const TokenType& type) {
+    switch (type) { 
+        map_macro(each_token, _operators, _punctuations, _division, _comment)
+        map_macro(each_keyword, _keywords)
+    }
+
+    PANIC("provided unknown TokenType.", type);
+}
+#undef each_token
+#undef each_keyword
