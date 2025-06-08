@@ -1,3 +1,4 @@
+#pragma once
 #include "token_definitions.hpp"
 #include <fstream>
 #include <vector>
@@ -45,6 +46,8 @@ struct Lexer {
     str file_name;
 
     [[nodiscard]] Result<std::vector<Token>, str> tokenize_file(const str file_name);
+
+  private:
     [[nodiscard]] Result<Token, str> parse_numeric_literal();
     [[nodiscard]] Result<Token, str> parse_identifier();
     [[nodiscard]] str peek_line();

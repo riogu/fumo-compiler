@@ -10,6 +10,7 @@
  * visit https://creativecommons.org/publicdomain/zero/1.0/
  */
 
+#pragma once
 #ifndef MAP_H_INCLUDED
 #define MAP_H_INCLUDED
 
