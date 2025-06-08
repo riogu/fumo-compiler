@@ -4,7 +4,7 @@
 #include <string>
 
 [[nodiscard]] Result<std::vector<Token>, str> Lexer::tokenize_file(const str _file_name) {
-    file_stream = std::ifstream(file_name);
+    file_stream = std::ifstream(_file_name);
     file_name = _file_name;
     std::vector<Token> tokens;
     __FUMO_LINE__ = peek_line();
