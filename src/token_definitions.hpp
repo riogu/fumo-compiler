@@ -5,9 +5,15 @@
 #include <string>
 #include <variant>
 #include <libassert/assert.hpp>
+
+using i64 = int64_t;
+template<typename Ok, typename Err>
+using Result = std::expected<Ok, Err>;
+template<typename T>
+using Err = std::unexpected<T>;
 //---------------------------------
 // for switch case usage in lexer
-enum struct Symbols {
+enum struct Symbol {
 // operator
     _equals        =   '=',
     _less          =   '<',
@@ -88,6 +94,8 @@ space,                  \
 tab,                    \
 r_thing
 
+#define _literals _identifier, _keyword, _integer, _floating_point
+
 #define add_(v_) _##v_
 #define add_equals(v_) v_##_equals
 #define _keywords MAP_LIST(add_, keywords)
@@ -96,27 +104,31 @@ r_thing
 #define _punctuations MAP_LIST(add_, punctuations)
 
 #define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
-#define all_symbols _keywords, _operators, _punctuations, _division, _comment 
+#define _all_symbols _operators, _punctuations, _division, _comment, _literals
 
 #define make_enum(_v) _v,
-enum struct TokenType { map_macro(make_enum, all_symbols) };
+enum struct TokenType {map_macro(make_enum, _all_symbols)};
 #undef make_enum
 
+using TokenValue = std::variant<int, double, std::string>;
 struct Token {
-    using TokenValue = std::variant<int, float, std::string>;
     TokenType type;
     std::optional<TokenValue> value;
 };
 
-#define each_token(_v) case TokenType::_v: return _repr##_v; break;
-#define each_keyword(_v) case TokenType::_v: return #_v; break;
-[[nodiscard]] inline std::string token_to_str(const TokenType& type) {
-    switch (type) { 
-        map_macro(each_token, _operators, _punctuations, _division, _comment)
-        map_macro(each_keyword, _keywords)
-    }
+#define each_token(_v) case TokenType::_v: return _repr##_v;
 
-    PANIC("provided unknown TokenType.", type);
+[[nodiscard]] inline std::string token_to_str(const Token& token) {
+    switch (token.type) {
+        map_macro(each_token, _operators, _punctuations, _division, _comment)
+        case TokenType::_identifier:
+        case TokenType::_keyword:
+        case TokenType::_integer:
+        case TokenType::_floating_point:
+            return std::get<std::string>(token.value.value());
+        default:
+            PANIC("provided unknown TokenType.", token.type);
+    }
 }
 #undef each_token
 #undef each_keyword

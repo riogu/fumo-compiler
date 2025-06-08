@@ -1,16 +1,15 @@
 #include "token_definitions.hpp"
+#include <fstream>
 #include <vector>
 
-namespace Lexer {
-
 #define punctuation_case(v_)                                    \
-case static_cast<int>(Symbols::_##v_): {                        \
+case static_cast<int>(Symbol::_##v_): {                         \
         tokens.push_back({.type = TokenType::_##v_,             \
                           .value = std::nullopt});              \
         break;                                                  \
 }
 #define operator_case(v_)                                       \
-case static_cast<int>(Symbols::_##v_): {                        \
+case static_cast<int>(Symbol::_##v_): {                         \
     tokens.push_back(                                           \
         file_stream.peek() == '='                               \
             ? Token {.type = TokenType::_##v_##_equals,         \
@@ -20,10 +19,16 @@ case static_cast<int>(Symbols::_##v_): {                        \
         break;                                                  \
 }
 #define ignore_case(v_)                                         \
-case static_cast<int>(Symbols::_##v_): {                        \
+case static_cast<int>(Symbol::_##v_): {                         \
     break;                                                      \
 }
 
-[[nodiscard]] std::vector<Token> lex_file(const std::string file_name);
+struct Lexer {
+    i64 __FUMO_LINE_NUM__ = 1;
+    char curr, start = 0;
+    std::ifstream file_stream;
 
-} // namespace Lexer
+    [[nodiscard]] std::vector<Token> tokenize_file(const std::string file_name);
+    [[nodiscard]] Result<Token, std::string> parse_numeric_literal();
+    [[nodiscard]] bool identifier_ended();
+};
