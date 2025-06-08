@@ -2,4 +2,4 @@
 
 testing out making a C compiler.
 
-later, the idea is to turn it into a compiler for FumoLang programming language.
+the goal is to turn fumo-compiler into a compiler for FumoLang programming language later.
