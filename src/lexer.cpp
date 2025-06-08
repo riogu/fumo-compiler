@@ -3,28 +3,6 @@
 #include <fstream>
 #include <string>
 
-#define fmt_error(error_msg)                                                    \
- fmt("\n\t| error at line {}:\n\t| {}\n\t|{}{}",                                \
-    __FUMO_LINE_NUM__,                                                          \
-    __FUMO_LINE__,                                                              \
-    str(__FUMO_LINE_OFFSET__, ' ') + "^ ",                                      \
-    error_msg                                                                   \
-    )
-
-[[nodiscard]] str Lexer::peek_line() {
-    std::string line;
-    int len = file_stream.tellg();
-    std::getline(file_stream, line);
-    file_stream.seekg(len, std::ios_base::beg);
-    return line;
-}
-
-[[nodiscard]] char Lexer::get_curr() {
-    __FUMO_LINE_OFFSET__++;
-    char curr = file_stream.get();
-    return curr;
-}
-
 [[nodiscard]] Result<std::vector<Token>, str> Lexer::tokenize_file(const str _file_name) {
     file_stream = std::ifstream(file_name);
     file_name = _file_name;
@@ -32,8 +10,6 @@
     __FUMO_LINE__ = peek_line();
 
     while ((curr = get_curr()) != EOF) {
-        // int epic = 123123;
-        // float epic = 1231.3244;
         if (std::isdigit(curr)) {
 
             auto token = parse_numeric_literal();
@@ -137,4 +113,18 @@
     token.line_number = __FUMO_LINE_NUM__;
     token.line_offset = __FUMO_LINE_OFFSET__;
     return token;
+}
+
+[[nodiscard]] str Lexer::peek_line() {
+    std::string line;
+    int len = file_stream.tellg();
+    std::getline(file_stream, line);
+    file_stream.seekg(len, std::ios_base::beg);
+    return line;
+}
+
+[[nodiscard]] char Lexer::get_curr() {
+    __FUMO_LINE_OFFSET__++;
+    char curr = file_stream.get();
+    return curr;
 }
