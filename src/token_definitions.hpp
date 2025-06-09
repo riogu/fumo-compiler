@@ -122,7 +122,6 @@ struct Token {
     i64 line_number, line_offset;
 };
 
-
 [[nodiscard]] inline std::string token_to_str(const Token& token) {
     switch (token.type) {
         map_macro(each_token, operators, punctuations, division, comment)

@@ -2,30 +2,30 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
+// clang-format off
+
 [[nodiscard]] Result<std::vector<Token>, str>
 Lexer::tokenize_file(const fs::path _file_name) {
-    file_stream = std::ifstream(_file_name);
     __FUMO_FILE__ = _file_name.filename();
-    std::vector<Token> tokens;
     __FUMO_LINE__ = peek_line();
+    file_stream = std::ifstream(_file_name);
+    std::vector<Token> tokens;
 
     while ((curr = get_curr()) != EOF) {
         if (std::isdigit(curr)) {
             auto token = parse_numeric_literal();
             if (token) tokens.push_back(token.value());
             else
-                PANIC(token.error());
+                return Err(token.error());
             continue;
         }
         if (std::isalpha(curr)) {
             auto token = parse_identifier();
             if (token) tokens.push_back(token.value());
             else
-                PANIC(token.error());
+                return Err(token.error());
             continue;
         }
-        // clang-format off
-
         switch (curr) {
             map_macro(punctuation_case, punctuations);
             map_macro(operator_case, __operators);
