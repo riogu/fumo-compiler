@@ -1,2 +1,4 @@
 .cache
 build
+ninja_stuff
+write_a_c_compiler
