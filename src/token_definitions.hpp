@@ -6,6 +6,7 @@
 #include <variant>
 #include <libassert/assert.hpp>
 
+namespace fs = std::filesystem; 
 using i64 = int64_t;
 template<typename Ok, typename Err>
 using Result = std::expected<Ok, Err>;

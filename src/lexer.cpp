@@ -2,9 +2,10 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
-[[nodiscard]] Result<std::vector<Token>, str> Lexer::tokenize_file(const str _file_name) {
+[[nodiscard]] Result<std::vector<Token>, str>
+Lexer::tokenize_file(const fs::path _file_name) {
     file_stream = std::ifstream(_file_name);
-    file_name = _file_name;
+    __FUMO_FILE__ = _file_name.filename();
     std::vector<Token> tokens;
     __FUMO_LINE__ = peek_line();
 
@@ -88,7 +89,7 @@
             if (next != 'f') 
                 return Err(fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
         } else
-            return Err(fmt_error(fmt("unknown character '{}'.", next)));
+            return Err(fmt_error("Source file is not valid ASCII."));
     }
 
     token.value = value;

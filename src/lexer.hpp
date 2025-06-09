@@ -9,7 +9,8 @@
 .line_offset = __FUMO_LINE_OFFSET__
 
 #define fmt_error(error_msg)                                        \
- fmt("\n\t| error at line {}:\n\t| {}\n\t|{}{}",                    \
+ fmt("\n\t| error in file '{}' at line {}:\n\t| {}\n\t|{}{}",       \
+    __FUMO_FILE__,                                                  \
     __FUMO_LINE_NUM__,                                              \
     __FUMO_LINE__,                                                  \
     str(__FUMO_LINE_OFFSET__, ' ') + "^ ",                          \
@@ -40,12 +41,12 @@ case static_cast<int>(Symbol::_##v_): {                             \
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
-    str __FUMO_LINE__;
+    str __FUMO_LINE__, __FUMO_FILE__;
     char curr = 0;
     std::ifstream file_stream;
-    str file_name;
 
-    [[nodiscard]] Result<std::vector<Token>, str> tokenize_file(const str file_name);
+    [[nodiscard]] Result<std::vector<Token>, str>
+    tokenize_file(const fs::path _file_name);
 
   private:
     [[nodiscard]] Result<Token, str> parse_numeric_literal();
