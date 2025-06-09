@@ -24,6 +24,7 @@ Lexer::tokenize_file(const fs::path _file_name) {
                 PANIC(token.error());
             continue;
         }
+        // clang-format off
 
         switch (curr) {
             map_macro(punctuation_case, punctuations);
@@ -32,18 +33,13 @@ Lexer::tokenize_file(const fs::path _file_name) {
             // special cases
             case '/':
                 // handle comments or division
-                if (file_stream.peek() == '/') {
-                    while (file_stream.peek() != EOF && file_stream.peek() != '\n')
-                        curr = get_curr();
-                } else {
-                    tokens.push_back(
-                        Token {.type = TokenType::_division, add_token_info});
-                }
+                if (file_stream.peek() == '/') 
+                    while (file_stream.peek() != EOF && file_stream.peek() != '\n') curr = get_curr();
+                else 
+                    tokens.push_back(Token {.type = TokenType::_division, add_token_info});
                 break;
             case '\n':
-                __FUMO_LINE_NUM__++;
-                __FUMO_LINE_OFFSET__ = 0;
-                __FUMO_LINE__ = peek_line();
+                __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line();
                 break;
             default:
                 return Err(fmt_error("Source file is not valid ASCII."));
