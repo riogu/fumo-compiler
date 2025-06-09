@@ -106,13 +106,14 @@ r_thing
 #define literals identifier, keyword, integer, floating_point
 
 #define add_equals(v_) v_##_equals
+#define make_enum(_v) _##_v,
+#define each_token(_v) case TokenType::_##_v: return _repr_##_v;
+#define tkntype(v_) case TokenType::_##v_: return #v_;
 
 #define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
 #define all_symbols operators, punctuations, division, comment, literals
 
-#define make_enum(_v) _##_v,
 enum struct TokenType {map_macro(make_enum, all_symbols)};
-#undef make_enum
 
 using TokenValue = std::variant<int, double, std::string>;
 struct Token {
@@ -121,7 +122,6 @@ struct Token {
     i64 line_number, line_offset;
 };
 
-#define each_token(_v) case TokenType::_##_v: return _repr_##_v;
 
 [[nodiscard]] inline std::string token_to_str(const Token& token) {
     switch (token.type) {
@@ -136,15 +136,14 @@ struct Token {
     }
 }
 
-#undef each_token
-
-
-#define tkntype(v_) case TokenType::_##v_: return #v_;
-
 [[nodiscard]] inline str tokentype_name(const TokenType& type) {
     switch (type) {
         map_macro(tkntype, all_symbols);
         default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
     }
 }
+
+#undef each_token
 #undef tkntype
+#undef make_enum
+#undef add_equals

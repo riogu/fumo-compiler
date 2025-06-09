@@ -1,21 +1,23 @@
 #include "lexer.hpp"
 
-[[nodiscard]] bool Lexer::identifier_ended() {
 #define symbol_case(v_) case static_cast<int>(Symbol::_##v_): return true;
+#define check_keyword(v_) if(identifier == #v_) return true;
+
+[[nodiscard]] bool Lexer::identifier_ended() {
     switch (file_stream.peek()) {
         map_macro(symbol_case, __operators, punctuations, ignores);
         default:
             return false;
     }
-#undef symbol_case
 }
 
 [[nodiscard]] bool Lexer::is_keyword(const str identifier) {
-#define check_keyword(v_) if(identifier == #v_) return true;
     map_macro(check_keyword, keywords);
     return false;
-#undef check_keyword
 }
+
+#undef symbol_case
+#undef check_keyword
 
 [[nodiscard]] str Lexer::peek_line() {
     std::string line;
