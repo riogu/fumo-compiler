@@ -3,7 +3,6 @@
 #include "symbol_cases.hpp"
 #include "token_definitions.hpp"
 #include <fstream>
-namespace fs = std::filesystem; 
 
 [[nodiscard]] Result<Vec<Token>, Str> Lexer::tokenize_file(const fs::path _file_name) {
     __FUMO_FILE__ = _file_name.filename();
@@ -59,15 +58,14 @@ namespace fs = std::filesystem;
     return tokens;
 }
 
-// clang-format off
+// clang-format on
 
 [[nodiscard]] Result<Token, Str> Lexer::parse_identifier() {
     Str value = std::format("{}", curr);
 
     while (!identifier_ended()) {
-        if (char next = get_curr(); std::isalpha(next) || std::isdigit(next) || next == '_')
-            value += next;
-        else 
+        if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
+        else
             return Err(fmt_error("Source file is not valid ASCII."));
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,

@@ -18,8 +18,8 @@ case (int)Symbol::v_: {                                             \
                           add_token_info});                         \
         break;                                                      \
 }
-#define has_double_and_equals_case(v_)
-#define has_triple_case(v_)
+#define has_double_and_equals_case(v_) // TODO:
+#define has_triple_case(v_) // TODO:
 #define ignore_case(v_)                                             \
 case static_cast<int>(Symbol::v_): {                                \
     break;                                                          \

@@ -7,16 +7,17 @@
 #include <vector>
 #include "symbol_definitions.hpp"
 
-#define literals identifier, keyword, integer, floating_point, string
-#define all_tokens punctuators, literals
 
-namespace fs = std::filesystem; 
 #define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
 #define fmt std::format
 using i64 = int64_t;
-template<typename Ok, typename Err> using Result = std::expected<Ok, Err>;
-template<typename T> using Err = std::unexpected<T>;
-template<typename  T> using Vec = std::vector<T>;
+template<typename Ok, typename Err>
+using Result = std::expected<Ok, Err>;
+template<typename T>
+using Err = std::unexpected<T>;
+template<typename  T>
+using Vec = std::vector<T>;
+namespace fs = std::filesystem; 
 
 #define make_enum(_v) _v,
 enum struct TokenType {map_macro(make_enum, all_tokens)};
