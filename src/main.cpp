@@ -1,7 +1,6 @@
-#include "lexer.hpp"
-#include "token_definitions.hpp"
-#include <filesystem>
+#include "lexer/lexer.hpp"
 #include <iostream>
+
 #define fn auto
 using i32 = int;
 using i64 = int64_t;
