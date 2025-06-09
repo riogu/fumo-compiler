@@ -16,7 +16,8 @@ fn main(int argc, char* argv[]) -> i32 {
     if (!tokens) PANIC(tokens.error());
 
     for (auto token : tokens.value()) {
-        std::cout << token_to_str(token) << "\t-> " << tokentype_name(token.type) << "\n";
+        // std::cout << token_to_str(token) << "\t-> " << tokentype_name(token.type) << "\n";
+        std::cout << token_to_str(token) << " (" << tokentype_name(token.type) << ") | ";
         // std::cout << token_to_str(token);
     }
 }

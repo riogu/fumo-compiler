@@ -11,9 +11,7 @@ Lexer::tokenize_file(const fs::path _file_name) {
 
     while ((curr = get_curr()) != EOF) {
         if (std::isdigit(curr)) {
-
             auto token = parse_numeric_literal();
-
             if (token) tokens.push_back(token.value());
             else
                 PANIC(token.error());
@@ -54,22 +52,19 @@ Lexer::tokenize_file(const fs::path _file_name) {
     return tokens;
 }
 
+// clang-format off
 [[nodiscard]] Result<Token, str> Lexer::parse_identifier() {
     str value = std::format("{}", curr);
-    Token token {.type = TokenType::_integer};
-
     while (!identifier_ended()) {
         char next = get_curr();
         if (std::isalpha(next) || std::isdigit(next)) value += next;
         else
             return Err(fmt_error("Source file is not valid ASCII."));
     }
-
-    token.type = is_keyword(value) ? TokenType::_keyword : TokenType::_identifier;
-    token.value = value;
-    token.line_number = __FUMO_LINE_NUM__;
-    token.line_offset = __FUMO_LINE_OFFSET__;
-    return token;
+    return Token {.type = is_keyword(value) ? TokenType::_keyword : TokenType::_identifier,
+                  .value = value,
+                  .line_number = __FUMO_LINE_NUM__,
+                  .line_offset = __FUMO_LINE_OFFSET__};
 }
 
 // clang-format off
