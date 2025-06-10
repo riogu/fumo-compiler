@@ -1,7 +1,6 @@
 #pragma once
 // clang-format off
 #define cases(symbols) map_macro(symbols##_case, symbols)
-#define consume_tkn(tkn) {{get_curr();Token {.type = TokenType::tkn, add_token_info};})
 
 #define singular_case(tkn)                                              \
 case (int)(Symbol::tkn): {                                              \
