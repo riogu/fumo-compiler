@@ -27,8 +27,8 @@
             continue;
         }
         switch (curr) {
-            // FIXME: add consuming the characters in case of successfully getting fs.peek()
-            //        fix issues with EOF during the lexer
+            // FIXME: - add consuming the characters in case of successfully getting fs.peek()
+            //        - fix issues with EOF during the lexer
             //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
