@@ -27,5 +27,5 @@ struct Lexer {
     [[nodiscard]] Str peek_line();
     [[nodiscard]] bool is_keyword(const Str identifier);
     [[nodiscard]] bool identifier_ended();
-    [[nodiscard]] char get_curr();
+    char get_curr();
 };

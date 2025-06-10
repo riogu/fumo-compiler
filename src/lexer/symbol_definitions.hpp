@@ -45,7 +45,6 @@ const std::unordered_map<Str, Str> all_token_strings {
     {"hat_equals",                  "^="  },
     {"bar_equals",                  "|="  },
 // double operators
-    {"division_division",           "||"  },
     {"bar_bar",                     "||"  },
     {"minus_minus",                 "--"  },
     {"plus_plus",                   "++"  },
@@ -97,7 +96,6 @@ const std::unordered_map<Str, Str> all_token_strings {
     ampersand_equals,                   \
     hat_equals,                         \
     bar_equals,                         \
-    division_division,                  \
     bar_bar,                            \
     minus_minus,                        \
     plus_plus,                          \
@@ -179,7 +177,6 @@ enum struct Symbol {
     plus            =     '+',
     minus           =     '-',
     equals          =     '=',
-    division        =     '/',
 // has triple
     dot             =     '.',
     greater         =     '>',
@@ -189,8 +186,9 @@ enum struct Symbol {
     tab             =     '\t',
     r_thing         =     '\r',
     alert           =     '\a',
-//  hashtag         =     '#',
 };
+// division        =     '/',
+//  hashtag         =     '#',
 
 #define singular                    \
     question_mark   ,               \
@@ -214,8 +212,7 @@ enum struct Symbol {
     ampersand       ,               \
     plus            ,               \
     minus           ,               \
-    equals          ,               \
-    division
+    equals
 #define has_triple                  \
     dot             ,               \
     greater         ,               \

@@ -4,11 +4,13 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
+#define add_token(tkn) tokens.push_back(Token {.type = TokenType::tkn, add_token_info})
+#define add_and_consume_token(tkn) do {tokens.push_back(Token {.type = TokenType::tkn, add_token_info}); get_curr();} while(0)
+#define next_is(tkn) (file_stream.peek() == tkn)
+
 [[nodiscard]] Result<Vec<Token>, Str> Lexer::tokenize_file(const fs::path _file_name) {
-    __FUMO_FILE__ = _file_name.filename();
-    __FUMO_LINE__ = peek_line();
-    file_stream = std::ifstream(_file_name);
-    Vec<Token> tokens;
+    __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
+    file_stream = std::ifstream(_file_name); Vec<Token> tokens;
 
     while ((curr = get_curr()) != EOF) {
 
@@ -25,31 +27,54 @@
             continue;
         }
         switch (curr) {
+            // FIXME: add consuming the characters in case of successfully getting fs.peek()
+            //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
             cases(singular);
             cases(has_equals);
             cases(has_double_and_equals);
-            cases(has_triple);
             cases(ignore);
+            // -----------------------------------------------------------
+            // triple cases
+            case '.': 
+                if (next_is('.'))  {
+                    if (get_curr(); next_is('.')) add_token(dot_dot_dot);
+                    else 
+                        PANIC(fmt_error("Expected expression."));
+                }
+                break;
+            case '<':
+                if ((file_stream.peek() == '<')) {
+                    if (get_curr(); file_stream.peek() == '=')
+                        add_and_consume_token(less_equals);
+                    else if (curr == '<') {
+                        if (get_curr(); (file_stream.peek() == '='))
+                            add_and_consume_token(less_less_equals);
+                        else
+                            add_token(less_less);
+                    } else
+                        add_token(less);
+                }
+                break;
             // -----------------------------------------------------------
             // special cases
             case '/':
-                if (file_stream.peek() == '/') 
-                    while (file_stream.peek() != EOF && file_stream.peek() != '\n') curr = get_curr();
-                else 
-                    tokens.push_back(Token {.type = TokenType::division, add_token_info});
+                if (next_is('/'))
+                    while (!next_is(EOF) && !next_is('\n')) curr = get_curr();
+                else
+                    tokens.push_back(next_is('=')
+                                     ? Token {.type = TokenType::division_equals, add_token_info}
+                                     : Token {.type = TokenType::division, add_token_info});
                 break;
 
             case '\n':
-                __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line();
-                break;
+                __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
             case '#':
-                tokens.push_back(
-                    file_stream.peek() == '#'
-                        ? Token {.type = TokenType::hashtag_hashtag, add_token_info}
-                        : Token {.type = TokenType::hashtag, add_token_info});
+                tokens.push_back(next_is('#')
+                                 ? Token {.type = TokenType::hashtag_hashtag, add_token_info}
+                                 : Token {.type = TokenType::hashtag, add_token_info});
                 break;
 
             default: PANIC(fmt_error("Source file is not valid ASCII."));
@@ -58,7 +83,7 @@
     return tokens;
 }
 
-// clang-format on
+// clang-format off
 
 [[nodiscard]] Result<Token, Str> Lexer::parse_identifier() {
     Str value = std::format("{}", curr);
@@ -79,8 +104,7 @@
     Token token {.type = TokenType::integer};
 
     while (!identifier_ended()) {
-        char next = get_curr();
-        if ((next == '.' && std::isdigit(file_stream.peek()))) {
+        if (char next = get_curr(); next == '.' && std::isdigit(file_stream.peek())) {
             value += next;
             token.type = TokenType::floating_point;
         } //
@@ -88,8 +112,7 @@
             value += next; // continue getting number
         else if (std::isalpha(next)) {
             if (next != 'f')
-                return Err(
-                    fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
+                return Err(fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
         } else
             return Err(fmt_error("Source file is not valid ASCII."));
     }
