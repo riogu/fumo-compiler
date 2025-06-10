@@ -2,7 +2,7 @@
 #pragma once
 #include <libassert/assert.hpp>
 #include <optional>
-#include "map-macro.hpp"
+#include "utils/map-macro.hpp"
 #include <variant>
 #include <vector>
 #include "symbol_definitions.hpp"
