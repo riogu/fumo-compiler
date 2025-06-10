@@ -29,7 +29,7 @@
             continue;
         }
         switch (curr) {
-            // FIXME: - fix issues with EOF during the lexe
+            // FIXME: - fix issues with EOF during the lexer
             //        - add -> punctuator case
             //
             // -----------------------------------------------------------
