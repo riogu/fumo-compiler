@@ -30,16 +30,16 @@ case (int)Symbol::tkn: {                                                \
     break;                                                              \
 }
 #define triple_case(tkn)                                                \
-if ((file_stream.peek() == tkn)) {                                      \
+if ((file_stream.peek() == (int)Symbol::tkn)) {                         \
     if (get_curr(); file_stream.peek() == '=')                          \
-        add_and_consume_token(less_equals);                             \
-    else if (curr == tkn) {                                             \
+        add_and_consume_token(tkn##_equals);                            \
+    else if (curr == (int)Symbol::tkn) {                                \
         if (get_curr(); (file_stream.peek() == '='))                    \
-            add_and_consume_token(less_less_equals);                    \
+            add_and_consume_token(tkn##_##tkn##_equals);                \
 else                                                                    \
-            add_token(less_less);                                       \
+            add_token(tkn##_##tkn);                                     \
     } else                                                              \
-        add_token(less);                                                \
+        add_token(tkn);                                                 \
 }
 
 #define ignore_case(tkn)                                            \

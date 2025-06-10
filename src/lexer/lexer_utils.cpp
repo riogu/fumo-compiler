@@ -30,6 +30,6 @@
 
 char Lexer::get_curr() {
     __FUMO_LINE_OFFSET__++;
-    char curr = file_stream.get();
+    curr = file_stream.get();
     return curr;
 }

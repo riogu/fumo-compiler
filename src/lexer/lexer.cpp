@@ -28,6 +28,7 @@
         }
         switch (curr) {
             // FIXME: add consuming the characters in case of successfully getting fs.peek()
+            //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
             cases(singular);
@@ -45,16 +46,18 @@
                 break;
             // special cases
             case '<': 
-                triple_case('<'); break;
+                triple_case(less); break;
             case '>': 
-                triple_case('>'); break;
+                triple_case(greater); break;
+            // clang-format on
+            // clang-format off
             // -----------------------------------------------------------
             case '/':
                 if (next_is('/'))
                     while (!next_is(EOF) && !next_is('\n')) curr = get_curr();
                 else
                     tokens.push_back(next_is('=')
-                                     ? Token {.type = TokenType::division_equals, add_token_info}
+                                     ? ({get_curr(); Token {.type = TokenType::division_equals, add_token_info};})
                                      : Token {.type = TokenType::division, add_token_info});
                 break;
 
@@ -63,7 +66,7 @@
 
             case '#':
                 tokens.push_back(next_is('#')
-                                 ? Token {.type = TokenType::hashtag_hashtag, add_token_info}
+                                 ? ({get_curr();Token {.type = TokenType::hashtag_hashtag, add_token_info};})
                                  : Token {.type = TokenType::hashtag, add_token_info});
                 break;
 
