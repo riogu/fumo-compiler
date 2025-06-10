@@ -28,7 +28,7 @@
     return line;
 }
 
-char Lexer::get_curr() {
+i64 Lexer::get_curr() {
     __FUMO_LINE_OFFSET__++;
     curr = file_stream.get();
     return curr;

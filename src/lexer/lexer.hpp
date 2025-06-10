@@ -16,7 +16,7 @@ struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
     Str __FUMO_LINE__, __FUMO_FILE__;
-    char curr = 0;
+    i64 curr = 0;
     std::ifstream file_stream;
 
     [[nodiscard]] Result<Vec<Token>, Str> tokenize_file(const fs::path _file_name);
@@ -27,5 +27,5 @@ struct Lexer {
     [[nodiscard]] Str peek_line();
     [[nodiscard]] bool is_keyword(const Str identifier);
     [[nodiscard]] bool identifier_ended();
-    char get_curr();
+    i64 get_curr();
 };

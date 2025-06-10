@@ -27,8 +27,9 @@
             continue;
         }
         switch (curr) {
-            // FIXME: - add consuming the characters in case of successfully getting fs.peek()
+            // FIXME: 
             //        - fix issues with EOF during the lexer
+            //        - add -> punctuator case
             //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
@@ -40,7 +41,7 @@
             // triple cases
             case '.':
                 if ((file_stream.peek() == '.')) {
-                    if (get_curr(); (file_stream.peek() == '.')) add_token(dot_dot_dot);
+                    if (get_curr(); (file_stream.peek() == '.')) add_and_consume_token(dot_dot_dot);
                     else
                         PANIC(fmt_error("Expected expression."));
                 } else 
@@ -98,7 +99,7 @@
 // clang-format off
 
 [[nodiscard]] Result<Token, Str> Lexer::parse_identifier() {
-    Str value = std::format("{}", curr);
+    Str value = std::format("{}", char(curr));
 
     while (!identifier_ended()) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
@@ -112,7 +113,7 @@
 }
 
 [[nodiscard]] Result<Token, Str> Lexer::parse_numeric_literal() {
-    Str value = std::format("{}", curr);
+    Str value = std::format("{}", char(curr));
     Token token {.type = TokenType::integer};
 
     while (!identifier_ended()) {
