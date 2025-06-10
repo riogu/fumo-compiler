@@ -33,3 +33,41 @@ i64 Lexer::get_curr() {
     curr = file_stream.get();
     return curr;
 }
+
+[[nodiscard]] Result<Token, Str> Lexer::parse_identifier() {
+    Str value = std::format("{}", char(curr));
+
+    while (!identifier_ended()) {
+        if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
+        else
+            return Err(fmt_error("Source file is not valid ASCII."));
+    }
+    return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
+                  .value = value,
+                  .line_number = __FUMO_LINE_NUM__,
+                  .line_offset = __FUMO_LINE_OFFSET__};
+}
+
+[[nodiscard]] Result<Token, Str> Lexer::parse_numeric_literal() {
+    Str value = std::format("{}", char(curr));
+    Token token {.type = TokenType::integer};
+
+    while (!identifier_ended()) {
+        if (char next = get_curr(); next == '.' && std::isdigit(file_stream.peek())) {
+            value += next;
+            token.type = TokenType::floating_point;
+        } //
+        else if (std::isdigit(next))
+            value += next; // continue getting number
+        else if (std::isalpha(next)) {
+            if (next != 'f')
+                return Err(fmt_error("invalid digit '{}' in decimal constant.", next));
+        } else
+            return Err(fmt_error("Source file is not valid ASCII."));
+    }
+
+    token.value = value;
+    token.line_number = __FUMO_LINE_NUM__;
+    token.line_offset = __FUMO_LINE_OFFSET__;
+    return token;
+}
