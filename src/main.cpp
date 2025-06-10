@@ -7,7 +7,7 @@ using i64 = int64_t;
 
 fn main(int argc, char* argv[]) -> i32 {
     // std::string test = "write_a_c_compiler/stage_1/valid/return_2.c";
-    fs::path test = "src/tests/testfile.c";
+    fs::path test = "src/tests/test-symbols.c";
 
     Lexer lexer {};
 

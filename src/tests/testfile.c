@@ -4,6 +4,7 @@ int main() {
     // comments work /n/n/n/n
     int epic = 3369;
     float var= 69.2131669f;
+    epic -=1;
     while (1) {
         for(;;)
         if (epic) epic += 1;

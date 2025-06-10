@@ -56,6 +56,8 @@ const std::unordered_map<Str, Str> all_token_strings {
     {"less_less_equals",            "<<=" },
     {"greater_greater_equals",      ">>=" },
     {"dot_dot_dot",                 "..." },
+// special
+    {"minus_greater",               "->"  },
 };
 
 #define punctuators                     \
@@ -105,7 +107,8 @@ const std::unordered_map<Str, Str> all_token_strings {
     less_less,                          \
     less_less_equals,                   \
     greater_greater_equals,             \
-    dot_dot_dot 
+    dot_dot_dot,                        \
+    minus_greater
 #define keywords                        \
     auto             ,                  \
     break            ,                  \
@@ -181,14 +184,14 @@ enum struct Symbol {
     dot             =     '.',
     greater         =     '>',
     less            =     '<',
+    division        =     '/',
+    hashtag         =     '#',
 // ignore
     space           =     ' ',
     tab             =     '\t',
     r_thing         =     '\r',
     alert           =     '\a',
 };
-//  division        =     '/',
-//  hashtag         =     '#',
 
 #define singular                    \
     question_mark   ,               \
@@ -211,11 +214,12 @@ enum struct Symbol {
     ampersand       ,               \
     bar,                            \
     plus            ,               \
-    minus           ,               \
     equals
 #define has_triple                  \
+    minus           ,               \
     dot             ,               \
     greater         ,               \
+    division        ,               \
     less
 #define ignore                      \
     space           ,               \

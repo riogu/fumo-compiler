@@ -73,6 +73,16 @@
                 break;
             // -----------------------------------------------------------
             // special cases
+            case '-': 
+                if(next_is('-')) 
+                    add_and_consume_token(minus_minus); // -- 
+                else if (next_is('='))
+                    add_and_consume_token(minus_equals); // -=
+                else if (next_is('>'))
+                    add_and_consume_token(minus_greater); // ->
+                else
+                    add_token(minus);
+
             case '/':
                 if (next_is('/'))
                     while (!next_is(EOF) && !next_is('\n')) curr = get_curr();

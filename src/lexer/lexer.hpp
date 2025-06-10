@@ -15,7 +15,7 @@
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
-    Str __FUMO_LINE__, __FUMO_FILE__;
+    std::string __FUMO_LINE__, __FUMO_FILE__;
     i64 curr = 0;
     std::ifstream file_stream;
 
@@ -24,8 +24,8 @@ struct Lexer {
   private:
     [[nodiscard]] Result<Token, Str> parse_numeric_literal();
     [[nodiscard]] Result<Token, Str> parse_identifier();
-    [[nodiscard]] Str peek_line();
     [[nodiscard]] bool is_keyword(const Str identifier);
+    [[nodiscard]] Str peek_line();
     [[nodiscard]] bool identifier_ended();
     i64 get_curr();
 };
