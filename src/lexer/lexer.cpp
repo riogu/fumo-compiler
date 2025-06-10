@@ -28,7 +28,6 @@
         }
         switch (curr) {
             // FIXME: add consuming the characters in case of successfully getting fs.peek()
-            //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
             cases(singular);
@@ -37,28 +36,19 @@
             cases(ignore);
             // -----------------------------------------------------------
             // triple cases
-            case '.': 
-                if (next_is('.'))  {
-                    if (get_curr(); next_is('.')) add_token(dot_dot_dot);
-                    else 
+            case '.':
+                if ((file_stream.peek() == '.')) {
+                    if (get_curr(); (file_stream.peek() == '.')) add_token(dot_dot_dot);
+                    else
                         PANIC(fmt_error("Expected expression."));
                 }
                 break;
-            case '<':
-                if ((file_stream.peek() == '<')) {
-                    if (get_curr(); file_stream.peek() == '=')
-                        add_and_consume_token(less_equals);
-                    else if (curr == '<') {
-                        if (get_curr(); (file_stream.peek() == '='))
-                            add_and_consume_token(less_less_equals);
-                        else
-                            add_token(less_less);
-                    } else
-                        add_token(less);
-                }
-                break;
-            // -----------------------------------------------------------
             // special cases
+            case '<': 
+                triple_case('<'); break;
+            case '>': 
+                triple_case('>'); break;
+            // -----------------------------------------------------------
             case '/':
                 if (next_is('/'))
                     while (!next_is(EOF) && !next_is('\n')) curr = get_curr();

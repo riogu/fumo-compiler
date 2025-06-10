@@ -1,6 +1,7 @@
 #pragma once
 // clang-format off
 #define cases(symbols) map_macro(symbols##_case, symbols)
+#define consume_tkn(tkn) {{get_curr();Token {.type = TokenType::tkn, add_token_info};})
 
 #define singular_case(tkn)                                              \
 case (int)(Symbol::tkn): {                                              \
@@ -11,7 +12,8 @@ case (int)(Symbol::tkn): {                                              \
 case (int)Symbol::tkn: {                                                \
     tokens.push_back(                                                   \
         file_stream.peek() == '='                                       \
-            ? Token {.type = TokenType::tkn##_equals,add_token_info}    \
+            ? ({get_curr();                                             \
+              Token {.type = TokenType::tkn##_equals,add_token_info};}) \
             : Token {.type = TokenType::tkn, add_token_info});          \
         break;                                                          \
 }
@@ -20,16 +22,26 @@ case (int)Symbol::tkn: {                                                \
     tokens.push_back(                                                   \
         file_stream.peek() == (int)Symbol::tkn                          \
             ? ({get_curr();                                             \
-                Token {.type = TokenType::tkn##_##tkn,add_token_info};})\
+                Token {.type =TokenType::tkn##_##tkn,add_token_info};}) \
             : file_stream.peek() == '=' ?                               \
               ({get_curr();                                             \
               Token {.type =TokenType::tkn##_equals,add_token_info};})  \
             : Token {.type =TokenType::tkn, add_token_info});           \
     break;                                                              \
 }
+#define triple_case(tkn)                                                \
+if ((file_stream.peek() == tkn)) {                                      \
+    if (get_curr(); file_stream.peek() == '=')                          \
+        add_and_consume_token(less_equals);                             \
+    else if (curr == tkn) {                                             \
+        if (get_curr(); (file_stream.peek() == '='))                    \
+            add_and_consume_token(less_less_equals);                    \
+else                                                                    \
+            add_token(less_less);                                       \
+    } else                                                              \
+        add_token(less);                                                \
+}
 
-
-#define has_triple_case(tkn) // TODO:
 #define ignore_case(tkn)                                            \
 case static_cast<int>(Symbol::tkn): {                               \
     break;                                                          \

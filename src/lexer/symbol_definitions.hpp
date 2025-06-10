@@ -165,10 +165,10 @@ enum struct Symbol {
     close_brace     =     '}',
     semicolon       =     ';',
     comma           =     ',',
+    negate          =     '~',
 // has equals
     exclamation     =     '!',
     asterisk        =     '*',
-    negate          =     '~',
     percent         =     '%',
     hat             =     '^',
     bar             =     '|',
