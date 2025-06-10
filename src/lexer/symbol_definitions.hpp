@@ -171,8 +171,8 @@ enum struct Symbol {
     asterisk        =     '*',
     percent         =     '%',
     hat             =     '^',
-    bar             =     '|',
 // has double and equals
+    bar             =     '|',
     ampersand       =     '&',
     plus            =     '+',
     minus           =     '-',
@@ -187,7 +187,7 @@ enum struct Symbol {
     r_thing         =     '\r',
     alert           =     '\a',
 };
-// division        =     '/',
+//  division        =     '/',
 //  hashtag         =     '#',
 
 #define singular                    \
@@ -206,10 +206,10 @@ enum struct Symbol {
     exclamation     ,               \
     asterisk        ,               \
     percent         ,               \
-    hat             ,               \
-    bar             
+    hat
 #define has_double_and_equals       \
     ampersand       ,               \
+    bar,                            \
     plus            ,               \
     minus           ,               \
     equals

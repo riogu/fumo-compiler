@@ -29,19 +29,6 @@ case (int)Symbol::tkn: {                                                \
             : Token {.type =TokenType::tkn, add_token_info});           \
     break;                                                              \
 }
-#define triple_case(tkn)                                                \
-if ((file_stream.peek() == (int)Symbol::tkn)) {                         \
-    if (get_curr(); file_stream.peek() == '=')                          \
-        add_and_consume_token(tkn##_equals);                            \
-    else if (curr == (int)Symbol::tkn) {                                \
-        if (get_curr(); (file_stream.peek() == '='))                    \
-            add_and_consume_token(tkn##_##tkn##_equals);                \
-else                                                                    \
-            add_token(tkn##_##tkn);                                     \
-    } else                                                              \
-        add_token(tkn);                                                 \
-}
-
 #define ignore_case(tkn)                                            \
 case static_cast<int>(Symbol::tkn): {                               \
     break;                                                          \

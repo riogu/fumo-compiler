@@ -28,6 +28,7 @@
         }
         switch (curr) {
             // FIXME: add consuming the characters in case of successfully getting fs.peek()
+            //        fix issues with EOF during the lexer
             //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
@@ -42,16 +43,35 @@
                     if (get_curr(); (file_stream.peek() == '.')) add_token(dot_dot_dot);
                     else
                         PANIC(fmt_error("Expected expression."));
-                }
+                } else 
+                      add_token(dot);
                 break;
-            // special cases
-            case '<': 
-                triple_case(less); break;
-            case '>': 
-                triple_case(greater); break;
-            // clang-format on
-            // clang-format off
+            case '<':
+                if (file_stream.peek() == '<') { // <<
+                    if (get_curr(); file_stream.peek() == '=') // <<=
+                        add_and_consume_token(less_less_equals);
+                    else
+                        add_and_consume_token(less_less);
+                } else if (file_stream.peek() == '=') // <=
+                    add_and_consume_token(less_equals);
+                else // <
+                    add_token(less);
+                break;
+
+            case '>':
+                if (file_stream.peek() == '>') { // <<
+                    if (get_curr(); file_stream.peek() == '=') // <<=
+                        add_and_consume_token(greater_greater_equals);
+                    else
+                        add_and_consume_token(greater_greater);
+                } else if (file_stream.peek() == '=') // <=
+                    add_and_consume_token(greater_equals);
+                else // <
+                    add_token(greater);
+                break;
+                // clang-format off
             // -----------------------------------------------------------
+            // special cases
             case '/':
                 if (next_is('/'))
                     while (!next_is(EOF) && !next_is('\n')) curr = get_curr();
@@ -61,8 +81,7 @@
                                      : Token {.type = TokenType::division, add_token_info});
                 break;
 
-            case '\n':
-                __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
+            case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
             case '#':
                 tokens.push_back(next_is('#')
