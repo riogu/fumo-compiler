@@ -41,32 +41,32 @@
             // -----------------------------------------------------------
             // triple cases are handled individually
             case '.':
-                if ((file_stream.peek() == '.')) {
-                    if (get_curr(); (file_stream.peek() == '.')) add_and_consume_token(dot_dot_dot);
+                if ((next_is('.'))) {
+                    if (get_curr(); (next_is('.'))) add_and_consume_token(dot_dot_dot);
                     else
                         PANIC(fmt_error("Expected complete '...' ellipsis."));
                 } else 
                       add_token(dot);
                 break;
             case '<':
-                if (file_stream.peek() == '<') { // <<
-                    if (get_curr(); file_stream.peek() == '=') // <<=
+                if (next_is('<')) { // <<
+                    if (get_curr(); next_is('=')) // <<=
                         add_and_consume_token(less_less_equals);
                     else
                         add_and_consume_token(less_less);
-                } else if (file_stream.peek() == '=') // <=
+                } else if (next_is('=')) // <=
                     add_and_consume_token(less_equals);
                 else // <
                     add_token(less);
                 break;
 
             case '>':
-                if (file_stream.peek() == '>') { // <<
-                    if (get_curr(); file_stream.peek() == '=') // <<=
+                if (next_is('>')) { // <<
+                    if (get_curr(); next_is('=')) // <<=
                         add_and_consume_token(greater_greater_equals);
                     else
                         add_and_consume_token(greater_greater);
-                } else if (file_stream.peek() == '=') // <=
+                } else if (next_is('=')) // <=
                     add_and_consume_token(greater_equals);
                 else // <
                     add_token(greater);
@@ -123,7 +123,7 @@
             value += next; // continue getting number
         else if (std::isalpha(next)) {
             if (next != 'f')
-                return Err(fmt_error(fmt("invalid digit '{}' in decimal constant.", next)));
+                return Err(fmt_error("invalid digit '{}' in decimal constant.", next));
         } else
             return Err(fmt_error("Source file is not valid ASCII."));
     }
