@@ -26,30 +26,31 @@ struct Token {
     TokenType type;
     std::optional<TokenValue> value;
     i64 line_number, line_offset;
-};
 
 #define each_token(_v) case TokenType::_v: return all_token_strings.at(#_v);
-[[nodiscard]] inline constexpr Str token_to_str(const Token& token) {
-    switch (token.type) {
-        map_macro(each_token, punctuators)
-        case TokenType::identifier:
-        case TokenType::keyword:
-        case TokenType::integer:
-        case TokenType::floating_point:
-        case TokenType::string:
-            return std::get<std::string>(token.value.value());
-        default:
-            PANIC(fmt("provided unknown TokenType '{}'.", (int)token.type));
+    [[nodiscard]] inline constexpr Str to_str() {
+        switch (type) {
+            map_macro(each_token, punctuators)
+            case TokenType::identifier:
+            case TokenType::keyword:
+            case TokenType::integer:
+            case TokenType::floating_point:
+            case TokenType::string:
+                return std::get<std::string>(value.value());
+            default:
+                PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+        }
     }
-}
-
 #define tkntype(v_) case TokenType::v_: return #v_;
-[[nodiscard]] inline constexpr Str tokentype_name(const TokenType& type) {
-    switch (type) {
-        map_macro(tkntype, all_tokens);
-        default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+    [[nodiscard]] inline constexpr Str type_name() {
+        switch (type) {
+            map_macro(tkntype, all_tokens);
+            default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+        }
     }
-}
+};
+
+
 
 #undef each_token
 #undef tkntype
