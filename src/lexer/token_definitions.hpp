@@ -22,10 +22,12 @@ template<typename  T> using Vec = std::vector<T>;
 enum struct TokenType {map_macro(make_enum, all_tokens)};
 
 using TokenValue = std::variant<int, double, std::string>;
+
 struct Token {
     TokenType type;
     std::optional<TokenValue> value;
     i64 line_number, line_offset;
+
 
 #define each_token(_v) case TokenType::_v: return all_token_strings.at(#_v);
     [[nodiscard]] inline constexpr Str to_str() {
@@ -37,10 +39,10 @@ struct Token {
             case TokenType::floating_point:
             case TokenType::string:
                 return std::get<std::string>(value.value());
-            default:
-                PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+            default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
         }
     }
+
 #define tkntype(v_) case TokenType::v_: return #v_;
     [[nodiscard]] inline constexpr Str type_name() {
         switch (type) {
