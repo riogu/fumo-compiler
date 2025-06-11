@@ -4,7 +4,7 @@
 #include <fstream>
 
 #define fmt_error(...)                                              \
- fmt("\n\t| error in file '{}' at line {}:\n\t| {}\n\t|{}{}",       \
+ fmt("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",       \
     __FUMO_FILE__,                                                  \
     __FUMO_LINE_NUM__,                                              \
     __FUMO_LINE__,                                                  \
@@ -19,11 +19,11 @@ struct Lexer {
     i64 curr = 0;
     std::ifstream file_stream;
 
-    [[nodiscard]] Result<Vec<Token>, Str> tokenize_file(const fs::path _file_name);
+    [[nodiscard]] Vec<Token> tokenize_file(const fs::path _file_name);
 
   private:
-    [[nodiscard]] Result<Token, Str> parse_numeric_literal();
-    [[nodiscard]] Result<Token, Str> parse_identifier();
+    [[nodiscard]] Token parse_numeric_literal();
+    [[nodiscard]] Token parse_identifier();
     [[nodiscard]] bool is_keyword(const Str identifier);
     [[nodiscard]] Str peek_line();
     [[nodiscard]] bool identifier_ended();

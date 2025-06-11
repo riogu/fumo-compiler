@@ -34,13 +34,13 @@ i64 Lexer::get_curr() {
     return curr;
 }
 
-[[nodiscard]] Result<Token, Str> Lexer::parse_identifier() {
+[[nodiscard]] Token Lexer::parse_identifier() {
     Str value = std::format("{}", char(curr));
 
     while (!identifier_ended()) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
         else
-            return Err(fmt_error("Source file is not valid ASCII."));
+            PANIC(fmt_error("Source file is not valid ASCII."));
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
                   .value = value,
@@ -48,7 +48,7 @@ i64 Lexer::get_curr() {
                   .line_offset = __FUMO_LINE_OFFSET__};
 }
 
-[[nodiscard]] Result<Token, Str> Lexer::parse_numeric_literal() {
+[[nodiscard]] Token Lexer::parse_numeric_literal() {
     Str value = std::format("{}", char(curr));
     Token token {.type = TokenType::integer};
 
@@ -61,9 +61,9 @@ i64 Lexer::get_curr() {
             value += next; // continue getting number
         else if (std::isalpha(next)) {
             if (next != 'f')
-                return Err(fmt_error("invalid digit '{}' in decimal constant.", next));
+                PANIC(fmt_error("invalid digit '{}' in decimal constant.", next));
         } else
-            return Err(fmt_error("Source file is not valid ASCII."));
+            PANIC(fmt_error("Source file is not valid ASCII."));
     }
 
     token.value = value;
