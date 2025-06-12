@@ -1,10 +1,11 @@
 #pragma once
 // clang-format off
+
 #include <string>
 #include <unordered_map>
 
 using Str = std::string;
-const std::unordered_map<Str, Str> all_token_strings {
+const std::unordered_map<int, Str> all_token_strings {
     {"less",                        "<"   },
     {"greater",                     ">"   },
     {"exclamation",                 "!"   },
@@ -59,7 +60,6 @@ const std::unordered_map<Str, Str> all_token_strings {
 // special
     {"minus_greater",               "->"  },
 };
-
 #define punctuators                     \
     less,                               \
     greater,                            \
@@ -228,3 +228,58 @@ enum struct Symbol {
     alert
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore
 //----------------------------------------------------------------
+
+#define symbol_reprs__ \
+"<"  ,              \
+">"  ,              \
+"!"  ,              \
+"+"  ,              \
+"-"  ,              \
+"*"  ,              \
+"&"  ,              \
+"~"  ,              \
+"%"  ,              \
+"#"  ,              \
+"^"  ,              \
+"|"  ,              \
+"/"  ,              \
+"="  ,              \
+"?"  ,              \
+":"  ,              \
+"."  ,              \
+"["  ,              \
+"]"  ,              \
+"("  ,              \
+")"  ,              \
+"{"  ,              \
+"}"  ,              \
+";"  ,              \
+","  ,              \
+"==" ,              \
+">=" ,              \
+"<=" ,              \
+"!=" ,              \
+"+=" ,              \
+"-=" ,              \
+"*=" ,              \
+"/=" ,              \
+"%=" ,              \
+"&=" ,              \
+"^=" ,              \
+"|=" ,              \
+"||" ,              \
+"--" ,              \
+"++" ,              \
+"&&" ,              \
+">>" ,              \
+"<<" ,              \
+"##" ,              \
+"<<=",              \
+">>=",              \
+"...",              \
+"->" 
+#define add_parens(S) (S)
+#define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
+#define punctuators_ map_macro(add_parens, punctuators)
+
+

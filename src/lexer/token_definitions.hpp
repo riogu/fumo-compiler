@@ -27,7 +27,7 @@ struct Token {
     i64 line_number, line_offset;
 
 
-#define each_token(_v) case TokenType::_v: return all_token_strings.at(#_v);
+#define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
     [[nodiscard]] inline constexpr Str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
