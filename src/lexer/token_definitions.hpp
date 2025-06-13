@@ -28,7 +28,7 @@ struct Token {
 
 
 #define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
-    [[nodiscard]] inline constexpr Str to_str() {
+    [[nodiscard]] inline constexpr str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::identifier:
@@ -42,7 +42,7 @@ struct Token {
     }
 
 #define tkntype(v_) case TokenType::v_: return #v_;
-    [[nodiscard]] inline constexpr Str type_name() {
+    [[nodiscard]] inline constexpr str type_name() {
         switch (type) {
             map_macro(tkntype, all_tokens);
             default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));

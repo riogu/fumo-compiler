@@ -3,9 +3,9 @@
 
 #include <string>
 #include <unordered_map>
+using str = std::string;
 
-using Str = std::string;
-const std::unordered_map<int, Str> all_token_strings {
+const std::unordered_map<std::string, std::string> all_token_strings {
     {"less",                        "<"   },
     {"greater",                     ">"   },
     {"exclamation",                 "!"   },
@@ -60,6 +60,7 @@ const std::unordered_map<int, Str> all_token_strings {
 // special
     {"minus_greater",               "->"  },
 };
+
 #define punctuators                     \
     less,                               \
     greater,                            \
