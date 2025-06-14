@@ -3,6 +3,7 @@
 #include <libassert/assert.hpp>
 #include <optional>
 #include "utils/map-macro.hpp"
+#include <string>
 #include <variant>
 #include <vector>
 #include "symbol_definitions.hpp"
@@ -31,11 +32,11 @@ struct Token {
     [[nodiscard]] inline constexpr str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
-            case TokenType::identifier:
-            case TokenType::keyword:
             case TokenType::integer:
+                return std::to_string(std::get<int>(value.value()));
             case TokenType::floating_point:
-            case TokenType::string:
+                return std::to_string(std::get<double>(value.value()));
+            case TokenType::identifier: case TokenType::keyword: case TokenType::string:
                 return std::get<std::string>(value.value());
             default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
         }

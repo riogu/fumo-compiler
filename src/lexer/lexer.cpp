@@ -26,6 +26,8 @@
         }
         switch (curr) {
             // FIXME: - fix issues with EOF during the lexer
+            //        - convert the std::string ver of int/float literals to int/float
+            //        - add string literal parsing
     
             //
             // -----------------------------------------------------------

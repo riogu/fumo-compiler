@@ -1,4 +1,6 @@
 #include "lexer.hpp"
+#include "lexer/token_definitions.hpp"
+#include <iostream>
 
 #define symbol_case(v_) case static_cast<int>(Symbol::v_): return true;
 
@@ -52,21 +54,26 @@ i64 Lexer::get_curr() {
     str value = std::format("{}", char(curr));
     Token token {.type = TokenType::integer};
 
-    while (!identifier_ended()) {
-        if (char next = get_curr(); next == '.' && std::isdigit(file_stream.peek())) {
-            value += next;
+    while (!identifier_ended() || file_stream.peek() == '.') {
+        if (get_curr(); curr == '.' && std::isdigit(file_stream.peek())) {
+            value += curr;
             token.type = TokenType::floating_point;
         } //
-        else if (std::isdigit(next))
-            value += next; // continue getting number
-        else if (std::isalpha(next)) {
-            if (next != 'f')
-                PANIC(fmt_error("invalid digit '{}' in decimal constant.", next));
+        else if (std::isdigit(curr))
+            value += curr; // continue getting number
+        else if (std::isalpha(curr)) {
+            if (curr != 'f') // FIXME: technically only allowed at the end of floats
+                PANIC(fmt_error("invalid digit '{}' in decimal constant.", curr));
         } else
             PANIC(fmt_error("Source file is not valid ASCII."));
     }
 
-    token.value = value;
+    if (token.type == TokenType::integer) token.value = std::stoi(value);
+    else if (token.type == TokenType::floating_point)
+        token.value = std::stof(value);
+    else
+        token.value = std::move(value);
+
     token.line_number = __FUMO_LINE_NUM__;
     token.line_offset = __FUMO_LINE_OFFSET__;
     return token;
