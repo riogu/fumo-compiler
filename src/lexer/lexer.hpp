@@ -19,7 +19,7 @@ struct Lexer {
     i64 curr = 0;
     std::ifstream file_stream;
 
-    [[nodiscard]] Vec<Token> tokenize_file(const fs::path _file_name);
+    [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
 
   private:
     [[nodiscard]] Token parse_numeric_literal();

@@ -10,7 +10,7 @@
 #define make_token(tkn) Token {.type = TokenType::tkn, add_token_info}
 #define make_and_consume_token(tkn) ({get_curr(); Token {.type = TokenType::tkn, add_token_info};})
 
-[[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path _file_name) {
+[[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
     __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
     file_stream = std::ifstream(_file_name); Vec<Token> tokens;
 
@@ -26,7 +26,7 @@
         }
         switch (curr) {
             // FIXME: - fix issues with EOF during the lexer
-            //        - add -> punctuator case
+    
             //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
