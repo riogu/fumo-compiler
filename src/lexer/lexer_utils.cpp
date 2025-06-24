@@ -45,7 +45,7 @@ i64 Lexer::get_curr() {
             PANIC(fmt_error("Source file is not valid ASCII."));
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
-                  .value = value,
+                  .value = std::move(value),
                   .line_number = __FUMO_LINE_NUM__,
                   .line_offset = __FUMO_LINE_OFFSET__};
 }
@@ -60,7 +60,7 @@ i64 Lexer::get_curr() {
             token.type = TokenType::floating_point;
         } //
         else if (std::isdigit(curr))
-            value += curr; // continue getting number
+            value += curr;
         else if (std::isalpha(curr)) {
             if (curr != 'f') // FIXME: technically only allowed at the end of floats
                 PANIC(fmt_error("invalid digit '{}' in decimal constant.", curr));

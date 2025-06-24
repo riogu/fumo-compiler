@@ -16,10 +16,10 @@ struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
     std::string __FUMO_LINE__, __FUMO_FILE__;
-    i64 curr = 0;
     std::ifstream file_stream;
+    i64 curr = 0;
 
-    [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] Result<Vec<Token>, str> tokenize_file(const fs::path& _file_name);
 
   private:
     [[nodiscard]] Token parse_numeric_literal();
@@ -29,3 +29,5 @@ struct Lexer {
     [[nodiscard]] bool identifier_ended();
     i64 get_curr();
 };
+
+inline static int e = 123;

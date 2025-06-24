@@ -3,6 +3,7 @@
 #include "symbol_cases.hpp"
 #include "token_definitions.hpp"
 #include <fstream>
+#include <stdexcept>
 
 #define add_token(tkn) tokens.push_back(Token {.type = TokenType::tkn, add_token_info})
 #define add_and_consume_token(tkn) do {tokens.push_back(Token {.type = TokenType::tkn, add_token_info}); get_curr();} while(0)
@@ -10,7 +11,7 @@
 #define make_token(tkn) Token {.type = TokenType::tkn, add_token_info}
 #define make_and_consume_token(tkn) ({get_curr(); Token {.type = TokenType::tkn, add_token_info};})
 
-[[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
+[[nodiscard]] Result<Vec<Token>, str> Lexer::tokenize_file(const fs::path& _file_name) {
     __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
     file_stream = std::ifstream(_file_name); Vec<Token> tokens;
 
@@ -24,11 +25,10 @@
             tokens.push_back(parse_identifier());
             continue;
         }
+        // FIXME: - fix issues with EOF during the lexer
+        //        - convert the std::string ver of int/float literals to int/float
+        //        - add string literal parsing
         switch (curr) {
-            // FIXME: - fix issues with EOF during the lexer
-            //        - convert the std::string ver of int/float literals to int/float
-            //        - add string literal parsing
-    
             //
             // -----------------------------------------------------------
             // handle each symbol based on its possible compound symbols
@@ -42,7 +42,7 @@
                 if ((next_is('.'))) {
                     if (get_curr(); (next_is('.'))) add_and_consume_token(dot_dot_dot);
                     else
-                        PANIC(fmt_error("Expected complete '...' ellipsis."));
+                        return Err(fmt_error("Expected complete '...' ellipsis."));
                 } else 
                       add_token(dot);
                 break;
@@ -80,6 +80,7 @@
                     add_and_consume_token(minus_greater); // ->
                 else
                     add_token(minus);
+                break;
 
             case '/':
                 if (next_is('/'))
@@ -89,15 +90,16 @@
                                                   : make_token(division));
                 break;
 
-            case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
-
             case '#':
                 tokens.push_back(next_is('#') ? make_and_consume_token(hashtag_hashtag)
-                                              : make_token(hashtag));
+                                 : make_token(hashtag));
                 break;
+
+            case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
             default: PANIC(fmt_error("Source file is not valid ASCII."));
         }
     }
     return tokens;
 }
+

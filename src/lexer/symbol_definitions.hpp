@@ -1,9 +1,14 @@
 #pragma once
 // clang-format off
 
+#include <expected>
 #include <string>
 #include <unordered_map>
 using str = std::string;
+template<typename Ok, typename Err>
+using Result = std::expected<Ok, Err>;
+template<typename T>
+using Err = std::unexpected<T>;
 
 const std::unordered_map<std::string, std::string> all_token_strings {
     {"less",                        "<"   },
