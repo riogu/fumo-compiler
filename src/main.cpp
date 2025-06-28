@@ -9,11 +9,11 @@ using i64 = int64_t;
 #define CATCH(param) CPPTRACE_CATCH(param)
 
 fn main() -> i32 {
-    fs::path test = "src/tests/test-symbols.c";
-    if (Lexer lexer; auto tokens = lexer.tokenize_file(test))
+    fs::path test = "src/tests/testfile.c";
+    if (Lexer lexer; auto tokens = lexer.tokenize_file(test)) {
         for (auto& token : tokens.value())
             std::cout << token.to_str() << "\t-> " << token.type_name() << "\n";
-    else
+    } else
         PANIC(tokens.error());
 }
 

@@ -3,7 +3,6 @@
 #include "symbol_cases.hpp"
 #include "token_definitions.hpp"
 #include <fstream>
-#include <stdexcept>
 
 #define add_token(tkn) tokens.push_back(Token {.type = TokenType::tkn, add_token_info})
 #define add_and_consume_token(tkn) do {tokens.push_back(Token {.type = TokenType::tkn, add_token_info}); get_curr();} while(0)

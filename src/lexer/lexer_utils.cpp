@@ -2,7 +2,7 @@
 #include "lexer/token_definitions.hpp"
 #include <iostream>
 
-#define symbol_case(v_) case static_cast<int>(Symbol::v_): return true;
+#define symbol_case(v_) case int(Symbol::v_): return true;
 
 [[nodiscard]] bool Lexer::identifier_ended() {
     switch (file_stream.peek()) {
@@ -42,7 +42,8 @@ i64 Lexer::get_curr() {
     while (!identifier_ended()) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
         else
-            PANIC(fmt_error("Source file is not valid ASCII."));
+            PANIC(fmt_error(
+                "Source file is not valid ASCII or used unsupported character in identifier."));
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
                   .value = std::move(value),
@@ -63,7 +64,9 @@ i64 Lexer::get_curr() {
             value += curr;
         else if (std::isalpha(curr)) {
             if (curr != 'f') // FIXME: technically only allowed at the end of floats
-                PANIC(fmt_error("invalid digit '{}' in decimal constant.", curr));
+                PANIC(fmt_error(
+                    "invalid digit '{}' in decimal constant. NOTE: (only 'f' is allowed in floats).",
+                    char(curr)));
         } else
             PANIC(fmt_error("Source file is not valid ASCII."));
     }

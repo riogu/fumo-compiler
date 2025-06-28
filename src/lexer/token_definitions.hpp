@@ -29,6 +29,7 @@ struct Token {
 
 
 #define each_token(_v) case TokenType::_v: return all_token_strings.at(#_v);
+
     [[nodiscard]] inline constexpr str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
@@ -43,6 +44,7 @@ struct Token {
     }
 
 #define tkntype(v_) case TokenType::v_: return #v_;
+
     [[nodiscard]] inline constexpr str type_name() {
         switch (type) {
             map_macro(tkntype, all_tokens);

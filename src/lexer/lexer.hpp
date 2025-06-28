@@ -3,13 +3,13 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
-#define fmt_error(...)                                              \
- fmt("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",       \
-    __FUMO_FILE__,                                                  \
-    __FUMO_LINE_NUM__,                                              \
-    __FUMO_LINE__,                                                  \
-    std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                  \
-    fmt(__VA_ARGS__)                                                \
+#define fmt_error(...)                                                \
+std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
+    __FUMO_FILE__,                                                    \
+    __FUMO_LINE_NUM__,                                                \
+    __FUMO_LINE__,                                                    \
+    std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                    \
+    std::format(__VA_ARGS__)                                          \
     )
 
 struct Lexer {
