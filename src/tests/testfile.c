@@ -9,4 +9,7 @@ int main() {
         for(;;)
         if (epic) epic += 1;
     }
+
+    int* wowowo, *huh;
+
 }

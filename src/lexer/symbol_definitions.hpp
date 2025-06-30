@@ -234,6 +234,7 @@ enum struct Symbol {
     alert
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore
 //----------------------------------------------------------------
+// this code below isnt used anywhere (here temporarily)
 
 #define symbol_reprs__ \
 "<"  ,              \
