@@ -16,6 +16,3 @@ fn main() -> i32 {
     } else
         PANIC(tokens.error());
 }
-
-// std::cout << token_to_str(token) << " (" << tokentype_name(token.type) << ") | ";
-// std::cout << token_to_str(token);

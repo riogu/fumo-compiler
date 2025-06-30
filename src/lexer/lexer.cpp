@@ -1,6 +1,5 @@
 // clang-format off
 #include "lexer.hpp"
-#include "symbol_cases.hpp"
 #include "token_definitions.hpp"
 #include <fstream>
 
@@ -101,4 +100,3 @@
     }
     return tokens;
 }
-
