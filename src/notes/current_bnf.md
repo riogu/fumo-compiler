@@ -4,25 +4,57 @@ Current structure for the AST parser in BNF format
 <program> ::= <function>
 
 ---
-- Statements
-
-
-<compound-statement> ::= 
+---
+---
+- Expressions
+```c
+// an expression is not directly modelled as a NodeKind
+// an initializer may have an expression in it
+```
 <expression> ::= 
 
 ---
+---
+---
+- Statements
+
+<compound-statement> ::= 
+
+---
+---
+---
 - Misc definitions
-<standard-types> ::= void | char | int | long | etc... (dont need to type these here)
-<type-specifier> ::= <standard-types> 
-                   | <struct-specifier>
+
+<type-specifier> ::= void
+                   | char
+                   | short
+                   | int
+                   | long
+                   | float
+                   | double
+                   | signed
+                   | unsigned
+                   | <struct-or-union-specifier>
                    | <enum-specifier>
+                   | <typedef-name>
 
 <pointer> ::= " * " {<type-qualifier>}* {<pointer>}?
 
+---
+---
+---
+- Parameters 
 NOTE: haven't added "..." yet
-<parameter-list> ::= <parameter>
-                   | <paremeter-list> "," <parameter>
 
+-> a parameter is considered a declaration
+
+<parameter-list> ::= <parameter>
+                   | <parameter-list> "," <parameter> 
+
+<parameter> ::= <type-specifier> <identifier> 
+
+---
+---
 ---
 - Declarations
 
@@ -33,17 +65,16 @@ NOTE: haven't added "..." yet
 
 <variable-declaration> ::= {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
 
-<function-declaration> ::= {<declaration-specifier>}+ <ptr-and-declarator> "(" {<parameter-list>}? ")"
+<function-declaration> ::= {<declaration-specifier>}+ {<pointer>}? <identifier> "(" {<parameter-list>}? ")"
 <function-definition> ::= <function-declaration> <compound-statement>
 
 
 <declarator> ::= <identifier>
-               | <declarator> \[ {<constant-expression>}? \]
                | <declarator> "(" {<parameter-list>}? ")"
+               | <declarator> \[ {<constant-expression>}? \]
 
 <declaration-specifier> ::= <type-qualifier> 
                           | <type-specifier>
-                          | <storage-specifier>
 
 <ptr-and-declarator> ::= {<pointer>}? <declarator> 
 
@@ -51,7 +82,7 @@ NOTE: haven't added "..." yet
                     | <ptr-and-declarator>, <declarator-list>
 
 
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+---
 ```c
 int a = 1, *p = NULL, f(void), (*pf)(double);
 // the type specifier is "int"
@@ -81,14 +112,7 @@ struct C
 
 // initializer "= &obj" provides the initial value for that pointer
 ```
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 ---
-- Parameters 
-
--> a parameter is considered a declaration
-
-<parameter-list> ::= <parameter>
-                   | <parameter-list> "," <parameter> 
-<parameter> ::= <type-specifier> <id> 
+---
+---
 

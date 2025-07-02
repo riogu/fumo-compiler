@@ -3,68 +3,15 @@
 
 #include <expected>
 #include <string>
-#include <unordered_map>
+#include "utils/map-macro.hpp"
+#include "utils/zip-macro.hpp"
 using str = std::string;
 template<typename Ok, typename Err>
 using Result = std::expected<Ok, Err>;
 template<typename T>
 using Err = std::unexpected<T>;
+#define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
 
-const std::unordered_map<std::string, std::string> all_token_strings {
-    {"less",                        "<"   },
-    {"greater",                     ">"   },
-    {"exclamation",                 "!"   },
-    {"plus",                        "+"   },
-    {"minus",                       "-"   },
-    {"asterisk",                    "*"   },
-    {"ampersand",                   "&"   },
-    {"negate",                      "~"   },
-    {"percent",                     "%"   },
-    {"hashtag",                     "#"   },
-    {"hat",                         "^"   },
-    {"bar",                         "|"   },
-    {"division",                    "/"   },
-    {"equals",                      "="   },
-// punctuation
-    {"question_mark",               "?"   },
-    {"colon",                       ":"   },
-    {"dot",                         "."   },
-    {"open_bracket",                "["   },
-    {"close_bracket",               "]"   },
-    {"open_paren",                  "("   },
-    {"close_paren",                 ")"   },
-    {"open_brace",                  "{"   },
-    {"close_brace",                 "}"   },
-    {"semicolon",                   ";"   },
-    {"comma",                       ","   },
-// with equals
-    {"equals_equals",               "=="  },
-    {"greater_equals",              ">="  },
-    {"less_equals",                 "<="  },
-    {"exclamation_equals",          "!="  },
-    {"plus_equals",                 "+="  },
-    {"minus_equals",                "-="  },
-    {"asterisk_equals",             "*="  },
-    {"division_equals",             "/="  },
-    {"percent_equals",              "%="  },
-    {"ampersand_equals",            "&="  },
-    {"hat_equals",                  "^="  },
-    {"bar_equals",                  "|="  },
-// double operators
-    {"bar_bar",                     "||"  },
-    {"minus_minus",                 "--"  },
-    {"plus_plus",                   "++"  },
-    {"ampersand_ampersand",         "&&"  },
-    {"greater_greater",             ">>"  },
-    {"less_less",                   "<<"  },
-    {"hashtag_hashtag",             "##"  },
-// triple operators
-    {"less_less_equals",            "<<=" },
-    {"greater_greater_equals",      ">>=" },
-    {"dot_dot_dot",                 "..." },
-// special
-    {"minus_greater",               "->"  },
-};
 
 #define punctuators                     \
     less,                               \
@@ -234,59 +181,58 @@ enum struct Symbol {
     alert
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore
 //----------------------------------------------------------------
-// this code below isnt used anywhere (here temporarily)
-
-#define symbol_reprs__ \
-"<"  ,              \
-">"  ,              \
-"!"  ,              \
-"+"  ,              \
-"-"  ,              \
-"*"  ,              \
-"&"  ,              \
-"~"  ,              \
-"%"  ,              \
-"#"  ,              \
-"^"  ,              \
-"|"  ,              \
-"/"  ,              \
-"="  ,              \
-"?"  ,              \
-":"  ,              \
-"."  ,              \
-"["  ,              \
-"]"  ,              \
-"("  ,              \
-")"  ,              \
-"{"  ,              \
-"}"  ,              \
-";"  ,              \
-","  ,              \
-"==" ,              \
-">=" ,              \
-"<=" ,              \
-"!=" ,              \
-"+=" ,              \
-"-=" ,              \
-"*=" ,              \
-"/=" ,              \
-"%=" ,              \
-"&=" ,              \
-"^=" ,              \
-"|=" ,              \
-"||" ,              \
-"--" ,              \
-"++" ,              \
-"&&" ,              \
-">>" ,              \
-"<<" ,              \
-"##" ,              \
-"<<=",              \
-">>=",              \
-"...",              \
+// for printing
+#define symbol_reprs__  \
+"<"  ,                  \
+">"  ,                  \
+"!"  ,                  \
+"+"  ,                  \
+"-"  ,                  \
+"*"  ,                  \
+"&"  ,                  \
+"~"  ,                  \
+"%"  ,                  \
+"#"  ,                  \
+"^"  ,                  \
+"|"  ,                  \
+"/"  ,                  \
+"="  ,                  \
+"?"  ,                  \
+":"  ,                  \
+"."  ,                  \
+"["  ,                  \
+"]"  ,                  \
+"("  ,                  \
+")"  ,                  \
+"{"  ,                  \
+"}"  ,                  \
+";"  ,                  \
+","  ,                  \
+"==" ,                  \
+">=" ,                  \
+"<=" ,                  \
+"!=" ,                  \
+"+=" ,                  \
+"-=" ,                  \
+"*=" ,                  \
+"/=" ,                  \
+"%=" ,                  \
+"&=" ,                  \
+"^=" ,                  \
+"|=" ,                  \
+"||" ,                  \
+"--" ,                  \
+"++" ,                  \
+"&&" ,                  \
+">>" ,                  \
+"<<" ,                  \
+"##" ,                  \
+"<<=",                  \
+">>=",                  \
+"...",                  \
 "->" 
+
 #define add_parens(S) (S)
 #define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
 #define punctuators_ map_macro(add_parens, punctuators)
-
 

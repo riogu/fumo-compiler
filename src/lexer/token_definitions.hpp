@@ -2,8 +2,9 @@
 #pragma once
 #include <libassert/assert.hpp>
 #include <optional>
-#include "utils/map-macro.hpp"
 #include <string>
+#include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 #include "symbol_definitions.hpp"
@@ -12,13 +13,20 @@
 #define all_tokens punctuators, literals
 
 namespace fs = std::filesystem; 
-#define map_macro(macro, ...) MAP(macro, __VA_ARGS__)
 #define fmt std::format
 using i64 = int64_t;
 template<typename  T> using Vec = std::vector<T>;
 
+
 #define make_enum(_v) _v,
 enum struct TokenType {map_macro(make_enum, all_tokens)};
+
+
+#define _make_hashmap1_(a, b) {TokenType::IDENTITY a, IDENTITY b},
+
+const std::unordered_map<TokenType, std::string> all_token_strings {
+    zip_to_macro(_make_hashmap1_, punctuators_, symbol_reprs_)
+};
 
 using TokenValue = std::variant<int, double, std::string>;
 
@@ -28,9 +36,9 @@ struct Token {
     i64 line_number, line_offset;
 
 
-#define each_token(_v) case TokenType::_v: return all_token_strings.at(#_v);
+#define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
 
-    [[nodiscard]] inline constexpr str to_str() {
+    [[nodiscard]] constexpr str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::integer:
@@ -45,7 +53,7 @@ struct Token {
 
 #define tkntype(v_) case TokenType::v_: return #v_;
 
-    [[nodiscard]] inline constexpr str type_name() {
+    [[nodiscard]] constexpr str type_name() {
         switch (type) {
             map_macro(tkntype, all_tokens);
             default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
@@ -54,7 +62,18 @@ struct Token {
 };
 
 
+// hacky conversions here
+#define each_str_to_tkn(a, b) if(str == IDENTITY a) {return TokenType::IDENTITY b;} else
+
+[[nodiscard]] constexpr TokenType str_to_tkn_type(std::string_view str) {
+    zip_to_macro(each_str_to_tkn, symbol_reprs_, punctuators_)
+    PANIC(fmt("provided unknown token name: '{}'.", str));
+}
+#define tkn(tok) str_to_tkn_type(#tok)
+
 
 #undef each_token
 #undef tkntype
 #undef make_enum
+#undef _make_hashmap1_
+#undef each_str_to_tkn

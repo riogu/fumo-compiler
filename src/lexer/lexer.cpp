@@ -3,11 +3,11 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
-#define add_token(tkn) tokens.push_back(Token {.type = TokenType::tkn, add_token_info})
-#define add_and_consume_token(tkn) do {tokens.push_back(Token {.type = TokenType::tkn, add_token_info}); get_curr();} while(0)
-#define next_is(tkn) (file_stream.peek() == tkn)
-#define make_token(tkn) Token {.type = TokenType::tkn, add_token_info}
-#define make_and_consume_token(tkn) ({get_curr(); Token {.type = TokenType::tkn, add_token_info};})
+#define add_token(tok) tokens.push_back(Token {.type = tkn(tok), add_token_info})
+#define add_and_consume_token(tok) do {tokens.push_back(Token {.type = tkn(tok), add_token_info}); get_curr();} while(0)
+#define next_is(tok) (file_stream.peek() == tok)
+#define make_token(tok) Token {.type = tkn(tok), add_token_info}
+#define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
 [[nodiscard]] Result<Vec<Token>, str> Lexer::tokenize_file(const fs::path& _file_name) {
     __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
@@ -24,7 +24,7 @@
             continue;
         }
         // FIXME: - fix issues with EOF during the lexer
-        //        - convert the std::string ver of int/float literals to int/float
+        //        - convert the std::string ver of int/float literals to int/float (might be done?)
         //        - add string literal parsing
         switch (curr) {
             //
@@ -38,59 +38,59 @@
             // triple cases are handled individually
             case '.':
                 if ((next_is('.'))) {
-                    if (get_curr(); (next_is('.'))) add_and_consume_token(dot_dot_dot);
+                    if (get_curr(); (next_is('.'))) add_and_consume_token(...);
                     else
                         return Err(fmt_error("Expected complete '...' ellipsis."));
                 } else 
-                      add_token(dot);
+                      add_token(.);
                 break;
             case '<':
-                if (next_is('<')) { // <<
-                    if (get_curr(); next_is('=')) // <<=
-                        add_and_consume_token(less_less_equals);
+                if (next_is('<')) { 
+                    if (get_curr(); next_is('=')) 
+                        add_and_consume_token(<<=);
                     else
-                        add_and_consume_token(less_less);
-                } else if (next_is('=')) // <=
-                    add_and_consume_token(less_equals);
-                else // <
-                    add_token(less);
+                        add_and_consume_token(<<);
+                } else if (next_is('=')) 
+                    add_and_consume_token(<=);
+                else 
+                    add_token(<);
                 break;
 
             case '>':
-                if (next_is('>')) { // <<
-                    if (get_curr(); next_is('=')) // <<=
-                        add_and_consume_token(greater_greater_equals);
+                if (next_is('>')) { 
+                    if (get_curr(); next_is('=')) 
+                        add_and_consume_token(>>=);
                     else
-                        add_and_consume_token(greater_greater);
-                } else if (next_is('=')) // <=
-                    add_and_consume_token(greater_equals);
-                else // <
-                    add_token(greater);
+                        add_and_consume_token(>>);
+                } else if (next_is('=')) 
+                    add_and_consume_token(>=);
+                else 
+                    add_token(>);
                 break;
             // -----------------------------------------------------------
             // special cases
             case '-': 
                 if(next_is('-')) 
-                    add_and_consume_token(minus_minus); // -- 
+                    add_and_consume_token(--);
                 else if (next_is('='))
-                    add_and_consume_token(minus_equals); // -=
+                    add_and_consume_token(-=);
                 else if (next_is('>'))
-                    add_and_consume_token(minus_greater); // ->
+                    add_and_consume_token(->); 
                 else
-                    add_token(minus);
+                    add_token(-);
                 break;
 
             case '/':
                 if (next_is('/'))
                     while (!next_is(EOF) && !next_is('\n')) curr = get_curr();
                 else
-                    tokens.push_back(next_is('=') ? make_and_consume_token(division_equals)
-                                                  : make_token(division));
+                    tokens.push_back(next_is('=') ? make_and_consume_token(/=)
+                                                  : make_token(/));
                 break;
 
             case '#':
-                tokens.push_back(next_is('#') ? make_and_consume_token(hashtag_hashtag)
-                                 : make_token(hashtag));
+                tokens.push_back(next_is('#') ? make_and_consume_token(##)
+                                 : make_token(#));
                 break;
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
