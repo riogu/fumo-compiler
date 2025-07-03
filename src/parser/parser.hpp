@@ -53,7 +53,6 @@ struct ASTNode {
 
 };
 
-
 template<typename T, typename Head, typename... Tail>
 constexpr int type_index(int index = 0) {
     if constexpr (std::is_same_v<T, Head>) return index;
@@ -73,8 +72,6 @@ struct type_sequence {
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const std::shared_ptr<ASTNode>& node) { return type_sequence(node->branch); };
 constexpr auto wrapped_type_seq(const std::unique_ptr<ASTNode>& node) { return type_sequence(node->branch); };
-
-
 inline size_t index_of(std::shared_ptr<ASTNode>& node) { return node->branch.index(); }
 inline size_t index_of(std::unique_ptr<ASTNode>& node) { return node->branch.index(); }
 inline size_t index_of(ASTNode& node) { return node.branch.index(); }
@@ -89,12 +86,11 @@ template<typename  T> auto& get_elem(ASTNode& node) { return std::get<T>(node.br
     bool was_default = false;                                                                       \
     switch (auto __t_seq__ = wrapped_type_seq(v); index_of(v)) {                                   
 
-
 #define holds(T, name)                                                                              \
     break;                                                                                          \
 }                                                                                                   \
     case __t_seq__.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                   \
-        T name = get_elem<std::remove_pointer<std ::remove_cvref<decltype(name)>::type>::type>(__v__); 
+        T name = get_elem<std::remove_pointer<std ::remove_cvref<decltype(name)>::type>::type>(__v__);
 
 #define _                                                                                           \
         break;                                                                                      \
@@ -111,7 +107,7 @@ Result<Vec<ASTNode>, str> parse_tokens(Vec<Token>& tokens);
 } // namespace Parser
 
 
-inline void func() {
+inline void test_example_func() {
     ASTNode v = {.branch = Binary {
                      .lhs = std::make_unique<ASTNode>(
                          ASTNode {.kind = NodeKind::add,
