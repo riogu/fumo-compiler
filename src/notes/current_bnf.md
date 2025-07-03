@@ -12,6 +12,8 @@ Current structure for the AST parser in BNF format
 // an initializer may have an expression in it
 // expressions show up all over the place and are part of lots of nodes
 ```
+<statement> ::= <expression-statement>
+
 <expression-statement> = <expression> ";"
 
 <expression> ::= <assignment> 
@@ -20,15 +22,17 @@ Current structure for the AST parser in BNF format
 
 <equality> ::= <relational> {"==" <relational>}*
 
-<relational>
+<relational> ::= <add> { <relational-op>  <add> }?
 
+<add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
+
+<multiplication> ::= 
 
 ---
 ---
 ---
 - Statements
 
-<statement> ::= <expression-statement>
 
 
 
@@ -36,6 +40,11 @@ Current structure for the AST parser in BNF format
 ---
 ---
 - Misc definitions
+<relational-op> ::= < 
+                  | > 
+                  | <=
+                  | >=
+
 
 <type-specifier> ::= void
                    | char

@@ -14,7 +14,7 @@ enum struct NodeKind {
     equal,                   // ==
     not_equal,               // !=                     
     less_than,               // <                      
-    greater_than,            // <=                     
+    greater_than,            // >                     
     assignment,              // =
     // unary
     expression_statement,    // Expression statement
@@ -27,11 +27,13 @@ enum struct NodeKind {
 
 
 struct ASTNode;
+using ASTNode_ptr = std::unique_ptr<ASTNode>;
 struct Unary; struct Binary; struct If; struct For; struct Variable; 
 struct Value; struct Function; struct Member; struct Scope;
 
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Value, Function, Member, Scope>;
 
+struct Value {};
 struct Unary {};
 struct Binary {
     std::unique_ptr<ASTNode> lhs;
@@ -39,11 +41,10 @@ struct Binary {
 };
 struct If {};
 struct For {};
-struct Variable {};
-struct Value {};
-struct Function {};
 struct Member {};
+struct Variable {};
 struct Scope {};
+struct Function {};
 
 struct ASTNode {
 
@@ -75,9 +76,9 @@ constexpr auto wrapped_type_seq(const std::unique_ptr<ASTNode>& node) { return t
 inline size_t index_of(std::shared_ptr<ASTNode>& node) { return node->branch.index(); }
 inline size_t index_of(std::unique_ptr<ASTNode>& node) { return node->branch.index(); }
 inline size_t index_of(ASTNode& node) { return node.branch.index(); }
-template<typename  T> auto& get_elem(std::unique_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
-template<typename  T> auto& get_elem(std::shared_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
-template<typename  T> auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
+template<typename T> auto& get_elem(std::unique_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
+template<typename T> auto& get_elem(std::shared_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
+template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 
 
 #define match(v)                                                                                    \
@@ -90,7 +91,7 @@ template<typename  T> auto& get_elem(ASTNode& node) { return std::get<T>(node.br
     break;                                                                                          \
 }                                                                                                   \
     case __t_seq__.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                   \
-        T name = get_elem<std::remove_pointer<std ::remove_cvref<decltype(name)>::type>::type>(__v__);
+        T name=get_elem<std::remove_pointer<std::remove_cvref<decltype(name)>::type>::type>(__v__);
 
 #define _                                                                                           \
         break;                                                                                      \
@@ -101,11 +102,22 @@ template<typename  T> auto& get_elem(ASTNode& node) { return std::get<T>(node.br
     if (was_default)
 
 // clang-format on
-
-namespace Parser {
-Result<Vec<ASTNode>, str> parse_tokens(Vec<Token>& tokens);
-} // namespace Parser
-
+struct Parser {
+    Vec<Token> tokens;
+    Result<Vec<ASTNode_ptr>, str> parse_tokens(Vec<Token>& tokens);
+    // based on BNF for C99 with modifications
+    void statement();
+    void expression_statement();
+    void expression();
+    void assignment();
+    void equality();
+    void relational();
+    void add();
+    void subtract();
+    void multiply();
+    void unary();
+    void primary();
+};
 
 inline void test_example_func() {
     ASTNode v = {.branch = Binary {
@@ -119,8 +131,21 @@ inline void test_example_func() {
     match(v) {
         holds(Binary, &bin_var) { // have to take by reference
             match(bin_var.lhs) {
-                holds(Binary, &mul) {
-                    std::cout << "mul was: " << mul.lhs << '\n';
+                holds(Binary, &bin) {
+                    switch(bin_var.lhs->kind) {
+                        case NodeKind::add:
+                        case NodeKind::subtract:
+                        case NodeKind::multiply:
+                        case NodeKind::divide:
+                        case NodeKind::equal:
+                        case NodeKind::not_equal:
+                        case NodeKind::less_than:
+                        case NodeKind::greater_than:
+                            break;
+                        default:
+                            PANIC("failed to parse node.");
+                    }
+                    std::cout << "mul was: " << bin.lhs << '\n';
                 }
                 _ {}
             }

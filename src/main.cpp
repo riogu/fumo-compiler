@@ -1,18 +1,11 @@
 #include "lexer/lexer.hpp"
+#include "parser/parser.hpp"
 #include <cpptrace/from_current.hpp>
 #include <iostream>
 
-#define fn auto
 using i32 = int;
-using i64 = int64_t;
-#define TRY CPPTRACE_TRY
-#define CATCH(param) CPPTRACE_CATCH(param)
 
-fn main(int argc, char* argv[]) -> i32 {
-
-
-    bool huh;
-    bool wow = huh = 2;
+auto main(int argc, char* argv[]) -> i32 {
 
     fs::path test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
 
@@ -21,6 +14,12 @@ fn main(int argc, char* argv[]) -> i32 {
     if (Lexer lexer; auto tokens = lexer.tokenize_file(test)) {
         for (auto& token : tokens.value())
             std::cout << token.to_str() << "\t-> " << token.type_name() << "\n";
+
+        if (Parser parser {}; auto AST = parser.parse_tokens(tokens.value())) {
+            // do stuff with the created AST
+        } else
+            PANIC(AST.error());
+
     } else
         PANIC(tokens.error());
 }

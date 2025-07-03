@@ -65,11 +65,11 @@ struct Token {
 // hacky conversions here
 #define each_str_to_tkn(a, b) if(str == IDENTITY a) {return TokenType::IDENTITY b;} else
 
+#define tkn(tok) str_to_tkn_type(#tok)
 [[nodiscard]] constexpr TokenType str_to_tkn_type(std::string_view str) {
     zip_to_macro(each_str_to_tkn, symbol_reprs_, punctuators_)
     PANIC(fmt("provided unknown token name: '{}'.", str));
 }
-#define tkn(tok) str_to_tkn_type(#tok)
 
 
 #undef each_token

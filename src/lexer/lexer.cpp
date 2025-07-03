@@ -5,7 +5,7 @@
 
 #define add_token(tok) tokens.push_back(Token {.type = tkn(tok), add_token_info})
 #define add_and_consume_token(tok) do {tokens.push_back(Token {.type = tkn(tok), add_token_info}); get_curr();} while(0)
-#define next_is(tok) (file_stream.peek() == tok)
+#define next_char_is(tok) (file_stream.peek() == tok)
 #define make_token(tok) Token {.type = tkn(tok), add_token_info}
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
@@ -37,32 +37,32 @@
             // -----------------------------------------------------------
             // triple cases are handled individually
             case '.':
-                if ((next_is('.'))) {
-                    if (get_curr(); (next_is('.'))) add_and_consume_token(...);
+                if ((next_char_is('.'))) {
+                    if (get_curr(); (next_char_is('.'))) add_and_consume_token(...);
                     else
                         return Err(fmt_error("Expected complete '...' ellipsis."));
                 } else 
                       add_token(.);
                 break;
             case '<':
-                if (next_is('<')) { 
-                    if (get_curr(); next_is('=')) 
+                if (next_char_is('<')) { 
+                    if (get_curr(); next_char_is('=')) 
                         add_and_consume_token(<<=);
                     else
                         add_and_consume_token(<<);
-                } else if (next_is('=')) 
+                } else if (next_char_is('=')) 
                     add_and_consume_token(<=);
                 else 
                     add_token(<);
                 break;
 
             case '>':
-                if (next_is('>')) { 
-                    if (get_curr(); next_is('=')) 
+                if (next_char_is('>')) { 
+                    if (get_curr(); next_char_is('=')) 
                         add_and_consume_token(>>=);
                     else
                         add_and_consume_token(>>);
-                } else if (next_is('=')) 
+                } else if (next_char_is('=')) 
                     add_and_consume_token(>=);
                 else 
                     add_token(>);
@@ -70,26 +70,26 @@
             // -----------------------------------------------------------
             // special cases
             case '-': 
-                if(next_is('-')) 
+                if(next_char_is('-')) 
                     add_and_consume_token(--);
-                else if (next_is('='))
+                else if (next_char_is('='))
                     add_and_consume_token(-=);
-                else if (next_is('>'))
+                else if (next_char_is('>'))
                     add_and_consume_token(->); 
                 else
                     add_token(-);
                 break;
 
             case '/':
-                if (next_is('/'))
-                    while (!next_is(EOF) && !next_is('\n')) curr = get_curr();
+                if (next_char_is('/'))
+                    while (!next_char_is(EOF) && !next_char_is('\n')) curr = get_curr();
                 else
-                    tokens.push_back(next_is('=') ? make_and_consume_token(/=)
+                    tokens.push_back(next_char_is('=') ? make_and_consume_token(/=)
                                                   : make_token(/));
                 break;
 
             case '#':
-                tokens.push_back(next_is('#') ? make_and_consume_token(##)
+                tokens.push_back(next_char_is('#') ? make_and_consume_token(##)
                                  : make_token(#));
                 break;
 
