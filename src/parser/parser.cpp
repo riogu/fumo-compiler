@@ -2,9 +2,9 @@
 
 namespace Parser {
 
-Result<Vec<ASTNode>, str> parse_tokens(Vec<Token>& tokens) {
+Result<Vec<NodeData>, str> parse_tokens(Vec<Token>& tokens) {
     
-    ASTNode node = Stmt{};
+    NodeData node = Stmt{};
 
     return {};
 

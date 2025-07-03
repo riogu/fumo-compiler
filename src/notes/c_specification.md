@@ -1,10 +1,8 @@
 The syntax of C in Backus-Naur Form
 
 <translation-unit> ::= {<external-declaration>}*
-
 <external-declaration> ::= <function-definition>
                          | <declaration>
-
 <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
 
 <declaration-specifier> ::= <storage-class-specifier>
@@ -216,6 +214,11 @@ The syntax of C in Backus-Naur Form
                       | default : <statement>
 
 <expression-statement> ::= {<expression>}? ;
+
+
+// decl-specifier identifier "=" assignement-expression ";"
+// 
+
 
 <selection-statement> ::= if ( <expression> ) <statement>
                         | if ( <expression> ) <statement> else <statement>

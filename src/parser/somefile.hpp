@@ -19,10 +19,25 @@ struct type_sequence {
     constexpr static int idx = type_index<T, Types...>();
 };
 
-#define _ break;} default: was_default = true; } if (was_default)
-#define holds(T, name) break;} case __t_seq__.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: { T as(name)
-#define as(name) name = get_elem<std::remove_pointer<std ::remove_cvref<decltype(name)>::type>::type>(__v__);
-#define match(v)  { auto& __v__ = v; bool was_default = false; switch (auto __t_seq__ = type_sequence(v); index_of(v)) {
+#define _                                                                                           \
+        break;                                                                                      \
+    }                                                                                               \
+        default:                                                                                    \
+            was_default = true;                                                                     \
+}                                                                                                   \
+    if (was_default)
+
+#define holds(T, name)                                                                              \
+break;}                                                                                             \
+    case __t_seq__.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                   \
+    T name = get_elem<std::remove_pointer<std ::remove_cvref<decltype(name)>::type>::type>(__v__); 
+
+#define match(v)                                                                                    \
+{                                                                                                   \
+    auto& __v__ = v;                                                                                \
+    bool was_default = false;                                                                       \
+    switch (auto __t_seq__ = type_sequence(v); index_of(v)) {                                   
+
 
 struct Add; struct Sub;struct Mul;struct Div; struct Var;struct Func;
 using ASTNode = std::variant<Add, Sub, Mul, Div, Var, Func>;
@@ -43,10 +58,10 @@ template<typename  T> auto& get_elem(ASTNode& node) { return std::get<T>(node); 
 
 
 inline void func() {
-    auto v = std::make_unique<ASTNode>(Add {
+    ASTNode v = Add {
         .lhs = std::make_unique<ASTNode>(Sub {1, 2}),
         .rhs = std::make_unique<ASTNode>(Sub {2, 4}),
-    });
+    };
 
     match(v) {
         holds(Add, &add_var) {
