@@ -10,6 +10,10 @@ using i64 = int64_t;
 
 fn main(int argc, char* argv[]) -> i32 {
 
+
+    bool huh;
+    bool wow = huh = 2;
+
     fs::path test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
 
     // TODO: write a script to run all the tests for the compiler (up to current stage)
