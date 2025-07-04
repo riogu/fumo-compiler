@@ -133,44 +133,37 @@ struct Parser {
 
     // print nice errors
     void report_error(std::string_view error);
-
     // clang-format off
+
+
 #define tkn_is(tok) consume_tkn(tkn(tok))
     constexpr bool consume_tkn(const TokenType& type) {
         return (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
     }
 
+#define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
+
+    void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
+        if(!consume_tkn(type)) report_error(std::format("expected '{}'", repr));
+    }
+
     // clang-format on
 };
 
-#define make_node(knd, ...)                                 \
-std::make_unique<ASTNode>(ASTNode{.token = *curr_tkn,       \
-                                  .kind = NodeKind::knd,    \
-                                  .branch = __VA_ARGS__})
-
 inline void test_example_func() {
-    ASTNode v = {.branch = Binary {
-                     .lhs = std::make_unique<ASTNode>(
-                         ASTNode {.kind = NodeKind::add,
-                                  .branch = Binary {std::make_unique<ASTNode>(),
-                                                    std::make_unique<ASTNode>()}}),
-                     .rhs = std::make_unique<ASTNode>(),
-                 }};
+    ASTNode v = {
+        .branch = Binary {
+            .lhs = ASTNode {.kind = NodeKind::add,
+                            .branch = Binary {ASTNode {}, std::make_unique<ASTNode>()}},
+            .rhs = ASTNode {},
+        }};
 
+    // doesnt matter if its an ASTNode or a unique/shared_ptr, same API
     match(v) {
         holds(Binary, &bin_var) { // have to take by reference
-            switch (v.kind) {
-                case NodeKind::add:
-                case NodeKind::sub:
-                case NodeKind::multiply:
-                case NodeKind::divide:
-                case NodeKind::equal:
-                case NodeKind::not_equal:
-                case NodeKind::less_than:
-                case NodeKind::less_equals:
-                case NodeKind::assignment:
-                default:
-                    break;
+            match(bin_var.lhs) {
+                holds(Unary, &unaryvar) {}
+                _ {}
             }
         }
         holds(If, &if_var) {

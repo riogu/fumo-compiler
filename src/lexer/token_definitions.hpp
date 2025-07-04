@@ -34,7 +34,8 @@ using TokenValue = std::variant<int, double, std::string>;
 struct Token {
     TokenType type;
     std::optional<TokenValue> value;
-    i64 line_number, line_offset;
+    i64 line_number, line_offset, file_offset;
+    std::string file_name;
 
 
 #define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
@@ -65,11 +66,17 @@ struct Token {
 
 // hacky conversions here
 #define each_str_to_tkn(a, b) if(str == IDENTITY a) {return TokenType::IDENTITY b;} else
+#define each_literal_to_tkn(a) if(str == #a) {return TokenType::a;} else
 
 #define tkn(tok) str_to_tkn_type(#tok)
 [[nodiscard]] constexpr TokenType str_to_tkn_type(std::string_view str) {
     zip_to_macro(each_str_to_tkn, symbol_reprs_, punctuators_)
-    PANIC(fmt("provided unknown token name: '{}'.", str));
+    if (str == "keyword") return TokenType::keyword;
+    else if (str == "int") return TokenType::integer;
+    else if (str == "float") return TokenType::floating_point;
+    else if (str == "string") return TokenType::string;
+    else if (str == "identifier") return TokenType::identifier;
+    else PANIC(fmt("provided unknown token name: '{}'.", str));
 }
 
 

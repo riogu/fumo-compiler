@@ -3,7 +3,7 @@
 #include "token_definitions.hpp"
 #include <fstream>
 
-#define fmt_error(...)                                                \
+#define lexer_error(...)                                              \
 std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
     __FUMO_FILE__,                                                    \
     __FUMO_LINE_NUM__,                                                \
@@ -68,5 +68,7 @@ case static_cast<int>(Symbol::tkn): {                                   \
 #define add_token_info                                                  \
 .value = std::nullopt,                                                  \
 .line_number = __FUMO_LINE_NUM__,                                       \
-.line_offset = __FUMO_LINE_OFFSET__
+.line_offset = __FUMO_LINE_OFFSET__,                                    \
+.file_offset = file_stream.tellg(),                                     \
+.file_name = __FUMO_FILE__
 

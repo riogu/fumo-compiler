@@ -1,4 +1,5 @@
 #include "parser/parser.hpp"
+#include <fstream>
 
 Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
@@ -18,6 +19,7 @@ Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
+
     return expression();
 }
 
@@ -128,6 +130,26 @@ Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
 
     if (consume_tkn(str_to_tkn_type("(")))
         return ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
+    else if (tkn_is(identifier))
+        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
+    else if (tkn_is(int))
+        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
+    else if (tkn_is(float))
+        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
     else
         PANIC("expected expression.");
+}
+
+void Parser::report_error(std::string_view error) {
+    std::ifstream file_stream = std::ifstream(curr_tkn->file_name);
+    std::string line;
+    file_stream.seekg(curr_tkn->file_offset, std::ios_base::beg);
+    std::getline(file_stream, line);
+
+    std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",
+                             curr_tkn->file_name,
+                             curr_tkn->line_number,
+                             line,
+                             std::string(curr_tkn->line_offset, ' ') + "^ ",
+                             error);
 }

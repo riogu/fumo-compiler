@@ -106,6 +106,61 @@ using Err = std::unexpected<T>;
     string
 
 #define all_tokens punctuators, literals
+//----------------------------------------------------------------
+// for printing
+#define symbol_reprs__  \
+"<"  ,                  \
+">"  ,                  \
+"!"  ,                  \
+"+"  ,                  \
+"-"  ,                  \
+"*"  ,                  \
+"&"  ,                  \
+"~"  ,                  \
+"%"  ,                  \
+"#"  ,                  \
+"^"  ,                  \
+"|"  ,                  \
+"/"  ,                  \
+"="  ,                  \
+"?"  ,                  \
+":"  ,                  \
+"."  ,                  \
+"["  ,                  \
+"]"  ,                  \
+"("  ,                  \
+")"  ,                  \
+"{"  ,                  \
+"}"  ,                  \
+";"  ,                  \
+","  ,                  \
+"==" ,                  \
+">=" ,                  \
+"<=" ,                  \
+"!=" ,                  \
+"+=" ,                  \
+"-=" ,                  \
+"*=" ,                  \
+"/=" ,                  \
+"%=" ,                  \
+"&=" ,                  \
+"^=" ,                  \
+"|=" ,                  \
+"||" ,                  \
+"--" ,                  \
+"++" ,                  \
+"&&" ,                  \
+">>" ,                  \
+"<<" ,                  \
+"##" ,                  \
+"<<=",                  \
+">>=",                  \
+"...",                  \
+"->" 
+
+#define add_parens(S) (S)
+#define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
+#define punctuators_ map_macro(add_parens, punctuators)
 
 //-----------------------------------------------------------------------------
 // for switch case usage in lexer
@@ -180,59 +235,3 @@ enum struct Symbol {
     r_thing         ,               \
     alert
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore
-//----------------------------------------------------------------
-// for printing
-#define symbol_reprs__  \
-"<"  ,                  \
-">"  ,                  \
-"!"  ,                  \
-"+"  ,                  \
-"-"  ,                  \
-"*"  ,                  \
-"&"  ,                  \
-"~"  ,                  \
-"%"  ,                  \
-"#"  ,                  \
-"^"  ,                  \
-"|"  ,                  \
-"/"  ,                  \
-"="  ,                  \
-"?"  ,                  \
-":"  ,                  \
-"."  ,                  \
-"["  ,                  \
-"]"  ,                  \
-"("  ,                  \
-")"  ,                  \
-"{"  ,                  \
-"}"  ,                  \
-";"  ,                  \
-","  ,                  \
-"==" ,                  \
-">=" ,                  \
-"<=" ,                  \
-"!=" ,                  \
-"+=" ,                  \
-"-=" ,                  \
-"*=" ,                  \
-"/=" ,                  \
-"%=" ,                  \
-"&=" ,                  \
-"^=" ,                  \
-"|=" ,                  \
-"||" ,                  \
-"--" ,                  \
-"++" ,                  \
-"&&" ,                  \
-">>" ,                  \
-"<<" ,                  \
-"##" ,                  \
-"<<=",                  \
-">>=",                  \
-"...",                  \
-"->" 
-
-#define add_parens(S) (S)
-#define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
-#define punctuators_ map_macro(add_parens, punctuators)
-

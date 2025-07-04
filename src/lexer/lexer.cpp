@@ -40,7 +40,7 @@
                 if ((next_char_is('.'))) {
                     if (get_curr(); (next_char_is('.'))) add_and_consume_token(...);
                     else
-                        return Err(fmt_error("Expected complete '...' ellipsis."));
+                        return Err(lexer_error("Expected complete '...' ellipsis."));
                 } else 
                       add_token(.);
                 break;
@@ -95,7 +95,7 @@
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
-            default: PANIC(fmt_error("Source file is not valid ASCII."));
+            default: PANIC(lexer_error("Source file is not valid ASCII."));
         }
     }
     return tokens;
