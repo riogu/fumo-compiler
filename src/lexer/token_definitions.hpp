@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 #define fmt std::format
 using i64 = int64_t;
 template<typename  T> using Vec = std::vector<T>;
+template<typename T> using Opt = std::optional<T>;
 
 
 #define make_enum(_v) _v,

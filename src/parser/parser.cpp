@@ -1,39 +1,79 @@
 #include "parser/parser.hpp"
+#include <algorithm>
 
 Result<Vec<ASTNode_ptr>, str> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
-
+    curr_tkn = tkns.begin();
     Vec<ASTNode_ptr> AST;
-
     ASTNode_ptr program = std::make_unique<ASTNode>();
 
-    while (!tokens.empty()) {
-        statement();
-    }
+    while (!tokens.empty()) AST.push_back(statement());
 
     return AST;
 }
 
-void Parser::statement() {
-    expression_statement();
+// <statement> ::= <expression-statement>
+[[nodiscard]] ASTNode_ptr Parser::statement() {
+    return expression_statement();
 }
 
-void Parser::expression_statement() {}
+// <expression-statement> = <expression> ";"
+[[nodiscard]] ASTNode_ptr Parser::expression_statement() {
+    return expression();
+}
 
-void Parser::expression() {}
+// <expression> ::= <assignment>
+[[nodiscard]] ASTNode_ptr Parser::expression() {
+    return assignment();
+}
 
-void Parser::assignment() {}
 
-void Parser::equality() {}
+// <assignment> ::= <equality> {"=" <assignment>}?
+[[nodiscard]] ASTNode_ptr Parser::assignment() {
 
-void Parser::relational() {}
+    if (auto node = equality(); tkn_is(=))
+        return ASTNode {*curr_tkn,
+                        NodeKind::assignment,
+                        Binary {std::move(node), assignment()}};
+    else
+        return node;
+}
 
-void Parser::add() {}
+// <equality> ::= <relational> {"==" <relational>}*
+[[nodiscard]] ASTNode_ptr Parser::equality() {
 
-void Parser::subtract() {}
+    if (auto node = relational(); tkn_is(==))
+        return ASTNode {*curr_tkn,
+                        NodeKind::equal,
+                        Binary {std::move(node), relational()}};
+    else if (tkn_is(!=))
+        return ASTNode {*curr_tkn,
+                        NodeKind::not_equal,
+                        Binary {std::move(node), relational()}};
+    else
+        return node;
+}
 
-void Parser::multiply() {}
+[[nodiscard]] ASTNode_ptr Parser::relational() {
+    return {};
+}
 
-void Parser::unary() {}
+[[nodiscard]] ASTNode_ptr Parser::add() {
+    return {};
+}
 
-void Parser::primary() {}
+[[nodiscard]] ASTNode_ptr Parser::subtract() {
+    return {};
+}
+
+[[nodiscard]] ASTNode_ptr Parser::multiply() {
+    return {};
+}
+
+[[nodiscard]] ASTNode_ptr Parser::unary() {
+    return {};
+}
+
+[[nodiscard]] ASTNode_ptr Parser::primary() {
+    return {};
+}

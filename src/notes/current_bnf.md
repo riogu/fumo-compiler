@@ -20,15 +20,23 @@ Current structure for the AST parser in BNF format
 
 <assignment> ::= <equality> {"=" <assignment>}?
 
-<equality> ::= <relational> {"==" <relational>}*
+<equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
 <relational> ::= <add> { <relational-op>  <add> }?
 
 <add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
 
-<multiplication> ::= 
+<multiplication> ::=  <unary> { \"*" <unary> |"/" <unary> }*
+
+<unary> ::= <unary-op> <unary> 
+          | <primary>
+
+<primary> ::= "(" <expression> ")"
+            | <identifier> 
+            | <literal>
 
 ---
+
 ---
 ---
 - Statements
@@ -40,12 +48,14 @@ Current structure for the AST parser in BNF format
 ---
 ---
 - Misc definitions
+<unary-op> ::= - 
+             | ! 
+             | ~ 
+             | +
 <relational-op> ::= < 
                   | > 
                   | <=
                   | >=
-
-
 <type-specifier> ::= void
                    | char
                    | short
