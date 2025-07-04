@@ -22,7 +22,7 @@ Current structure for the AST parser in BNF format
 
 <equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
-<relational> ::= <add> { <relational-op>  <add> }?
+<relational> ::= <add> { <relational-op>  <add> }*
 
 <add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
 

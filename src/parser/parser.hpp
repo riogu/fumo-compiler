@@ -1,7 +1,6 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -10,35 +9,41 @@
 enum struct NodeKind {
     // binary
     add,                     // +                          
-    subtract,                // -                      
+    sub,                     // -                      
     multiply,                // *                      
     divide,                  // /
     equal,                   // ==
     not_equal,               // !=                     
-    less_than,       // < | >
-    less_equals,     // <= | >=
+    less_than,               // < | >
+    less_equals,             // <= | >=
     assignment,              // =
     // unary
     expression_statement,    // Expression statement
     negate,                  // unary -
+    logic_not,               // !
+    bitwise_not,             // ~
     // variable
     variable,                // Variable
     // literal
     integer,                 // Integer
 };
 
+template<typename T>
+using unique_ptr = std::unique_ptr<T>;
 struct ASTNode;
-using ASTNode_ptr = std::unique_ptr<ASTNode>;
+// using ASTNode_ptr = std::unique_ptr<ASTNode>;
 struct Unary; struct Binary; struct If; struct For; struct Variable; 
 struct Literal; struct Function; struct Member; struct Scope;
 
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Literal, Function, Member, Scope>;
 
 struct Literal {};
-struct Unary {};
+struct Unary {
+    unique_ptr<ASTNode> expr;
+};
 struct Binary {
-    std::unique_ptr<ASTNode> lhs;
-    std::unique_ptr<ASTNode> rhs;
+    unique_ptr<ASTNode> lhs;
+    unique_ptr<ASTNode> rhs;
 };
 struct If {};
 struct For {};
@@ -112,69 +117,72 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
-    Result<Vec<ASTNode_ptr>, str> parse_tokens(Vec<Token>& tokens);
+    Result<Vec<unique_ptr<ASTNode>>, str> parse_tokens(Vec<Token>& tokens);
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
-    [[nodiscard]] ASTNode_ptr statement();
-    [[nodiscard]] ASTNode_ptr expression_statement();
-    [[nodiscard]] ASTNode_ptr expression();
-    [[nodiscard]] ASTNode_ptr assignment();
-    [[nodiscard]] ASTNode_ptr equality();
-    [[nodiscard]] ASTNode_ptr relational();
-    [[nodiscard]] ASTNode_ptr add();
-    [[nodiscard]] ASTNode_ptr subtract();
-    [[nodiscard]] ASTNode_ptr multiply();
-    [[nodiscard]] ASTNode_ptr unary();
-    [[nodiscard]] ASTNode_ptr primary();
+    [[nodiscard]] unique_ptr<ASTNode> statement();
+    [[nodiscard]] unique_ptr<ASTNode> expression_statement();
+    [[nodiscard]] unique_ptr<ASTNode> expression();
+    [[nodiscard]] unique_ptr<ASTNode> assignment();
+    [[nodiscard]] unique_ptr<ASTNode> equality();
+    [[nodiscard]] unique_ptr<ASTNode> relational();
+    [[nodiscard]] unique_ptr<ASTNode> add();
+    [[nodiscard]] unique_ptr<ASTNode> multiply();
+    [[nodiscard]] unique_ptr<ASTNode> unary();
+    [[nodiscard]] unique_ptr<ASTNode> primary();
 
     // print nice errors
     void report_error(std::string_view error);
 
     // clang-format off
-    constexpr bool consume_tkn_if(const TokenType& type) {
+#define tkn_is(tok) consume_tkn(tkn(tok))
+    constexpr bool consume_tkn(const TokenType& type) {
         return (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
     }
 
     // clang-format on
+};
 
-#define tkn_is(tok) consume_tkn_if(tkn(tok))
 #define make_node(knd, ...)                                 \
 std::make_unique<ASTNode>(ASTNode{.token = *curr_tkn,       \
                                   .kind = NodeKind::knd,    \
                                   .branch = __VA_ARGS__})
-};
 
-// inline void test_example_func() {
-//     ASTNode v = {.branch = Binary {
-//                      .lhs = std::make_unique<ASTNode>(
-//                          ASTNode {.kind = NodeKind::add,
-//                                   .branch = Binary {std::make_unique<ASTNode>(),
-//                                                     std::make_unique<ASTNode>()}}),
-//                      .rhs = std::make_unique<ASTNode>(),
-//                  }};
-//
-//     match(v) {
-//         holds(Binary, &bin_var) { // have to take by reference
-//             match(bin_var.lhs) {
-//                 holds(Binary, &bin) {
-//                     switch(bin_var.lhs->kind) {
-//                         case NodeKind::add:
-//                         case NodeKind::subtract:
-//                         case NodeKind::multiply:
-//                         case NodeKind::divide:
-//                         case NodeKind::equal:
-//                         case NodeKind::not_equal:
-//                         case NodeKind::less_than:
-//                         case NodeKind::greater_than:
-//                             break;
-//                         default:
-//                             PANIC("failed to parse node.");
-//                     }
-//                     std::cout << "mul was: " << bin.lhs << '\n';
-//                 }
-//                 _ {}
-//             }
-//         }
-//         _ std::cerr << "type unknown.\n";
-//     }
-// }
+inline void test_example_func() {
+    ASTNode v = {.branch = Binary {
+                     .lhs = std::make_unique<ASTNode>(
+                         ASTNode {.kind = NodeKind::add,
+                                  .branch = Binary {std::make_unique<ASTNode>(),
+                                                    std::make_unique<ASTNode>()}}),
+                     .rhs = std::make_unique<ASTNode>(),
+                 }};
+
+    match(v) {
+        holds(Binary, &bin_var) { // have to take by reference
+            switch (v.kind) {
+                case NodeKind::add:
+                case NodeKind::sub:
+                case NodeKind::multiply:
+                case NodeKind::divide:
+                case NodeKind::equal:
+                case NodeKind::not_equal:
+                case NodeKind::less_than:
+                case NodeKind::less_equals:
+                case NodeKind::assignment:
+                default:
+                    break;
+            }
+        }
+        holds(If, &if_var) {
+            switch (v.kind) {
+                case NodeKind::add:
+                case NodeKind::variable:
+                case NodeKind::integer:
+                    break;
+                default:
+                    break;
+            }
+        }
+        _ std::cerr << "type unknown.\n";
+    }
+}
