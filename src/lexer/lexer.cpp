@@ -10,8 +10,8 @@
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
 [[nodiscard]] Result<Vec<Token>, str> Lexer::tokenize_file(const fs::path& _file_name) {
-    __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
     file_stream = std::ifstream(_file_name); Vec<Token> tokens;
+    __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
 
     while ((curr = get_curr()) != EOF) {
 

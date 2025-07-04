@@ -1,4 +1,3 @@
-// clang-format off
 int main() {
     // !=!=1=1== 2=1=1=1=1
     // comments work /n/n/n/n

@@ -6,6 +6,23 @@
 
 // clang-format off
 
+
+#define report_error(...)                                                               \
+{                                                                                       \
+    std::ifstream file_stream = std::ifstream(curr_tkn->file_name);                     \
+    std::string line;                                                                   \
+    file_stream.seekg(curr_tkn->file_offset, std::ios_base::beg);                       \
+    std::getline(file_stream, line);                                                    \
+                                                                                        \
+    std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}\n", \
+                             curr_tkn->file_name,                                       \
+                             curr_tkn->line_number,                                     \
+                             line,                                                      \
+                             std::string(curr_tkn->line_offset, ' ') + "^ ",            \
+                             __VA_ARGS__);                                              \
+    exit(1);                                                                            \
+}
+
 enum struct NodeKind {
     // binary
     add,                     // +                          
@@ -132,7 +149,7 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
     // print nice errors
-    void report_error(std::string_view error);
+    void report_parser_error(std::string_view error);
     // clang-format off
 
 
@@ -144,7 +161,7 @@ struct Parser {
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
 
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if(!consume_tkn(type)) report_error(std::format("expected '{}'", repr));
+        if(!consume_tkn(type)) report_parser_error(std::format("expected '{}'", repr));
     }
 
     // clang-format on

@@ -5,7 +5,7 @@
 
 #define lexer_error(...)                                              \
 std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
-    __FUMO_FILE__,                                                    \
+    __FUMO_FILE__.root_path().string(),                               \
     __FUMO_LINE_NUM__,                                                \
     __FUMO_LINE__,                                                    \
     std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                    \
@@ -15,7 +15,8 @@ std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
-    std::string __FUMO_LINE__, __FUMO_FILE__;
+    std::string __FUMO_LINE__;
+    fs::path __FUMO_FILE__;
     std::ifstream file_stream;
     i64 curr = 0;
 
@@ -70,5 +71,5 @@ case static_cast<int>(Symbol::tkn): {                                   \
 .line_number = __FUMO_LINE_NUM__,                                       \
 .line_offset = __FUMO_LINE_OFFSET__,                                    \
 .file_offset = file_stream.tellg(),                                     \
-.file_name = __FUMO_FILE__
+.file_name = __FUMO_FILE__.string()
 
