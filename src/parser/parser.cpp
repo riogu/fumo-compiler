@@ -27,7 +27,6 @@ Result<Vec<ASTNode_ptr>, str> Parser::parse_tokens(Vec<Token>& tkns) {
     return assignment();
 }
 
-
 // <assignment> ::= <equality> {"=" <assignment>}?
 [[nodiscard]] ASTNode_ptr Parser::assignment() {
 
@@ -39,7 +38,7 @@ Result<Vec<ASTNode_ptr>, str> Parser::parse_tokens(Vec<Token>& tkns) {
         return node;
 }
 
-// <equality> ::= <relational> {"==" <relational>}*
+// <equality> ::= <relational> {("==" | "!=") <relational>}*
 [[nodiscard]] ASTNode_ptr Parser::equality() {
 
     if (auto node = relational(); tkn_is(==))
@@ -54,8 +53,23 @@ Result<Vec<ASTNode_ptr>, str> Parser::parse_tokens(Vec<Token>& tkns) {
         return node;
 }
 
+// <relational> ::= <add> { ("<" | ">" | "<=" | ">=")  <add> }?
+
 [[nodiscard]] ASTNode_ptr Parser::relational() {
-    return {};
+    if (auto node = add(); tkn_is(<))
+        return ASTNode {*curr_tkn, NodeKind::less_than, Binary {std::move(node), add()}};
+    else if (auto node = add(); tkn_is(>))
+        return ASTNode {*curr_tkn, NodeKind::less_than, Binary {add(), std::move(node)}};
+    else if (auto node = add(); tkn_is(<=))
+        return ASTNode {*curr_tkn,
+                        NodeKind::less_equals,
+                        Binary {std::move(node), add()}};
+    else if (auto node = add(); tkn_is(>=))
+        return ASTNode {*curr_tkn,
+                        NodeKind::less_equals,
+                        Binary {add(), std::move(node)}};
+    else
+        return node;
 }
 
 [[nodiscard]] ASTNode_ptr Parser::add() {

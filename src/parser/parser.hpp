@@ -15,8 +15,8 @@ enum struct NodeKind {
     divide,                  // /
     equal,                   // ==
     not_equal,               // !=                     
-    less_than,               // <                      
-    greater_than,            // >                     
+    less_than,       // < | >
+    less_equals,     // <= | >=
     assignment,              // =
     // unary
     expression_statement,    // Expression statement
@@ -26,7 +26,6 @@ enum struct NodeKind {
     // literal
     integer,                 // Integer
 };
-
 
 struct ASTNode;
 using ASTNode_ptr = std::unique_ptr<ASTNode>;
@@ -135,6 +134,7 @@ struct Parser {
     constexpr bool consume_tkn_if(const TokenType& type) {
         return (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
     }
+
     // clang-format on
 
 #define tkn_is(tok) consume_tkn_if(tkn(tok))
