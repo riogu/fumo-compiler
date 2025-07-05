@@ -19,7 +19,7 @@ auto main(int argc, char* argv[]) -> i32 {
 
     {
         // std::string test = " int a = 123123;\n int b = 123123123;\n 1 + 2;";
-        str test = "gaming = epic;   ";
+        str test = "gaming epic 10 68 ";
 
         Lexer lexer {};
         auto tokens = lexer.tokenize_string(test);

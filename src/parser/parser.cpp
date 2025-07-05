@@ -140,10 +140,12 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     // FIXME: finish primary() (does nothing right now)
     //
     // FIXME: iterators are wrong (might be due to recursion)
+    //        pretty sure it is advancing the iterator more than we want sometimes
 
     if (is_tkn(str_to_tkn_type("("))) {
         auto node = ASTNode {*curr_tkn++, NodeKind::expression, Unary {expression()}};
         consume_tkn_or_error(str_to_tkn_type(")"), ")");
+        return node;
 
     } else if (tkn_is(identifier)) {
         curr_tkn++;
