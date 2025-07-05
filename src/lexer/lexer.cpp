@@ -2,6 +2,7 @@
 #include "lexer.hpp"
 #include "token_definitions.hpp"
 #include <fstream>
+#include <iostream>
 
 #define add_token(tok) tokens.push_back(Token {.type = tkn(tok), add_token_info})
 #define add_and_consume_token(tok) do {tokens.push_back(Token {.type = tkn(tok), add_token_info}); get_curr();} while(0)
@@ -10,8 +11,19 @@
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
 [[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
-    file_stream = std::ifstream(_file_name); Vec<Token> tokens;
-    __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
+    __FUMO_FILE__ = _file_name.filename();
+    file_stream << std::ifstream(_file_name).rdbuf();
+    return tokenize();
+}
+[[nodiscard]] Vec<Token> Lexer::tokenize_string(const std::string& test_string) {
+    __FUMO_FILE__ = std::string(test_string);
+    file_stream << test_string;
+    return tokenize();
+}
+
+[[nodiscard]] Vec<Token> Lexer::tokenize() {
+    Vec<Token> tokens;
+    __FUMO_LINE__ = peek_line();
 
     while ((curr = get_curr()) != EOF) {
 

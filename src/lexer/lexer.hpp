@@ -1,8 +1,5 @@
 #pragma once
-
 #include "token_definitions.hpp"
-#include <fstream>
-#include <iostream> 
 
 
 #define lexer_error(...)                                    \
@@ -25,10 +22,12 @@ struct Lexer {
     i64 __FUMO_LINE_OFFSET__ = 0;
     std::string __FUMO_LINE__;
     fs::path __FUMO_FILE__;
-    std::ifstream file_stream;
+    std::stringstream file_stream;
     i64 curr = 0;
 
     [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] Vec<Token> tokenize_string(const std::string& test_string);
+    [[nodiscard]] Vec<Token> tokenize();
 
   private:
     [[nodiscard]] Token parse_numeric_literal();
