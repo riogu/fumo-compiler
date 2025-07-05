@@ -168,15 +168,16 @@ struct Parser {
     // clang-format off
 
 
-#define tkn_is(tok) consume_tkn(tkn(tok))
-    constexpr bool consume_tkn(const TokenType& type) {
-        return (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
+#define tkn_is(tok) is_tkn(tkn(tok))
+    constexpr bool is_tkn(const TokenType& type) {
+        return (curr_tkn->type == type);
+        // return curr_tkn != tokens.end() && (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
     }
 
 
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!consume_tkn(type)) report_error(std::format("expected '{}'", repr));
+        if (!is_tkn(type)) report_error(std::format("expected '{}'", repr));
     }
 };
 

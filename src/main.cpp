@@ -18,7 +18,8 @@ auto main(int argc, char* argv[]) -> i32 {
     auto tokens = lexer.tokenize_file(file_paths.at(0));
 
     {
-        std::string test = " int a = 123123;\n int b = 123123123;\n 1 + 2;";
+        // std::string test = " int a = 123123;\n int b = 123123123;\n 1 + 2;";
+        str test = "gaming = epic;   ";
 
         Lexer lexer {};
         auto tokens = lexer.tokenize_string(test);
