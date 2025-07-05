@@ -170,8 +170,8 @@ struct Parser {
 
 #define tkn_is(tok) is_tkn(tkn(tok))
     constexpr bool is_tkn(const TokenType& type) {
-        return (curr_tkn->type == type);
-        // return curr_tkn != tokens.end() && (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
+        return ((curr_tkn+1)->type == type);
+        // return ((curr_tkn+1)->type == type) ? ({ curr_tkn++; true; }) : false;
     }
 
 

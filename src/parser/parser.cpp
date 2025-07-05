@@ -3,30 +3,30 @@
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
-    curr_tkn = tkns.begin();
+    curr_tkn = tkns.begin() - 1;
     Vec<unique_ptr<ASTNode>> AST;
 
-    while (curr_tkn != tkns.end()) AST.push_back(statement());
+    while ((curr_tkn + 1) != tkns.end()) AST.push_back(statement());
 
     return AST;
 }
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
-    return ASTNode {*curr_tkn, NodeKind::statement, Unary {expression_statement()}};
+    return ASTNode {*(curr_tkn+1), NodeKind::statement, Unary {expression_statement()}};
 }
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
 
-    auto node = ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
+    auto node = ASTNode {*(curr_tkn+1), NodeKind::expression_statement, Unary {expression()}};
     expect_tkn(;); // terminate if we dont find a semicolon
     return node;
 }
 
 // <expression> ::= <assignment>
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression() {
-    return ASTNode {*curr_tkn, NodeKind::expression, Unary {assignment()}};
+    return ASTNode {*(curr_tkn+1), NodeKind::expression, Unary {assignment()}};
 }
 
 // <assignment> ::= <equality> {"=" <assignment>}?
