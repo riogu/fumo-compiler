@@ -13,18 +13,20 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
-    return expression_statement();
+    return ASTNode {*curr_tkn, NodeKind::statement, Unary {expression_statement()}};
 }
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
 
-    return expression();
+    auto node = ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
+    expect_tkn(;); // terminate if we dont find a semicolon
+    return node;
 }
 
 // <expression> ::= <assignment>
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression() {
-    return assignment();
+    return ASTNode {*curr_tkn, NodeKind::expression, Unary {assignment()}};
 }
 
 // <assignment> ::= <equality> {"=" <assignment>}?
@@ -134,15 +136,15 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     // FIXME: finish primary() (does nothing right now)
 
     if (consume_tkn(str_to_tkn_type("("))) {
-        auto node =
-            ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
+        auto node = ASTNode {*curr_tkn, NodeKind::expression, Unary {expression()}};
         consume_tkn_or_error(str_to_tkn_type(")"), ")");
+
     } else if (tkn_is(identifier))
-        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
-    else if (tkn_is(int))
-        return ASTNode {*curr_tkn, NodeKind::numeric_literal, Unary {}};
-    else if (tkn_is(float))
-        return ASTNode {*curr_tkn, NodeKind::numeric_literal, Unary {}};
+        return ASTNode {*curr_tkn,
+                        NodeKind::identifier,
+                        Primary {curr_tkn->value.value()}};
+    else if (tkn_is(int) || tkn_is(float) || tkn_is(string))
+        return ASTNode {*curr_tkn, NodeKind::literal, Primary {curr_tkn->value.value()}};
 
     report_error("expected expression.");
 }

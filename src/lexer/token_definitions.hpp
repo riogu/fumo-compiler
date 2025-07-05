@@ -29,11 +29,11 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
     zip_to_macro(_make_hashmap1_, punctuators_, symbol_reprs_)
 };
 
-using TokenValue = std::variant<int, double, std::string>;
+using Literal = std::variant<int, double, std::string>;
 
 struct Token {
     TokenType type;
-    std::optional<TokenValue> value;
+    std::optional<Literal> value;
     i64 line_number, line_offset, file_offset;
     std::string file_name;
 

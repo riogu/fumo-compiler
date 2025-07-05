@@ -26,6 +26,8 @@
 }
 
 enum struct NodeKind {
+    // ----------------------------------------
+    // simple expressions
     // binary
     add,                     // +                          
     sub,                     // -                      
@@ -37,14 +39,25 @@ enum struct NodeKind {
     less_equals,             // <= | >=
     assignment,              // =
     // unary
-    expression_statement,    // Expression statement
     negate,                  // unary -
     logic_not,               // !
     bitwise_not,             // ~
-    // variable
-    variable,                // Variable
-    // literal
-    literal,        // int | float | string
+    expression_statement,    // expression statement
+    // ----------------------------------------
+    literal,                 // int | float | string
+    identifier,              // (variable | function) name 
+    //                          | (enum |struct |union) member
+    function_call,           // function call
+    // ----------------------------------------
+    // statements 
+    // if, for, while, compound-statement, etc
+    compound_statement,      // {...}
+    // ----------------------------------------
+    // top levels
+    expression,
+    statement,
+    variable_declaration,    // variable
+    function_declaration,    // function
 };
 
 template<typename T>
@@ -56,8 +69,8 @@ struct Primary; struct Function; struct Member; struct Scope;
 
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
 
-struct Primary { 
-    //
+struct Primary {
+    Literal literal; // taken from the tokens
 };
 struct Unary {
     unique_ptr<ASTNode> expr;

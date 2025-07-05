@@ -188,10 +188,12 @@ The syntax of C in Backus-Naur Form
 
 <typedef-name> ::= <identifier>
 
+
 <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
 
 <init-declarator> ::= <declarator>
                     | <declarator> = <initializer>
+
 
 <initializer> ::= <assignment-expression>
                 | { <initializer-list> }

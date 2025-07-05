@@ -96,11 +96,12 @@ NOTE: haven't added "..." yet
 <declaration> ::= <variable-declaration> ";"
                 | <function-declaration> ";"
 
-<variable-declaration> ::= {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
+<variable-declaration> ::= 
+            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
 
-<function-declaration> ::= {<declaration-specifier>}+ {<pointer>}? <identifier> "(" {<parameter-list>}? ")"
-<function-definition> ::= <function-declaration> <compound-statement>
-
+<function-declaration> ::= 
+            {<declaration-specifier>}+ <ptr-and-declarator> 
+            "(" {<parameter-list>}? ")" {<compound-statement>}?
 
 <declarator> ::= <identifier>
                | <declarator> "(" {<parameter-list>}? ")"
