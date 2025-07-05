@@ -201,7 +201,6 @@ inline void test_example_func() {
         holds(If, &if_var) {
             switch (v.kind) {
                 case NodeKind::add:
-                case NodeKind::variable:
                 case NodeKind::literal:
                     break;
                 default:

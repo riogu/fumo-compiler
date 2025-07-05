@@ -121,14 +121,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
         return ASTNode {*curr_tkn, NodeKind::bitwise_not, Unary {unary()}};
     else
         return primary();
-
-    // !var; +var; -12312; int epic = -var;
 }
-
-// epic = 123123;
-//        ^ this guy is a primary literal.
-// epic = wow;
-
 // <primary> ::= "(" <expression> ")"
 //             | <identifier>
 //             | <literal
