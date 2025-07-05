@@ -42,8 +42,8 @@ i64 Lexer::get_curr() {
     while (!identifier_ended()) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
         else
-            PANIC(lexer_error(
-                "Source file is not valid ASCII or used unsupported character in identifier."));
+            lexer_error(
+                "Source file is not valid ASCII or used unsupported character in identifier.");
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
                   .value = std::move(value),
@@ -64,11 +64,11 @@ i64 Lexer::get_curr() {
             value += curr;
         else if (std::isalpha(curr)) {
             if (curr != 'f') // FIXME: technically only allowed at the end of floats
-                PANIC(lexer_error(
+                lexer_error(
                     "invalid digit '{}' in decimal constant. NOTE: (only 'f' is allowed in floats).",
-                    char(curr)));
+                    char(curr));
         } else
-            PANIC(lexer_error("Source file is not valid ASCII."));
+            lexer_error("Source file is not valid ASCII.");
     }
 
     if (token.type == TokenType::integer) token.value = std::stoi(value);

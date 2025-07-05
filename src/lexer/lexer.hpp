@@ -2,10 +2,18 @@
 
 #include "token_definitions.hpp"
 #include <fstream>
+#include <iostream> 
 
-#define lexer_error(...)                                              \
+
+#define lexer_error(...)                                    \
+{                                                           \
+    std::cerr << _lexer_error(__VA_ARGS__) << std::endl;    \
+    exit(0);                                                \
+}
+
+#define _lexer_error(...)                                             \
 std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
-    __FUMO_FILE__.root_path().string(),                               \
+    __FUMO_FILE__.string(),                                           \
     __FUMO_LINE_NUM__,                                                \
     __FUMO_LINE__,                                                    \
     std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                    \
@@ -20,7 +28,7 @@ struct Lexer {
     std::ifstream file_stream;
     i64 curr = 0;
 
-    [[nodiscard]] Result<Vec<Token>, str> tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
 
   private:
     [[nodiscard]] Token parse_numeric_literal();

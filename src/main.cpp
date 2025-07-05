@@ -17,15 +17,10 @@ auto main(int argc, char* argv[]) -> i32 {
 
     // TODO: write a script to run all the tests for the compiler (up to current stage)
 
-    if (auto tokens = lexer.tokenize_file(file_paths.at(0))) {
-        // for (auto& token : tokens.value())
-        //     std::cout << token.to_str() << "\t-> " << token.type_name() << "\n";
+    auto tokens = lexer.tokenize_file(file_paths.at(0));
 
-        if (auto AST = parser.parse_tokens(tokens.value())) {
-            // do stuff with the created AST
-        } else
-            PANIC(AST.error());
+    for (auto& token : tokens)
+        std::cout << token.to_str() << "\t-> " << token.type_name() << "\n";
 
-    } else
-        PANIC(tokens.error());
+    auto AST = parser.parse_tokens(tokens);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -7,6 +8,7 @@
 // clang-format off
 
 
+// print nice errors
 #define report_error(...)                                                               \
 {                                                                                       \
     std::ifstream file_stream = std::ifstream(curr_tkn->file_name);                     \
@@ -42,7 +44,7 @@ enum struct NodeKind {
     // variable
     variable,                // Variable
     // literal
-    integer,                 // Integer
+    literal,        // int | float | string
 };
 
 template<typename T>
@@ -50,11 +52,13 @@ using unique_ptr = std::unique_ptr<T>;
 struct ASTNode;
 // using ASTNode_ptr = std::unique_ptr<ASTNode>;
 struct Unary; struct Binary; struct If; struct For; struct Variable; 
-struct Literal; struct Function; struct Member; struct Scope;
+struct Primary; struct Function; struct Member; struct Scope;
 
-using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Literal, Function, Member, Scope>;
+using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
 
-struct Literal {};
+struct Primary { 
+    //
+};
 struct Unary {
     unique_ptr<ASTNode> expr;
 };
@@ -134,7 +138,7 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
-    Result<Vec<unique_ptr<ASTNode>>, str> parse_tokens(Vec<Token>& tokens);
+    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
@@ -148,8 +152,6 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
-    // print nice errors
-    void report_parser_error(std::string_view error);
     // clang-format off
 
 
@@ -158,14 +160,14 @@ struct Parser {
         return (curr_tkn->type == type) ? ({ curr_tkn++; true; }) : false;
     }
 
+
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
-
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if(!consume_tkn(type)) report_parser_error(std::format("expected '{}'", repr));
+        if (!consume_tkn(type)) report_error(std::format("expected '{}'", repr));
     }
-
-    // clang-format on
 };
+
+// clang-format on
 
 inline void test_example_func() {
     ASTNode v = {
@@ -187,7 +189,7 @@ inline void test_example_func() {
             switch (v.kind) {
                 case NodeKind::add:
                 case NodeKind::variable:
-                case NodeKind::integer:
+                case NodeKind::literal:
                     break;
                 default:
                     break;

@@ -9,7 +9,7 @@
 #define make_token(tok) Token {.type = tkn(tok), add_token_info}
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
-[[nodiscard]] Result<Vec<Token>, str> Lexer::tokenize_file(const fs::path& _file_name) {
+[[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
     file_stream = std::ifstream(_file_name); Vec<Token> tokens;
     __FUMO_FILE__ = _file_name.filename(); __FUMO_LINE__ = peek_line();
 
@@ -40,7 +40,7 @@
                 if ((next_char_is('.'))) {
                     if (get_curr(); (next_char_is('.'))) add_and_consume_token(...);
                     else
-                        return Err(lexer_error("Expected complete '...' ellipsis."));
+                        lexer_error("Expected complete '...' ellipsis.");
                 } else 
                       add_token(.);
                 break;
@@ -95,7 +95,7 @@
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
-            default: PANIC(lexer_error("Source file is not valid ASCII."));
+            default: lexer_error("Source file is not valid ASCII.");
         }
     }
     return tokens;

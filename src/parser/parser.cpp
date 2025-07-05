@@ -1,11 +1,10 @@
 #include "parser/parser.hpp"
-#include <fstream>
+#include "lexer/token_definitions.hpp"
 
-Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
+Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
     curr_tkn = tkns.begin();
     Vec<unique_ptr<ASTNode>> AST;
-    unique_ptr<ASTNode> program = std::make_unique<ASTNode>();
 
     while (!tokens.empty()) AST.push_back(statement());
 
@@ -30,8 +29,8 @@ Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <assignment> ::= <equality> {"=" <assignment>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::assignment() {
-
-    if (auto node = equality(); tkn_is(=))
+    auto node = equality();
+    if (tkn_is(=))
         return ASTNode {*curr_tkn,
                         NodeKind::assignment,
                         Binary {std::move(node), assignment()}};
@@ -111,7 +110,6 @@ Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <unary> ::= ("-" | "!" | "~" | "+") <unary>
 //           | <primary>
-//  -!!~~!3 * 312;
 [[nodiscard]] unique_ptr<ASTNode> Parser::unary() {
 
     if (tkn_is(-)) return ASTNode {*curr_tkn, NodeKind::negate, Unary {unary()}};
@@ -121,36 +119,30 @@ Result<Vec<unique_ptr<ASTNode>>, str> Parser::parse_tokens(Vec<Token>& tkns) {
         return ASTNode {*curr_tkn, NodeKind::bitwise_not, Unary {unary()}};
     else
         return primary();
+
+    // !var; +var; -12312; int epic = -var;
 }
+
+// epic = 123123;
+//        ^ this guy is a primary literal.
+// epic = wow;
 
 // <primary> ::= "(" <expression> ")"
 //             | <identifier>
-//             | <literal>
+//             | <literal
 [[nodiscard]] unique_ptr<ASTNode> Parser::primary() {
+    // FIXME: finish primary() (does nothing right now)
 
-    if (consume_tkn(str_to_tkn_type("(")))
-        return ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
-    else if (tkn_is(identifier))
+    if (consume_tkn(str_to_tkn_type("("))) {
+        auto node =
+            ASTNode {*curr_tkn, NodeKind::expression_statement, Unary {expression()}};
+        consume_tkn_or_error(str_to_tkn_type(")"), ")");
+    } else if (tkn_is(identifier))
         return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
     else if (tkn_is(int))
-        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
+        return ASTNode {*curr_tkn, NodeKind::numeric_literal, Unary {}};
     else if (tkn_is(float))
-        return ASTNode {*curr_tkn, NodeKind::variable, Unary {}};
+        return ASTNode {*curr_tkn, NodeKind::numeric_literal, Unary {}};
 
     report_error("expected expression.");
 }
-
-// void Parser::report_parser_error(std::string_view error) {
-//     std::ifstream file_stream = std::ifstream(curr_tkn->file_name);
-//     std::string line;
-//     file_stream.seekg(curr_tkn->file_offset, std::ios_base::beg);
-//     std::getline(file_stream, line);
-//
-//     std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",
-//                              curr_tkn->file_name,
-//                              curr_tkn->line_number,
-//                              line,
-//                              std::string(curr_tkn->line_offset, ' ') + "^ ",
-//                              error);
-//     exit(1);
-// }

@@ -215,11 +215,6 @@ The syntax of C in Backus-Naur Form
 
 <expression-statement> ::= {<expression>}? ;
 
-
-// decl-specifier identifier "=" assignement-expression ";"
-// 
-
-
 <selection-statement> ::= if ( <expression> ) <statement>
                         | if ( <expression> ) <statement> else <statement>
                         | switch ( <expression> ) <statement>
