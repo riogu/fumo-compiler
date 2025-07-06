@@ -1,6 +1,5 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <print>
@@ -137,6 +136,7 @@ struct ASTNode {
         }
     }
 
+    [[nodiscard]] constexpr str to_str(i64 depth);
 
 };
 
@@ -187,8 +187,6 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 }                                                                                                   \
     if (was_default)
 
-// clang-format on
-
 struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
@@ -208,9 +206,6 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
-    // clang-format off
-
-
 #define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
             return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? ({ std::print("consumed: '{}'\n", curr_tkn->to_str());
@@ -218,40 +213,43 @@ struct Parser {
                                                                           : false;
     }
 
-
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        // clang-format on
         if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
     }
 };
 
 // clang-format on
 
-inline void test_example_func() {
-    ASTNode v = {.branch = Binary {
-                     .lhs = ASTNode {.kind = NodeKind::add,
-                                     .branch = Binary {ASTNode {}, ASTNode {}}},
-                     .rhs = ASTNode {},
-                 }};
+[[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
+    str result {};
 
-    // doesnt matter if its an ASTNode or a unique/shared_ptr, same API
-    match(v) {
-        holds(Binary, &bin_var) { // have to take by reference(if its unique_ptr)
-            match(bin_var.lhs) {
-                holds(Unary, &unaryvar) {}
-                _ {}
-            }
+    match(*this) {
+
+        holds(Binary, &bin) {
+            depth++;
+            result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
+            result += bin.lhs->to_str(depth);
+            result += bin.rhs->to_str(depth);
         }
-        holds(If, &if_var) {
-            switch (v.kind) {
-                case NodeKind::add:
-                case NodeKind::literal:
-                    break;
-                default:
-                    break;
-            }
+
+        holds(Unary, &unary) {
+            depth++;
+            result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
+            result += unary.expr->to_str(depth);
         }
-        _ std::cerr << "type unknown.\n";
+
+        holds(Primary, &primary) {
+            result += std::format("{} => ", kind_name());
+            result += std::format("'{}' \n{}| ",
+                                  this->token.to_str(),
+                                  std::string(depth * 2, ' '));
+        }
+
+        _ {
+            PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
+        }
     }
+
+    return result;
 }

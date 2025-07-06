@@ -15,6 +15,7 @@ auto main(int argc, char* argv[]) -> i32 {
     // auto [tokens, file] = lexer.tokenize_file(test);
 
     test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 10);\n";
+    // test = " epic = 10 + 213;";
     auto [tokens, file] = lexer.tokenize_string("test01", test);
 
     std::print("compiling file: {}...\n", file.path_name.string());
@@ -28,5 +29,5 @@ auto main(int argc, char* argv[]) -> i32 {
     std::print(
         "\n------------------------------------------------\n{}------------------------------------------------\n",
         file.file_string);
-    for (auto& node : AST) std::print("node found: '{}'\n", node->kind_name());
+    for (auto& node : AST) std::print("node found: {}\n", node->to_str());
 }
