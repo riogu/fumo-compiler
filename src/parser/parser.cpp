@@ -6,7 +6,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     prev_tkn = tkns.begin();
     Vec<unique_ptr<ASTNode>> AST;
 
-    while (curr_tkn != tkns.end()) AST.push_back(statement());
+    while (curr_tkn+1 != tkns.end()) AST.push_back(statement());
 
     return AST;
 }

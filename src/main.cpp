@@ -11,13 +11,13 @@ auto main(int argc, char* argv[]) -> i32 {
 
     std::string test;
 
-    // test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
-    // auto [tokens, file] = lexer.tokenize_file(test);
+    test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
+    auto [tokens, file] = lexer.tokenize_file(test);
 
-    test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 10)";
-    auto [tokens, file] = lexer.tokenize_string("test01", test);
+    // test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 10);";
+    // auto [tokens, file] = lexer.tokenize_string("test01", test);
 
-    std::print("compiling file: {}...\n", test);
+    std::print("compiling file: {}...\n", file.path_name.string());
 
     for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
 
