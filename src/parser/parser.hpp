@@ -31,6 +31,7 @@
                              std::format(__VA_ARGS__));                                 \
     exit(1);                                                                            \
 }
+
 #define all_node_kinds       \
     add,                     \
     sub,                     \
@@ -206,7 +207,8 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
-#define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+// #define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+#define tkn_is(tok) (is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
             return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? ({ std::print("consumed: '{}'\n", curr_tkn->to_str());
                                                                                prev_tkn = curr_tkn; curr_tkn++; true; })
@@ -219,30 +221,24 @@ struct Parser {
     }
 };
 
-// clang-format on
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
-    str result {};
     depth++;
+    str result = std::format("{}", kind_name());
 
     match(*this) {
 
         holds(Binary, &bin) {
-            result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
-            result += bin.lhs->to_str(depth);
-            result += bin.rhs->to_str(depth);
+            result += std::format(":\n{}| {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
+            result += std::format(":\n{}| {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
         }
 
         holds(Unary, &unary) {
-            result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
-            result += unary.expr->to_str(depth);
+            result += std::format(":\n{}| {}", str(depth * 2, ' '), unary.expr->to_str(depth));
         }
 
         holds(Primary, &primary) {
-            result += std::format("{} => ", kind_name());
-            result += std::format("'{}' \n{}| ",
-                                  this->token.to_str(),
-                                  std::string(depth * 2, ' '));
+            result += std::format(" => '{}'", this->token.to_str());
         }
 
         _ {
@@ -252,3 +248,4 @@ struct Parser {
 
     return result;
 }
+

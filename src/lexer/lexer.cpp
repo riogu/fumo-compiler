@@ -107,6 +107,10 @@
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
 
+            // case EOF:
+            //     lexer_error("Expected expression.");
+            //     break;
+
             default: lexer_error("Source file is not valid ASCII.");
         }
     }
