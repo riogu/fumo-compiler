@@ -1,4 +1,4 @@
-# C-compiler
+# fumo-c99-compiler
 Making a C compiler based on a subset of the [ISO/IEC 9899:1999 specification](https://www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf)
 
 ## Goal
