@@ -130,7 +130,6 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 //             | <identifier>
 //             | <literal
 [[nodiscard]] unique_ptr<ASTNode> Parser::primary() {
-    // FIXME: primary() still doesnt work right (we are turning ; into a node)
 
     if (is_tkn(str_to_tkn_type("("))) {
         auto node = ASTNode {*prev_tkn, NodeKind::expression, Unary {expression()}};
