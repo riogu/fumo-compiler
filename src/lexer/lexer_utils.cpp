@@ -29,6 +29,7 @@
     file_stream.seekg(len, std::ios_base::beg);
     return line;
 }
+
 int Lexer::get_curr() {
     __FUMO_LINE_OFFSET__++;
     curr = file_stream.get();
@@ -47,7 +48,9 @@ int Lexer::get_curr() {
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
                   .value = std::move(value),
                   .line_number = __FUMO_LINE_NUM__,
-                  .line_offset = __FUMO_LINE_OFFSET__};
+                  .line_offset = __FUMO_LINE_OFFSET__,
+                  .file_offset = file_stream.tellg(),
+                  .file_name = __FUMO_FILE__.string()};
 }
 
 [[nodiscard]] Token Lexer::parse_numeric_literal() {
@@ -78,5 +81,8 @@ int Lexer::get_curr() {
 
     token.line_number = __FUMO_LINE_NUM__;
     token.line_offset = __FUMO_LINE_OFFSET__;
+    token.file_offset = file_stream.tellg();
+    token.file_name = __FUMO_FILE__.string();
+
     return token;
 }

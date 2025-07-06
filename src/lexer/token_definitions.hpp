@@ -9,8 +9,6 @@
 #include <vector>
 #include "symbol_definitions.hpp"
 
-#define literals identifier, keyword, integer, floating_point, string
-#define all_tokens punctuators, literals
 
 namespace fs = std::filesystem; 
 #define fmt std::format
@@ -49,7 +47,10 @@ struct Token {
                 return std::to_string(std::get<double>(value.value()));
             case TokenType::identifier: case TokenType::keyword: case TokenType::string:
                 return std::get<std::string>(value.value());
-            default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+            case TokenType::is_EOF:
+                return "EOF";
+            default: 
+                PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
         }
     }
 
@@ -76,6 +77,7 @@ struct Token {
     else if (str == "float") return TokenType::floating_point;
     else if (str == "string") return TokenType::string;
     else if (str == "identifier") return TokenType::identifier;
+    else if(str == "is_EOF") return TokenType::is_EOF;
     else PANIC(fmt("provided unknown token name: '{}'.", str));
 }
 

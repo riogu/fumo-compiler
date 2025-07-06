@@ -105,7 +105,7 @@ using Err = std::unexpected<T>;
     floating_point,                     \
     string
 
-#define all_tokens punctuators, literals
+#define all_tokens punctuators, literals, is_EOF
 //----------------------------------------------------------------
 // for printing
 #define symbol_reprs__  \
@@ -199,6 +199,7 @@ enum struct Symbol {
     tab             =     '\t',
     r_thing         =     '\r',
     alert           =     '\a',
+    newline         =     '\n',
 };
 
 #define singular                    \
@@ -228,10 +229,13 @@ enum struct Symbol {
     dot             ,               \
     greater         ,               \
     division        ,               \
-    less
+    less            ,               \
+    hashtag         ,               \
+    newline
 #define ignore                      \
     space           ,               \
     tab             ,               \
     r_thing         ,               \
-    alert
+    alert          
+
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore

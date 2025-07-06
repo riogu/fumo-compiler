@@ -10,19 +10,27 @@
 
 
 // print nice errors
-#define report_error(...)                                                               \
+#define report_error(tok, ...)                                                          \
 {                                                                                       \
-    std::ifstream file_stream = std::ifstream(curr_tkn->file_name);                     \
+    std::stringstream file_stream;                                                      \
+    file_stream << std::ifstream(tok->file_name).rdbuf();                               \
     std::string line;                                                                   \
-    file_stream.seekg(curr_tkn->file_offset, std::ios_base::beg);                       \
+    if (tok->line_number != 1) {                                                        \
+        file_stream.seekg(tok->file_offset, std::ios_base::beg);                        \
+        while(file_stream.peek() != '\n') {                                             \
+            long pos = file_stream.tellg();                                             \
+            file_stream.seekg(pos-1);                                                   \
+        }                                                                               \
+        file_stream.get();                                                              \
+    }                                                                                   \
     std::getline(file_stream, line);                                                    \
                                                                                         \
     std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}\n", \
-                             curr_tkn->file_name,                                       \
-                             curr_tkn->line_number,                                     \
+                             tok->file_name,                                            \
+                             tok->line_number,                                          \
                              line,                                                      \
-                             std::string(curr_tkn->line_offset, ' ') + "^ ",            \
-                             __VA_ARGS__);                                              \
+                             std::string(tok->line_offset+1, ' ') + "^ ",               \
+                             std::format(__VA_ARGS__));                                 \
     exit(1);                                                                            \
 }
 
@@ -171,14 +179,16 @@ struct Parser {
 
 #define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
-        
-            return ((curr_tkn)->type == type) ? ({  std::print("consumed: '{}'\n", curr_tkn->to_str()); prev_tkn = curr_tkn; curr_tkn++; true; }) : false;
+            return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? ({ std::print("consumed: '{}'\n", curr_tkn->to_str());
+                                                                               prev_tkn = curr_tkn; curr_tkn++; true; })
+                                                                          : false;
     }
 
 
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!is_tkn(type)) report_error("expected '{}'", repr);
+        // clang-format on
+        if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
     }
 };
 

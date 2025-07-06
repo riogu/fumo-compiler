@@ -11,7 +11,7 @@
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
 [[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
-    __FUMO_FILE__ = _file_name.filename();
+    __FUMO_FILE__ = _file_name;
     file_stream << std::ifstream(_file_name).rdbuf();
     return tokenize();
 }
@@ -110,5 +110,6 @@
             default: lexer_error("Source file is not valid ASCII.");
         }
     }
+    add_token(is_EOF);
     return tokens;
 }

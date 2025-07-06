@@ -14,18 +14,16 @@ auto main(int argc, char* argv[]) -> i32 {
 
     std::print("compiling file: {}...\n", test.string());
 
-    // Lexer lexer {};
-    // auto tokens = lexer.tokenize_file(file_paths.at(0));
+    Lexer lexer {};
+    auto tokens = lexer.tokenize_file(file_paths.at(0));
 
     {
         // std::string test = " ~a = 123;";
-        str test = "gamer = 69420;";
-        std::print("{}\n", test);
-
-        Lexer lexer {};
-        auto tokens = lexer.tokenize_string(test);
-        for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
-
+        // str test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 10)";
+        // std::print("{}\n", test);
+        // Lexer lexer {};
+        // auto tokens = lexer.tokenize_string(test);
+        // for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
         Parser parser {};
         auto AST = parser.parse_tokens(tokens);
         for (auto& node : AST) std::print("node found: '{}'\n", node->token.to_str());
