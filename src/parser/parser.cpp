@@ -143,9 +143,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
                         Primary {prev_tkn->value.value()}};
 
     } else if (tkn_is(int) || tkn_is(float) || tkn_is(string)) {
-        return ASTNode {*prev_tkn,
-                        NodeKind::literal,
-                        Primary {prev_tkn->value.value()}};
+        return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->value.value()}};
     }
 
     report_error("expected expression.");

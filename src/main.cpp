@@ -24,8 +24,7 @@ auto main(int argc, char* argv[]) -> i32 {
 
         Lexer lexer {};
         auto tokens = lexer.tokenize_string(test);
-        for (auto& token : tokens)
-            std::print("{}\t-> {}\n", token.to_str(), token.type_name());
+        for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
 
         Parser parser {};
         auto AST = parser.parse_tokens(tokens);
