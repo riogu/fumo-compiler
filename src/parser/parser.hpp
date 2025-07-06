@@ -32,8 +32,32 @@
                              std::format(__VA_ARGS__));                                 \
     exit(1);                                                                            \
 }
+#define all_node_kinds       \
+    add,                     \
+    sub,                     \
+    multiply,                \
+    divide,                  \
+    equal,                   \
+    not_equal,               \
+    less_than,               \
+    less_equals,             \
+    assignment,              \
+    negate,                  \
+    logic_not,               \
+    bitwise_not,             \
+    expression_statement,    \
+    literal,                 \
+    identifier,              \
+    function_call,           \
+    compound_statement,      \
+    expression,              \
+    statement,               \
+    variable_declaration,    \
+    function_declaration
 
-enum struct NodeKind {
+enum struct NodeKind { 
+    // NOTE: remember to update the list above when you add a new NodeKind
+
     // ----------------------------------------
     // simple expressions
     // binary
@@ -62,8 +86,8 @@ enum struct NodeKind {
     compound_statement,      // {...}
     // ----------------------------------------
     // top levels
-    expression,
-    statement,
+    expression,              // expression
+    statement,               // statement
     variable_declaration,    // variable
     function_declaration,    // function
 };
@@ -103,6 +127,16 @@ struct ASTNode {
     constexpr operator std::unique_ptr<ASTNode>()&& { 
         return std::make_unique<ASTNode>(std::move(*this));
     }
+    
+
+#define nd_kind(v_) case NodeKind::v_: return #v_;
+    [[nodiscard]] constexpr str kind_name() {
+        switch (kind) {
+            map_macro(nd_kind, all_node_kinds);
+            default: PANIC(fmt("provided unknown NodeKind '{}'.", (int)kind));
+        }
+    }
+
 
 };
 

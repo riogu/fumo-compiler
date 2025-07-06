@@ -25,5 +25,8 @@ auto main(int argc, char* argv[]) -> i32 {
     parser.file_stream << file.file_string;
 
     auto AST = parser.parse_tokens(tokens);
-    for (auto& node : AST) std::print("node found: '{}'\n", node->token.to_str());
+    std::print(
+        "\n------------------------------------------------\n\n{}------------------------------------------------\n",
+        file.file_string);
+    for (auto& node : AST) std::print("node found: '{}'\n", node->kind_name());
 }
