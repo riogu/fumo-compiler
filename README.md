@@ -3,7 +3,7 @@ Making a C compiler based on a subset of the [ISO/IEC 9899:1999 specification](h
 
 ## Goal
 - Implement maybe 30/40% of the specification for C99.
-- Turn fumo-compiler into a compiler for FumoLang programming language later.
+- Turn fumo-c99-compiler into a compiler for FumoLang programming language later.
 ## Currently done:
 - C Lexer (Tokenizer)
 
