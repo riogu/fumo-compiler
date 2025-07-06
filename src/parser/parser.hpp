@@ -223,18 +223,17 @@ struct Parser {
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     str result {};
+    depth++;
 
     match(*this) {
 
         holds(Binary, &bin) {
-            depth++;
             result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
             result += bin.lhs->to_str(depth);
             result += bin.rhs->to_str(depth);
         }
 
         holds(Unary, &unary) {
-            depth++;
             result += std::format("{}:\n{}| ", kind_name(), std::string(depth * 2, ' '));
             result += unary.expr->to_str(depth);
         }
