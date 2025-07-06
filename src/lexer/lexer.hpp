@@ -23,7 +23,7 @@ struct Lexer {
     std::string __FUMO_LINE__;
     fs::path __FUMO_FILE__;
     std::stringstream file_stream;
-    i64 curr = 0;
+    int curr = 0;
 
     [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
     [[nodiscard]] Vec<Token> tokenize_string(const std::string& test_string);
@@ -35,7 +35,7 @@ struct Lexer {
     [[nodiscard]] bool is_keyword(const str identifier);
     [[nodiscard]] str peek_line();
     [[nodiscard]] bool identifier_ended();
-    i64 get_curr();
+    int get_curr();
 };
 
 // clang-format off

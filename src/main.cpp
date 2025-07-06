@@ -20,17 +20,15 @@ auto main(int argc, char* argv[]) -> i32 {
     {
         // std::string test = " ~a = 123;";
         str test = "gamer = 69420;";
-        std::print("{}\n",test);
+        std::print("{}\n", test);
 
         Lexer lexer {};
         auto tokens = lexer.tokenize_string(test);
         for (auto& token : tokens)
-            std::cout << token.to_str() << "\t-> " << token.type_name() << "\n";
+            std::print("{}\t-> {}\n", token.to_str(), token.type_name());
 
         Parser parser {};
         auto AST = parser.parse_tokens(tokens);
-        for (auto& node : AST) {
-            std::print("node found: '{}'\n", node->token.to_str());
-        }
+        for (auto& node : AST) std::print("node found: '{}'\n", node->token.to_str());
     }
 }
