@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <print>
 #include <vector>
 
 // clang-format off
@@ -92,10 +93,9 @@ struct ASTNode {
     NodeKind kind;
     NodeBranch branch;
 
-    constexpr operator std::unique_ptr<ASTNode>() { 
+    constexpr operator std::unique_ptr<ASTNode>()&& { 
         return std::make_unique<ASTNode>(std::move(*this));
     }
-
 
 };
 
@@ -128,15 +128,15 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 
 #define match(v)                                                                                    \
 {                                                                                                   \
-    auto& __v__ = v;                                                                                \
+    auto& v___ = v;                                                                                 \
     bool was_default = false;                                                                       \
-    switch (auto __t_seq__ = wrapped_type_seq(v); index_of(v)) {                                   
+    switch (auto t_seq___ = wrapped_type_seq(v); index_of(v)) {                                   
 
 #define holds(T, name)                                                                              \
     break;                                                                                          \
 }                                                                                                   \
-    case __t_seq__.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                   \
-        T name=get_elem<std::remove_pointer<std::remove_cvref<decltype(name)>::type>::type>(__v__);
+    case t_seq___.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                    \
+        T name=get_elem<std::remove_pointer<std::remove_cvref<decltype(name)>::type>::type>(v___);
 
 #define _                                                                                           \
         break;                                                                                      \
@@ -152,6 +152,7 @@ struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
+    std::vector<Token>::iterator prev_tkn;
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
@@ -168,32 +169,31 @@ struct Parser {
     // clang-format off
 
 
-#define tkn_is(tok) is_tkn(tkn(tok))
+#define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
-        return ((curr_tkn+1)->type == type);
-        // return ((curr_tkn+1)->type == type) ? ({ curr_tkn++; true; }) : false;
+        
+            return ((curr_tkn)->type == type) ? ({  std::print("consumed: '{}'\n", curr_tkn->to_str()); prev_tkn = curr_tkn; curr_tkn++; true; }) : false;
     }
 
 
 #define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!is_tkn(type)) report_error(std::format("expected '{}'", repr));
+        if (!is_tkn(type)) report_error("expected '{}'", repr);
     }
 };
 
 // clang-format on
 
 inline void test_example_func() {
-    ASTNode v = {
-        .branch = Binary {
-            .lhs = ASTNode {.kind = NodeKind::add,
-                            .branch = Binary {ASTNode {}, std::make_unique<ASTNode>()}},
-            .rhs = ASTNode {},
-        }};
+    ASTNode v = {.branch = Binary {
+                     .lhs = ASTNode {.kind = NodeKind::add,
+                                     .branch = Binary {ASTNode {}, ASTNode {}}},
+                     .rhs = ASTNode {},
+                 }};
 
     // doesnt matter if its an ASTNode or a unique/shared_ptr, same API
     match(v) {
-        holds(Binary, &bin_var) { // have to take by reference
+        holds(Binary, &bin_var) { // have to take by reference(if its unique_ptr)
             match(bin_var.lhs) {
                 holds(Unary, &unaryvar) {}
                 _ {}

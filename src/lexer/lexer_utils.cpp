@@ -29,7 +29,6 @@
     file_stream.seekg(len, std::ios_base::beg);
     return line;
 }
-
 i64 Lexer::get_curr() {
     __FUMO_LINE_OFFSET__++;
     curr = file_stream.get();

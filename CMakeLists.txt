@@ -42,6 +42,6 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 target_link_libraries(${LIBRARIES})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CMAKE_CXX_FLAGS "-O0 -fsanitize=address -Werror -Wall -Wno-unused-variable")
+  set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address -Werror -Wall -Wno-unused-variable")
 endif()
 
