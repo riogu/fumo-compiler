@@ -10,15 +10,15 @@
 #define make_token(tok) Token {.type = tkn(tok), add_token_info}
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 
-[[nodiscard]] Vec<Token> Lexer::tokenize_file(const fs::path& _file_name) {
+[[nodiscard]] std::pair<Vec<Token>, File>  Lexer::tokenize_file(const fs::path& _file_name) {
     __FUMO_FILE__ = _file_name;
     file_stream << std::ifstream(_file_name).rdbuf();
-    return tokenize();
+    return {tokenize(), File{_file_name, file_stream.str()}};
 }
-[[nodiscard]] Vec<Token> Lexer::tokenize_string(const std::string& test_string) {
-    __FUMO_FILE__ = std::string(test_string);
+[[nodiscard]] std::pair<Vec<Token>, File> Lexer::tokenize_string(const std::string& testname, const std::string& test_string) {
+    __FUMO_FILE__ = std::string(testname);
     file_stream << test_string;
-    return tokenize();
+    return {tokenize(), File{testname, file_stream.str()}};
 }
 
 [[nodiscard]] Vec<Token> Lexer::tokenize() {

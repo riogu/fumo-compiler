@@ -1,6 +1,10 @@
 #pragma once
 #include "token_definitions.hpp"
 
+struct File {
+    fs::path path_name;
+    std::string file_string;
+};
 
 #define lexer_error(...)                                    \
 {                                                           \
@@ -25,8 +29,8 @@ struct Lexer {
     std::stringstream file_stream;
     int curr = 0;
 
-    [[nodiscard]] Vec<Token> tokenize_file(const fs::path& _file_name);
-    [[nodiscard]] Vec<Token> tokenize_string(const std::string& test_string);
+    [[nodiscard]] std::pair<Vec<Token>, File>  tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_string(const std::string& testname, const std::string& test_string);
     [[nodiscard]] Vec<Token> tokenize();
 
   private:

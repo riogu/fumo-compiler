@@ -12,8 +12,7 @@
 // print nice errors
 #define report_error(tok, ...)                                                          \
 {                                                                                       \
-    std::stringstream file_stream;                                                      \
-    file_stream << std::ifstream(tok->file_name).rdbuf();                               \
+    file_stream.seekg(file_stream.beg);                                                 \
     std::string line;                                                                   \
     if (tok->line_number != 1) {                                                        \
         file_stream.seekg(tok->file_offset, std::ios_base::beg);                        \
@@ -161,6 +160,7 @@ struct Parser {
     std::vector<Token>::iterator curr_tkn;
     Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
     std::vector<Token>::iterator prev_tkn;
+    std::stringstream file_stream;
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
