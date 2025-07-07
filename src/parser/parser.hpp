@@ -207,15 +207,15 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
-// #define tkn_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
-#define tkn_is(tok) (is_tkn(tkn(tok)))
+// #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+#define token_is(tok) (is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
             return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? ({ std::print("consumed: '{}'\n", curr_tkn->to_str());
                                                                                prev_tkn = curr_tkn; curr_tkn++; true; })
                                                                           : false;
     }
 
-#define expect_tkn(tok) consume_tkn_or_error(tkn(tok), #tok)
+#define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
     }
