@@ -14,8 +14,10 @@ auto main(int argc, char* argv[]) -> i32 {
     // test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
     // auto [tokens, file] = lexer.tokenize_file(test);
 
-    test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);\n";
+    // test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);\n";
+    test = "var = 69 + 21 + 3 * (-2 - 3 / ~3) + 3 + 3;";
     // test = "-(-(-(-(-(-(-(-(-(1)))))))));\n";
+    // test = "gamer = 123123 + ~213213* 3123;";
 
     auto [tokens, file] = lexer.tokenize_string("test01", test);
 
@@ -30,5 +32,5 @@ auto main(int argc, char* argv[]) -> i32 {
     std::print(
         "\n------------------------------------------------\n{}\n------------------------------------------------\n",
         file.file_string);
-    for (auto& node : AST) std::print("node found: {}\n", node->to_str());
+    for (auto& node : AST) std::print("node found:\n  {}\n", node->to_str());
 }

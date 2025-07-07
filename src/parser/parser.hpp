@@ -129,7 +129,7 @@ struct ASTNode {
     }
     
 
-#define nd_kind(v_) case NodeKind::v_: return #v_;
+#define nd_kind(v_) case NodeKind::v_: return fmt("\033[38;2;142;163;217m{}\033[0m",#v_);
     [[nodiscard]] constexpr str kind_name() {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
@@ -229,16 +229,17 @@ struct Parser {
     match(*this) {
 
         holds(Binary, &bin) {
-            result += std::format(":\n{}| {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
-            result += std::format(":\n{}| {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
+            result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
+            result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
         }
 
         holds(Unary, &unary) {
-            result += std::format(":\n{}| {}", str(depth * 2, ' '), unary.expr->to_str(depth));
+            depth--;
+            result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
 
         holds(Primary, &primary) {
-            result += std::format(" => '{}'", this->token.to_str());
+            result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->token.to_str());
         }
 
         _ {

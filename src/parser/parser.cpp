@@ -132,7 +132,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 [[nodiscard]] unique_ptr<ASTNode> Parser::primary() {
 
     if (is_tkn(str_to_tkn_type("("))) {
-        auto node = ASTNode {*prev_tkn, NodeKind::expression, Unary {expression()}};
+        auto node = expression();
         consume_tkn_or_error(str_to_tkn_type(")"), ")");
         return node;
 
@@ -147,3 +147,4 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 
     report_error(curr_tkn, "expected expression.");
 }
+
