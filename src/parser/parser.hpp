@@ -1,108 +1,60 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
-#include <iostream>
+#include "parser_errors.hpp"
 #include <memory>
-#include <print>
 #include <vector>
 
 // clang-format off
 
-
-// print nice errors
-#define report_error(tok, ...)                                                          \
-{                                                                                       \
-    file_stream.seekg(file_stream.beg);                                                 \
-    std::string line;                                                                   \
-    if (tok->line_number != 1) {                                                        \
-        file_stream.seekg(tok->file_offset, std::ios_base::beg);                        \
-        while(file_stream.peek() != '\n') {                                             \
-            long pos = file_stream.tellg();                                             \
-            file_stream.seekg(pos-1);                                                   \
-        }                                                                               \
-        file_stream.get();                                                              \
-    }                                                                                   \
-    std::getline(file_stream, line);                                                    \
-                                                                                        \
-    std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}\n", \
-                             tok->file_name,                                            \
-                             tok->line_number,                                          \
-                             line,                                                      \
-                             std::string(tok->line_offset+1, ' ') + "^ ",               \
-                             std::format(__VA_ARGS__));                                 \
-    exit(1);                                                                            \
-}
-
-#define all_node_kinds       \
-    add,                     \
-    sub,                     \
-    multiply,                \
-    divide,                  \
-    equal,                   \
-    not_equal,               \
-    less_than,               \
-    less_equals,             \
-    assignment,              \
-    negate,                  \
-    logic_not,               \
-    bitwise_not,             \
-    expression_statement,    \
-    literal,                 \
-    identifier,              \
-    function_call,           \
-    compound_statement,      \
-    expression,              \
-    statement,               \
-    variable_declaration,    \
-    function_declaration
-
 enum struct NodeKind { 
-    // NOTE: remember to update the list above when you add a new NodeKind
+#define all_node_kinds                                                  \
+    /* ----------------------------------------                   */    \
+    /* simple expressions                                         */    \
+    /* binary                                                     */    \
+    empty_expr,              /* ;                                 */    \
+    add,                     /* +                                 */    \
+    sub,                     /* -                                 */    \
+    multiply,                /* *                                 */    \
+    divide,                  /* /                                 */    \
+    equal,                   /* ==                                */    \
+    not_equal,               /* !=                                */    \
+    less_than,               /* < | >                             */    \
+    less_equals,             /* <= | >=                           */    \
+    assignment,              /* =                                 */    \
+    /* unary                                                      */    \
+    negate,                  /* unary -                           */    \
+    logic_not,               /* !                                 */    \
+    bitwise_not,             /* ~                                 */    \
+    expression_statement,    /* expression statement              */    \
+    /* ----------------------------------------                   */    \
+    literal,                 /* int | float | string              */    \
+    identifier,              /* (variable | function) name        */    \
+                             /* | (enum |struct |union) member    */    \
+    function_call,           /* function call                     */    \
+    /* ----------------------------------------                   */    \
+    /* statements                                                 */    \
+    /* if, for, while, compound-statement, etc                    */    \
+    compound_statement,      /* {...}                             */    \
+    return_statement,        /* return                            */    \
+    /* ----------------------------------------                   */    \
+    /* top levels                                                 */    \
+    expression,              /* expression                        */    \
+    statement,               /* statement                         */    \
+    variable_declaration,    /* variable                          */    \
+    function_declaration     /* function                          */
 
-    // ----------------------------------------
-    // simple expressions
-    // binary
-    add,                     // +                          
-    sub,                     // -                      
-    multiply,                // *                      
-    divide,                  // /
-    equal,                   // ==
-    not_equal,               // !=                     
-    less_than,               // < | >
-    less_equals,             // <= | >=
-    assignment,              // =
-    // unary
-    negate,                  // unary -
-    logic_not,               // !
-    bitwise_not,             // ~
-    expression_statement,    // expression statement
-    // ----------------------------------------
-    literal,                 // int | float | string
-    identifier,              // (variable | function) name 
-    //                          | (enum |struct |union) member
-    function_call,           // function call
-    // ----------------------------------------
-    // statements 
-    // if, for, while, compound-statement, etc
-    compound_statement,      // {...}
-    // ----------------------------------------
-    // top levels
-    expression,              // expression
-    statement,               // statement
-    variable_declaration,    // variable
-    function_declaration,    // function
+    all_node_kinds
 };
 
 template<typename T>
 using unique_ptr = std::unique_ptr<T>;
 struct ASTNode;
-// using ASTNode_ptr = std::unique_ptr<ASTNode>;
-struct Unary; struct Binary; struct If; struct For; struct Variable; 
-struct Primary; struct Function; struct Member; struct Scope;
+struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary; struct Function; struct Member; struct Scope;
 
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
 
 struct Primary {
-    Literal literal; // taken from the tokens
+    Literal value; // can also be an identifier
 };
 struct Unary {
     unique_ptr<ASTNode> expr;
@@ -111,29 +63,23 @@ struct Binary {
     unique_ptr<ASTNode> lhs;
     unique_ptr<ASTNode> rhs;
 };
-struct If {};
-struct For {};
-struct Member {};
-struct Variable {};
-struct Scope {};
-struct Function {};
+struct If {};struct For {};struct Member {};struct Variable {};struct Scope {};struct Function {};
 
 struct ASTNode {
 
-    Token token; // token that originated this Node
+    Token source_token; // token that originated this Node
     NodeKind kind;
     NodeBranch branch;
 
     constexpr operator std::unique_ptr<ASTNode>()&& { 
         return std::make_unique<ASTNode>(std::move(*this));
     }
-    
 
-#define nd_kind(v_) case NodeKind::v_: return fmt("\033[38;2;142;163;217m{}\033[0m",#v_);
+    #define nd_kind(v_) case NodeKind::v_: return std::format("\033[38;2;142;163;217m{}\033[0m",#v_);
     [[nodiscard]] constexpr str kind_name() {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
-            default: PANIC(fmt("provided unknown NodeKind '{}'.", (int)kind));
+            default: PANIC(std::format("provided unknown NodeKind '{}'.", (int)kind));
         }
     }
 
@@ -191,9 +137,10 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
-    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
     std::vector<Token>::iterator prev_tkn;
     std::stringstream file_stream;
+
+    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
@@ -207,42 +154,48 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
-// #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
-#define token_is(tok) (is_tkn(tkn(tok)))
+
+//  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+    #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
+    #define token_is(tok, ...) (is_tkn(tkn(tok)) __VA_OPT__(&& is_tkn_keyword(#__VA_ARGS__)))
 
     constexpr bool is_tkn(const TokenType& type) {
-            return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
-                                                                               prev_tkn = curr_tkn; curr_tkn++; true; })
-                                                                          : false;
+        return curr_tkn != tokens.end()
+               && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
+                                                  prev_tkn = curr_tkn; curr_tkn++; true; })
+                                             : false;
     }
 
-#define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
+    constexpr bool is_tkn_keyword(std::string_view keyword) {
+        return std::get<str>(prev_tkn->value.value()) == keyword;
+    }
+
+    #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
+    #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
+        if (!is_tkn(type)) {
+            prev_tkn->line_offset++;
+            report_error(prev_tkn, "expected '{}'.", repr);
+        }
     }
 };
 
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
-    str result = std::format("{}", kind_name());
+    str result = std::format("{}\033[38;2;134;149;179m ⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", kind_name(), source_token.to_str());
 
     match(*this) {
-
         holds(Binary, &bin) {
             result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
             result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
         }
-
         holds(Unary, &unary) {
             depth--;
             result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
-
-        holds(Primary, &primary) {
-            result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->token.to_str());
-        }
-
+        holds(Primary, &primary) {}
+        // result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         _ {
             PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
         }
@@ -250,4 +203,3 @@ struct Parser {
 
     return result;
 }
-

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6...4.0)
-cmake_path(GET CMAKE_CURRENT_SOURCE_DIR FILENAME ProjectName)   
-string(REPLACE " " "_" ProjectId ${ProjectName})
-project(${ProjectName} LANGUAGES CXX)
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR FILENAME PROJECT_NAME)   
+string(REPLACE " " "_" ProjectId ${PROJECT_NAME})
+project(${PROJECT_NAME} LANGUAGES CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 
@@ -17,7 +17,8 @@ function(add_git_dependency libName gitURL gitTag)
     GIT_REPOSITORY ${gitURL}
     GIT_TAG ${gitTag}
     GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
+    GIT_PROGRESS TRUE
+  )
   if(NOT ("${libName}" STREQUAL "libname"))
     FetchContent_MakeAvailable(${libName})
   endif()
@@ -31,9 +32,24 @@ if(USE_LIBASSERT)
   list(APPEND LIBRARIES libassert::assert)
 endif()
 
+#------------------------------------------------------------------------
+# llvm stuff
+find_package(LLVM REQUIRED CONFIG)
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+include_directories(${LLVM_INCLUDE_DIRS})
+separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+add_definitions(${LLVM_DEFINITIONS_LIST})
+# llvm_map_components_to_libnames(llvm_libs support core irreader)
+# ^ this doesnt seem to do anything for some reason (it should)
+list(APPEND LIBRARIES LLVM)
+#------------------------------------------------------------------------
+
+
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
      "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 set(PROJECT_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/src/")
+
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})

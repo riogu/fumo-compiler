@@ -1,6 +1,9 @@
-    epic = 3369
-    de;
-    // this is a comment
+struct epic {
+    int gamer;
+};
 
-    wow = 10 * (10 - 2 + 2) / 32;
-
+int main() {
+    int x;
+    x = 69;
+    return x;
+}

@@ -11,7 +11,8 @@
 
 
 namespace fs = std::filesystem; 
-#define fmt std::format
+
+
 using i64 = int64_t;
 template<typename  T> using Vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
@@ -35,21 +36,21 @@ struct Token {
     i64 line_number, line_offset, file_offset;
     std::string file_name;
 
-#define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
+#define each_token(_v) case TokenType::_v: return std::format("\033[38;2;140;170;190m{}\033[0m",all_token_strings.at(TokenType::_v));
 
     [[nodiscard]] constexpr str to_str() {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::integer:
-                return fmt("\033[38;2;224;180;187m{}\033[0m",std::to_string(std::get<int>(value.value())));
+                return std::format("\033[38;2;224;180;187m{}\033[0m",std::to_string(std::get<int>(value.value())));
             case TokenType::floating_point:
                 return std::to_string(std::get<double>(value.value()));
             case TokenType::identifier: case TokenType::keyword: case TokenType::string:
-                return fmt("\033[38;2;252;191;85m{}\033[0m",std::get<std::string>(value.value()));
+                return std::format("\033[38;2;252;191;85m{}\033[0m",std::get<std::string>(value.value()));
             case TokenType::is_EOF:
                 return "EOF";
             default: 
-                PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+                PANIC(std::format("provided unknown TokenType '{}'.", (int)type));
         }
     }
 // \033[38;2;252;191;85m{}\033[0m 
@@ -62,7 +63,7 @@ struct Token {
     [[nodiscard]] constexpr str type_name() {
         switch (type) {
             map_macro(tkntype, all_tokens);
-            default: PANIC(fmt("provided unknown TokenType '{}'.", (int)type));
+            default: PANIC(std::format("provided unknown TokenType '{}'.", (int)type));
         }
     }
 };
@@ -81,7 +82,7 @@ struct Token {
     else if (str == "string") return TokenType::string;
     else if (str == "identifier") return TokenType::identifier;
     else if(str == "is_EOF") return TokenType::is_EOF;
-    else PANIC(fmt("provided unknown token name: '{}'.", str));
+    else PANIC(std::format("provided unknown token name: '{}'.", str));
 }
 
 

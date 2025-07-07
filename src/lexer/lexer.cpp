@@ -35,9 +35,7 @@
             tokens.push_back(parse_identifier());
             continue;
         }
-        // FIXME: - fix issues with EOF during the lexer
-        //        - convert the std::string ver of int/float literals to int/float (might be done?)
-        //        - add string literal parsing
+        // FIXME: - add string literal parsing
         switch (curr) {
             //
             // -----------------------------------------------------------
@@ -106,10 +104,6 @@
                 break;
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;
-
-            // case EOF:
-            //     lexer_error("Expected expression.");
-            //     break;
 
             default: lexer_error("Source file is not valid ASCII.");
         }

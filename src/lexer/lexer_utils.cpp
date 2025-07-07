@@ -12,10 +12,10 @@
     }
 }
 
-#define check_keyword(v_) if(identifier == #v_) return true;
+#define check_keyword(v_) if(identifier == #v_) return true; else
 
 [[nodiscard]] bool Lexer::is_keyword(const str identifier) {
-    map_macro(check_keyword, keywords);
+    map_macro(check_keyword, keywords)
     return false;
 }
 
@@ -42,8 +42,7 @@ int Lexer::get_curr() {
     while (!identifier_ended() && file_stream.peek() != EOF) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
         else
-            lexer_error(
-                "Source file is not valid ASCII or used unsupported character in identifier.");
+            lexer_error("Source file is not valid ASCII or used unsupported character in identifier.");
     }
     return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
                   .value = std::move(value),
@@ -66,15 +65,13 @@ int Lexer::get_curr() {
         if (curr == '.' && std::isdigit(file_stream.peek())) {
             value += curr;
             token.type = TokenType::floating_point;
-        } //
+        } 
         else if (std::isdigit(curr))
             value += curr;
         else if (std::isalpha(curr)) {
-            // FIXME: technically only allowed at the end of floats
             if (curr != 'f' || token.type != TokenType::floating_point)
-                lexer_error(
-                    "invalid digit '{}' in decimal constant. NOTE: (only 'f' is allowed in floats).",
-                    char(curr));
+                lexer_error("invalid digit '{}' in decimal constant. NOTE: (only 'f' is allowed in floats).",
+                            char(curr));
         } else
             lexer_error("Source file is not valid ASCII.");
     }

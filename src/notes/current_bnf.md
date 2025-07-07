@@ -1,7 +1,20 @@
 
 Current structure for the AST parser in BNF format
 
+- Top level
+
 <program> ::= <function>
+
+- Statements
+
+<statement> ::= <jump-statement>
+              | <expression-statement>
+
+<jump-statement> ::= "return" {<expression>}? ";"
+                   | "continue" ";"
+                   | "break" ";"
+
+<expression-statement> = <expression> ";"
 
 ---
 ---
@@ -10,15 +23,12 @@ Current structure for the AST parser in BNF format
 ```c
 // an expression is not directly modelled as a NodeKind
 // an initializer may have an expression in it
-// expressions show up all over the place and are part of lots of nodes
+// also note that <assignment> doesnt follow C99's specification
 ```
-<statement> ::= <expression-statement>
-
-<expression-statement> = <expression> ";"
 
 <expression> ::= <assignment> 
 
-<assignment> ::= <equality> {"=" <assignment>}?
+<assignment> ::= <equality> | {"=" <assignment>}?
 
 <equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
@@ -31,16 +41,38 @@ Current structure for the AST parser in BNF format
 <unary> ::= <unary-op> <unary> 
           | <primary>
 
-<primary> ::= "(" <expression> ")"
+<primary> ::= "(" <equality> ")"
             | <identifier> 
             | <literal>
 
 ---
-
 ---
 ---
-- Statements
+- Declarations
 
+-> A declaration is used to introduce identifiers into the program and specify their meaning/properties
+
+<declaration> ::= <variable-declaration> ";"
+                | <function-declaration> ";"
+
+<variable-declaration> ::= 
+            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
+
+<function-declaration> ::= 
+            {<declaration-specifier>}+ <ptr-and-declarator> 
+            "(" {<parameter-list>}? ")" {<compound-statement>}?
+
+<declarator> ::= <identifier>
+               | <declarator> "(" {<parameter-list>}? ")"
+               | <declarator> \[ {<constant-expression>}? \]
+
+<declaration-specifier> ::= <type-qualifier> 
+                          | <type-specifier>
+
+<ptr-and-declarator> ::= {<pointer>}? <declarator> 
+
+<declarator-list> ::= <ptr-and-declarator>
+                    | <ptr-and-declarator>, <declarator-list>
 
 
 
@@ -84,36 +116,6 @@ NOTE: haven't added "..." yet
 
 <parameter> ::= <type-specifier> <identifier> 
 
-
-
----
----
----
-- Declarations
-
--> A declaration is used to introduce identifiers into the program and specify their meaning/properties
-
-<declaration> ::= <variable-declaration> ";"
-                | <function-declaration> ";"
-
-<variable-declaration> ::= 
-            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
-
-<function-declaration> ::= 
-            {<declaration-specifier>}+ <ptr-and-declarator> 
-            "(" {<parameter-list>}? ")" {<compound-statement>}?
-
-<declarator> ::= <identifier>
-               | <declarator> "(" {<parameter-list>}? ")"
-               | <declarator> \[ {<constant-expression>}? \]
-
-<declaration-specifier> ::= <type-qualifier> 
-                          | <type-specifier>
-
-<ptr-and-declarator> ::= {<pointer>}? <declarator> 
-
-<declarator-list> ::= <ptr-and-declarator>
-                    | <ptr-and-declarator>, <declarator-list>
 
 
 ---
