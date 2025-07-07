@@ -7,5 +7,5 @@ Making a C compiler based on a subset of the [ISO/IEC 9899:1999 specification](h
 ## Currently done:
 - Lexer (Tokenizer)
 ## Doing:
-- Parser
+- Parser (AST, static analysis, expression evaluation, etc)
 
