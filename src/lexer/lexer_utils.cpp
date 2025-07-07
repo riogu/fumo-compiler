@@ -39,7 +39,7 @@ int Lexer::get_curr() {
 [[nodiscard]] Token Lexer::parse_identifier() {
     str value = std::format("{}", char(curr));
 
-    while (!identifier_ended()) {
+    while (!identifier_ended() && file_stream.peek() != EOF) {
         if (char next = get_curr(); std::isalnum(next) || next == '_') value += next;
         else
             lexer_error(
@@ -57,15 +57,21 @@ int Lexer::get_curr() {
     str value = std::format("{}", char(curr));
     Token token {.type = TokenType::integer};
 
-    while (!identifier_ended() || file_stream.peek() == '.') {
-        if (get_curr(); curr == '.' && std::isdigit(file_stream.peek())) {
+    // FIXME: fix the syntax for floating point numbers to be compliant
+    while ((!identifier_ended() || file_stream.peek() == '.')
+           && file_stream.peek() != EOF) {
+
+        get_curr();
+
+        if (curr == '.' && std::isdigit(file_stream.peek())) {
             value += curr;
             token.type = TokenType::floating_point;
         } //
         else if (std::isdigit(curr))
             value += curr;
         else if (std::isalpha(curr)) {
-            if (curr != 'f') // FIXME: technically only allowed at the end of floats
+            // FIXME: technically only allowed at the end of floats
+            if (curr != 'f' || token.type != TokenType::floating_point)
                 lexer_error(
                     "invalid digit '{}' in decimal constant. NOTE: (only 'f' is allowed in floats).",
                     char(curr));

@@ -15,13 +15,15 @@ auto main(int argc, char* argv[]) -> i32 {
     // auto [tokens, file] = lexer.tokenize_file(test);
 
     // test = "gamer = 69420; gamer = 1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);\n";
-    test = "var = 69 + 21 + 3 * (-2 - 3 / ~3) + 3 + 3;";
-    // test = "-(-(-(-(-(-(-(-(-(1)))))))));\n";
+    // test = "var = 69 + 21 + 3 * (-2 - 3 / ~3) + 3 + 30\nepic = 213";
+    test = "var";
+    // test = "-(-(-(-(-(-(-(-(-(1)))))))));";
+    // test ="(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));";
     // test = "gamer = 123123 + ~213213* 3123;";
 
     auto [tokens, file] = lexer.tokenize_string("test01", test);
 
-    std::print("compiling file: {}...\n", file.path_name.string());
+    std::print("\ncompiling file: {}...", file.path_name.string());
 
     // for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
 
