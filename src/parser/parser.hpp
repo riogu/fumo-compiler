@@ -47,7 +47,6 @@ enum struct NodeKind {
 template<typename T>
 using unique_ptr = std::unique_ptr<T>;
 struct ASTNode;
-// using ASTNode_ptr = std::unique_ptr<ASTNode>;
 struct Unary; struct Binary; struct If; struct For; struct Variable; 
 struct Primary; struct Function; struct Member; struct Scope;
 
@@ -199,4 +198,3 @@ struct Parser {
 
     return result;
 }
-
