@@ -21,5 +21,5 @@
                              line,                                                      \
                              std::string(tok->line_offset+1, ' ') + "^ ",               \
                              std::format(__VA_ARGS__));                                 \
-    exit(1);                                                                            \
+    std::exit(1);                                                                       \
 }

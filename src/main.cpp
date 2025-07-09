@@ -8,33 +8,21 @@ using i32 = int;
 // TODO: write a script to run all the tests for the compiler (up to current stage)
 
 auto main(int argc, char* argv[]) -> i32 {
+
     Lexer lexer {};
 
     std::string test;
-
-    // test = (argc > 1) ? argv[1] : "src/tests/testfile.c";
+    if (argc > 1) test = argv[1];
     // auto [tokens, file] = lexer.tokenize_file(test);
 
-    // test = "var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nepic = 213;";
-    // FIXME:                         ^ fix this in the analysis step
-
-    test =
-        "gamer = 69420; gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);\n";
-    // test  = "var = 69 + (3  + 2 = 3);";
-    // test = "-(-(-(-(-(-(-(-(-(1)))))))));";
-    // test ="(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));";
-    // test = "gamer = 123123 + ~213213* 3123;";
-
     auto [tokens, file] = lexer.tokenize_string("test01", test);
-
-    // std::print("\ncompiling file: {}...", file.path_name.string());
-
+    std::print("\ncompiling file: {}...", file.path_name.string());
     // for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
 
     Parser parser {};
     parser.file_stream << file.file_string;
 
-        auto AST = parser.parse_tokens(tokens);
+    auto AST = parser.parse_tokens(tokens);
 
     std::print(
         "\n------------------------------------------------\n{}\n------------------------------------------------\n",
