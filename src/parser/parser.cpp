@@ -1,5 +1,4 @@
 #include "parser/parser.hpp"
-#include <stdexcept>
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
@@ -14,22 +13,19 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
-
-    return ASTNode {*prev_tkn, NodeKind::statement, Unary {expression_statement()}};
+    return expression_statement();
 }
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
-
-    auto node = ASTNode {*prev_tkn, NodeKind::expression_statement, Unary {expression()}};
-
+    auto node = expression();
     expect_token(;); // terminate if we dont find a semicolon
     return node;
 }
 
 // <expression> ::= <assignment>
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression() {
-    return ASTNode {*prev_tkn, NodeKind::expression, Unary {assignment()}};
+    return assignment();
 }
 
 // <assignment> ::= <equality> {"=" <assignment>}?

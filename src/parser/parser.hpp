@@ -1,8 +1,8 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
+#include "parser_errors.hpp"
 #include <memory>
 #include <vector>
-#include "parser_errors.hpp"
 
 // clang-format off
 
@@ -80,7 +80,7 @@ struct ASTNode {
     }
     
 
-    #define nd_kind(v_) case NodeKind::v_: return fmt("\033[38;2;142;163;217m{}\033[0m",#v_);
+    #define nd_kind(v_) case NodeKind::v_: return std::format("\033[38;2;142;163;217m{}\033[0m",#v_);
     [[nodiscard]] constexpr str kind_name() {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
