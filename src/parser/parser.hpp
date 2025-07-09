@@ -80,7 +80,7 @@ struct ASTNode {
     }
     
 
-#define nd_kind(v_) case NodeKind::v_: return fmt("\033[38;2;142;163;217m{}\033[0m",#v_);
+    #define nd_kind(v_) case NodeKind::v_: return fmt("\033[38;2;142;163;217m{}\033[0m",#v_);
     [[nodiscard]] constexpr str kind_name() {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
@@ -159,8 +159,8 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> primary();
 
 
-// #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
-#define token_is(tok) (is_tkn(tkn(tok)))
+//  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+    #define token_is(tok) (is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
             return curr_tkn != tokens.end()
                    && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
@@ -168,7 +168,7 @@ struct Parser {
                                                  : false;
     }
 
-#define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
+    #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
     }
