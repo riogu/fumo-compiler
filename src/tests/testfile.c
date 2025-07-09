@@ -1,6 +1,9 @@
-    epic = 3369
-    de;
-    // this is a comment
-
-    wow = 10 * (10 - 2 + 2) / 32;
-
+void somefunc(a, b) int a; int b; {
+    // this garbage
+}
+void sort_old (array, length)
+    int length;
+    int array [length];
+{
+    // i hate this
+}
