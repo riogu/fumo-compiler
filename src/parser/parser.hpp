@@ -142,9 +142,10 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
-    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
     std::vector<Token>::iterator prev_tkn;
     std::stringstream file_stream;
+
+    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
