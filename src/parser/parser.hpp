@@ -39,7 +39,7 @@ enum struct NodeKind {
     expression,              /* expression                        */    \
     statement,               /* statement                         */    \
     variable_declaration,    /* variable                          */    \
-    function_declaration    /* function                           */
+    function_declaration     /* function                          */
 
     all_node_kinds
 };
