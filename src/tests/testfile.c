@@ -1,9 +1,12 @@
-void somefunc(a, b) int a; int b; {
-    // this garbage
+#include <stdio.h>
+
+void func(int a, int b) {
+    printf("%d and %d\n", a, b);
 }
-void sort_old (array, length)
-    int length;
-    int array [length];
-{
-    // i hate this
+
+int main() {
+    int x = 10;
+    int* z;
+    int y;
+    z[0] = 1 + (x = 2, 2);
 }

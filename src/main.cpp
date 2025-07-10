@@ -23,8 +23,10 @@ auto main(int argc, char* argv[]) -> i32 {
     parser.file_stream << file.contents;
 
     auto AST = parser.parse_tokens(tokens);
-    std::print(
-        "\n------------------------------------------------\n{}\n------------------------------------------------\n",
-        file.contents);
+    // clang-format off
+    std::cout << "\n------------------------------------------------\n" 
+              <<  file.contents
+              << "\n------------------------------------------------\n";
+
     for (auto& node : AST) std::print("node found:\n  {}\n", node->to_str());
 }

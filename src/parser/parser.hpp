@@ -161,6 +161,7 @@ struct Parser {
 
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
+    #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
     #define token_is(tok) (is_tkn(tkn(tok)))
     constexpr bool is_tkn(const TokenType& type) {
             return curr_tkn != tokens.end()
@@ -170,6 +171,7 @@ struct Parser {
     }
 
     #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
+    #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
     }

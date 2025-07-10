@@ -35,6 +35,35 @@ Current structure for the AST parser in BNF format
             | <literal>
 
 ---
+---
+---
+- Declarations
+
+-> A declaration is used to introduce identifiers into the program and specify their meaning/properties
+
+<declaration> ::= <variable-declaration> ";"
+                | <function-declaration> ";"
+
+<variable-declaration> ::= 
+            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
+
+<function-declaration> ::= 
+            {<declaration-specifier>}+ <ptr-and-declarator> 
+            "(" {<parameter-list>}? ")" {<compound-statement>}?
+
+<declarator> ::= <identifier>
+               | <declarator> "(" {<parameter-list>}? ")"
+               | <declarator> \[ {<constant-expression>}? \]
+
+<declaration-specifier> ::= <type-qualifier> 
+                          | <type-specifier>
+
+<ptr-and-declarator> ::= {<pointer>}? <declarator> 
+
+<declarator-list> ::= <ptr-and-declarator>
+                    | <ptr-and-declarator>, <declarator-list>
+
+
 
 ---
 ---
@@ -83,36 +112,6 @@ NOTE: haven't added "..." yet
 
 <parameter> ::= <type-specifier> <identifier> 
 
-
-
----
----
----
-- Declarations
-
--> A declaration is used to introduce identifiers into the program and specify their meaning/properties
-
-<declaration> ::= <variable-declaration> ";"
-                | <function-declaration> ";"
-
-<variable-declaration> ::= 
-            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
-
-<function-declaration> ::= 
-            {<declaration-specifier>}+ <ptr-and-declarator> 
-            "(" {<parameter-list>}? ")" {<compound-statement>}?
-
-<declarator> ::= <identifier>
-               | <declarator> "(" {<parameter-list>}? ")"
-               | <declarator> \[ {<constant-expression>}? \]
-
-<declaration-specifier> ::= <type-qualifier> 
-                          | <type-specifier>
-
-<ptr-and-declarator> ::= {<pointer>}? <declarator> 
-
-<declarator-list> ::= <ptr-and-declarator>
-                    | <ptr-and-declarator>, <declarator-list>
 
 
 ---
