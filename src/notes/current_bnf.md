@@ -10,6 +10,7 @@ Current structure for the AST parser in BNF format
 ```c
 // an expression is not directly modelled as a NodeKind
 // an initializer may have an expression in it
+// also note that <assignment> doesnt follow C99's specification
 ```
 <statement> ::= <expression-statement>
 
@@ -17,7 +18,7 @@ Current structure for the AST parser in BNF format
 
 <expression> ::= <assignment> 
 
-<assignment> ::= <equality> {"=" <assignment>}?
+<assignment> ::= <equality> | {"=" <assignment>}?
 
 <equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
@@ -30,7 +31,7 @@ Current structure for the AST parser in BNF format
 <unary> ::= <unary-op> <unary> 
           | <primary>
 
-<primary> ::= "(" <expression> ")"
+<primary> ::= "(" <equality> ")"
             | <identifier> 
             | <literal>
 

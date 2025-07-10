@@ -53,7 +53,7 @@ struct Primary; struct Function; struct Member; struct Scope;
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
 
 struct Primary {
-    Literal literal; // taken from the tokens
+    Literal value_or_id; // taken from the tokens
 };
 struct Unary {
     unique_ptr<ASTNode> expr;
@@ -173,7 +173,10 @@ struct Parser {
     #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
     #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!is_tkn(type)) report_error(prev_tkn, "expected '{}'.", repr);
+        if (!is_tkn(type)) {
+            prev_tkn->line_offset++;
+            report_error(prev_tkn, "expected '{}'.", repr);
+        }
     }
 };
 

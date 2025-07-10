@@ -19,7 +19,7 @@
                              tok->file_name,                                            \
                              tok->line_number,                                          \
                              line,                                                      \
-                             std::string(tok->line_offset+1, ' ') + "^ ",               \
+                             std::string(tok->line_offset, ' ') + "^ ",                 \
                              std::format(__VA_ARGS__));                                 \
     std::exit(1);                                                                       \
 }

@@ -1,4 +1,5 @@
 #include "parser/parser.hpp"
+#include "parser/parser_errors.hpp"
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
@@ -31,11 +32,17 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 // <assignment> ::= <equality> {"=" <assignment>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::assignment() {
     auto node = equality();
-    if (token_is(=))
+
+    if (token_is(=)) {
+        if (node->kind != NodeKind::identifier) 
+            // NOTE: wont work later when we add postfix operators
+            // you can change this to NodeKind::literal and its fine
+            report_error((&node->token), "expected lvalue on left-hand side of assignment.");
         return ASTNode {*prev_tkn,
                         NodeKind::assignment,
                         Binary {std::move(node), assignment()}};
-    else
+
+    } else
         return node;
 }
 
@@ -104,7 +111,6 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 // <unary> ::= ("-" | "!" | "~" | "+") <unary>
 //           | <primary>
 [[nodiscard]] unique_ptr<ASTNode> Parser::unary() {
-
     if (token_is(-)) return ASTNode {*prev_tkn, NodeKind::negate, Unary {unary()}};
     else if (token_is(!))
         return ASTNode {*prev_tkn, NodeKind::logic_not, Unary {unary()}};
@@ -120,7 +126,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 [[nodiscard]] unique_ptr<ASTNode> Parser::primary() {
 
     if (token_is_str("(")) {
-        auto node = expression();
+        auto node = equality();
         expect_token_str(")");
         return node;
 
