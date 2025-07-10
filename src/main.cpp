@@ -20,12 +20,11 @@ auto main(int argc, char* argv[]) -> i32 {
     // for (auto& tkn : tokens) std::print("{}\t-> {}\n", tkn.to_str(), tkn.type_name());
 
     Parser parser {};
-    parser.file_stream << file.file_string;
+    parser.file_stream << file.contents;
 
     auto AST = parser.parse_tokens(tokens);
-
     std::print(
         "\n------------------------------------------------\n{}\n------------------------------------------------\n",
-        file.file_string);
+        file.contents);
     for (auto& node : AST) std::print("node found:\n  {}\n", node->to_str());
 }

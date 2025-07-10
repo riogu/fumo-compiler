@@ -15,5 +15,9 @@ auto main() -> int {
         t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));",0),
         t("1 + 3 * 2 - 2 / 3;", 0),
     };
-    for (const auto& [test, expected] : tests) std::system(std::format("./build/c-compiler \"{}\"", test).c_str());
+
+  [&tests]<std::size_t... i>(std::index_sequence<i...>) {
+        (std::system(std::format("./build/c-compiler \"{}\"", std::get<0>(tests[i])).c_str()), ...);
+    }(std::make_index_sequence<tests.size()>());
+
 }

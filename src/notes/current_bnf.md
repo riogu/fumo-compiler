@@ -10,7 +10,6 @@ Current structure for the AST parser in BNF format
 ```c
 // an expression is not directly modelled as a NodeKind
 // an initializer may have an expression in it
-// expressions show up all over the place and are part of lots of nodes
 ```
 <statement> ::= <expression-statement>
 

@@ -3,7 +3,7 @@
 
 struct File {
     fs::path path_name;
-    std::string file_string;
+    std::string contents;
 };
 
 #define lexer_error(...)                                    \
