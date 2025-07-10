@@ -14,11 +14,17 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
+    if (token_is(keyword, return)) {
+        return ASTNode {*prev_tkn, NodeKind::return_statement, Unary {expression_statement()}};
+    }
     return expression_statement();
 }
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
+    if (token_is(;)) {
+        return ASTNode {*prev_tkn, NodeKind::empty_expr, Primary {}};
+    }
     auto node = expression();
     expect_token(;); // terminate if we dont find a semicolon
     return node;
@@ -34,10 +40,11 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     auto node = equality();
 
     if (token_is(=)) {
-        if (node->kind != NodeKind::identifier) 
+        if (node->kind != NodeKind::identifier) {
             // NOTE: wont work later when we add postfix operators
             // you can change this to NodeKind::literal and its fine
-            report_error((&node->token), "expected lvalue on left-hand side of assignment.");
+            report_error((&node->source_token), "expected lvalue on left-hand side of assignment.");
+        }
         return ASTNode {*prev_tkn,
                         NodeKind::assignment,
                         Binary {std::move(node), assignment()}};

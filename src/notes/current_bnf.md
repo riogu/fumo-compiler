@@ -1,7 +1,20 @@
 
 Current structure for the AST parser in BNF format
 
+- Top level
+
 <program> ::= <function>
+
+- Statements
+
+<statement> ::= <jump-statement>
+              | <expression-statement>
+
+<jump-statement> ::= "return" {<expression>}? ";"
+                   | "continue" ";"
+                   | "break" ";"
+
+<expression-statement> = <expression> ";"
 
 ---
 ---
@@ -12,9 +25,6 @@ Current structure for the AST parser in BNF format
 // an initializer may have an expression in it
 // also note that <assignment> doesnt follow C99's specification
 ```
-<statement> ::= <expression-statement>
-
-<expression-statement> = <expression> ";"
 
 <expression> ::= <assignment> 
 
@@ -63,13 +73,6 @@ Current structure for the AST parser in BNF format
 
 <declarator-list> ::= <ptr-and-declarator>
                     | <ptr-and-declarator>, <declarator-list>
-
-
-
----
----
-- Statements
-
 
 
 

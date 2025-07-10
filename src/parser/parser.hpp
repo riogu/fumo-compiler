@@ -11,6 +11,7 @@ enum struct NodeKind {
     /* ----------------------------------------                   */    \
     /* simple expressions                                         */    \
     /* binary                                                     */    \
+    empty_expr,              /* ;                                 */    \
     add,                     /* +                                 */    \
     sub,                     /* -                                 */    \
     multiply,                /* *                                 */    \
@@ -34,6 +35,7 @@ enum struct NodeKind {
     /* statements                                                 */    \
     /* if, for, while, compound-statement, etc                    */    \
     compound_statement,      /* {...}                             */    \
+    return_statement,        /* return                            */    \
     /* ----------------------------------------                   */    \
     /* top levels                                                 */    \
     expression,              /* expression                        */    \
@@ -53,7 +55,7 @@ struct Primary; struct Function; struct Member; struct Scope;
 using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
 
 struct Primary {
-    Literal value_or_id; // taken from the tokens
+    Literal value; // can also be an identifier
 };
 struct Unary {
     unique_ptr<ASTNode> expr;
@@ -71,7 +73,7 @@ struct Function {};
 
 struct ASTNode {
 
-    Token token; // token that originated this Node
+    Token source_token; // token that originated this Node
     NodeKind kind;
     NodeBranch branch;
 
@@ -162,12 +164,17 @@ struct Parser {
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
     #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
-    #define token_is(tok) (is_tkn(tkn(tok)))
+    #define token_is(tok, ...) (is_tkn(tkn(tok)) __VA_OPT__(&& is_tkn_keyword(#__VA_ARGS__)))
+
     constexpr bool is_tkn(const TokenType& type) {
-            return curr_tkn != tokens.end()
-                   && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
-                                                      prev_tkn = curr_tkn; curr_tkn++; true; })
-                                                 : false;
+        return curr_tkn != tokens.end()
+               && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
+                                                  prev_tkn = curr_tkn; curr_tkn++; true; })
+                                             : false;
+    }
+
+    constexpr bool is_tkn_keyword(std::string_view keyword) {
+        return std::get<str>(prev_tkn->value.value()) == keyword;
     }
 
     #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
@@ -195,7 +202,7 @@ struct Parser {
             result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
         holds(Primary, &primary) {
-            result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->token.to_str());
+            result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         }
         _ {
             PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
