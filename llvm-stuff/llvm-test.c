@@ -6,11 +6,10 @@ struct gaming {
     int wow;
 };
 
+int func(int wowo) {return 3123;}
+
 int main() {
-    struct gaming e;
-    e.wow = 69420;
-    int w;
-    int* xa = &w;
-    *xa = 123123;
+    int x;
+    int var = func(2);
     return 69;
 }

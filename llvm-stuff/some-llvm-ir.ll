@@ -4,24 +4,20 @@ target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:
 target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: noinline nounwind optnone sspstrong uwtable
-define i64 @func(i64 noundef %somevar) {
-  %1 = icmp eq i64 %somevar, 0
-
-  br i1 %1, label %was_zero, label %not_zero
-
-  was_zero:
-    ret i64 -69
-  not_zero:
-    %2 = mul i64 %somevar, %somevar
-    ret i64 %2
+define dso_local i32 @func(i32 noundef %0) #0 {
+  %2 = alloca i32, align 4
+  store i32 %0, ptr %2, align 4
+  ret i32 3123
 }
 
 ; Function Attrs: noinline nounwind optnone sspstrong uwtable
-define dso_local i64 @main() #0 {
+define dso_local i32 @main() #0 {
   %1 = alloca i32, align 4
+  %3 = alloca i32, align 4
   store i32 0, ptr %1, align 4
-  %3 = call i64 @func(i64* %1)
-  ret i64 %3
+  %4 = call i32 @func(i32 noundef 2)
+  store i32 %4, ptr %3, align 4
+  ret i32 69
 }
 
 attributes #0 = { noinline nounwind optnone sspstrong uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
