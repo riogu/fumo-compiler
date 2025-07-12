@@ -19,9 +19,9 @@ std::string exec(const char* cmd) {
 }
 
 #define t std::tuple
-// teststring + expected output (only for arithmetic for now)
 
 auto main() -> int {
+    // teststring + expected output (only for arithmetic for now)
     constexpr std::array tests {
         t("var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nepic = 213;", ""),
         t("123123 + ~213213* 3123;", "69"),
