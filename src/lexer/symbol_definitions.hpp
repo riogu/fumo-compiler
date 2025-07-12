@@ -3,8 +3,8 @@
 
 #include <expected>
 #include <string>
-#include "utils/map-macro.hpp"
-#include "utils/zip-macro.hpp"
+#include "macro-utils/map-macro.hpp"
+#include "macro-utils/zip-macro.hpp"
 using str = std::string;
 template<typename Ok, typename Err>
 using Result = std::expected<Ok, Err>;
