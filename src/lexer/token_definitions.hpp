@@ -36,7 +36,7 @@ struct Token {
     i64 line_number, line_offset, file_offset;
     std::string file_name;
 
-#define each_token(_v) case TokenType::_v: return all_token_strings.at(TokenType::_v);
+#define each_token(_v) case TokenType::_v: return std::format("\033[38;2;140;170;190m{}\033[0m",all_token_strings.at(TokenType::_v));
 
     [[nodiscard]] constexpr str to_str() {
         switch (type) {

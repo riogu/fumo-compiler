@@ -190,7 +190,7 @@ struct Parser {
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
-    str result = std::format("{}({})", kind_name(), source_token.to_str());
+    str result = std::format("{}\033[38;2;134;149;179m ⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", kind_name(), source_token.to_str());
 
     match(*this) {
         holds(Binary, &bin) {
@@ -201,9 +201,8 @@ struct Parser {
             depth--;
             result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
-        holds(Primary, &primary) {
-            result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
-        }
+        holds(Primary, &primary) {}
+        // result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         _ {
             PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
         }
