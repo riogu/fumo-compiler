@@ -36,7 +36,6 @@ auto main() -> int {
     std::print("{}","\n------------------------------------------------\n");
     for (const auto& [test, expected] : tests) {
         auto output = exec(std::format("./build/c-compiler \"{}\"", test).c_str());
-
         if (output != expected) {
             std::print("> \033[38;2;235;67;54m❌FAILED\033[0m:\n"
                        "{}\n"
