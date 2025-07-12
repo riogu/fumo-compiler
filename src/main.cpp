@@ -9,6 +9,7 @@ auto main(int argc, char* argv[]) -> i32 {
 
     Lexer lexer {};
     std::string test;
+
     if (argc > 1) test = argv[1];
     // auto [tokens, file] = lexer.tokenize_file(test);
 
