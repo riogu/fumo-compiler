@@ -1,6 +1,5 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
-#include <llvm/IR/LLVMContext.h>
 #include <print>
 using i32 = int;
 
@@ -9,9 +8,6 @@ using i32 = int;
 auto main(int argc, char* argv[]) -> i32 {
 
     Lexer lexer {};
-    llvm::LLVMContext e{};
-    e.getDiagnosticContext();
-
     std::string test;
     if (argc > 1) test = argv[1];
     // auto [tokens, file] = lexer.tokenize_file(test);
