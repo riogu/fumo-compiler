@@ -1,15 +1,12 @@
-
-
-struct gaming {
-    char* thing;
-    int heh;
-    int wow;
-};
-
-int func(int wowo) {return 3123;}
-
 int main() {
-    int x;
-    int var = func(2);
+    int x = 123;
+
+    switch (x) {
+        case 123:
+            x = 69420;
+        case 111:
+            x = 1212121;
+    }
+
     return 69;
 }

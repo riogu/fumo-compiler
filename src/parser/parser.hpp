@@ -86,7 +86,7 @@ struct ASTNode {
     [[nodiscard]] constexpr str kind_name() {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
-            default: PANIC(fmt("provided unknown NodeKind '{}'.", (int)kind));
+            default: PANIC(std::format("provided unknown NodeKind '{}'.", (int)kind));
         }
     }
 
@@ -190,7 +190,7 @@ struct Parser {
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
-    str result = std::format("{}", kind_name());
+    str result = std::format("{}({})", kind_name(), source_token.to_str());
 
     match(*this) {
         holds(Binary, &bin) {

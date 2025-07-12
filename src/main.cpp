@@ -1,8 +1,7 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
-#include <cpptrace/from_current.hpp>
+#include <llvm/IR/LLVMContext.h>
 #include <print>
-
 using i32 = int;
 
 // TODO: write a script to run all the tests for the compiler (up to current stage)
@@ -10,6 +9,8 @@ using i32 = int;
 auto main(int argc, char* argv[]) -> i32 {
 
     Lexer lexer {};
+    llvm::LLVMContext e{};
+    e.getDiagnosticContext();
 
     std::string test;
     if (argc > 1) test = argv[1];
