@@ -132,15 +132,12 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 //             | <identifier>
 //             | <literal
 [[nodiscard]] unique_ptr<ASTNode> Parser::primary() {
-
     if (token_is_str("(")) {
         auto node = equality();
         expect_token_str(")");
         return node;
-
     } else if (token_is(identifier)) {
         return ASTNode {*prev_tkn, NodeKind::identifier, Primary {prev_tkn->value.value()}};
-
     } else if (token_is(int) || token_is(float) || token_is(string)) {
         return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->value.value()}};
     }

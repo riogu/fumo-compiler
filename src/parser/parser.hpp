@@ -135,12 +135,14 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
     if (was_default)
 
 struct Parser {
+
+    [[nodiscard]] Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
+    std::stringstream file_stream;
+
+  private:
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
-    std::stringstream file_stream;
-
-    Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
     [[nodiscard]] unique_ptr<ASTNode> statement();
@@ -161,7 +163,7 @@ struct Parser {
 
     constexpr bool is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end()
-               && ((curr_tkn)->type == type) ? ({ /*std::print("consumed: '{}'\n", curr_tkn->to_str());*/
+               && ((curr_tkn)->type == type) ? ({ // std::print("consumed: '{}'\n", curr_tkn->to_str());
                                                   prev_tkn = curr_tkn; curr_tkn++; true; })
                                              : false;
     }
