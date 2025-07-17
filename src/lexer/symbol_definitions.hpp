@@ -76,8 +76,8 @@ using Err = std::unexpected<T>;
     void
 #define keywords                        \
     let              ,                  \
-    auto             ,                  \
     fn               ,                  \
+    auto             ,                  \
     default          ,                  \
     break            ,                  \
     case             ,                  \

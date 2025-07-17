@@ -11,6 +11,7 @@ auto main(int argc, char* argv[]) -> int {
     Lexer lexer {};
     // auto [tokens, file] = lexer.tokenize_file(test);
     auto [tokens, file] = lexer.tokenize_string("test01", test);
+    // for(auto& token: tokens) std::print("{} and ", token.to_str());
 
     Parser parser {};
     parser.file_stream << file.contents;

@@ -175,8 +175,8 @@ struct Parser {
 
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
-    #define token_is_str(tok) (is_tkn(str_to_tkn_type(tok)))
-    #define token_is(tok, ...) (is_tkn(tkn(tok)) __VA_OPT__(&& is_tkn_keyword(#__VA_ARGS__)))
+    #define token_is_str(tok, ...) (__VA_OPT__(is_tkn_keyword(#__VA_ARGS__) &&) is_tkn(str_to_tkn_type(tok)) )
+    #define token_is(tok, ...) (__VA_OPT__(is_tkn_keyword(#__VA_ARGS__) &&) is_tkn(tkn(tok)) )
     constexpr bool is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end()
                && ((curr_tkn)->type == type) ? ({ // std::print("consumed: '{}'\n", curr_tkn->to_str());
@@ -184,13 +184,12 @@ struct Parser {
                                              : false;
     }
 
-    #define peek_token_str(tok) peek_is_tkn(str_to_tkn_type(tok))
-    #define peek_token(tok) peek_is_tkn(tkn(tok))
+    #define peek_token_str(tok, ...) ( __VA_OPT__(is_tkn_keyword(#__VA_ARGS__) &&) peek_is_tkn(str_to_tkn_type(tok)))
+    #define peek_token(tok, ...) (peek_is_tkn(tkn(tok)) __VA_OPT__(&& is_tkn_keyword(#__VA_ARGS__)))
     constexpr bool peek_is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end() && ((curr_tkn)->type == type);
                                            
     }
-
     constexpr bool is_tkn_keyword(std::string_view keyword) {
         return std::get<str>(prev_tkn->value.value()) == keyword;
     }
@@ -205,35 +204,35 @@ struct Parser {
     }
 };
 
-
+#define gray(symbol) "\033[38;2;134;149;179m" symbol "\033[0m"
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
     str result = std::format("{} ", kind_name());
 
     match(*this) {
         holds(Binary, &bin) {
-            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
-            result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
-            result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
+            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(),gray("⟯"));
+            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
+            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
         holds(Unary, &unary) {
-            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
+            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
-            result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
+            result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
         }
         holds(Primary, &primary) {
-            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
+            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
         }
         holds(InitializerList, &init_list) {
+            result += gray("{");
+
             depth++;
-            result += "\033[38;2;134;149;179m{\033[0m";
-            for(const auto& node: init_list.nodes) {
-                result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), node->to_str(depth));
-            }
+            for(const auto& node: init_list.nodes) 
+                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node->to_str(depth));
             depth--;
-            result += std::format("\n{}{}", str(depth * 2, ' '), "\033[38;2;134;149;179m}\033[0m");
+
+            result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
         }
-        // result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         _ {
             PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
         }

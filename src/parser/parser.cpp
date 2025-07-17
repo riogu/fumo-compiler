@@ -28,10 +28,10 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
     Variable variable {std::get<str>(prev_tkn->value.value())};
 
-    // if (token_is(:)) {
+    expect_token(:);
+    expect_token(identifier);
     //     // NOTE: should also allow user types (add later)
-    //     auto fix_this_should_be_a_type = declaration_specifier();
-    // }
+    // auto fix_this_should_be_a_type = declaration_specifier();
 
     variable.initializer = token_is(=) ? std::make_optional(initializer()) : std::nullopt;
     node.branch = std::move(variable);
