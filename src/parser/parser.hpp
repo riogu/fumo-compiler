@@ -208,25 +208,30 @@ struct Parser {
 
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
-    str result = std::format("{}\033[38;2;134;149;179m ⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", kind_name(), source_token.to_str());
+    str result = std::format("{} ", kind_name());
 
     match(*this) {
         holds(Binary, &bin) {
-            result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
-            result += std::format(" \n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
+            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
+            result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.lhs->to_str(depth));
+            result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), bin.rhs->to_str(depth));
         }
         holds(Unary, &unary) {
+            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
             depth--;
             result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
-        holds(Primary, &primary) {}
+        holds(Primary, &primary) {
+            result += std::format("\033[38;2;134;149;179m⟮\033[0m{}\033[38;2;134;149;179m⟯\033[0m", source_token.to_str());
+        }
         holds(InitializerList, &init_list) {
-            depth--;
+            depth++;
+            result += "\033[38;2;134;149;179m{\033[0m";
             for(const auto& node: init_list.nodes) {
-                match(*node) {
-                    _{}
-                }
+                result += std::format("\n{}\033[38;2;134;149;179m↳\033[0m {}", str(depth * 2, ' '), node->to_str(depth));
             }
+            depth--;
+            result += std::format("\n{}{}", str(depth * 2, ' '), "\033[38;2;134;149;179m}\033[0m");
         }
         // result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         _ {
