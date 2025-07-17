@@ -45,7 +45,7 @@ struct Token {
                 return std::format("\033[38;2;224;180;187m{}\033[0m",std::to_string(std::get<int>(value.value())));
             case TokenType::floating_point:
                 return std::to_string(std::get<double>(value.value()));
-            case TokenType::identifier: case TokenType::keyword: case TokenType::string:
+            case TokenType::identifier: case TokenType::keyword: case TokenType::builtin_type: case TokenType::string:
                 return std::format("\033[38;2;252;191;85m{}\033[0m",std::get<std::string>(value.value()));
             case TokenType::is_EOF:
                 return "EOF";
@@ -82,6 +82,7 @@ struct Token {
     else if (str == "string") return TokenType::string;
     else if (str == "identifier") return TokenType::identifier;
     else if(str == "is_EOF") return TokenType::is_EOF;
+    else if(str == "builtin_type") return TokenType::builtin_type;
     else PANIC(std::format("provided unknown token name: '{}'.", str));
 }
 

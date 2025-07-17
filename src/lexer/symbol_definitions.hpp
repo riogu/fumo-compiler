@@ -62,45 +62,43 @@ using Err = std::unexpected<T>;
     greater_greater_equals,             \
     dot_dot_dot,                        \
     minus_greater
-#define keywords                        \
-    auto             ,                  \
-    break            ,                  \
-    case             ,                  \
+#define builtin_types                   \
     char             ,                  \
     const            ,                  \
-    continue         ,                  \
-    default          ,                  \
-    do               ,                  \
     double           ,                  \
-    else             ,                  \
     enum             ,                  \
     extern           ,                  \
+    int              ,                  \
+    struct           ,                  \
+    union            ,                  \
     float            ,                  \
+    bool             ,                  \
+    void
+#define keywords                        \
+    let              ,                  \
+    auto             ,                  \
+    fn               ,                  \
+    default          ,                  \
+    break            ,                  \
+    case             ,                  \
+    continue         ,                  \
+    do               ,                  \
+    else             ,                  \
     for              ,                  \
     goto             ,                  \
     if               ,                  \
     inline           ,                  \
-    int              ,                  \
-    long             ,                  \
-    register         ,                  \
-    restrict         ,                  \
     return           ,                  \
-    short            ,                  \
-    signed           ,                  \
     sizeof           ,                  \
     static           ,                  \
-    struct           ,                  \
     switch           ,                  \
-    typedef          ,                  \
-    union            ,                  \
-    unsigned         ,                  \
-    void             ,                  \
     volatile         ,                  \
     while            ,                  \
-    _Bool
+    builtin_types
 #define literals                        \
     identifier,                         \
     keyword,                            \
+    builtin_type,                       \
     integer,                            \
     floating_point,                     \
     string

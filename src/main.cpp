@@ -18,7 +18,14 @@ auto main(int argc, char* argv[]) -> int {
     const auto AST = parser.parse_tokens(tokens);
     for (auto& node : AST) std::print("node found:\n  {}\n", node->to_str());
 
-    Codegen codegen {};
-    codegen.codegen(AST);
+    // Codegen codegen {};
+    // codegen.codegen(AST);
+
+    // Plan:
+    // 1-add functions and local variables to parser (maybe also solve a symbol table while making the AST)
+    //      consider adding types
+    // 2-make small sample llvm project to test the library
+    // 3-add llvm to my project starting from smaller parts
+
 
 }

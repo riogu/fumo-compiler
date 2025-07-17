@@ -1,5 +1,4 @@
 #include "parser/parser.hpp"
-#include "parser/parser_errors.hpp"
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns;
@@ -7,9 +6,36 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     prev_tkn = tkns.begin();
     Vec<unique_ptr<ASTNode>> AST;
 
-    while (curr_tkn + 1 != tkns.end()) AST.push_back(statement());
-
+    while (curr_tkn + 1 != tkns.end()) {
+        if (token_is(keyword, let)) //
+            AST.push_back(variable_declaration());
+        else if (token_is(keyword, fn))
+            AST.push_back(function_declaration());
+        else
+            AST.push_back(statement());
+    }
     return AST;
+}
+
+[[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
+    if (token_is(identifier)) {
+        // NOTE: should be identifier list (add later)
+    }
+    if(token_is(:)) {
+        // extern const int;
+        // NOTE: should also allow user types (add later)
+        auto fix_should_be_type = declaration_specifier();
+        return initializer();
+    }
+    return {};
+}
+
+[[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
+    return {};
+}
+// FIXME: continue this tomorrow
+[[nodiscard]] unique_ptr<ASTNode> Parser::initializer() {
+    return {};
 }
 
 // <statement> ::= <expression-statement>
@@ -35,7 +61,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     return assignment();
 }
 
-// <assignment> ::= <equality> {"=" <assignment>}?
+// <assignment> ::= <equality> {"=" <equality>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::assignment() {
     auto node = equality();
 
@@ -48,7 +74,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
         }
         return ASTNode {*prev_tkn,
                         NodeKind::assignment,
-                        Binary {std::move(node), assignment()}};
+                        Binary {std::move(node), initializer()}};
 
     } else
         return node;
@@ -141,6 +167,5 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     } else if (token_is(int) || token_is(float) || token_is(string)) {
         return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->value.value()}};
     }
-
     report_error(curr_tkn, "expected expression.");
 }

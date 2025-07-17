@@ -28,7 +28,7 @@ Current structure for the AST parser in BNF format
 
 <expression> ::= <assignment> 
 
-<assignment> ::= <equality> | {"=" <assignment>}?
+<assignment> ::= <equality> | {"=" <equality>}?
 
 <equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
@@ -52,15 +52,15 @@ Current structure for the AST parser in BNF format
 
 -> A declaration is used to introduce identifiers into the program and specify their meaning/properties
 
-<declaration> ::= <variable-declaration> ";"
-                | <function-declaration> ";"
+<declaration> ::= "let" <variable-declaration> ";"
+                | "fn" <function-declaration> ";"
 
 <variable-declaration> ::= 
-            {<declaration-specifier>}+ <declarator-list> {"=" <initializer>}?
+             <declarator-list> {":"}? {<declaration-specifier>}+ {"=" <initializer>}?
 
 <function-declaration> ::= 
-            {<declaration-specifier>}+ <ptr-and-declarator> 
-            "(" {<parameter-list>}? ")" {<compound-statement>}?
+             <ptr-and-declarator> "(" {<parameter-list>}? ")" 
+             "->" {<declaration-specifier>}+ {<compound-statement>}?
 
 <declarator> ::= <identifier>
                | <declarator> "(" {<parameter-list>}? ")"
@@ -74,7 +74,9 @@ Current structure for the AST parser in BNF format
 <declarator-list> ::= <ptr-and-declarator>
                     | <ptr-and-declarator>, <declarator-list>
 
-
+<initializer> ::= <equality>
+                | "{" <initializer> {","}? "}"
+// FIXME: this above is wrong^
 
 ---
 ---
@@ -134,7 +136,8 @@ int a = 1, *p = NULL, f(void), (*pf)(double);
 
 // declarator "(*pf)(double)" defines an object of type pointer to function 
 //   taking double and returning int
-
+'int' epicness;
+'struct gaming{int wow; float gamer;}' epicness;
 struct C
 {
     int member; // "int" is the type specifier

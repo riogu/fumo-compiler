@@ -14,14 +14,16 @@ struct Lexer {
     std::stringstream file_stream;
     int curr = 0;
 
-    [[nodiscard]] std::pair<Vec<Token>, File>  tokenize_file(const fs::path& _file_name);
-    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_string(const std::string& testname, const std::string& test_string);
+    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_string(const std::string& testname,
+                                                              const std::string& test_string);
     [[nodiscard]] Vec<Token> tokenize();
 
   private:
     [[nodiscard]] Token parse_numeric_literal();
     [[nodiscard]] Token parse_identifier();
     [[nodiscard]] bool is_keyword(const str identifier);
+    [[nodiscard]] bool is_builtin_type(const str identifier);
     [[nodiscard]] str peek_line();
     [[nodiscard]] bool identifier_ended();
     int get_curr();
@@ -69,17 +71,17 @@ case static_cast<int>(Symbol::tkn): {                                   \
 .file_offset = file_stream.tellg(),                                     \
 .file_name = __FUMO_FILE__.string()
 
-#define lexer_error(...)                                    \
-{                                                           \
-    std::cerr << _lexer_error(__VA_ARGS__) << std::endl;    \
-    exit(0);                                                \
+#define lexer_error(...)                                                \
+{                                                                       \
+    std::cerr << _lexer_error(__VA_ARGS__) << std::endl;                \
+    std::exit(0);                                                       \
 }
 
-#define _lexer_error(...)                                             \
-std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",  \
-    __FUMO_FILE__.string(),                                           \
-    __FUMO_LINE_NUM__,                                                \
-    __FUMO_LINE__,                                                    \
-    std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                    \
-    std::format(__VA_ARGS__)                                          \
+#define _lexer_error(...)                                               \
+std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}",    \
+    __FUMO_FILE__.string(),                                             \
+    __FUMO_LINE_NUM__,                                                  \
+    __FUMO_LINE__,                                                      \
+    std::string(__FUMO_LINE_OFFSET__, ' ') + "^ ",                      \
+    std::format(__VA_ARGS__)                                            \
     )

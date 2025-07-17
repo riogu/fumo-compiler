@@ -18,6 +18,10 @@
     map_macro(check_keyword, keywords)
     return false;
 }
+[[nodiscard]] bool Lexer::is_builtin_type(const str identifier) {
+    map_macro(check_keyword, builtin_types)
+    return false;
+}
 
 #undef symbol_case
 #undef check_keyword
@@ -44,7 +48,9 @@ int Lexer::get_curr() {
         else
             lexer_error("Source file is not valid ASCII or used unsupported character in identifier.");
     }
-    return Token {.type = is_keyword(value) ? TokenType::keyword : TokenType::identifier,
+
+    return Token {.type = is_keyword(value) ? is_builtin_type(value) ? TokenType::builtin_type : TokenType::keyword
+                                            : TokenType::identifier,
                   .value = std::move(value),
                   .line_number = __FUMO_LINE_NUM__,
                   .line_offset = __FUMO_LINE_OFFSET__,

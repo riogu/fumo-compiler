@@ -3,7 +3,6 @@
 #include "parser_errors.hpp"
 #include <memory>
 #include <vector>
-
 // clang-format off
 
 enum struct NodeKind { 
@@ -63,7 +62,11 @@ struct Binary {
     unique_ptr<ASTNode> lhs;
     unique_ptr<ASTNode> rhs;
 };
-struct If {};struct For {};struct Member {};struct Variable {};struct Scope {};struct Function {};
+struct If {};struct For {};struct Member {};
+struct Variable {
+    
+};
+struct Scope {};struct Function {};
 
 struct ASTNode {
 
@@ -145,6 +148,7 @@ struct Parser {
     std::vector<Token>::iterator prev_tkn;
 
     // based on BNF for C99 with modifications (notes/current_bnf.md)
+    // expressions
     [[nodiscard]] unique_ptr<ASTNode> statement();
     [[nodiscard]] unique_ptr<ASTNode> expression_statement();
     [[nodiscard]] unique_ptr<ASTNode> expression();
@@ -155,6 +159,12 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> multiply();
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
+    // declarations
+    [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
+    [[nodiscard]] unique_ptr<ASTNode> function_declaration();
+    // misc
+    [[nodiscard]] unique_ptr<ASTNode> declaration_specifier();
+    [[nodiscard]] unique_ptr<ASTNode> initializer();
 
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
