@@ -74,9 +74,11 @@ Current structure for the AST parser in BNF format
 <declarator-list> ::= <ptr-and-declarator>
                     | <ptr-and-declarator>, <declarator-list>
 
-<initializer> ::= <equality>
-                | "{" <initializer> {","}? "}"
-// FIXME: this above is wrong^
+<initializer> ::= "{" <initializer-list> "}"
+                | <equality>
+
+<initializer-list> ::= <initializer> {","}?
+                     | <initializer> , <initializer-list>
 
 ---
 ---

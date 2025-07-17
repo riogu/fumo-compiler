@@ -40,7 +40,8 @@ enum struct NodeKind {
     expression,              /* expression                        */    \
     statement,               /* statement                         */    \
     variable_declaration,    /* variable                          */    \
-    function_declaration     /* function                          */
+    function_declaration,    /* function                          */    \
+    initializer_list         /* function                          */
 
     all_node_kinds
 };
@@ -48,9 +49,9 @@ enum struct NodeKind {
 template<typename T>
 using unique_ptr = std::unique_ptr<T>;
 struct ASTNode;
-struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary; struct Function; struct Member; struct Scope;
+struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary; struct Function; struct Member; struct Scope; struct InitializerList;
 
-using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope>;
+using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope, InitializerList>;
 
 struct Primary {
     Literal value; // can also be an identifier
@@ -63,8 +64,13 @@ struct Binary {
     unique_ptr<ASTNode> rhs;
 };
 struct If {};struct For {};struct Member {};
+
 struct Variable {
-    
+    std::string identifier;
+    Opt<unique_ptr<ASTNode>> initializer;
+};
+struct InitializerList {
+    Vec<unique_ptr<ASTNode>> nodes;
 };
 struct Scope {};struct Function {};
 
@@ -164,18 +170,25 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
     // misc
     [[nodiscard]] unique_ptr<ASTNode> declaration_specifier();
+    [[nodiscard]] unique_ptr<ASTNode> initializer_list();
     [[nodiscard]] unique_ptr<ASTNode> initializer();
 
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
-    #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
+    #define token_is_str(tok) (is_tkn(str_to_tkn_type(tok)))
     #define token_is(tok, ...) (is_tkn(tkn(tok)) __VA_OPT__(&& is_tkn_keyword(#__VA_ARGS__)))
-
     constexpr bool is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end()
                && ((curr_tkn)->type == type) ? ({ // std::print("consumed: '{}'\n", curr_tkn->to_str());
                                                   prev_tkn = curr_tkn; curr_tkn++; true; })
                                              : false;
+    }
+
+    #define peek_token_str(tok) peek_is_tkn(str_to_tkn_type(tok))
+    #define peek_token(tok) peek_is_tkn(tkn(tok))
+    constexpr bool peek_is_tkn(const TokenType& type) {
+        return curr_tkn != tokens.end() && ((curr_tkn)->type == type);
+                                           
     }
 
     constexpr bool is_tkn_keyword(std::string_view keyword) {
@@ -207,6 +220,14 @@ struct Parser {
             result += std::format(" \033[38;2;134;149;179m::=\033[0m {}", unary.expr->to_str(depth));
         }
         holds(Primary, &primary) {}
+        holds(InitializerList, &init_list) {
+            depth--;
+            for(const auto& node: init_list.nodes) {
+                match(*node) {
+                    _{}
+                }
+            }
+        }
         // result += std::format(" \033[38;2;134;149;179m=>\033[0m '{}'", this->source_token.to_str());
         _ {
             PANIC(std::format("couldn't print node of kind: {}.", kind_name()));
