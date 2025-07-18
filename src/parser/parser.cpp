@@ -1,15 +1,15 @@
 #include "parser/parser.hpp"
+#include "parser/ast_node.hpp"
+#include "parser/parser_errors.hpp"
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
-    tokens = tkns;
-    curr_tkn = tkns.begin();
-    prev_tkn = tkns.begin();
+    tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
     Vec<unique_ptr<ASTNode>> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
-        if (token_is(keyword, fn)) //
+        if (token_is_keyword(fn)) //
             AST.push_back(function_declaration());
-        else if (token_is(keyword, let))
+        else if (token_is_keyword(let))
             AST.push_back(variable_declaration());
         else
             AST.push_back(statement());
@@ -17,25 +17,45 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     return AST;
 }
 
+// <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
+//                            "->" {<declaration-specifier>}+ {<pointer>}* 
+//                            {<compound-statement>}?
+// fn cool_func(i32 a, float b) -> const i32* {}
 [[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
-    PANIC("not implemented.");
+    expect_token(identifier);
+    Function function {.name = std::get<str>(prev_tkn->literal.value())};
+    Token token = *prev_tkn;
+
+    expect_token_str("(");
+    function.parameters = parameter_list(); // could be an empty vector
+    expect_token_str(")");
+
+    expect_token(->);
+    function.type = declaration_specifier();
+
+    if (token_is_str("{")) {
+        function.body = compound_statement();
+        expect_token_str("}");
+    } else
+        expect_token(;);
+
+    return ASTNode{token, NodeKind::function_declaration, std::move(function)};
 }
 
-// FIXME: continue this tomorrow
+// <variable-declaration> ::= <declarator-list> {":"}? 
+//                            {<declaration-specifier>}+ {"=" <initializer>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
-    // NOTE: should be identifier list (add later)
+    // TODO: should be identifier list (add later)
     expect_token(identifier);
     auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
-    Variable variable {std::get<str>(prev_tkn->value.value())};
+    Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
+    // TODO: should also allow user types 
+    if (token_is(:)) variable.type = declaration_specifier();
 
-    expect_token(:);
-    expect_token(identifier);
-    //     // NOTE: should also allow user types (add later)
-    // auto fix_this_should_be_a_type = declaration_specifier();
-
-    variable.initializer = token_is(=) ? std::make_optional(initializer()) : std::nullopt;
+    variable.value = token_is(=) ? std::make_optional(initializer()) : std::nullopt;
     node.branch = std::move(variable);
 
+    expect_token(;);
     return node;
 }
 
@@ -69,7 +89,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
-    if (token_is(keyword, return)) {
+    if (token_is_keyword(return)) {
         return ASTNode {*prev_tkn, NodeKind::return_statement, Unary {expression_statement()}};
     }
     return expression_statement();
@@ -128,9 +148,9 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 [[nodiscard]] unique_ptr<ASTNode> Parser::relational() {
     auto node = add();
     if (token_is(<))
-        return ASTNode {*prev_tkn, NodeKind::less_than, Binary {std::move(node), add()}};
+        return ASTNode {*prev_tkn, NodeKind::less_than,   Binary {std::move(node), add()}};
     if (token_is(>))
-        return ASTNode {*prev_tkn, NodeKind::less_than, Binary {add(), std::move(node)}};
+        return ASTNode {*prev_tkn, NodeKind::less_than,   Binary {add(), std::move(node)}};
     if (token_is(<=))
         return ASTNode {*prev_tkn, NodeKind::less_equals, Binary {std::move(node), add()}};
     if (token_is(>=))
@@ -189,10 +209,10 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
         return node;
     }
     if (token_is(identifier)) {
-        return ASTNode {*prev_tkn, NodeKind::identifier, Primary {prev_tkn->value.value()}};
+        return ASTNode {*prev_tkn, NodeKind::identifier, Primary {prev_tkn->literal.value()}};
     }
     if (token_is(int) || token_is(float) || token_is(string)) {
-        return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->value.value()}};
+        return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->literal.value()}};
     }
     report_error(curr_tkn, "expected expression.");
 }

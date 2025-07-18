@@ -64,19 +64,18 @@ using Err = std::unexpected<T>;
     minus_greater
 #define builtin_types                   \
     char             ,                  \
-    const            ,                  \
     double           ,                  \
     enum             ,                  \
-    extern           ,                  \
-    int              ,                  \
-    struct           ,                  \
-    union            ,                  \
+    i32              ,                  \
     float            ,                  \
     bool             ,                  \
+    struct           ,                  \
+    union            ,                  \
     void
 #define keywords                        \
     let              ,                  \
     fn               ,                  \
+    extern           ,                  \
     auto             ,                  \
     default          ,                  \
     break            ,                  \
@@ -92,6 +91,7 @@ using Err = std::unexpected<T>;
     sizeof           ,                  \
     static           ,                  \
     switch           ,                  \
+    const            ,                  \
     volatile         ,                  \
     while            ,                  \
     builtin_types

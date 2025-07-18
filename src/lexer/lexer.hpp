@@ -65,7 +65,7 @@ case static_cast<int>(Symbol::tkn): {                                   \
 }
 
 #define add_token_info                                                  \
-.value = std::nullopt,                                                  \
+.literal = std::nullopt,                                                \
 .line_number = __FUMO_LINE_NUM__,                                       \
 .line_offset = __FUMO_LINE_OFFSET__,                                    \
 .file_offset = file_stream.tellg(),                                     \

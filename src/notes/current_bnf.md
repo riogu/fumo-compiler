@@ -19,6 +19,51 @@ Current structure for the AST parser in BNF format
 ---
 ---
 ---
+- Declarations
+
+-> A declaration is used to introduce identifiers into the program and specify their meaning/properties
+
+<declaration> ::= "let" <variable-declaration> ";"
+                | "fn" <function-declaration> ";"
+```c
+fn int* func() {}
+let f: fn(int, int) -> int = some();
+let var : fn<int(int, int)> = some();
+
+auto func(int, int) -> int* {}
+```
+
+<variable-declaration> ::= <declarator-list> {":"}?
+                           {<declaration-specifier>}+ {<pointer>}* 
+                           {"=" <initializer>}?
+
+<function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
+                           "->" {<declaration-specifier>}+ {<pointer>}* {<compound-statement>}?
+
+<declarator> ::= <identifier>
+               | <declarator> "(" {<parameter-list>}? ")"
+               | <declarator> "\[" {<constant-expression>}? "]"
+
+<declaration-specifier> ::= <type-qualifier>
+                          | <type-specifier>
+
+<declarator-list> ::= <declarator>
+                    | <declarator> "," <declarator-list>
+
+<initializer> ::= "{" <initializer-list> "}"
+                | <equality>
+
+<initializer-list> ::= <initializer> {","}?
+                     | <initializer> , <initializer-list>
+
+<parameter-list> ::= <parameter>
+                   | <parameter-list> "," <parameter> 
+
+<parameter> ::= <declarator-specifier> <identifier> 
+
+---
+---
+---
 - Expressions
 ```c
 // an expression is not directly modelled as a NodeKind
@@ -48,42 +93,8 @@ Current structure for the AST parser in BNF format
 ---
 ---
 ---
-- Declarations
-
--> A declaration is used to introduce identifiers into the program and specify their meaning/properties
-
-<declaration> ::= "let" <variable-declaration> ";"
-                | "fn" <function-declaration> ";"
-
-<variable-declaration> ::= 
-             <declarator-list> {":"}? {<declaration-specifier>}+ {"=" <initializer>}?
-
-<function-declaration> ::= 
-             <ptr-and-declarator> "(" {<parameter-list>}? ")" 
-             "->" {<declaration-specifier>}+ {<compound-statement>}?
-
-<declarator> ::= <identifier>
-               | <declarator> "(" {<parameter-list>}? ")"
-               | <declarator> \[ {<constant-expression>}? \]
-
-<declaration-specifier> ::= <type-qualifier> 
-                          | <type-specifier>
-
-<ptr-and-declarator> ::= {<pointer>}? <declarator> 
-
-<declarator-list> ::= <ptr-and-declarator>
-                    | <ptr-and-declarator>, <declarator-list>
-
-<initializer> ::= "{" <initializer-list> "}"
-                | <equality>
-
-<initializer-list> ::= <initializer> {","}?
-                     | <initializer> , <initializer-list>
-
----
----
----
 - Misc definitions
+<pointer> ::= " * "
 <unary-op> ::= - 
              | ! 
              | ~ 
@@ -105,7 +116,6 @@ Current structure for the AST parser in BNF format
                    | <enum-specifier>
                    | <typedef-name>
 
-<pointer> ::= " * " {<type-qualifier>}* {<pointer>}?
 
 ---
 ---
@@ -114,11 +124,6 @@ Current structure for the AST parser in BNF format
 NOTE: haven't added "..." yet
 
 -> a parameter is considered a declaration
-
-<parameter-list> ::= <parameter>
-                   | <parameter-list> "," <parameter> 
-
-<parameter> ::= <type-specifier> <identifier> 
 
 
 
