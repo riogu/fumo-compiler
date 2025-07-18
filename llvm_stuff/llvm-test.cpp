@@ -1,15 +1,14 @@
 // struct huh{float x; char* hum;};
 // struct epic{ int a; int b; struct huh var;};
 // int myfunc(){return 1231;}
-#include <iostream>
-
-int square(int x) { return x * x; }
+int square(int x);
+extern int huh;
 
 int main() { 
-    int var;
-    std::cin >> var;
-
-    float epic = 213123;
-
-    return square(var);
+    int var = 213123;
+    huh = 123123;
+    huh = 21;
+    return square(123123);
 }
+
+int square(int x) { return x * x; }

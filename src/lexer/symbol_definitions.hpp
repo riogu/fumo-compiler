@@ -63,15 +63,14 @@ using Err = std::unexpected<T>;
     dot_dot_dot,                        \
     minus_greater
 #define builtin_types                   \
-    char             ,                  \
-    double           ,                  \
-    enum             ,                  \
+    void             ,                  \
+    i8               ,                  \
     i32              ,                  \
-    float            ,                  \
-    bool             ,                  \
-    struct           ,                  \
-    union            ,                  \
-    void
+    i64              ,                  \
+    f32              ,                  \
+    f64              ,                  \
+    str              ,                  \
+    bool
 #define keywords                        \
     let              ,                  \
     fn               ,                  \
@@ -94,6 +93,9 @@ using Err = std::unexpected<T>;
     const            ,                  \
     volatile         ,                  \
     while            ,                  \
+    enum             ,                  \
+    union            ,                  \
+    struct           ,                  \
     builtin_types
 #define literals                        \
     identifier,                         \

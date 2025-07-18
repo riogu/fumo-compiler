@@ -50,11 +50,6 @@ auto func(int, int) -> int* {}
 <declarator-list> ::= <declarator>
                     | <declarator> "," <declarator-list>
 
-<initializer> ::= "{" <initializer-list> "}"
-                | <equality>
-
-<initializer-list> ::= <initializer> {","}?
-                     | <initializer> , <initializer-list>
 
 <parameter-list> ::= <parameter>
                    | <parameter-list> "," <parameter> 
@@ -73,7 +68,13 @@ auto func(int, int) -> int* {}
 
 <expression> ::= <assignment> 
 
-<assignment> ::= <equality> | {"=" <equality>}?
+<assignment> ::= <equality> | {"=" <initializer>}?
+
+<initializer> ::= "{" <initializer-list> "}"
+                | <equality>
+
+<initializer-list> ::= <initializer> {","}?
+                     | <initializer> , <initializer-list>
 
 <equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
 
@@ -89,6 +90,7 @@ auto func(int, int) -> int* {}
 <primary> ::= "(" <equality> ")"
             | <identifier> 
             | <literal>
+
 
 ---
 ---
@@ -115,6 +117,10 @@ auto func(int, int) -> int* {}
                    | <struct-or-union-specifier>
                    | <enum-specifier>
                    | <typedef-name>
+<type-qualifier> ::= const
+                   | volatile
+                   | static
+                   | extern
 
 
 ---

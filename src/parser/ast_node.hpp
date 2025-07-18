@@ -1,9 +1,7 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
+#include "parser/type.hpp"
 // clang-format off
-
-template<typename T>
-using unique_ptr = std::unique_ptr<T>;
 
 enum struct NodeKind { 
 #define all_node_kinds                                               \
@@ -46,20 +44,6 @@ enum struct NodeKind {
 
     all_node_kinds
 };
-
-#define make_enum_member(_v) _##_v,
-enum struct TypeKind {
-    _ptr,
-    map_macro(make_enum_member, builtin_types)
-};
-enum struct TypeQualifier { _const, _volatile };
-struct Type {
-    TypeQualifier qualifier;
-    TypeKind kind;
-    str name;
-    Opt<unique_ptr<Type>> base; // if its a pointer
-};
-#undef make_enum_member
 
 struct ASTNode; struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary;
 struct Function; struct Member; struct Scope; struct InitializerList;

@@ -1,6 +1,5 @@
 #include "parser/parser.hpp"
-#include "parser/ast_node.hpp"
-#include "parser/parser_errors.hpp"
+#include "parser/type.hpp"
 
 Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
@@ -17,75 +16,6 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     return AST;
 }
 
-// <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
-//                            "->" {<declaration-specifier>}+ {<pointer>}* 
-//                            {<compound-statement>}?
-// fn cool_func(i32 a, float b) -> const i32* {}
-[[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
-    expect_token(identifier);
-    Function function {.name = std::get<str>(prev_tkn->literal.value())};
-    Token token = *prev_tkn;
-
-    expect_token_str("(");
-    function.parameters = parameter_list(); // could be an empty vector
-    expect_token_str(")");
-
-    expect_token(->);
-    function.type = declaration_specifier();
-
-    if (token_is_str("{")) {
-        function.body = compound_statement();
-        expect_token_str("}");
-    } else
-        expect_token(;);
-
-    return ASTNode{token, NodeKind::function_declaration, std::move(function)};
-}
-
-// <variable-declaration> ::= <declarator-list> {":"}? 
-//                            {<declaration-specifier>}+ {"=" <initializer>}?
-[[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
-    // TODO: should be identifier list (add later)
-    expect_token(identifier);
-    auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
-    Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
-    // TODO: should also allow user types 
-    if (token_is(:)) variable.type = declaration_specifier();
-
-    variable.value = token_is(=) ? std::make_optional(initializer()) : std::nullopt;
-    node.branch = std::move(variable);
-
-    expect_token(;);
-    return node;
-}
-
-// <initializer> ::= "{" <initializer-list> "}"
-//                 | <equality>
-[[nodiscard]] unique_ptr<ASTNode> Parser::initializer() {
-    if (token_is_str("{")) {
-        auto node = initializer_list();
-        expect_token_str("}");
-        return node;
-    }
-    return equality();
-}
-
-// <initializer-list> ::= <initializer> {","}?
-//                      | <initializer> , <initializer-list>
-[[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
-    InitializerList init_list {};
-    init_list.nodes.push_back(initializer());
-    while (1) {
-        if (token_is_str(",")) {
-            if (peek_token_str("}")) { // allow optional hanging comma
-                return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
-            }
-            init_list.nodes.push_back(initializer());
-            continue;
-        }
-        return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
-    }
-}
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
@@ -126,6 +56,34 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
                         Binary {std::move(node), initializer()}};
     }
     return node;
+}
+
+// <initializer> ::= "{" <initializer-list> "}"
+//                 | <equality>
+[[nodiscard]] unique_ptr<ASTNode> Parser::initializer() {
+    if (token_is_str("{")) {
+        auto node = initializer_list();
+        expect_token_str("}");
+        return node;
+    }
+    return equality();
+}
+
+// <initializer-list> ::= <initializer> {","}?
+//                      | <initializer> , <initializer-list>
+[[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
+    InitializerList init_list {};
+    init_list.nodes.push_back(initializer());
+    while (1) {
+        if (token_is_str(",")) {
+            if (peek_token_str("}")) { // allow optional hanging comma
+                return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
+            }
+            init_list.nodes.push_back(initializer());
+            continue;
+        }
+        return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
+    }
 }
 
 // <equality> ::= <relational> {("==" | "!=") <relational>}*

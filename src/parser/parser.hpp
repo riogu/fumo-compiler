@@ -23,16 +23,16 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> multiply();
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
-    // variables
+    // declarations
     [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
     [[nodiscard]] unique_ptr<ASTNode> initializer_list();
     [[nodiscard]] unique_ptr<ASTNode> initializer();
-    // functions
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
     [[nodiscard]] Vec<Variable> parameter_list();
-    // misc
-    [[nodiscard]] unique_ptr<ASTNode> compound_statement();
     [[nodiscard]] Type declaration_specifier();
+    [[nodiscard]] Struct struct_declaration();
+    [[nodiscard]] Enum enum_declaration();
+    [[nodiscard]] unique_ptr<ASTNode> compound_statement();
     // --------------------------------------------------------------
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
