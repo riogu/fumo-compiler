@@ -32,9 +32,10 @@ auto main() -> int {
         t("let gamer = 69420;let gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);","pass"),
         t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
         t("let var: int = (-1) * 3- - 8 * - 1 +2;", "pass"),
-        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n"
-          "    fn func_name(a: i32, b: f64) -> const i32* {\n"
+        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
+        t("fn func_name(a: i32, b: f64) -> const i32* {\n"
           "    let var: i32 = 213123;\n"
+          // "{let x: int;}\n"
           "    var = 213;\n"
           "}\n"
           "fn another_f() -> const i32****;\n"
@@ -42,6 +43,7 @@ auto main() -> int {
           // "let var;\n"
           // "let var: i32 = 1232;\n"
           ,"pass"),
+        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail")
         // t("struct gaming;", 
 
         //   "fail")

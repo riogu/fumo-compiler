@@ -76,7 +76,7 @@ struct Function {
     Type type;
     std::string name;
     Vec<Variable> parameters; // if its empty we have no params
-    Opt<Scope> body; // compound statement
+    Opt<unique_ptr<ASTNode>> body; // scope
 };
 
 struct If {};
@@ -189,21 +189,16 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
             temp += gray(")");
             temp += gray(" -> ") + yellow(func.type.name);
             result += std::format("{} {}", gray("=>"), temp);
+            if (func.body) result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"),
+                                                 func.body.value()->to_str(depth)); 
         }
         holds(Scope, &scope) {
-            switch(this->kind) {
-                case NodeKind::initializer_list:
-                    result += gray("{");
-                    depth++;
-                    for(auto& node: scope.nodes) 
-                        result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
-                    depth--;
-                    result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
-                    break;
-                case NodeKind::translation_unit:
-                default:
-                    break;
-            }
+            result += gray("{");
+            depth++;
+            for(auto& node: scope.nodes) 
+                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
+            depth--;
+            result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
         }
         _ { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }

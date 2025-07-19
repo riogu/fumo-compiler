@@ -3,6 +3,7 @@
 #include "parser/parser_errors.hpp"
 
 struct Parser {
+
     std::stringstream file_stream;
     [[nodiscard]] Scope parse_tokens(Vec<Token>& tokens);
 
@@ -34,8 +35,8 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
     // function
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
+    [[nodiscard]] unique_ptr<ASTNode> compound_statement();
     [[nodiscard]] Vec<Variable> parameter_list();
-    [[nodiscard]] Scope compound_statement();
     // --------------------------------------------------------------
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))

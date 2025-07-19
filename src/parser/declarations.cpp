@@ -71,7 +71,7 @@
 }
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* }
-[[nodiscard]] Scope Parser::compound_statement() {
+[[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
     // TODO: finish this
     Vec<ASTNode> nodes {};
     while(!token_is_str("}")) {
@@ -82,7 +82,7 @@
         else
             nodes.push_back(std::move(*statement()));
     }
-    return Scope {std::move(nodes)};
+    return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {std::move(nodes)}};
 }
 // <declaration-specifier> ::= <type-qualifier> | <type-specifier>
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str
