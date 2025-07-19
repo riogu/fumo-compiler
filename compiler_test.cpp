@@ -38,7 +38,9 @@ auto main() -> int {
           "var = {1232};\n"
           "let var;"
           "let var: i32 = 1232;"
-          ,"pass")
+          ,"pass"),
+        t("struct gaming;", 
+          "fail")
     };
     std::print("{}","\n------------------------------------------------\n");
     for (const auto& [test, expected] : tests) {
