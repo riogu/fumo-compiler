@@ -157,7 +157,6 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
     str result = std::format("{} ", kind_name());
-    unique_ptr<ASTNode> epic = ASTNode{};
 
     match(*this) {
         holds(Binary, &bin) {

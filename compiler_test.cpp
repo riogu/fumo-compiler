@@ -36,7 +36,10 @@ auto main() -> int {
         t("fn another_f() -> const i32****;\n"
           "fn func_name(a: i32, b: f64) -> const i32* {\n"
           "    let var: i32 = 213123;\n"
-          // "{let x: int;}\n"
+          "    {\n"
+          "       let x: int;\n"
+          "       x = 123 + 20;\n"
+          "    }\n"
           "    var = 213;\n"
           "}\n"
           ,"pass"),

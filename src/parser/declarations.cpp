@@ -78,6 +78,8 @@
             nodes.push_back(std::move(*variable_declaration()));
         else if (token_is_keyword(fn))
             nodes.push_back(std::move(*function_declaration()));
+        else if(token_is_str("{"))
+            nodes.push_back(std::move(*compound_statement()));
         else
             nodes.push_back(std::move(*statement()));
     }
