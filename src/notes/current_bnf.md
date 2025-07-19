@@ -41,7 +41,7 @@ let var : fn<int(int, int)> = some();
 <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
                            "->" {<declaration-specifier>}+ {<pointer>}* {<compound-statement>}?
 
-<compound-statement> ::= { {<declaration>}* {<statement>}* }
+<compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement>}* }
 
 <declarator> ::= <identifier>
                | <declarator> "(" {<parameter-list>}? ")"

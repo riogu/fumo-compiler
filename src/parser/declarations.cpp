@@ -21,7 +21,6 @@
 //                            "->" {<declaration-specifier>}+ {<pointer>}* 
 //                            {<compound-statement>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
-    // fn cool_func(i32 a, float b) -> const i32* {}
     expect_token(identifier);
     Function function {.name = std::get<str>(prev_tkn->literal.value())};
     Token token = *prev_tkn;
@@ -30,6 +29,7 @@
 
     expect_token(->);
     function.type = declaration_specifier();
+
     if (const auto& kind = function.type.kind;
         kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
         report_error(token, "type cannot be defined in the result type of a function.");
@@ -48,9 +48,9 @@
 //                    | <parameter-list> "," <parameter> 
 [[nodiscard]] Vec<Variable> Parser::parameter_list() {
     expect_token_str("(");
-    Vec<Variable> parameters {};
+    if (token_is_str(")")) return {};
 
-    if (token_is_str(")")) return parameters;
+    Vec<Variable> parameters {};
     while (1) {
         expect_token(identifier);
         Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
@@ -70,7 +70,7 @@
     }
 }
 
-// <compound-statement> ::= { {<declaration>}* {<statement>}* }
+// <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement}* }
 [[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
     Vec<ASTNode> nodes {};
     while(!token_is_str("}")) {

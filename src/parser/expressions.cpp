@@ -39,7 +39,7 @@ Scope Parser::parse_tokens(Vec<Token>& tkns) {
     return assignment();
 }
 
-// <assignment> ::= <equality> {"=" <equality>}?
+// <assignment> ::= <equality> {"=" <initializer>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::assignment() {
     auto node = equality();
 

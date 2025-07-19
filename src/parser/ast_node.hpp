@@ -174,6 +174,7 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
         }
         holds(Variable, &var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));
+            result += gray(": ") + yellow(var.type.name);
             if (var.value) {
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
