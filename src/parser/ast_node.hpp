@@ -26,29 +26,31 @@ enum struct NodeKind {
     /* ----------------------------------------                   */ \
     literal,                 /* int | float | string              */ \
     identifier,              /* (variable | function) name        */ \
-                             /* | (enum |struct |union) member    */ \
+                             /* | (enum | struct | union) member  */ \
     function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* statements                                                 */ \
     /* if, for, while, compound-statement, etc                    */ \
-    compound_statement,      /* {...}                             */ \
     return_statement,        /* return                            */ \
+    /* ----------------------------------------                   */ \
+    /* scopes                                                     */ \
+    compound_statement,      /* {...}                             */ \
+    initializer_list,        /*                                   */ \
+    translation_unit,        /*                                   */ \
     /* ----------------------------------------                   */ \
     /* top levels                                                 */ \
     expression,              /*                                   */ \
     statement,               /*                                   */ \
     variable_declaration,    /*                                   */ \
-    function_declaration,    /*                                   */ \
-    initializer_list,        /*                                   */ \
-    translation_unit         /*                                   */
+    function_declaration
 
     all_node_kinds
 };
 
 struct ASTNode; struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary;
-struct Function; struct Member; struct Scope; struct InitializerList;
+struct Function; struct Scope; 
 
-using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Member, Scope, InitializerList>;
+using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Scope>;
 
 struct Primary {
     Literal value; // can also be an identifier
@@ -60,19 +62,15 @@ struct Binary {
     unique_ptr<ASTNode> lhs;
     unique_ptr<ASTNode> rhs;
 };
-struct Variable {
+struct  Variable {
     Type type;
     std::string name;
     Opt<unique_ptr<ASTNode>> value;
 };
-struct InitializerList {
+
+// compound-statement | initializer-list | translation-unit | struct-body
+struct Scope { 
     Vec<ASTNode> nodes;
-};
-struct Scope {
-    Vec<ASTNode> expressions;
-    // Declaration declaration;
-    // Statement statement;
-    // can be a compound statement or the global scope
 };
 struct Function {
     Type type;
@@ -81,7 +79,8 @@ struct Function {
     Opt<Scope> body; // compound statement
 };
 
-struct If {};struct For {};struct Member {};
+struct If {};
+struct For {};
 
 struct ASTNode {
     Token source_token; // token that originated this Node
@@ -180,14 +179,6 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
         }
-        holds(InitializerList, &init_list) {
-            result += gray("{");
-            depth++;
-            for(auto& node: init_list.nodes) 
-                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
-            depth--;
-            result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
-        }
         holds(Function, &func) {
             str temp = yellow("fn ") + blue(func.name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
@@ -198,6 +189,21 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
             temp += gray(")");
             temp += gray(" -> ") + yellow(func.type.name);
             result += std::format("{} {}", gray("=>"), temp);
+        }
+        holds(Scope, &scope) {
+            switch(this->kind) {
+                case NodeKind::initializer_list:
+                    result += gray("{");
+                    depth++;
+                    for(auto& node: scope.nodes) 
+                        result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
+                    depth--;
+                    result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
+                    break;
+                case NodeKind::translation_unit:
+                default:
+                    break;
+            }
         }
         _ { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }

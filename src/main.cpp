@@ -14,8 +14,8 @@ auto main(int argc, char* argv[]) -> int {
     Parser parser {};
     parser.file_stream << file.contents;
 
-    const auto AST = parser.parse_tokens(tokens);
-    for (auto& node : AST) std::cerr << "node found:\n  " + node->to_str() + "\n";
+    auto translation_unit = parser.parse_tokens(tokens);
+    for (auto& node : translation_unit.nodes) std::cerr << "node found:\n  " + node.to_str() + "\n";
 
     // Codegen codegen {};
     // codegen.codegen(AST);

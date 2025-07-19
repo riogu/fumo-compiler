@@ -4,7 +4,7 @@
 
 struct Parser {
     std::stringstream file_stream;
-    [[nodiscard]] Vec<unique_ptr<ASTNode>> parse_tokens(Vec<Token>& tokens);
+    [[nodiscard]] Scope parse_tokens(Vec<Token>& tokens);
 
   private:
     Vec<Token> tokens;

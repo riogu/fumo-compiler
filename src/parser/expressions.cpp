@@ -1,19 +1,19 @@
 #include "parser/parser.hpp"
 #include "parser/type.hpp"
 
-Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
+Scope Parser::parse_tokens(Vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
-    Vec<unique_ptr<ASTNode>> AST;
+    Vec<ASTNode> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
         if (token_is_keyword(let)) //
-            AST.push_back(variable_declaration());
+            AST.push_back(std::move(*variable_declaration()));
         else if (token_is_keyword(fn))
-            AST.push_back(function_declaration());
+            AST.push_back(std::move(*function_declaration()));
         else
-            AST.push_back(statement());
+            AST.push_back(std::move(*statement()));
     }
-    return AST;
+    return Scope {std::move(AST)};
 }
 
 // <statement> ::= <expression-statement>
@@ -71,7 +71,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 // <initializer-list> ::= <initializer> {","}?
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
-    InitializerList init_list {};
+    Scope init_list {};
     init_list.nodes.push_back(std::move(*initializer()));
     while (1) {
         if (token_is_str(",")) {
