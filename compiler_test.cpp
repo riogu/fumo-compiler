@@ -33,9 +33,9 @@ auto main() -> int {
         // t("wow = 1 + epic - 3 * (2  + 69 - 2) / 3;", "0"),
         // t("x = 3 + 3 * 123 - (321 + 213); x;", "0"),
         // t("let var: int = (-1) * 3- - 8 * - 1 +2;", "69")
-        t(
-            "let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n"
-          // "fn somevar();"
+        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n"
+          "fn func_name(a: i32, b: f64) -> const i32* {}\n"
+          "fn another_f() -> const int****;\n"
           "var = {1232};\n"
           "let var: i32 = 1232;"
           ,"")

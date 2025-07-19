@@ -27,13 +27,11 @@
     Token token = *prev_tkn;
 
     function.parameters = parameter_list(); // could be an empty vector
-    expect_token_str(")");
 
     expect_token(->);
     function.type = declaration_specifier();
-    if (function.type.kind == TypeKind::_union 
-        || function.type.kind == TypeKind::_enum
-        || function.type.kind == TypeKind::_struct) {
+    if (const auto& kind = function.type.kind;
+        kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
@@ -60,11 +58,12 @@
 
         expect_token(:);
         variable.type = declaration_specifier();
-        if (variable.type.kind == TypeKind::_union 
-            || variable.type.kind == TypeKind::_enum
-            || variable.type.kind == TypeKind::_struct) {
+
+        if (const auto& kind = variable.type.kind;
+            kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
+
         parameters.push_back(std::move(variable));
 
         if (token_is_str(",")) continue;
@@ -83,20 +82,12 @@
 // <type-qualifier> ::= const | volatile| static | extern
 [[nodiscard]] Type Parser::declaration_specifier() {
     Type type {};
-    // we recognize but ignore these keywords atm
+
+    // TODO: add extern later
     while (token_is_keyword(const) || token_is_keyword(volatile) 
-            || token_is_keyword(static) || token_is_keyword(extern)) {
-        // TODO: add extern later
-    }
-    if (token_is(builtin_type)) {
-        type.name = std::get<str>(prev_tkn->literal.value());
-        type.kind = builtin_type_kind(type.name);
-        while (token_is(*)) { // NOTE: consider redoing the ptr implementation
-            type.name += "*";
-            type.ptr_count++;
-        }
-        return type;
-    }
+        || token_is_keyword(static)|| token_is_keyword(extern)) {}
+        // we recognize but ignore these keywords atm
+    
     if (token_is_keyword(struct)) {
         return Type {.name = "struct" + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_struct,
@@ -107,8 +98,18 @@
                      .kind = TypeKind::_enum,
                      .enum_type = enum_declaration()};
     }
+    if (token_is(builtin_type)) {
+        type.name = std::get<str>(prev_tkn->literal.value());
+        type.kind = builtin_type_kind(type.name);
+        // NOTE: consider redoing the ptr implementation
+        while (token_is(*)) { type.name += "*"; type.ptr_count++; }
+        return type;
+    }
     if (token_is(identifier)) {
-        return Type {std::get<str>(prev_tkn->literal.value()), TypeKind::_undetermined};
+        type.name = std::get<str>(prev_tkn->literal.value());
+        type.kind = TypeKind::_undetermined;
+        while (token_is(*)) { type.name += "*"; type.ptr_count++; }
+        return type;
     }
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
 }
