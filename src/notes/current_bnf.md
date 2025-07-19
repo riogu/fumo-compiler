@@ -40,6 +40,8 @@ auto func(int, int) -> int* {}
 <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
                            "->" {<declaration-specifier>}+ {<pointer>}* {<compound-statement>}?
 
+<compound-statement> ::= { {<declaration>}* {<statement>}* }
+
 <declarator> ::= <identifier>
                | <declarator> "(" {<parameter-list>}? ")"
                | <declarator> "\[" {<constant-expression>}? "]"

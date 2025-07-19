@@ -17,21 +17,24 @@ struct Parser {
     [[nodiscard]] unique_ptr<ASTNode> expression_statement();
     [[nodiscard]] unique_ptr<ASTNode> expression();
     [[nodiscard]] unique_ptr<ASTNode> assignment();
+    [[nodiscard]] unique_ptr<ASTNode> initializer();
+    [[nodiscard]] unique_ptr<ASTNode> initializer_list();
     [[nodiscard]] unique_ptr<ASTNode> equality();
     [[nodiscard]] unique_ptr<ASTNode> relational();
     [[nodiscard]] unique_ptr<ASTNode> add();
     [[nodiscard]] unique_ptr<ASTNode> multiply();
     [[nodiscard]] unique_ptr<ASTNode> unary();
     [[nodiscard]] unique_ptr<ASTNode> primary();
+    // --------------------------------------------------------------
     // declarations
-    [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
-    [[nodiscard]] unique_ptr<ASTNode> initializer_list();
-    [[nodiscard]] unique_ptr<ASTNode> initializer();
-    [[nodiscard]] unique_ptr<ASTNode> function_declaration();
-    [[nodiscard]] Vec<Variable> parameter_list();
     [[nodiscard]] Type declaration_specifier();
     [[nodiscard]] Struct struct_declaration();
     [[nodiscard]] Enum enum_declaration();
+    // variable
+    [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
+    // function
+    [[nodiscard]] unique_ptr<ASTNode> function_declaration();
+    [[nodiscard]] Vec<Variable> parameter_list();
     [[nodiscard]] unique_ptr<ASTNode> compound_statement();
     // --------------------------------------------------------------
 
@@ -65,7 +68,7 @@ struct Parser {
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) {
             prev_tkn->line_offset++;
-            report_error(prev_tkn, "expected '{}'.", repr);
+            report_error((*prev_tkn), "expected '{}'.", repr);
         }
     }
 };

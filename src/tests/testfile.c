@@ -1,8 +1,7 @@
-struct epic {
-    int gamer;
-};
 
-const int** func();
+struct butwhy {int x; int y;} func(struct wow{int x;} param ) {
+    return (struct butwhy){};
+}
 
 int main() {
     {

@@ -72,7 +72,7 @@ struct Function {
     Type type;
     std::string name;
     Vec<Variable> parameters; // if its empty we have no params
-    unique_ptr<ASTNode> body; // compound statement
+    Opt<unique_ptr<ASTNode>> body; // compound statement
 };
 
 struct Scope {

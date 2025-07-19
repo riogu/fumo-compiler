@@ -6,16 +6,15 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     Vec<unique_ptr<ASTNode>> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
-        if (token_is_keyword(fn)) //
-            AST.push_back(function_declaration());
-        else if (token_is_keyword(let))
+        if (token_is_keyword(let)) //
             AST.push_back(variable_declaration());
+        else if (token_is_keyword(fn))
+            AST.push_back(function_declaration());
         else
             AST.push_back(statement());
     }
     return AST;
 }
-
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
@@ -48,7 +47,7 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
         if (node->kind != NodeKind::identifier) {
             // NOTE: error wont work later when we add postfix operators
             // you can change this to  == NodeKind::literal and its fine
-            report_error((&node->source_token),
+            report_error(node->source_token,
                          "expected lvalue on left-hand side of assignment.");
         }
         return ASTNode {*prev_tkn,
@@ -172,5 +171,5 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
     if (token_is(int) || token_is(float) || token_is(string)) {
         return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->literal.value()}};
     }
-    report_error(curr_tkn, "expected expression.");
+    report_error((*curr_tkn), "expected expression.");
 }
