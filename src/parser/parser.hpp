@@ -35,7 +35,7 @@ struct Parser {
     // function
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
     [[nodiscard]] Vec<Variable> parameter_list();
-    [[nodiscard]] unique_ptr<ASTNode> compound_statement();
+    [[nodiscard]] Scope compound_statement();
     // --------------------------------------------------------------
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))

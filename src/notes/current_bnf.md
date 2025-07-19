@@ -29,9 +29,10 @@ Current structure for the AST parser in BNF format
 fn int* func() {}
 let f: fn(int, int) -> int = some();
 let var : fn<int(int, int)> = some();
-
-auto func(int, int) -> int* {}
 ```
+
+<declaration> ::= <variable-declaration>
+                | <function-declaration>
 
 <variable-declaration> ::= <declarator-list> {":"}?
                            {<declaration-specifier>}+ {<pointer>}* 

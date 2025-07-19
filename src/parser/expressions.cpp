@@ -72,13 +72,13 @@ Vec<unique_ptr<ASTNode>> Parser::parse_tokens(Vec<Token>& tkns) {
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
     InitializerList init_list {};
-    init_list.nodes.push_back(initializer());
+    init_list.nodes.push_back(std::move(*initializer()));
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
                 return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
             }
-            init_list.nodes.push_back(initializer());
+            init_list.nodes.push_back(std::move(*initializer()));
             continue;
         }
         return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};

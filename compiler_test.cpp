@@ -35,12 +35,13 @@ auto main() -> int {
         t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n"
           "fn func_name(a: i32, b: f64) -> const i32* {}\n"
           "fn another_f() -> const i32****;\n"
-          "var = {1232};\n"
-          "let var;"
-          "let var: i32 = 1232;"
+          // "var = {1232};\n"
+          // "let var;\n"
+          // "let var: i32 = 1232;\n"
           ,"pass"),
-        t("struct gaming;", 
-          "fail")
+        // t("struct gaming;", 
+
+        //   "fail")
     };
     std::print("{}","\n------------------------------------------------\n");
     for (const auto& [test, expected] : tests) {

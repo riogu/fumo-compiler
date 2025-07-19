@@ -37,7 +37,6 @@
 
     if (token_is_str("{")) {
         function.body = compound_statement();
-        expect_token_str("}");
     } else
         expect_token(;);
 
@@ -72,9 +71,18 @@
 }
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* }
-[[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
-    // TODO: finish this 
-    return {};
+[[nodiscard]] Scope Parser::compound_statement() {
+    // TODO: finish this
+    Vec<ASTNode> nodes {};
+    while(!token_is_str("}")) {
+        if (token_is_keyword(let)) //
+            nodes.push_back(std::move(*variable_declaration()));
+        else if (token_is_keyword(fn))
+            nodes.push_back(std::move(*function_declaration()));
+        else
+            nodes.push_back(std::move(*statement()));
+    }
+    return Scope {std::move(nodes)};
 }
 // <declaration-specifier> ::= <type-qualifier> | <type-specifier>
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str

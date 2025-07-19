@@ -66,17 +66,19 @@ struct Variable {
     Opt<unique_ptr<ASTNode>> value;
 };
 struct InitializerList {
-    Vec<unique_ptr<ASTNode>> nodes;
+    Vec<ASTNode> nodes;
+};
+struct Scope {
+    Vec<ASTNode> expressions;
+    // Declaration declaration;
+    // Statement statement;
+    // can be a compound statement or the global scope
 };
 struct Function {
     Type type;
     std::string name;
     Vec<Variable> parameters; // if its empty we have no params
-    Opt<unique_ptr<ASTNode>> body; // compound statement
-};
-
-struct Scope {
-    // can be a compound statement or the global scope
+    Opt<Scope> body; // compound statement
 };
 
 struct If {};struct For {};struct Member {};
@@ -150,8 +152,9 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
     if (was_default)
 
 
-#define gray(symbol) "\033[38;2;134;149;179m" symbol "\033[0m"
-#define yellow(symbol) "\033[38;2;252;191;85m" + symbol + "\033[0m"
+#define gray(symbol) str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
+#define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
+#define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
     str result = std::format("{} ", kind_name());
@@ -172,7 +175,7 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
         }
         holds(Variable, &var) {
-            result += std::format("{}{}{}", gray("⟮"), yellow(var.name), gray("⟯"));
+            result += std::format("{} {}", gray("=>"), yellow(var.name));
             if (var.value) {
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
@@ -180,10 +183,21 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
         holds(InitializerList, &init_list) {
             result += gray("{");
             depth++;
-            for(const auto& node: init_list.nodes) 
-                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node->to_str(depth));
+            for(auto& node: init_list.nodes) 
+                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
             depth--;
             result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
+        }
+        holds(Function, &func) {
+            str temp = yellow("fn ") + blue(func.name) + gray("(");
+            for(size_t i = 0; i < func.parameters.size(); i++) {
+                const auto& param = func.parameters.at(i);
+                temp += param.name + gray(": ") + yellow(param.type.name);
+                if(i != func.parameters.size() - 1) temp += gray(", ");
+            }
+            temp += gray(")");
+            temp += gray(" -> ") + yellow(func.type.name);
+            result += std::format("{} {}", gray("=>"), temp);
         }
         _ { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }
