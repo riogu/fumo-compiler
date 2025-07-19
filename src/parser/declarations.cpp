@@ -72,7 +72,6 @@
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* }
 [[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
-    // TODO: finish this
     Vec<ASTNode> nodes {};
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //

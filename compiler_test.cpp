@@ -22,8 +22,7 @@ std::pair<std::string, int> exec(const char* cmd) {
 }
 
 #define t std::pair
-constexpr std::string fail = "fail";
-constexpr std::string pass = "pass";
+constexpr std::string fail = "fail", pass = "pass";
 auto main() -> int {
     // teststring + expected output (only for arithmetic for now)
     constexpr std::array tests {
@@ -33,22 +32,17 @@ auto main() -> int {
         t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
         t("let var: int = (-1) * 3- - 8 * - 1 +2;", "pass"),
         t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
-        t("fn func_name(a: i32, b: f64) -> const i32* {\n"
+        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
+        t("fn another_f() -> const i32****;\n"
+          "fn func_name(a: i32, b: f64) -> const i32* {\n"
           "    let var: i32 = 213123;\n"
           // "{let x: int;}\n"
           "    var = 213;\n"
           "}\n"
-          "fn another_f() -> const i32****;\n"
-          // "var = {1232};\n"
-          // "let var;\n"
-          // "let var: i32 = 1232;\n"
           ,"pass"),
-        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail")
-        // t("struct gaming;", 
 
-        //   "fail")
     };
-    std::print("{}","\n------------------------------------------------\n");
+    std::print("{}",   "\n------------------------------------------------\n");
     for (const auto& [test, expected] : tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
@@ -64,5 +58,4 @@ auto main() -> int {
                        ,test);
         }
     }
-
 }

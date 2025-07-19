@@ -2,7 +2,6 @@
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 
-// TODO: write a script to run all the tests for the compiler (up to current stage)
 auto main(int argc, char* argv[]) -> int {
     std::string test;
 
