@@ -90,14 +90,13 @@ Current structure for the AST parser in BNF format
                   | <=
                   | >=
 <type-specifier> ::= void
-                   | char
-                   | short
-                   | int
-                   | long
-                   | float
-                   | double
-                   | signed
-                   | unsigned
+                   | u8
+                   | i32
+                   | i64
+                   | f32
+                   | f64
+                   | str
+                   | bool
                    | <struct-or-union-specifier>
                    | <enum-specifier>
                    | <typedef-name>
