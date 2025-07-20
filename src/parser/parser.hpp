@@ -11,7 +11,7 @@ struct Parser {
     Vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
-    // based on BNF for C99 with modifications (notes/current_bnf.md)
+    // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
     // --------------------------------------------------------------
     // expressions
     [[nodiscard]] unique_ptr<ASTNode> statement();

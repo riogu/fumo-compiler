@@ -74,24 +74,21 @@ using Err = std::unexpected<T>;
 #define keywords                        \
     let              ,                  \
     fn               ,                  \
+    const            ,                  \
+    volatile         ,                  \
+    static           ,                  \
     extern           ,                  \
-    auto             ,                  \
-    default          ,                  \
-    break            ,                  \
-    case             ,                  \
     continue         ,                  \
-    do               ,                  \
     else             ,                  \
     for              ,                  \
-    goto             ,                  \
     if               ,                  \
     inline           ,                  \
     return           ,                  \
     sizeof           ,                  \
-    static           ,                  \
     switch           ,                  \
-    const            ,                  \
-    volatile         ,                  \
+    default          ,                  \
+    case             ,                  \
+    break            ,                  \
     while            ,                  \
     enum             ,                  \
     union            ,                  \

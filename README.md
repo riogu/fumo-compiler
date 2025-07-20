@@ -9,4 +9,4 @@ Making a compiler based on a subset of the [ISO/IEC 9899:1999 specification](htt
 - static analysis, expression evaluation, etc
 ## Currently done:
 - Lexer (Tokenizer)
-- Parser/AST (not finished, but it is trivial to add new syntax to it)
+- Parser/AST (API is done, new additions are slowly added)
