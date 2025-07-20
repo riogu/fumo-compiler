@@ -6,7 +6,7 @@
 
 #define add_token(tok) tokens.push_back(Token {.type = tkn(tok), add_token_info})
 #define add_and_consume_token(tok) do {tokens.push_back(Token {.type = tkn(tok), add_token_info}); get_curr();} while(0)
-#define next_char_is(tok) (file_stream.peek() == #tok[0])
+#define next_char_is(tok) (file_stream.peek() == 0[#tok])
 #define make_token(tok) Token {.type = tkn(tok), add_token_info}
 #define make_and_consume_token(tok) ({get_curr(); Token {.type = tkn(tok), add_token_info};})
 

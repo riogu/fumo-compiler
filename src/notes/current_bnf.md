@@ -1,10 +1,4 @@
-
 Current structure for the AST parser in BNF format
-
-- Top level
-
-<program> ::= <function>
-
 - Statements
 
 <statement> ::= <jump-statement>
@@ -21,25 +15,18 @@ Current structure for the AST parser in BNF format
 ---
 - Declarations
 
--> A declaration is used to introduce identifiers into the program and specify their meaning/properties
-
 <declaration> ::= "let" <variable-declaration> ";"
                 | "fn" <function-declaration> ";"
-```c
-fn int* func() {}
-let f: fn(int, int) -> int = some();
-let var : fn<int(int, int)> = some();
-```
 
 <declaration> ::= <variable-declaration>
                 | <function-declaration>
 
 <variable-declaration> ::= <declarator-list> {":"}?
-                           {<declaration-specifier>}+ {<pointer>}* 
+                           {<declaration-specifier>}+
                            {"=" <initializer>}?
 
 <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
-                           "->" {<declaration-specifier>}+ {<pointer>}* {<compound-statement>}?
+                           "->" {<declaration-specifier>}+ {<compound-statement>}?
 
 <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement>}* }
 
@@ -47,8 +34,7 @@ let var : fn<int(int, int)> = some();
                | <declarator> "(" {<parameter-list>}? ")"
                | <declarator> "\[" {<constant-expression>}? "]"
 
-<declaration-specifier> ::= <type-qualifier>
-                          | <type-specifier>
+<declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}*
 
 <declarator-list> ::= <declarator>
                     | <declarator> "," <declarator-list>
@@ -63,11 +49,6 @@ let var : fn<int(int, int)> = some();
 ---
 ---
 - Expressions
-```c
-// an expression is not directly modelled as a NodeKind
-// an initializer may have an expression in it
-// also note that <assignment> doesnt follow C99's specification
-```
 
 <expression> ::= <assignment> 
 

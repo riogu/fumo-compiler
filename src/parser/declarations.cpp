@@ -18,7 +18,7 @@
 }
 
 // <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
-//                            "->" {<declaration-specifier>}+ {<pointer>}* 
+//                            "->" {<declaration-specifier>}+ 
 //                            {<compound-statement>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
     expect_token(identifier);
@@ -85,7 +85,7 @@
     }
     return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {std::move(nodes)}};
 }
-// <declaration-specifier> ::= <type-qualifier> | <type-specifier>
+// <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str
 //                    | <struct-or-union-specifier> | <enum-specifier>
 // <type-qualifier> ::= const | volatile| static | extern
