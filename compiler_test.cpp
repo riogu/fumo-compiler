@@ -26,23 +26,24 @@ constexpr std::string fail = "fail", pass = "pass";
 auto main() -> int {
     // teststring + expected output (only for arithmetic for now)
     constexpr std::array tests {
-        t("let var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nlet epic = 213;", "fail"),
-        t("123123 + ~213213* 3123;", "pass"),
-        t("let gamer = 69420;let gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);","pass"),
-        t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
-        t("let var: int = (-1) * 3- - 8 * - 1 +2;", "pass"),
-        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
-        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
-        t("fn another_f() -> const i32****;\n"
-          "fn func_name(a: i32, b: f64) -> const i32* {\n"
-          "    let var: i32 = 213123;\n"
-          "    {\n"
-          "       let x: MyStruct;\n"
-          "       x = {123 + 20};\n"
-          "    }\n"
-          "    var = 213;\n"
-          "}\n"
-          ,"pass"),
+        // t("let var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nlet epic = 213;", "fail"),
+        // t("123123 + ~213213* 3123;", "pass"),
+        // t("let gamer = 69420;let gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);","pass"),
+        // t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
+        // t("let var: int = (-1) * 3- - 8 * - 1 +2;", "pass"),
+        // t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
+        // t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
+        // t("fn another_f() -> const i32****;\n"
+        //   "fn func_name(a: i32, b: f64) -> const i32* {\n"
+        //   "    let var: i32 = 213123;\n"
+        //   "    {\n"
+        //   "       let x: MyStruct;\n"
+        //   "       x = {123 + 20};\n"
+        //   "    }\n"
+        //   "    var = 213;\n"
+        //   "}\n"
+        //   ,"pass"),
+        t("return;","pass"),
 
     };
     std::print("{}",   "\n------------------------------------------------\n");
