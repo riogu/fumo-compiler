@@ -33,17 +33,17 @@ auto main() -> int {
         // t("let var: int = (-1) * 3- - 8 * - 1 +2;", "pass"),
         // t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
         // t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
-        // t("fn another_f() -> const i32****;\n"
-        //   "fn func_name(a: i32, b: f64) -> const i32* {\n"
-        //   "    let var: i32 = 213123;\n"
-        //   "    {\n"
-        //   "       let x: MyStruct;\n"
-        //   "       x = {123 + 20};\n"
-        //   "    }\n"
-        //   "    var = 213;\n"
-        //   "}\n"
-        //   ,"pass"),
-        t("return;","pass"),
+        t("fn another_f() -> const i32****;\n"
+          "fn func_name(a: i32, b: f64) -> const i32* {\n"
+          "    let var: i32 = 213123;\n"
+          "    {\n"
+          "       let x: MyStruct;\n"
+          "       x = {123 + 20};\n"
+          "    }\n"
+          "    var = 213;\n"
+          "}\n"
+          ,"pass"),
+        // t("return;","pass"),
 
     };
     std::print("{}",   "\n------------------------------------------------\n");

@@ -1,9 +1,9 @@
 #include "parser/parser.hpp"
 #include "parser/type.hpp"
 
-Scope Parser::parse_tokens(Vec<Token>& tkns) {
+Scope Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
-    Vec<ASTNode> AST;
+    vec<ASTNode> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
         if (token_is_keyword(let)) //

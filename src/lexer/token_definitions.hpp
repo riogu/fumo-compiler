@@ -13,7 +13,7 @@
 namespace fs = std::filesystem; 
 
 using i64 = int64_t;
-template<typename  T> using Vec = std::vector<T>;
+template<typename  T> using vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
 
 

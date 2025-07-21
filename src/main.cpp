@@ -17,5 +17,5 @@ auto main(int argc, char* argv[]) -> int {
     for (auto& node : translation_unit.nodes) std::cerr << "node found:\n  " + node.to_str() + "\n";
 
     // Codegen codegen {};
-    // codegen.codegen(AST);
+    // codegen.begin_codegen(AST);
 }

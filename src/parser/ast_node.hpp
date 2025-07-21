@@ -1,6 +1,7 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
 #include "parser/type.hpp"
+#include <llvm/IR/Value.h>
 // clang-format off
 
 enum struct NodeKind { 
@@ -23,11 +24,12 @@ enum struct NodeKind {
     logic_not,               /* !                                 */ \
     bitwise_not,             /* ~                                 */ \
     expression_statement,    /* expression statement              */ \
+    function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
+    /* primary                                                    */ \
     literal,                 /* int | float | string              */ \
     identifier,              /* (variable | function) name        */ \
                              /* | (enum | struct | union) member  */ \
-    function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* statements                                                 */ \
     /* if, for, while, compound-statement, etc                    */ \
@@ -50,7 +52,7 @@ enum struct NodeKind {
 struct ASTNode; struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary;
 struct Function; struct Scope; 
 
-using NodeBranch = std::variant<Unary, Binary, If, For, Variable, Primary, Function, Scope>;
+using NodeBranch = std::variant<Primary, Unary, Binary, Variable, Function, Scope>;
 
 struct Primary {
     Literal value; // can also be an identifier
@@ -67,16 +69,15 @@ struct  Variable {
     std::string name;
     Opt<unique_ptr<ASTNode>> value;
 };
-
-// compound-statement | initializer-list | translation-unit | struct-body
-struct Scope { 
-    Vec<ASTNode> nodes;
-};
 struct Function {
     Type type;
     std::string name;
-    Vec<Variable> parameters; // if its empty we have no params
+    vec<Variable> parameters; // if its empty we have no params
     Opt<unique_ptr<ASTNode>> body; // scope
+};
+// compound-statement | initializer-list | translation-unit | struct-body
+struct Scope { 
+    vec<ASTNode> nodes;
 };
 
 struct If {};
@@ -101,6 +102,7 @@ struct ASTNode {
 
     [[nodiscard]] constexpr str to_str(i64 depth);
 
+
 };
 
 template<typename T, typename Head, typename... Tail>
@@ -122,12 +124,14 @@ struct type_sequence {
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const std::shared_ptr<ASTNode>& node) { return type_sequence(node->branch); };
 constexpr auto wrapped_type_seq(const std::unique_ptr<ASTNode>& node) { return type_sequence(node->branch); };
+inline size_t index_of(ASTNode& node) { return node.branch.index(); }
+inline size_t index_of(const ASTNode& node) { return node.branch.index(); }
 inline size_t index_of(std::shared_ptr<ASTNode>& node) { return node->branch.index(); }
 inline size_t index_of(std::unique_ptr<ASTNode>& node) { return node->branch.index(); }
-inline size_t index_of(ASTNode& node) { return node.branch.index(); }
 template<typename T> auto& get_elem(std::unique_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
 template<typename T> auto& get_elem(std::shared_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
 template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
+template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
 
 
 #define match(v)                                                                                    \
@@ -136,11 +140,13 @@ template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.bra
     bool was_default = false;                                                                       \
     switch (auto t_seq___ = wrapped_type_seq(v); index_of(v)) {                                   
 
-#define holds(T, name)                                                                              \
+#define holds(T, ...)                                                                               \
     break;                                                                                          \
 }                                                                                                   \
     case t_seq___.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                    \
-        T name=get_elem<std::remove_pointer<std::remove_cvref<decltype(name)>::type>::type>(v___);
+        __VA_OPT__(T __VA_ARGS__ =                                                                  \
+            get_elem<std::remove_pointer                                                            \
+                        <std::remove_cvref<decltype(__VA_ARGS__)>::type>::type>(v___);)
 
 #define _                                                                                           \
         break;                                                                                      \

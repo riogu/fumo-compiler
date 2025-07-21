@@ -46,11 +46,11 @@
 // <parameter> ::= <declarator-specifier> <identifier> 
 // <parameter-list> ::= <parameter>
 //                    | <parameter-list> "," <parameter> 
-[[nodiscard]] Vec<Variable> Parser::parameter_list() {
+[[nodiscard]] vec<Variable> Parser::parameter_list() {
     expect_token_str("(");
     if (token_is_str(")")) return {};
 
-    Vec<Variable> parameters {};
+    vec<Variable> parameters {};
     while (1) {
         expect_token(identifier);
         Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
@@ -72,7 +72,7 @@
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement}* }
 [[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
-    Vec<ASTNode> nodes {};
+    vec<ASTNode> nodes {};
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //
             nodes.push_back(std::move(*variable_declaration()));

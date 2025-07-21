@@ -14,10 +14,10 @@ struct Lexer {
     std::stringstream file_stream;
     int curr = 0;
 
-    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_file(const fs::path& _file_name);
-    [[nodiscard]] std::pair<Vec<Token>, File> tokenize_string(const std::string& testname,
+    [[nodiscard]] std::pair<vec<Token>, File> tokenize_file(const fs::path& _file_name);
+    [[nodiscard]] std::pair<vec<Token>, File> tokenize_string(const std::string& testname,
                                                               const std::string& test_string);
-    [[nodiscard]] Vec<Token> tokenize();
+    [[nodiscard]] vec<Token> tokenize();
 
   private:
     [[nodiscard]] Token parse_numeric_literal();

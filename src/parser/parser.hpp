@@ -5,10 +5,10 @@
 struct Parser {
 
     std::stringstream file_stream;
-    [[nodiscard]] Scope parse_tokens(Vec<Token>& tokens);
+    [[nodiscard]] Scope parse_tokens(vec<Token>& tokens);
 
   private:
-    Vec<Token> tokens;
+    vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
@@ -36,7 +36,7 @@ struct Parser {
     // function
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
     [[nodiscard]] unique_ptr<ASTNode> compound_statement();
-    [[nodiscard]] Vec<Variable> parameter_list();
+    [[nodiscard]] vec<Variable> parameter_list();
     // --------------------------------------------------------------
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))
