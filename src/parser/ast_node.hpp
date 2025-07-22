@@ -22,7 +22,9 @@ enum struct NodeKind {
     negate,                  /* unary -                           */ \
     logic_not,               /* !                                 */ \
     bitwise_not,             /* ~                                 */ \
-    expression_statement,    /* expression statement              */ \
+    /* expression_statement, */    /* expression statement              */ \
+    /* ----------------------------------------                   */ \
+    /* postfix                                                    */ \
     function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* primary                                                    */ \

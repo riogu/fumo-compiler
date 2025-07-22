@@ -27,7 +27,7 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
     zip_to_macro(_make_hashmap1_, punctuators_, symbol_reprs_)
 };
 
-using Literal = std::variant<int, double, std::string>;
+using Literal = std::variant<int64_t, double, std::string>;
 
 #define int_pink(str) "\033[38;2;224;180;187m" + str + "\033[0m"
 #define id_gold(str) "\033[38;2;252;191;85m"+ str + "\033[0m"
@@ -44,7 +44,7 @@ struct Token {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::integer:
-                return int_pink(std::to_string(std::get<int>(literal.value())));
+                return int_pink(std::to_string(std::get<int64_t>(literal.value())));
             case TokenType::floating_point:
                 return std::to_string(std::get<double>(literal.value()));
             case TokenType::identifier: case TokenType::keyword: case TokenType::builtin_type: case TokenType::string:
