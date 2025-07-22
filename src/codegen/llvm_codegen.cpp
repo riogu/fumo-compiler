@@ -26,66 +26,67 @@ llvm::Value* Codegen::codegen(ASTNode* node) {
     std::unreachable();
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Primary& branch) {
+llvm::Value* Codegen::codegen(ASTNode* node, Primary& primary) {
 
     switch (node->kind) {
         case NodeKind::integer:
             return llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*llvm_context),
-                                                std::get<int64_t>(branch.value));
+                                                std::get<int64_t>(primary.value));
         case NodeKind::floating_point:
             return llvm::ConstantInt::getSigned(llvm::Type::getFloatTy(*llvm_context),
-                                                std::get<double>(branch.value));
+                                                std::get<double>(primary.value));
         case NodeKind::identifier:
-            return variable_table[std::get<str>(branch.value)];
+            return variable_table[std::get<str>(primary.value)];
         case NodeKind::str:
         default:
             PANIC("codegen not implemented for '" + node->kind_name() + "'.");
     }
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Unary& branch) {
+llvm::Value* Codegen::codegen(ASTNode* node, Unary& unary) {
     switch (node->kind) {
         case NodeKind::negate:
-            return ir_builder->CreateNeg(codegen(branch.expr.get()));
+            return ir_builder->CreateNeg(codegen(unary.expr.get()));
         case NodeKind::logic_not:
-            return ir_builder->CreateICmpEQ(codegen(branch.expr.get()),
+            return ir_builder->CreateICmpEQ(codegen(unary.expr.get()),
                                             llvm::ConstantInt::getBool(*llvm_context, 0));
         case NodeKind::bitwise_not:
-            return ir_builder->CreateNot(codegen(branch.expr.get()));
+            return ir_builder->CreateNot(codegen(unary.expr.get()));
         default:
             PANIC("codegen not implemented for '" + node->kind_name() + "'.");
     }
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Binary& branch) {
+llvm::Value* Codegen::codegen(ASTNode* node, Binary& bin) {
 
     switch(node->kind){
         case NodeKind::add:
-            return ir_builder->CreateAdd(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateAdd(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::sub:
-            return ir_builder->CreateSub(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateSub(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::multiply:
-            return ir_builder->CreateMul(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateMul(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::divide:
-            return ir_builder->CreateSDiv(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateSDiv(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::equal:
-            return ir_builder->CreateICmpEQ(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateICmpEQ(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::not_equal:
-            return ir_builder->CreateICmpNE(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateICmpNE(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::less_than:
-            return ir_builder->CreateICmpSLT(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateICmpSLT(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::less_equals:
-            return ir_builder->CreateICmpSLE(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+            return ir_builder->CreateICmpSLE(codegen(bin.lhs.get()), codegen(bin.rhs.get()));
         case NodeKind::assignment:
-            return ir_builder->CreateStore(codegen(branch.rhs.get()), codegen(branch.lhs.get()));
+            return ir_builder->CreateStore(codegen(bin.rhs.get()), codegen(bin.lhs.get()));
         default:
             PANIC("codegen not implemented for '" + node->kind_name() + "'.");
     }
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Variable& branch) {
+llvm::Value* Codegen::codegen(ASTNode* node, Variable& var) {
     // TODO: finish fumo_to_llvm_type
-    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(llvm::Type::getInt32Ty(*llvm_context));
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type));
+    // if(var.value) ir_builder->CreateStore(Value *Val, Value *Ptr);
     return {};
 
 }

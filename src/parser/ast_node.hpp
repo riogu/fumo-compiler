@@ -163,6 +163,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
 #define gray(symbol) str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
 #define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
 #define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
+
 [[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
     depth++;
     str result = std::format("{} ", kind_name());

@@ -24,7 +24,9 @@ enum struct TypeKind {
 };
 
 struct TypeQualifier {
+  private:
     enum impl { _const, _volatile } value;
+  public:
     constexpr operator impl() { return value; }
     TypeQualifier(impl some) : value(some) {}
     TypeQualifier() {}
