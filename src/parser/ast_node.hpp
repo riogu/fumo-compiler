@@ -165,18 +165,19 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
     str result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(Binary, &bin) {
+        holds(Primary, &primary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
-            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
+
         holds(Unary, &unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
             result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
         }
-        holds(Primary, &primary) {
+        holds(Binary, &bin) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
+            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
+            result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
         holds(Variable, &var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));

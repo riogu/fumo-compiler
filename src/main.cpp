@@ -7,15 +7,15 @@ auto main(int argc, char* argv[]) -> int {
 
     if (argc > 1) test = argv[1];
     Lexer lexer {};
-    auto [tokens, file] = lexer.tokenize_string("test01", test);
+    auto [tokens, file] = lexer.tokenize_string("fumo_module", test);
     // for(auto& token: tokens) std::print("{} and ", token.to_str());
 
     Parser parser {};
     parser.file_stream << file.contents;
 
-    auto translation_unit = parser.parse_tokens(tokens);
-    for (auto& node : translation_unit.nodes) std::cerr << "node found:\n  " + node.to_str() + "\n";
+    auto AST = parser.parse_tokens(tokens);
+    for (auto& node : AST) std::cerr << "node found:\n  " + node.to_str() + "\n";
 
-    // Codegen codegen {};
-    // codegen.begin_codegen(AST);
+    Codegen codegen {file.path_name};
+    codegen.codegen(AST);
 }

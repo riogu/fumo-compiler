@@ -1,7 +1,7 @@
 #include "parser/parser.hpp"
 #include "parser/type.hpp"
 
-Scope Parser::parse_tokens(vec<Token>& tkns) {
+vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
     vec<ASTNode> AST;
 
@@ -13,7 +13,7 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         else
             AST.push_back(std::move(*statement()));
     }
-    return Scope {std::move(AST)};
+    return AST;
 }
 
 // <statement> ::= <expression-statement>
