@@ -15,7 +15,7 @@ auto main(int argc, char* argv[]) -> int {
 
     auto AST = parser.parse_tokens(tokens);
     for (auto& node : AST) std::cerr << "node found:\n  " + node.to_str() + "\n";
-
+ 
     Codegen codegen {file.path_name};
     codegen.codegen(AST);
     std::cerr << "\ncodegen:\n" + codegen.llvm_ir_to_str() + "\n";

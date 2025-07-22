@@ -1,6 +1,4 @@
 #include "codegen/llvm_codegen.hpp"
-#include <llvm/IR/Constants.h>
-#include <llvm/IR/Instructions.h>
 
 void Codegen::codegen(vec<ASTNode>& AST) {
 
@@ -10,10 +8,11 @@ void Codegen::codegen(vec<ASTNode>& AST) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    for (auto& node : AST) ir_builder->CreateRet(codegen(&node));
+    for (auto& node : AST) codegen(&node);
 }
 
 llvm::Value* Codegen::codegen(ASTNode* node) { 
+
     match(*node) {
         holds(Primary,  &v) return codegen(node, v);
         holds(Unary,    &v) return codegen(node, v);
@@ -84,11 +83,9 @@ llvm::Value* Codegen::codegen(ASTNode* node, Binary& bin) {
 }
 
 llvm::Value* Codegen::codegen(ASTNode* node, Variable& var) {
-    // TODO: finish fumo_to_llvm_type
     llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type));
-    // if(var.value) ir_builder->CreateStore(Value *Val, Value *Ptr);
-    return {};
-
+    if (var.value) ir_builder->CreateStore(codegen(var.value.value().get()), ptr);
+    return ptr;
 }
 llvm::Value* Codegen::codegen(ASTNode* node, Function&   branch) { return {};}
 llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}

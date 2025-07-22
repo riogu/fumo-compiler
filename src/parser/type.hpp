@@ -34,14 +34,14 @@ struct TypeQualifier {
 
 struct Type {
     str name;
-    TypeKind kind; // recursive enum
+    TypeKind kind;
     TypeQualifier qualifier;
     Opt<Struct> struct_type; // or union
     Opt<Enum> enum_type;
     int ptr_count = 0;
 };
 
-#define each_builtin_type(builtin_name) if (type_name == #builtin_name) return TypeKind::_##builtin_name; else
+#define each_builtin_type(builtin_name) if (type_name == #builtin_name) return TypeKind::_##builtin_name;
 
 [[nodiscard]] constexpr TypeKind builtin_type_kind(std::string_view type_name) {
     map_macro(each_builtin_type, builtin_types);

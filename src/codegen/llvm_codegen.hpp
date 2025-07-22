@@ -2,7 +2,6 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 #include <map>
-#include <memory>
 
 struct Codegen {
   private:
@@ -20,7 +19,9 @@ struct Codegen {
 
     void codegen(vec<ASTNode>& AST);
 
-    void print_llvm_ir() { llvm_module->print(llvm::outs(), nullptr); }
+    void print_llvm_ir() {
+        llvm_module->print(llvm::outs(), nullptr);
+    }
 
     [[nodiscard]] str llvm_ir_to_str() {
         std::string outstr;
@@ -39,7 +40,28 @@ struct Codegen {
     llvm::Value* codegen(ASTNode* node, Scope& branch);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
+        switch (fumo_type.kind) {
+            // case TypeKind::_struct:
+            // case TypeKind::_union:
+            // case TypeKind::_enum:
+            case TypeKind::_void:
+                return llvm::Type::getVoidTy(*llvm_context);
+            case TypeKind::_i8:
+                return llvm::Type::getInt8Ty(*llvm_context);
+            case TypeKind::_i32:
+                return llvm::Type::getInt32Ty(*llvm_context);
+            case TypeKind::_i64:
+                return llvm::Type::getInt64Ty(*llvm_context);
+            case TypeKind::_f32:
+                return llvm::Type::getFloatTy(*llvm_context);
+            case TypeKind::_f64:
+                return llvm::Type::getDoubleTy(*llvm_context);
+            case TypeKind::_bool:
+                return llvm::Type::getInt1Ty(*llvm_context);
+            // case TypeKind::_str:
+            default:
+                PANIC(std::format("can't convert '{}' to llvm::Type", fumo_type.name));
+        }
         return {};
     }
 };
-
