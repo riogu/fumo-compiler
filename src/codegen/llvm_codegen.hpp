@@ -38,3 +38,8 @@ struct Codegen {
     llvm::Value* codegen(ASTNode* node, Function& branch);
     llvm::Value* codegen(ASTNode* node, Scope& branch);
 };
+
+constexpr static llvm::Type* fumo_to_llvm_type(Type fumo_type) {
+  // TODO: finish this
+  return {};
+}

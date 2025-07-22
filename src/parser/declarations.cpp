@@ -98,12 +98,12 @@
         // we recognize but ignore these keywords atm
     
     if (token_is_keyword(struct)) {
-        return Type {.name = "struct" + std::get<str>(prev_tkn->literal.value()),
+        return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_struct,
                      .struct_type = struct_declaration()};
     } // add unions later
     if (token_is_keyword(enum)) {
-        return Type {.name = "enum" + std::get<str>(prev_tkn->literal.value()),
+        return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_enum,
                      .enum_type = enum_declaration()};
     }

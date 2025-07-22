@@ -1,5 +1,30 @@
 #include "codegen/llvm_codegen.hpp"
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+
+void Codegen::codegen(vec<ASTNode>& AST) {
+
+    llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
+    llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "main", llvm_module.get());
+
+    llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
+    ir_builder->SetInsertPoint(bblock);
+
+    for (auto& node : AST) ir_builder->CreateRet(codegen(&node));
+}
+
+llvm::Value* Codegen::codegen(ASTNode* node) { 
+    match(*node) {
+        holds(Primary,  &v) return codegen(node, v);
+        holds(Unary,    &v) return codegen(node, v);
+        holds(Binary,   &v) return codegen(node, v);
+        holds(Variable, &v) return codegen(node, v);
+        holds(Function, &v) return codegen(node, v);
+        holds(Scope,    &v) return codegen(node, v);
+        _ PANIC("missing codegen implementation for node: " + node->kind_name());
+    }
+    std::unreachable();
+}
 
 llvm::Value* Codegen::codegen(ASTNode* node, Primary& branch) {
 
@@ -28,9 +53,8 @@ llvm::Value* Codegen::codegen(ASTNode* node, Unary& branch) {
         case NodeKind::bitwise_not:
             return ir_builder->CreateNot(codegen(branch.expr.get()));
         default:
-            break;
+            PANIC("codegen not implemented for '" + node->kind_name() + "'.");
     }
-    return {};
 }
 
 llvm::Value* Codegen::codegen(ASTNode* node, Binary& branch) {
@@ -58,38 +82,14 @@ llvm::Value* Codegen::codegen(ASTNode* node, Binary& branch) {
             PANIC("codegen not implemented for '" + node->kind_name() + "'.");
     }
 }
-llvm::Value* Codegen::codegen(ASTNode* node, Variable&   branch) { return {};}
+
+llvm::Value* Codegen::codegen(ASTNode* node, Variable& branch) {
+    // TODO: finish fumo_to_llvm_type
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(llvm::Type::getInt32Ty(*llvm_context));
+    return {};
+
+}
 llvm::Value* Codegen::codegen(ASTNode* node, Function&   branch) { return {};}
 llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}
 
 
-llvm::Value* Codegen::codegen(ASTNode* node) { 
-    match(*node) {
-        holds(Primary,  &v) return codegen(node, v);
-        holds(Unary,    &v) return codegen(node, v);
-        holds(Binary,   &v) return codegen(node, v);
-        holds(Variable, &v) return codegen(node, v);
-        holds(Function, &v) return codegen(node, v);
-        holds(Scope,    &v) return codegen(node, v);
-        _ PANIC("missing codegen implementation for node: " + node->kind_name());
-    }
-    std::unreachable();
-}
-
-void Codegen::codegen(vec<ASTNode>& AST) {
-    llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
-    llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
-                                                  "main", llvm_module.get());
-    llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
-
-    ir_builder->SetInsertPoint(bblock);
-
-    for (auto& node : AST) ir_builder->CreateRet(codegen(&node));
-}
-
-/*
-
-
-
-
-*/
