@@ -1,7 +1,6 @@
 #pragma once
 #include "lexer/token_definitions.hpp"
 #include "parser/type.hpp"
-#include <llvm/IR/Value.h>
 // clang-format off
 
 enum struct NodeKind { 
@@ -27,7 +26,9 @@ enum struct NodeKind {
     function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* primary                                                    */ \
-    literal,                 /* int | float | string              */ \
+    integer,                 /* i32 | i64                         */ \
+    floating_point,          /*                                   */ \
+    str,                     /*                                   */ \
     identifier,              /* (variable | function) name        */ \
                              /* | (enum | struct | union) member  */ \
     /* ----------------------------------------                   */ \

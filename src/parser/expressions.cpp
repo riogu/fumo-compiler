@@ -165,11 +165,14 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
         expect_token_str(")");
         return node;
     }
-    if (token_is(identifier)) {
+    if (token_is(int)) 
+        return ASTNode {*prev_tkn, NodeKind::integer, Primary {prev_tkn->literal.value()}};
+    if (token_is(float)) 
+        return ASTNode {*prev_tkn, NodeKind::floating_point, Primary {prev_tkn->literal.value()}};
+    if (token_is(string)) 
+        return ASTNode {*prev_tkn, NodeKind::str, Primary {prev_tkn->literal.value()}};
+    if (token_is(identifier)) 
         return ASTNode {*prev_tkn, NodeKind::identifier, Primary {prev_tkn->literal.value()}};
-    }
-    if (token_is(int) || token_is(float) || token_is(string)) {
-        return ASTNode {*prev_tkn, NodeKind::literal, Primary {prev_tkn->literal.value()}};
-    }
+    
     report_error((*curr_tkn), "expected expression.");
 }
