@@ -18,4 +18,5 @@ auto main(int argc, char* argv[]) -> int {
 
     Codegen codegen {file.path_name};
     codegen.codegen(AST);
+    std::cerr << codegen.llvm_ir_to_str();
 }

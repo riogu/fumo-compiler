@@ -8,7 +8,7 @@ enum struct NodeKind {
     /* ----------------------------------------                   */ \
     /* simple expressions                                         */ \
     /* binary                                                     */ \
-    empty_expr,              /* ;                                 */ \
+    /* empty_expr,*/              /* ;                                 */ \
     add,                     /* +                                 */ \
     sub,                     /* -                                 */ \
     multiply,                /* *                                 */ \

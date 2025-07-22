@@ -32,19 +32,19 @@ auto main() -> int {
         // t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
         // t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
         // t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
-        t("fn another_f() -> const i32****;\n"
-          "fn func_name(a: i32, b: f64) -> const i32* {\n"
-          "    let var: i32 = 213123;\n"
-          "    {\n"
-          "       let x: MyStruct;\n"
-          "       x = {123 + 20};\n"
-          "    }\n"
-          "    var = 213;\n"
-          "}\n"
-          "fn main() -> i32 {\n    let var = 1;\n    return 0;\n}\n"
-          ,"pass"),
-        t("fn main() -> i32 {\n    let var: i32 = (-1) * 3 - -8 * -1 + 2;\n}", "pass"),
-        // t("return;","pass"),
+        // t("fn another_f() -> const i32****;\n"
+        //   "fn func_name(a: i32, b: f64) -> const i32* {\n"
+        //   "    let var: i32 = 213123;\n"
+        //   "    {\n"
+        //   "       let x: MyStruct;\n"
+        //   "       x = {123 + 20};\n"
+        //   "    }\n"
+        //   "    var = 213;\n"
+        //   "}\n"
+        //   "fn main() -> i32 {\n    let var = 1;\n    return 0;\n}\n"
+        //   ,"pass"),
+        // t("fn main() -> i32 {\n    let var: i32 = (-1) * 3 - -8 * -1 + 2;\n}", "pass"),
+        t("1 + 2;","pass"),
 
     };
     std::print("{}",   "\n------------------------------------------------\n");

@@ -1,5 +1,4 @@
 #include "codegen/llvm_codegen.hpp"
-#include <llvm/IR/Instructions.h>
 
 llvm::Value* Codegen::codegen(ASTNode* node, Primary& branch) {
     switch (node->kind) {
@@ -14,12 +13,35 @@ llvm::Value* Codegen::codegen(ASTNode* node, Primary& branch) {
         case NodeKind::str:
         default:
             PANIC("codegen not implemented for '" + node->kind_name() + "'.");
-            
     }
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Unary&      branch) { return {};}
-llvm::Value* Codegen::codegen(ASTNode* node, Binary&     branch) { return {};}
+llvm::Value* Codegen::codegen(ASTNode* node, Unary&      branch) { return {}; }
+
+llvm::Value* Codegen::codegen(ASTNode* node, Binary& branch) {
+    switch(node->kind){
+        case NodeKind::add:
+            return ir_builder->CreateAdd(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::sub:
+            return ir_builder->CreateSub(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::multiply:
+            return ir_builder->CreateMul(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::divide:
+            return ir_builder->CreateSDiv(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::equal:
+            return ir_builder->CreateICmpEQ(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::not_equal:
+            return ir_builder->CreateICmpNE(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::less_than:
+            return ir_builder->CreateICmpSLT(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::less_equals:
+            return ir_builder->CreateICmpSLE(codegen(branch.lhs.get()), codegen(branch.rhs.get()));
+        case NodeKind::assignment:
+            return ir_builder->CreateStore(codegen(branch.rhs.get()), codegen(branch.lhs.get()));
+        default:
+            PANIC("codegen not implemented for '" + node->kind_name() + "'.");
+    }
+}
 llvm::Value* Codegen::codegen(ASTNode* node, Variable&   branch) { return {};}
 llvm::Value* Codegen::codegen(ASTNode* node, Function&   branch) { return {};}
 llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}
@@ -27,12 +49,12 @@ llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}
 
 llvm::Value* Codegen::codegen(ASTNode* node) { 
     match(*node) {
-        holds(Primary,  &v) codegen(node, v);
-        holds(Unary,    &v) codegen(node, v);
-        holds(Binary,   &v) codegen(node, v);
-        holds(Variable, &v) codegen(node, v);
-        holds(Function, &v) codegen(node, v);
-        holds(Scope,    &v) codegen(node, v);
+        holds(Primary,  &v) return codegen(node, v);
+        holds(Unary,    &v) return codegen(node, v);
+        holds(Binary,   &v) return codegen(node, v);
+        holds(Variable, &v) return codegen(node, v);
+        holds(Function, &v) return codegen(node, v);
+        holds(Scope,    &v) return codegen(node, v);
         _ PANIC("missing codegen implementation for node: " + node->kind_name());
     }
     std::unreachable();

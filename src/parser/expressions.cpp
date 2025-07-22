@@ -26,9 +26,10 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] unique_ptr<ASTNode> Parser::expression_statement() {
-    if (token_is(;)) {
-        return ASTNode {*prev_tkn, NodeKind::empty_expr, Primary {}};
-    }
+    // not allowing empty expressions for now
+    // if (token_is(;)) {
+    //     return ASTNode {*prev_tkn, NodeKind::empty_expr, Primary {}};
+    // }
     auto node = expression();
     expect_token(;); // terminate if we dont find a semicolon
     return node;
