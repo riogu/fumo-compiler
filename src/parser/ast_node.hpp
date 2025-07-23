@@ -67,7 +67,7 @@ struct Binary {
     unique_ptr<ASTNode> lhs;
     unique_ptr<ASTNode> rhs;
 };
-struct  Variable {
+struct Variable {
     Type type;
     std::string name;
     Opt<unique_ptr<ASTNode>> value;
@@ -81,6 +81,7 @@ struct Function {
 // compound-statement | initializer-list | translation-unit | struct-body
 struct Scope { 
     vec<ASTNode> nodes;
+    unique_ptr<Scope> previous;
 };
 
 struct If {};

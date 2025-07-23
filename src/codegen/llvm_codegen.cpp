@@ -20,7 +20,7 @@ llvm::Value* Codegen::codegen(ASTNode* node) {
         holds(Variable, &v) return codegen(node, v);
         holds(Function, &v) return codegen(node, v);
         holds(Scope,    &v) return codegen(node, v);
-        _ PANIC("missing codegen implementation for node: " + node->kind_name());
+        _ INTERNAL_PANIC("codegen not implemented for '{}'", node->kind_name());
     }
     std::unreachable();
 }
@@ -35,10 +35,11 @@ llvm::Value* Codegen::codegen(ASTNode* node, Primary& primary) {
             return llvm::ConstantInt::getSigned(llvm::Type::getFloatTy(*llvm_context),
                                                 std::get<double>(primary.value));
         case NodeKind::identifier:
+            // TODO: make a proper symbol table
             return variable_table[std::get<str>(primary.value)];
         case NodeKind::str:
         default:
-            PANIC("codegen not implemented for '" + node->kind_name() + "'.");
+            INTERNAL_PANIC("codegen not implemented for '{}'", node->kind_name());
     }
 }
 
@@ -52,7 +53,7 @@ llvm::Value* Codegen::codegen(ASTNode* node, Unary& unary) {
         case NodeKind::bitwise_not:
             return ir_builder->CreateNot(codegen(unary.expr.get()));
         default:
-            PANIC("codegen not implemented for '" + node->kind_name() + "'.");
+            INTERNAL_PANIC("codegen not implemented for '{}'", node->kind_name());
     }
 }
 
@@ -78,15 +79,17 @@ llvm::Value* Codegen::codegen(ASTNode* node, Binary& bin) {
         case NodeKind::assignment:
             return ir_builder->CreateStore(codegen(bin.rhs.get()), codegen(bin.lhs.get()));
         default:
-            PANIC("codegen not implemented for '" + node->kind_name() + "'.");
+            INTERNAL_PANIC("codegen not implemented for '{}'", node->kind_name());
     }
 }
 
 llvm::Value* Codegen::codegen(ASTNode* node, Variable& var) {
+    // NOTE: type checker shouldn't allow "let x: void;" to exist
     llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type));
     if (var.value) ir_builder->CreateStore(codegen(var.value.value().get()), ptr);
     return ptr;
 }
+
 llvm::Value* Codegen::codegen(ASTNode* node, Function&   branch) { return {};}
 llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}
 

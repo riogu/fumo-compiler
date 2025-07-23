@@ -60,7 +60,7 @@ struct Codegen {
                 return llvm::Type::getInt1Ty(*llvm_context);
             // case TypeKind::_str:
             default:
-                PANIC(std::format("can't convert '{}' to llvm::Type", fumo_type.name));
+                INTERNAL_PANIC("can't convert '{}' to llvm::Type", fumo_type.name);
         }
         return {};
     }

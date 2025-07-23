@@ -11,6 +11,8 @@ using Result = std::expected<Ok, Err>;
 template<typename T>
 using Err = std::unexpected<T>;
 
+#define INTERNAL_PANIC(fmt, ...) PANIC(std::format("fumo internal error: " fmt, __VA_ARGS__))
+
 
 
 #define punctuators                     \
