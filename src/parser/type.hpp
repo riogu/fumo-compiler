@@ -19,7 +19,6 @@ enum struct TypeKind {
     _struct,
     _union,
     _enum,
-    _ptr,
     map_macro(make_enum_member, builtin_types)
 };
 
