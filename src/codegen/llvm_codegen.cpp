@@ -85,12 +85,16 @@ llvm::Value* Codegen::codegen(ASTNode* node, Binary& bin) {
 
 llvm::Value* Codegen::codegen(ASTNode* node, Variable& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
-    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type));
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type), nullptr, var.name);
     if (var.value) ir_builder->CreateStore(codegen(var.value.value().get()), ptr);
     return ptr;
 }
 
-llvm::Value* Codegen::codegen(ASTNode* node, Function&   branch) { return {};}
+llvm::Value* Codegen::codegen(ASTNode* node, Function& branch) {
+
+
+    return {};
+}
 llvm::Value* Codegen::codegen(ASTNode* node, Scope&      branch) { return {};}
 
 

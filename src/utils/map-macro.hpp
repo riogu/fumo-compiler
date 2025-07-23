@@ -46,3 +46,4 @@
 
 // Applies the function macro `f` to each of the remaining parameters.
 #define map_macro(f, ...) EVAL(MAP1(f, __VA_ARGS__, ()()(), ()()(), ()()(), 0))
+

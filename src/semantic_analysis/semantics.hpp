@@ -20,19 +20,20 @@ fn somefunc(x: i32, y: i64) {
     }
     { // somefunc::1
     }
-    if () { // somefunc::2
+    if () { // somefunc.2
     }
-    if () { // somefunc::3 
+    if () { // somefunc.3 
     }
 
     {
-        int x;
+        int x; // renamed to somefunc.4.x
     }
     {
-        {
+        { somefunc_5_0
             x++; // this doesnt work 
                  // we can only go backwards
-
+            // semantic analysis garantees this is an error
+            // because it knows we dont have access to somefunc::0::x from this scope
         }
         {
 
@@ -47,6 +48,10 @@ the global namespace would have:
     all the namespaces
 */
 
-struct e {
-    int x;
+#include "parser/ast_node.hpp"
+#include <llvm/IR/Function.h>
+#include <map>
+
+struct SymbolTable {
+    std::map<str, ASTNode> scope_to_nodes;
 };

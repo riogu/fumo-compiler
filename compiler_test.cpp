@@ -53,7 +53,7 @@ auto main() -> int {
           , "pass"),
     };
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : llvm_tests) {
+    for (const auto& [test, expected] : ast_syntax_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

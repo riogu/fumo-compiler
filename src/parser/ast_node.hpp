@@ -28,7 +28,7 @@ enum struct NodeKind {
     function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* primary                                                    */ \
-    integer,                 /* i32 | i64                         */ \
+    integer,                 /* i32 | int64_t                         */ \
     floating_point,          /*                                   */ \
     str,                     /*                                   */ \
     identifier,              /* (variable | function) name        */ \
@@ -78,10 +78,10 @@ struct Function {
     vec<Variable> parameters; // if its empty we have no params
     Opt<unique_ptr<ASTNode>> body; // scope
 };
+
 // compound-statement | initializer-list | translation-unit | struct-body
-struct Scope { 
+struct Scope {
     vec<ASTNode> nodes;
-    unique_ptr<Scope> previous;
 };
 
 struct If {};
@@ -93,6 +93,7 @@ struct ASTNode {
     NodeBranch branch;
 
     constexpr operator std::unique_ptr<ASTNode>()&& { 
+        str e = "func"".""varname";
         return std::make_unique<ASTNode>(std::move(*this));
     }
 
@@ -104,7 +105,7 @@ struct ASTNode {
         }
     }
 
-    [[nodiscard]] constexpr str to_str(i64 depth);
+    [[nodiscard]] constexpr str to_str(int64_t depth);
 
 
 };
@@ -165,7 +166,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
 #define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
 #define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
 
-[[nodiscard]] constexpr str ASTNode::to_str(i64 depth = 0) {
+[[nodiscard]] constexpr str ASTNode::to_str(int64_t depth = 0) {
     depth++;
     str result = std::format("{} ", kind_name());
 

@@ -1,20 +1,13 @@
 // clang-format off
 #pragma once
-#include <libassert/assert.hpp>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <variant>
-#include <vector>
+#include "utils/common_utils.hpp"
 #include "symbol_definitions.hpp"
-
-
-namespace fs = std::filesystem; 
-
-using i64 = int64_t;
-template<typename  T> using vec = std::vector<T>;
-template<typename T> using Opt = std::optional<T>;
+#include "utils/zip-macro.hpp"
+#include <libassert/assert.hpp>
 
 
 #define make_enum_member(_v) _v,

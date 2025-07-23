@@ -1,5 +1,6 @@
 #pragma once
-#include "lexer/token_definitions.hpp"
+#include <libassert/assert.hpp>
+#include "lexer/symbol_definitions.hpp"
 #include <memory>
 #include <optional>
 
