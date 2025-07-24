@@ -1,6 +1,7 @@
 #pragma once
 #include <libassert/assert.hpp>
 #include "lexer/symbol_definitions.hpp"
+#include "utils/common_utils.hpp"
 #include <memory>
 #include <optional>
 
@@ -36,8 +37,8 @@ struct Type {
     str name;
     TypeKind kind;
     TypeQualifier qualifier;
-    Opt<Struct> struct_type; // or union
-    Opt<Enum> enum_type;
+    Opt<std::variant<Struct, Enum>> struct_or_enum; // or union
+
     int ptr_count = 0;
 };
 
@@ -45,7 +46,7 @@ struct Type {
 
 [[nodiscard]] constexpr TypeKind builtin_type_kind(std::string_view type_name) {
     map_macro(each_builtin_type, builtin_types);
-    PANIC(std::format("internal compiler error: provided unknown type name: {}", type_name));
+    INTERNAL_PANIC("internal compiler error: provided unknown type name: {}", type_name);
 }
 
 #undef make_enum_member

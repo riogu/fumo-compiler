@@ -22,13 +22,12 @@ enum struct NodeKind {
     negate,                  /* unary -                           */ \
     logic_not,               /* !                                 */ \
     bitwise_not,             /* ~                                 */ \
-    /* expression_statement, */    /* expression statement              */ \
     /* ----------------------------------------                   */ \
     /* postfix                                                    */ \
     function_call,           /* function call                     */ \
     /* ----------------------------------------                   */ \
     /* primary                                                    */ \
-    integer,                 /* i32 | int64_t                         */ \
+    integer,                 /* i32 | int64_t                     */ \
     floating_point,          /*                                   */ \
     str,                     /*                                   */ \
     identifier,              /* (variable | function) name        */ \
@@ -48,7 +47,8 @@ enum struct NodeKind {
     statement,               /*                                   */ \
     global_var_declaration,  /*                                   */ \
     variable_declaration,    /*                                   */ \
-    function_declaration
+    function_declaration,    /*                                   */ \
+    parameter
 
     all_node_kinds
 };
@@ -60,6 +60,7 @@ using NodeBranch = std::variant<Primary, Unary, Binary, Variable, Function, Scop
 
 struct Primary {
     Literal value; // can also be an identifier
+    Opt<ASTNode*> var_declaration; // identifiers map to this
 };
 struct Unary {
     ASTNode* expr;
@@ -69,14 +70,12 @@ struct Binary {
     ASTNode* rhs;
 };
 struct Variable {
-    Type type;
     std::string name;
     Opt<ASTNode*> value;
 };
 struct Function {
-    Type type;
     std::string name;
-    vec<Variable> parameters; // if its empty we have no params
+    vec<ASTNode*> parameters; // if its empty we have no params
     Opt<ASTNode*> body; // scope
 };
 
@@ -91,6 +90,7 @@ struct ASTNode {
     Token source_token; // token that originated this Node
     NodeKind kind;
     NodeBranch branch;
+    Type type;
 
     constexpr operator std::unique_ptr<ASTNode>()&& { 
         return std::make_unique<ASTNode>(std::move(*this));
@@ -169,7 +169,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
     str result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(const Primary, primary) {
+        holds(Primary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
         }
         holds(const Unary&, unary) {
@@ -184,7 +184,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
         }
         holds(const Variable&, var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));
-            result += gray(": ") + yellow(var.type.name);
+            result += gray(": ") + yellow(type.name);
             if (var.value) {
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
@@ -192,15 +192,18 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
         holds(const Function&, func) {
             str temp = yellow("fn ") + blue(func.name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
-                const auto& param = func.parameters.at(i);
-                temp += param.name + gray(": ") + yellow(param.type.name);
-
-                if(param.value) temp += " = " + param.value.value()->to_str();
-
-                if(i != func.parameters.size() - 1) temp += gray(", ");
+                ASTNode* var = func.parameters.at(i);
+                match(*var) {
+                    holds(const Variable&, param) {
+                        temp += param.name + gray(": ") + yellow(var->type.name);
+                        if (param.value) temp += " = " + param.value.value()->to_str();
+                    }
+                    _ { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
+                }
+                if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
-            temp += gray(" -> ") + yellow(func.type.name);
+            temp += gray(" -> ") + yellow(type.name);
             result += std::format("{} {}", gray("=>"), temp);
             if (func.body) result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"),
                                                  func.body.value()->to_str(depth)); 

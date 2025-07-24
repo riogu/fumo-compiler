@@ -7,11 +7,11 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
 
     while (curr_tkn + 1 != tkns.end()) {
         if (token_is_keyword(let)) //
-            AST.push_back(push_node(variable_declaration()));
+            AST.push_back(push(variable_declaration()));
         else if (token_is_keyword(fn))
-            AST.push_back(push_node(function_declaration()));
+            AST.push_back(push(function_declaration()));
         else
-            AST.push_back(push_node(statement()));
+            AST.push_back(push(statement()));
     }
     return Scope {AST};
 }
@@ -19,7 +19,9 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
     if (token_is_keyword(return)) {
-        return ASTNode {*prev_tkn, NodeKind::return_statement, Unary {push_node(expression_statement())}};
+        return ASTNode {*prev_tkn,
+                        NodeKind::return_statement,
+                        Unary {push(expression_statement())}};
     }
     return expression_statement();
 }
@@ -53,7 +55,7 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         }
         return ASTNode {*prev_tkn,
                         NodeKind::assignment,
-                        Binary {push_node(std::move(node)), push_node(initializer())}};
+                        Binary {push(std::move(node)), push(initializer())}};
     }
     return node;
 }
@@ -73,13 +75,15 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
     Scope init_list {};
-    init_list.nodes.push_back(push_node(initializer()));
+    init_list.nodes.push_back(push(initializer()));
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
-                return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
+                return ASTNode {*prev_tkn,
+                                NodeKind::initializer_list,
+                                std::move(init_list)};
             }
-            init_list.nodes.push_back(push_node(initializer()));
+            init_list.nodes.push_back(push(initializer()));
             continue;
         }
         return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
@@ -93,11 +97,11 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         if (token_is(==))
             return ASTNode {*prev_tkn,
                             NodeKind::equal,
-                            Binary {push_node(std::move(node)), push_node(relational())}};
+                            Binary {push(std::move(node)), push(relational())}};
         if (token_is(!=))
             return ASTNode {*prev_tkn,
                             NodeKind::not_equal,
-                            Binary {push_node(std::move(node)), push_node(relational())}};
+                            Binary {push(std::move(node)), push(relational())}};
         return node;
     }
 }
@@ -108,19 +112,19 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(<))
         return ASTNode {*prev_tkn,
                         NodeKind::less_than,
-                        Binary {push_node(std::move(node)), push_node(add())}};
+                        Binary {push(std::move(node)), push(add())}};
     if (token_is(>))
         return ASTNode {*prev_tkn,
                         NodeKind::less_than,
-                        Binary {push_node(add()), push_node(std::move(node))}};
+                        Binary {push(add()), push(std::move(node))}};
     if (token_is(<=))
         return ASTNode {*prev_tkn,
                         NodeKind::less_equals,
-                        Binary {push_node(std::move(node)), push_node(add())}};
+                        Binary {push(std::move(node)), push(add())}};
     if (token_is(>=))
         return ASTNode {*prev_tkn,
                         NodeKind::less_equals,
-                        Binary {push_node(add()), push_node(std::move(node))}};
+                        Binary {push(add()), push(std::move(node))}};
     return node;
 }
 
@@ -131,13 +135,13 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         if (token_is(+)) {
             node = ASTNode {*prev_tkn,
                             NodeKind::add,
-                            Binary {push_node(std::move(node)), push_node(multiply())}};
+                            Binary {push(std::move(node)), push(multiply())}};
             continue;
         }
         if (token_is(-)) {
             node = ASTNode {*prev_tkn,
                             NodeKind::sub,
-                            Binary {push_node(std::move(node)), push_node(multiply())}};
+                            Binary {push(std::move(node)), push(multiply())}};
             continue;
         }
         return node;
@@ -151,13 +155,13 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         if (token_is(*)) {
             node = ASTNode {*prev_tkn,
                             NodeKind::multiply,
-                            Binary {push_node(std::move(node)), push_node(unary())}};
+                            Binary {push(std::move(node)), push(unary())}};
             continue;
         }
         if (token_is(/)) {
             node = ASTNode {*prev_tkn,
                             NodeKind::divide,
-                            Binary {push_node(std::move(node)), push_node(unary())}};
+                            Binary {push(std::move(node)), push(unary())}};
             continue;
         }
         return node;
@@ -168,11 +172,11 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
 //           | <primary>
 [[nodiscard]] unique_ptr<ASTNode> Parser::unary() {
     if (token_is(-))
-        return ASTNode {*prev_tkn, NodeKind::negate, Unary {push_node(unary())}};
+        return ASTNode {*prev_tkn, NodeKind::negate, Unary {push(unary())}};
     if (token_is(!))
-        return ASTNode {*prev_tkn, NodeKind::logic_not, Unary {push_node(unary())}};
+        return ASTNode {*prev_tkn, NodeKind::logic_not, Unary {push(unary())}};
     if (token_is(~))
-        return ASTNode {*prev_tkn, NodeKind::bitwise_not, Unary {push_node(unary())}};
+        return ASTNode {*prev_tkn, NodeKind::bitwise_not, Unary {push(unary())}};
     return primary();
 }
 
@@ -185,14 +189,22 @@ Scope Parser::parse_tokens(vec<Token>& tkns) {
         expect_token_str(")");
         return node;
     }
-    if (token_is(int)) 
-        return ASTNode {*prev_tkn, NodeKind::integer, Primary {prev_tkn->literal.value()}};
-    if (token_is(float)) 
-        return ASTNode {*prev_tkn, NodeKind::floating_point, Primary {prev_tkn->literal.value()}};
-    if (token_is(string)) 
-        return ASTNode {*prev_tkn, NodeKind::str, Primary {prev_tkn->literal.value()}};
-    if (token_is(identifier)) 
-        return ASTNode {*prev_tkn, NodeKind::identifier, Primary {prev_tkn->literal.value()}};
-    
+    if (token_is(int))
+        return ASTNode {*prev_tkn,
+                        NodeKind::integer,
+                        Primary {prev_tkn->literal.value()}};
+    if (token_is(float))
+        return ASTNode {*prev_tkn,
+                        NodeKind::floating_point,
+                        Primary {prev_tkn->literal.value()}};
+    if (token_is(string))
+        return ASTNode {*prev_tkn,
+                        NodeKind::str,
+                        Primary {prev_tkn->literal.value()}};
+    if (token_is(identifier))
+        return ASTNode {*prev_tkn,
+                        NodeKind::identifier,
+                        Primary {prev_tkn->literal.value()}};
+
     report_error((*curr_tkn), "expected expression.");
 }

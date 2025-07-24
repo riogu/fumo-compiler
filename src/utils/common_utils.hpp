@@ -1,6 +1,8 @@
+#pragma once
 #include <string>
 #include <optional>
 #include <filesystem>
+#include <iostream>
 #include <vector>
 // #include <expected>
 
@@ -16,4 +18,33 @@ template<typename  T> using vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
 using i64 = int64_t;
 
+struct File {
+    fs::path path_name;
+    std::string contents;
+};
+
 #define INTERNAL_PANIC(fmt, ...) PANIC(std::format("internal fumo error: " fmt, __VA_ARGS__))
+
+// print nice errors
+#define report_error(tok, ...)                                                          \
+{                                                                                       \
+    file_stream.seekg(file_stream.beg);                                                 \
+    std::string line;                                                                   \
+    if (tok.line_number != 1) {                                                         \
+        file_stream.seekg(tok.file_offset, std::ios_base::beg);                         \
+        while(file_stream.peek() != '\n') {                                             \
+            long pos = file_stream.tellg();                                             \
+            file_stream.seekg(pos-1);                                                   \
+        }                                                                               \
+        file_stream.get();                                                              \
+    }                                                                                   \
+    std::getline(file_stream, line);                                                    \
+                                                                                        \
+    std::cerr << std::format("\n  | error in file '{}' at line {}:\n  | {}\n  |{}{}\n", \
+                             tok.file_name,                                             \
+                             tok.line_number,                                           \
+                             line,                                                      \
+                             std::string(tok.line_offset, ' ') + "^ ",                  \
+                             std::format(__VA_ARGS__));                                 \
+    std::abort();                                                                       \
+}

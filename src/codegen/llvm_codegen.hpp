@@ -1,4 +1,4 @@
-#include "lexer/lexer.hpp"
+#pragma once
 #include "parser/ast_node.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
@@ -65,7 +65,7 @@ struct Codegen {
                 return llvm::Type::getDoubleTy(*llvm_context);
             case TypeKind::_bool:
                 return llvm::Type::getInt1Ty(*llvm_context);
-            // case TypeKind::_str:
+            case TypeKind::_str:
             default:
                 INTERNAL_PANIC("couldn't get llvm::Type for '{}'", fumo_type.name);
         }

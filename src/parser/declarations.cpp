@@ -9,9 +9,10 @@
     auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
     Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
 
-    if (token_is(:)) variable.type = declaration_specifier();
+    if (token_is(:)) node.type = declaration_specifier();
 
-    variable.value = token_is(=) ? std::make_optional(push_node(initializer())) : std::nullopt;
+    variable.value = token_is(=) ? std::make_optional(push(initializer())) 
+                                 : std::nullopt;
     node.branch = std::move(variable);
 
     expect_token(;);
@@ -29,41 +30,44 @@
     function.parameters = parameter_list(); // could be an empty vector
 
     expect_token(->);
-    function.type = declaration_specifier();
+    Type type = declaration_specifier();
 
-    if (const auto& kind = function.type.kind;
+    if (const auto& kind = type.kind;
         kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
     if (token_is_str("{")) {
-        function.body = push_node(compound_statement());
+        function.body = push(compound_statement());
     } else
         expect_token(;);
 
-    return ASTNode {token, NodeKind::function_declaration, std::move(function)};
+    return ASTNode {token, NodeKind::function_declaration, std::move(function), type};
 }
 
 // <parameter> ::= <declarator-specifier> <identifier> 
 // <parameter-list> ::= <parameter>
 //                    | <parameter-list> "," <parameter> 
-[[nodiscard]] vec<Variable> Parser::parameter_list() {
+[[nodiscard]] vec<ASTNode*> Parser::parameter_list() {
     expect_token_str("(");
     if (token_is_str(")")) return {};
 
-    vec<Variable> parameters {};
+    vec<ASTNode*> parameters {};
     while (1) {
         expect_token(identifier);
-        Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
-        expect_token(:);
-        variable.type = declaration_specifier();
+        ASTNode node {*prev_tkn,
+                      NodeKind::parameter,
+                      Variable {.name = std::get<str>(prev_tkn->literal.value())}};
 
-        if (const auto& kind = variable.type.kind;
+        expect_token(:);
+        node.type = declaration_specifier();
+
+        if (const auto& kind = node.type.kind;
             kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
 
-        parameters.push_back(std::move(variable));
+        parameters.push_back(push(std::move(node)));
 
         if (token_is_str(",")) continue;
         if (token_is_str(")")) return parameters;
@@ -75,13 +79,13 @@
     vec<ASTNode*> nodes {};
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //
-            nodes.push_back(push_node(variable_declaration()));
+            nodes.push_back(push(variable_declaration()));
         else if (token_is_keyword(fn))
-            nodes.push_back(push_node(function_declaration()));
+            nodes.push_back(push(function_declaration()));
         else if (token_is_str("{"))
-            nodes.push_back(push_node(compound_statement()));
+            nodes.push_back(push(compound_statement()));
         else
-            nodes.push_back(push_node(statement()));
+            nodes.push_back(push(statement()));
     }
     return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {nodes}};
 }
@@ -100,12 +104,12 @@
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_struct,
-                     .struct_type = struct_declaration()};
+                     .struct_or_enum = struct_declaration()};
     } // add unions later
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_enum,
-                     .enum_type = enum_declaration()};
+                     .struct_or_enum = enum_declaration()};
     }
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());

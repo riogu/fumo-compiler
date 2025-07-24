@@ -1,14 +1,15 @@
 #pragma once
+#include "lexer/lexer.hpp"
 #include "parser/ast_node.hpp"
 #include "parser/parser_errors.hpp"
 
 struct Parser {
-    Parser(const str& file_repr) { file_stream << file_repr; }
+    Parser(const File & file) { file_stream << file.contents; }
     [[nodiscard]] Scope parse_tokens(vec<Token>& tokens);
 
   private:
 
-    ASTNode* push_node(unique_ptr<ASTNode> node) {
+    ASTNode* push(unique_ptr<ASTNode> node) {
         all_nodes.push_back(std::move(node));
         return all_nodes.back().get();
     }
@@ -43,7 +44,7 @@ struct Parser {
     // function
     [[nodiscard]] unique_ptr<ASTNode> function_declaration();
     [[nodiscard]] unique_ptr<ASTNode> compound_statement();
-    [[nodiscard]] vec<Variable> parameter_list();
+    [[nodiscard]] vec<ASTNode*> parameter_list();
     // --------------------------------------------------------------
 
 //  #define token_is(tok) (std::print("is_tkn '{}' == '{}' ?\n", curr_tkn->to_str(), #tok), is_tkn(tkn(tok)))

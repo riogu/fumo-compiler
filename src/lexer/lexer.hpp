@@ -1,11 +1,6 @@
 #pragma once
 #include "token_definitions.hpp"
 
-struct File {
-    fs::path path_name;
-    std::string contents;
-};
-
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
     i64 __FUMO_LINE_OFFSET__ = 0;
