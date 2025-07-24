@@ -1,3 +1,4 @@
+#include "parser/ast_node.hpp"
 #include "parser/parser.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}? 
@@ -54,7 +55,6 @@
     while (1) {
         expect_token(identifier);
         Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
-
         expect_token(:);
         variable.type = declaration_specifier();
 

@@ -46,6 +46,7 @@ enum struct NodeKind {
     /* top levels                                                 */ \
     expression,              /*                                   */ \
     statement,               /*                                   */ \
+    global_var_declaration,  /*                                   */ \
     variable_declaration,    /*                                   */ \
     function_declaration
 
@@ -98,14 +99,14 @@ struct ASTNode {
     }
 
     #define nd_kind(v_) case NodeKind::v_: return std::format("\033[38;2;142;163;217m{}\033[0m",#v_);
-    [[nodiscard]] constexpr str kind_name() {
+    [[nodiscard]] constexpr str kind_name() const {
         switch (kind) {
             map_macro(nd_kind, all_node_kinds);
             default: PANIC(std::format("provided unknown NodeKind '{}'.", (int)kind));
         }
     }
 
-    [[nodiscard]] constexpr str to_str(int64_t depth);
+    [[nodiscard]] constexpr str to_str(int64_t depth) const;
 
 
 };
@@ -150,8 +151,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
 }                                                                                                   \
     case t_seq___.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                    \
         __VA_OPT__(T __VA_ARGS__ =                                                                  \
-            get_elem<std::remove_pointer                                                            \
-                        <std::remove_cvref<decltype(__VA_ARGS__)>::type>::type>(v___);)
+            get_elem<std::remove_pointer<std::remove_cvref<T>::type>::type>(v___);)
 
 #define _                                                                                           \
         break;                                                                                      \
@@ -166,37 +166,39 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
 #define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
 #define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
 
-[[nodiscard]] constexpr str ASTNode::to_str(int64_t depth = 0) {
+[[nodiscard]] constexpr str ASTNode::to_str(int64_t depth = 0) const {
     depth++;
     str result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(Primary, &primary) {
+        holds(const Primary, primary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
         }
-
-        holds(Unary, &unary) {
+        holds(const Unary&, unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
             result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
         }
-        holds(Binary, &bin) {
+        holds(const Binary&, bin) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
             result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
-        holds(Variable, &var) {
+        holds(const Variable&, var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));
             result += gray(": ") + yellow(var.type.name);
             if (var.value) {
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
         }
-        holds(Function, &func) {
+        holds(const Function&, func) {
             str temp = yellow("fn ") + blue(func.name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 const auto& param = func.parameters.at(i);
                 temp += param.name + gray(": ") + yellow(param.type.name);
+
+                if(param.value) temp += " = " + param.value.value()->to_str();
+
                 if(i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
@@ -205,7 +207,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
             if (func.body) result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"),
                                                  func.body.value()->to_str(depth)); 
         }
-        holds(Scope, &scope) {
+        holds(const Scope&, scope) {
             result += gray("{");
             depth++;
             for(auto& node: scope.nodes) 

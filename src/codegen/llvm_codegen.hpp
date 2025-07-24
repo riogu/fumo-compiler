@@ -34,13 +34,13 @@ struct Codegen {
     }
 
   private:
-    llvm::Value* codegen(ASTNode* node);
-    llvm::Value* codegen(ASTNode* node, Primary& branch);
-    llvm::Value* codegen(ASTNode* node, Unary& branch);
-    llvm::Value* codegen(ASTNode* node, Binary& branch);
-    llvm::Value* codegen(ASTNode* node, Variable& branch);
-    llvm::Value* codegen(ASTNode* node, Function& branch);
-    llvm::Value* codegen(ASTNode* node, Scope& branch);
+    llvm::Value* codegen(const ASTNode& node);
+    llvm::Value* codegen(const ASTNode& node, const Primary& branch);
+    llvm::Value* codegen(const ASTNode& node, const Unary& branch);
+    llvm::Value* codegen(const ASTNode& node, const Binary& branch);
+    llvm::Value* codegen(const ASTNode& node, const Variable& branch);
+    llvm::Value* codegen(const ASTNode& node, const Function& branch);
+    llvm::Value* codegen(const ASTNode& node, const Scope& branch);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

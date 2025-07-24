@@ -52,6 +52,7 @@ auto main() -> int {
           "x = 12; fn func() -> void {}"
           , "pass"),
         t("let x: i32 = 123123;                                     \n"
+          "fn another_func(x: i32) -> void;                         \n"
           "fn func_name(a: i32, b: f64) -> const i32* {             \n"
           "    x = 69420;                                           \n"
           "    let x: i32 = 1111111;                                \n"

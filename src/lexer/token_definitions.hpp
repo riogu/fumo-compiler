@@ -33,7 +33,7 @@ struct Token {
     std::string file_name;
 
     #define each_token(_v) case TokenType::_v: return token_grey_green(all_token_strings.at(TokenType::_v));
-    [[nodiscard]] constexpr str to_str() {
+    [[nodiscard]] constexpr str to_str() const {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::integer:
@@ -56,7 +56,7 @@ struct Token {
 
 #define tkntype(v_) case TokenType::v_: return #v_;
 
-    [[nodiscard]] constexpr str type_name() {
+    [[nodiscard]] constexpr str type_name() const {
         switch (type) {
             map_macro(tkntype, all_tokens);
             default: PANIC(std::format("provided unknown TokenType '{}'.", (int)type));
