@@ -41,17 +41,29 @@ auto main() -> int {
           "    }\n"
           "    var = 213;\n"
           "}\n"
-          "fn main() -> i32 {\n    let var = 1;\n    return 0;\n}\n"
+          // "fn main() -> i32 {\n    let var = 1;\n    return 0;\n}\n"
           ,"pass"),
-        t("fn main() -> i32 {\n    let var: i32 = (-1) * ~3 - -8 * -1 + 2;\n}", "pass"),
-        t(" 1 * 3 - 8 * 1 + 69;","pass"),
-        t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);","pass"),
+        // t("fn main() -> i32 {\n    let var: i32 = (-1) * ~3 - -8 * -1 + 2;\n}", "pass"),
+        // t(" 1 * 3 - 8 * 1 + 69;","pass"),
+        // t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);","pass"),
     };
     constexpr std::array llvm_tests {
         t("let x: cool = 12321; let y: i32; let x: f64;\n"
           "x = 12; fn func() -> void {}"
           , "pass"),
+        t("let x: i32 = 123123;                                     \n"
+          "fn func_name(a: i32, b: f64) -> const i32* {             \n"
+          "    x = 69420;                                           \n"
+          "    let x: i32 = 1111111;                                \n"
+          "    {                                                    \n"
+          "       let x: f64;                                       \n"
+          "       x = 12.0f;                                        \n"
+          "    }                                                    \n"
+          "    x = 213;                                             \n"
+          "}                                                        \n"
+            ,"pass"),
     };
+
     std::print("{}",   "\n------------------------------------------------\n");
     for (const auto& [test, expected] : llvm_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());

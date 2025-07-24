@@ -6,7 +6,7 @@
 
 struct Codegen {
   private:
-    std::map<str, llvm::AllocaInst*> variable_table;
+    std::map<str, llvm::AllocaInst*> variable_env;
     unique_ptr<llvm::LLVMContext> llvm_context;
     unique_ptr<llvm::IRBuilder<>> ir_builder;
     unique_ptr<llvm::Module> llvm_module;

@@ -39,7 +39,7 @@ struct Token {
             case TokenType::integer:
                 return int_pink(std::to_string(std::get<int64_t>(literal.value())));
             case TokenType::floating_point:
-                return std::to_string(std::get<double>(literal.value()));
+                return int_pink(std::to_string(std::get<double>(literal.value())));
             case TokenType::identifier: case TokenType::keyword: case TokenType::builtin_type: case TokenType::string:
                 return id_gold(std::get<std::string>(literal.value()));
             case TokenType::is_EOF:

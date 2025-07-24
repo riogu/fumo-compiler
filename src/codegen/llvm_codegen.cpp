@@ -37,7 +37,7 @@ llvm::Value* Codegen::codegen(ASTNode* node, Primary& primary) {
                                                 std::get<double>(primary.value));
         case NodeKind::identifier:
             // TODO: make a proper symbol table
-            return variable_table[std::get<str>(primary.value)];
+            // return variable_env[std::get<str>(primary.value)];
         case NodeKind::str:
         default:
             INTERNAL_PANIC("codegen not implemented for '{}'", node->kind_name());
