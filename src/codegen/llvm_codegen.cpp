@@ -1,4 +1,5 @@
 #include "codegen/llvm_codegen.hpp"
+#include "parser/parser_errors.hpp"
 
 void Codegen::codegen(vec<ASTNode>& AST) {
 
@@ -85,7 +86,12 @@ llvm::Value* Codegen::codegen(ASTNode* node, Binary& bin) {
 
 llvm::Value* Codegen::codegen(ASTNode* node, Variable& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
-    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(fumo_to_llvm_type(var.type), nullptr, var.name);
+    auto type = fumo_to_llvm_type(var.type);
+    if (type == nullptr)
+        report_error(node->source_token,
+                     "fumo internal error: couldn't generate codegen for variable.");
+
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, var.name);
     if (var.value) ir_builder->CreateStore(codegen(var.value.value().get()), ptr);
     return ptr;
 }

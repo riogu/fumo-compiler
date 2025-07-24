@@ -16,4 +16,4 @@ template<typename  T> using vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
 using i64 = int64_t;
 
-#define INTERNAL_PANIC(fmt, ...) PANIC(std::format("fumo internal error: " fmt, __VA_ARGS__))
+#define INTERNAL_PANIC(fmt, ...) PANIC(std::format("internal fumo error: " fmt, __VA_ARGS__))

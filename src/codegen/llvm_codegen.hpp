@@ -1,3 +1,4 @@
+#include "lexer/lexer.hpp"
 #include "parser/ast_node.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
@@ -9,12 +10,14 @@ struct Codegen {
     unique_ptr<llvm::LLVMContext> llvm_context;
     unique_ptr<llvm::IRBuilder<>> ir_builder;
     unique_ptr<llvm::Module> llvm_module;
+    std::stringstream file_stream;
 
   public:
-    Codegen(str name) {
+    Codegen(const File& file) {
         llvm_context = std::make_unique<llvm::LLVMContext>();
         ir_builder = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
-        llvm_module = std::make_unique<llvm::Module>(name, *llvm_context);
+        llvm_module = std::make_unique<llvm::Module>(file.path_name.string(), *llvm_context);
+        file_stream << file.contents;
     }
 
     void codegen(vec<ASTNode>& AST);
@@ -41,9 +44,13 @@ struct Codegen {
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {
-            // case TypeKind::_struct:
             // case TypeKind::_union:
             // case TypeKind::_enum:
+            case TypeKind::_struct: {
+                auto type = llvm::StructType::getTypeByName(*llvm_context, fumo_type.name);
+                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", fumo_type.name);
+                return type;
+            }
             case TypeKind::_void:
                 return llvm::Type::getVoidTy(*llvm_context);
             case TypeKind::_i8:
@@ -60,7 +67,7 @@ struct Codegen {
                 return llvm::Type::getInt1Ty(*llvm_context);
             // case TypeKind::_str:
             default:
-                INTERNAL_PANIC("can't convert '{}' to llvm::Type", fumo_type.name);
+                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", fumo_type.name);
         }
         return {};
     }

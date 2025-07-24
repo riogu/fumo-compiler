@@ -48,12 +48,12 @@ auto main() -> int {
         t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);","pass"),
     };
     constexpr std::array llvm_tests {
-        t("let x: f32 = 12321; let y: i32; let x: f64;\n"
+        t("let x: cool = 12321; let y: i32; let x: f64;\n"
           "x = 12; fn func() -> void {}"
           , "pass"),
     };
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : ast_syntax_tests) {
+    for (const auto& [test, expected] : llvm_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

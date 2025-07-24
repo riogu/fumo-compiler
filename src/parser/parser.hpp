@@ -4,13 +4,14 @@
 
 struct Parser {
 
-    std::stringstream file_stream;
+    Parser(const str& file_repr) { file_stream << file_repr; }
     [[nodiscard]] vec<ASTNode> parse_tokens(vec<Token>& tokens);
 
   private:
     vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
+    std::stringstream file_stream;
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
     // --------------------------------------------------------------
     // expressions
