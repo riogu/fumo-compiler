@@ -3,11 +3,17 @@
 #include "parser/parser_errors.hpp"
 
 struct Parser {
-
     Parser(const str& file_repr) { file_stream << file_repr; }
-    [[nodiscard]] vec<ASTNode> parse_tokens(vec<Token>& tokens);
+    [[nodiscard]] Scope parse_tokens(vec<Token>& tokens);
 
   private:
+
+    ASTNode* push_node(unique_ptr<ASTNode> node) {
+        all_nodes.push_back(std::move(node));
+        return all_nodes.back().get();
+    }
+
+    vec<unique_ptr<ASTNode>> all_nodes {};
     vec<Token> tokens;
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;

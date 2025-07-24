@@ -62,31 +62,30 @@ struct Primary {
     Literal value; // can also be an identifier
 };
 struct Unary {
-    unique_ptr<ASTNode> expr;
+    ASTNode* expr;
 };
 struct Binary {
-    unique_ptr<ASTNode> lhs;
-    unique_ptr<ASTNode> rhs;
+    ASTNode* lhs;
+    ASTNode* rhs;
 };
 struct Variable {
     Type type;
     std::string name;
-    Opt<unique_ptr<ASTNode>> value;
+    Opt<ASTNode*> value;
 };
 struct Function {
     Type type;
     std::string name;
     vec<Variable> parameters; // if its empty we have no params
-    Opt<unique_ptr<ASTNode>> body; // scope
+    Opt<ASTNode*> body; // scope
 };
 
 // compound-statement | initializer-list | translation-unit | struct-body
 struct Scope {
-    vec<ASTNode> nodes;
+    vec<ASTNode*> nodes;
 };
 
-struct If {};
-struct For {};
+struct If {}; struct For {};
 
 struct ASTNode {
     Token source_token; // token that originated this Node
@@ -94,7 +93,6 @@ struct ASTNode {
     NodeBranch branch;
 
     constexpr operator std::unique_ptr<ASTNode>()&& { 
-        str e = "func"".""varname";
         return std::make_unique<ASTNode>(std::move(*this));
     }
 
@@ -211,7 +209,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
             result += gray("{");
             depth++;
             for(auto& node: scope.nodes) 
-                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node.to_str(depth));
+                result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), node->to_str(depth));
             depth--;
             result += std::format("\n{}{}", str(depth * 2, ' '), gray("}"));
         }

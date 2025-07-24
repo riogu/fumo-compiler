@@ -20,7 +20,7 @@ struct Codegen {
         file_stream << file.contents;
     }
 
-    void codegen(vec<ASTNode>& AST);
+    void codegen(Scope& file_scope);
 
     void print_llvm_ir() {
         llvm_module->print(llvm::outs(), nullptr);

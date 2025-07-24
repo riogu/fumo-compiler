@@ -1,25 +1,25 @@
 #include "parser/parser.hpp"
 #include "parser/type.hpp"
 
-vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
+Scope Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
-    vec<ASTNode> AST;
+    vec<ASTNode*> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
         if (token_is_keyword(let)) //
-            AST.push_back(std::move(*variable_declaration()));
+            AST.push_back(push_node(variable_declaration()));
         else if (token_is_keyword(fn))
-            AST.push_back(std::move(*function_declaration()));
+            AST.push_back(push_node(function_declaration()));
         else
-            AST.push_back(std::move(*statement()));
+            AST.push_back(push_node(statement()));
     }
-    return AST;
+    return Scope {AST};
 }
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
     if (token_is_keyword(return)) {
-        return ASTNode {*prev_tkn, NodeKind::return_statement, Unary {expression_statement()}};
+        return ASTNode {*prev_tkn, NodeKind::return_statement, Unary {push_node(expression_statement())}};
     }
     return expression_statement();
 }
@@ -53,7 +53,7 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
         }
         return ASTNode {*prev_tkn,
                         NodeKind::assignment,
-                        Binary {std::move(node), initializer()}};
+                        Binary {push_node(std::move(node)), push_node(initializer())}};
     }
     return node;
 }
@@ -73,13 +73,13 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
     Scope init_list {};
-    init_list.nodes.push_back(std::move(*initializer()));
+    init_list.nodes.push_back(push_node(initializer()));
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
                 return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
             }
-            init_list.nodes.push_back(std::move(*initializer()));
+            init_list.nodes.push_back(push_node(initializer()));
             continue;
         }
         return ASTNode {*prev_tkn, NodeKind::initializer_list, std::move(init_list)};
@@ -93,11 +93,11 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
         if (token_is(==))
             return ASTNode {*prev_tkn,
                             NodeKind::equal,
-                            Binary {std::move(node), relational()}};
+                            Binary {push_node(std::move(node)), push_node(relational())}};
         if (token_is(!=))
             return ASTNode {*prev_tkn,
                             NodeKind::not_equal,
-                            Binary {std::move(node), relational()}};
+                            Binary {push_node(std::move(node)), push_node(relational())}};
         return node;
     }
 }
@@ -106,13 +106,21 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
 [[nodiscard]] unique_ptr<ASTNode> Parser::relational() {
     auto node = add();
     if (token_is(<))
-        return ASTNode {*prev_tkn, NodeKind::less_than,   Binary {std::move(node), add()}};
+        return ASTNode {*prev_tkn,
+                        NodeKind::less_than,
+                        Binary {push_node(std::move(node)), push_node(add())}};
     if (token_is(>))
-        return ASTNode {*prev_tkn, NodeKind::less_than,   Binary {add(), std::move(node)}};
+        return ASTNode {*prev_tkn,
+                        NodeKind::less_than,
+                        Binary {push_node(add()), push_node(std::move(node))}};
     if (token_is(<=))
-        return ASTNode {*prev_tkn, NodeKind::less_equals, Binary {std::move(node), add()}};
+        return ASTNode {*prev_tkn,
+                        NodeKind::less_equals,
+                        Binary {push_node(std::move(node)), push_node(add())}};
     if (token_is(>=))
-        return ASTNode {*prev_tkn, NodeKind::less_equals, Binary {add(), std::move(node)}};
+        return ASTNode {*prev_tkn,
+                        NodeKind::less_equals,
+                        Binary {push_node(add()), push_node(std::move(node))}};
     return node;
 }
 
@@ -121,11 +129,15 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
     auto node = multiply();
     while (1) {
         if (token_is(+)) {
-            node = ASTNode {*prev_tkn, NodeKind::add, Binary {std::move(node), multiply()}};
+            node = ASTNode {*prev_tkn,
+                            NodeKind::add,
+                            Binary {push_node(std::move(node)), push_node(multiply())}};
             continue;
         }
         if (token_is(-)) {
-            node = ASTNode {*prev_tkn, NodeKind::sub, Binary {std::move(node), multiply()}};
+            node = ASTNode {*prev_tkn,
+                            NodeKind::sub,
+                            Binary {push_node(std::move(node)), push_node(multiply())}};
             continue;
         }
         return node;
@@ -137,11 +149,15 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
     auto node = unary();
     while (1) {
         if (token_is(*)) {
-            node = ASTNode {*prev_tkn, NodeKind::multiply, Binary {std::move(node), unary()}};
+            node = ASTNode {*prev_tkn,
+                            NodeKind::multiply,
+                            Binary {push_node(std::move(node)), push_node(unary())}};
             continue;
         }
         if (token_is(/)) {
-            node = ASTNode {*prev_tkn, NodeKind::divide, Binary {std::move(node), unary()}};
+            node = ASTNode {*prev_tkn,
+                            NodeKind::divide,
+                            Binary {push_node(std::move(node)), push_node(unary())}};
             continue;
         }
         return node;
@@ -151,9 +167,12 @@ vec<ASTNode> Parser::parse_tokens(vec<Token>& tkns) {
 // <unary> ::= ("-" | "!" | "~" | "+") <unary>
 //           | <primary>
 [[nodiscard]] unique_ptr<ASTNode> Parser::unary() {
-    if (token_is(-)) return ASTNode {*prev_tkn, NodeKind::negate, Unary {unary()}};
-    if (token_is(!)) return ASTNode {*prev_tkn, NodeKind::logic_not, Unary {unary()}};
-    if (token_is(~)) return ASTNode {*prev_tkn, NodeKind::bitwise_not, Unary {unary()}};
+    if (token_is(-))
+        return ASTNode {*prev_tkn, NodeKind::negate, Unary {push_node(unary())}};
+    if (token_is(!))
+        return ASTNode {*prev_tkn, NodeKind::logic_not, Unary {push_node(unary())}};
+    if (token_is(~))
+        return ASTNode {*prev_tkn, NodeKind::bitwise_not, Unary {push_node(unary())}};
     return primary();
 }
 

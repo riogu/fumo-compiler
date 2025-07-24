@@ -11,7 +11,7 @@
 
     if (token_is(:)) variable.type = declaration_specifier();
 
-    variable.value = token_is(=) ? std::make_optional(initializer()) : std::nullopt;
+    variable.value = token_is(=) ? std::make_optional(push_node(initializer())) : std::nullopt;
     node.branch = std::move(variable);
 
     expect_token(;);
@@ -37,7 +37,7 @@
     }
 
     if (token_is_str("{")) {
-        function.body = compound_statement();
+        function.body = push_node(compound_statement());
     } else
         expect_token(;);
 
@@ -72,18 +72,18 @@
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement}* }
 [[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
-    vec<ASTNode> nodes {};
+    vec<ASTNode*> nodes {};
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //
-            nodes.push_back(std::move(*variable_declaration()));
+            nodes.push_back(push_node(variable_declaration()));
         else if (token_is_keyword(fn))
-            nodes.push_back(std::move(*function_declaration()));
-        else if(token_is_str("{"))
-            nodes.push_back(std::move(*compound_statement()));
+            nodes.push_back(push_node(function_declaration()));
+        else if (token_is_str("{"))
+            nodes.push_back(push_node(compound_statement()));
         else
-            nodes.push_back(std::move(*statement()));
+            nodes.push_back(push_node(statement()));
     }
-    return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {std::move(nodes)}};
+    return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {nodes}};
 }
 // <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str

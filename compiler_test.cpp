@@ -55,6 +55,7 @@ auto main() -> int {
           "fn another_func(x: i32) -> void;                         \n"
           "fn func_name(a: i32, b: f64) -> const i32* {             \n"
           "    x = 69420;                                           \n"
+          "    a = 69420;                                           \n"
           "    let x: i32 = 1111111;                                \n"
           "    {                                                    \n"
           "       let x: f64;                                       \n"

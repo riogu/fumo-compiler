@@ -1,7 +1,7 @@
 #include "codegen/llvm_codegen.hpp"
 #include "parser/parser_errors.hpp"
 
-void Codegen::codegen(vec<ASTNode>& AST) {
+void Codegen::codegen(Scope& file_scope) {
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "main", llvm_module.get());
@@ -9,7 +9,7 @@ void Codegen::codegen(vec<ASTNode>& AST) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    for (auto& node : AST) codegen(node);
+    for (auto& node : file_scope.nodes) codegen(*node);
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
@@ -78,6 +78,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const Binary& bin) {
         case NodeKind::less_equals:
             return ir_builder->CreateICmpSLE(codegen(*bin.lhs), codegen(*bin.rhs));
         case NodeKind::assignment:
+            // FIXME: we shouldnt codegen a new alloca on assignment
             return ir_builder->CreateStore(codegen(*bin.rhs), codegen(*bin.lhs));
         default:
             INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
