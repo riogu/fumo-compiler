@@ -33,7 +33,7 @@
     Type type = declaration_specifier();
 
     if (const auto& kind = type.kind;
-        kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
+        kind == TypeKind::Enum || kind == TypeKind::Struct) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
@@ -63,7 +63,7 @@
         node.type = declaration_specifier();
 
         if (const auto& kind = node.type.kind;
-            kind == TypeKind::_union || kind == TypeKind::_enum || kind == TypeKind::_struct) {
+            kind == TypeKind::Enum || kind == TypeKind::Struct) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
 
@@ -84,6 +84,10 @@
             nodes.push_back(push(function_declaration()));
         else if (token_is_str("{"))
             nodes.push_back(push(compound_statement()));
+        else if (token_is_keyword(struct))
+            nodes.push_back(push(struct_declaration()));
+        else if (token_is_keyword(enum))
+            nodes.push_back(push(enum_declaration()));
         else
             nodes.push_back(push(statement()));
     }
@@ -105,12 +109,12 @@
 
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::_struct,
+                     .kind = TypeKind::Struct,
                      .struct_or_enum = push(struct_declaration())};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::_enum,
+                     .kind = TypeKind::Enum,
                      .struct_or_enum = push(enum_declaration())};
     }
     if (token_is(builtin_type)) {
@@ -122,7 +126,7 @@
     }
     if (token_is(identifier)) {
         type.name = std::get<str>(prev_tkn->literal.value());
-        type.kind = TypeKind::_undetermined;
+        type.kind = TypeKind::Undetermined;
         while (token_is(*)) { type.name += "*"; type.ptr_count++; }
         return type;
     }

@@ -48,5 +48,5 @@ struct File {
                              line,                                                      \
                              std::string(tok.line_offset, ' ') + "^ ",                  \
                              std::format(__VA_ARGS__));                                 \
-    std::abort();                                                                       \
+    std::exit(1);                                                                       \
 }

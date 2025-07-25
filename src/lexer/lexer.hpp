@@ -69,7 +69,7 @@ case static_cast<int>(Symbol::tkn): {                                   \
 #define lexer_error(...)                                                \
 {                                                                       \
     std::cerr << _lexer_error(__VA_ARGS__) << std::endl;                \
-    std::exit(0);                                                       \
+    std::exit(1);                                                       \
 }
 
 #define _lexer_error(...)                                               \

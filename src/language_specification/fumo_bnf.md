@@ -1,4 +1,9 @@
 Current structure for the AST parser in BNF format
+- Top level
+
+<translation-unit> ::= <declaration>
+                     | <statement>
+
 - Statements
 
 <statement> ::= <jump-statement>
@@ -17,9 +22,8 @@ Current structure for the AST parser in BNF format
 
 <declaration> ::= "let" <variable-declaration> ";"
                 | "fn" <function-declaration> ";"
-
-<declaration> ::= <variable-declaration>
-                | <function-declaration>
+                | "struct" <struct-declaration> ";"
+                | "enum" <enum-declaration> ";"
 
 <variable-declaration> ::= <declarator-list> {":"}?
                            {<declaration-specifier>}+

@@ -9,19 +9,16 @@
     advanced type checking like generics, polymorphism will be done on a separate pass
 */
 
-// struct | enum | namespace
-struct Namespace {
-};
-
 struct SymbolTableTree {
-    // updates the ASTNodes to represent a fully compliant program
-    vec<std::map<str, ASTNode*>> scope_to_nodes{};
+    vec<std::map<str, ASTNode*>> scope_to_nodes {};
     i64 depth = 0; // each scope moves forward 1 element in the vector
     // we clear the current depth when entering a new scope
-    // information about structs/namespaces is kept separately
     void open_scope();
     void close_scope();
     void insert_node(ASTNode* node);
+    
+    // struct | enum | namespace
+    vec<ASTNode*> named_scopes {}; // these are kept separately 
 
     [[nodiscard]] ASTNode* find_node(std::string_view var_name) {
         PANIC("not implemented.");
@@ -29,9 +26,7 @@ struct SymbolTableTree {
 };
 
 struct Analyzer {
-  public:
     Analyzer(const File& file) { file_stream << file.contents; }
-        
     void semantic_analysis(BlockScope& file_scope);
 
   private:

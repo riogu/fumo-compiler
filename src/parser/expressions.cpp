@@ -9,12 +9,14 @@ BlockScope Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(push(variable_declaration()));
         else if (token_is_keyword(fn))
             AST.push_back(push(function_declaration()));
-        else if(token_is_keyword(struct))
+        else if (token_is_keyword(struct))
             AST.push_back(push(struct_declaration()));
+        else if (token_is_keyword(enum))
+            AST.push_back(push(enum_declaration()));
         else
             AST.push_back(push(statement()));
     }
-    return BlockScope {AST};
+    return BlockScope {std::move(AST)};
 }
 
 // <statement> ::= <expression-statement>

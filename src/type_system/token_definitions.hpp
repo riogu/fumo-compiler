@@ -9,10 +9,8 @@
 #include "utils/zip-macro.hpp"
 #include <libassert/assert.hpp>
 
-
 #define make_enum_member(_v) _v,
 enum struct TokenType {map_macro(make_enum_member, all_tokens)};
-
 
 #define _make_hashmap1_(a, b) {TokenType::IDENTITY a, IDENTITY b},
 
@@ -22,9 +20,12 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
 
 using Literal = std::variant<int64_t, double, std::string>;
 
-#define int_pink(str) "\033[38;2;224;180;187m" + str + "\033[0m"
-#define id_gold(str) "\033[38;2;252;191;85m"+ str + "\033[0m"
-#define token_grey_green(str) "\033[38;2;140;170;190m" + str + "\033[0m"
+#define int_pink(symbol)         str("\033[38;2;224;180;187m") + str(symbol) + str("\033[0m")
+#define id_gold(symbol)          str("\033[38;2;252;191;85m")  + str(symbol) + str("\033[0m")
+#define token_grey_green(symbol) str("\033[38;2;140;170;190m") + str(symbol) + str("\033[0m")
+#define gray(symbol)             str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
+#define yellow(symbol)           str("\033[38;2;252;191;85m")  + str(symbol) + str("\033[0m")
+#define blue(symbol)             str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
 
 struct Token {
     TokenType type;
@@ -81,6 +82,7 @@ struct Token {
     else if(str == "builtin_type") return TokenType::builtin_type;
     else PANIC(std::format("provided unknown token name: '{}'.", str));
 }
+
 
 
 #undef each_token

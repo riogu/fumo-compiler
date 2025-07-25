@@ -11,11 +11,11 @@ void Analyzer::analyze(ASTNode& node) {
         holds(PrimaryExpr&, prim) {
             switch (node.kind) {
                 case NodeKind::integer:
-                    node.type.name = "i32", node.type.kind = TypeKind::_i32; break;
+                    node.type.name = "i32", node.type.kind = TypeKind::i32; break;
                 case NodeKind::floating_point:
-                    node.type.name = "f64", node.type.kind = TypeKind::_f64; break;
+                    node.type.name = "f64", node.type.kind = TypeKind::f64; break;
                 case NodeKind::str:
-                    node.type.name = "str", node.type.kind = TypeKind::_str; break;
+                    node.type.name = "str", node.type.kind = TypeKind::str; break;
                 case NodeKind::identifier:
                     prim.var_declaration = symbol_tree.find_node(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
@@ -35,17 +35,23 @@ void Analyzer::analyze(ASTNode& node) {
         }
         holds(VariableDecl&, var) {
             if (symbol_tree.depth == 0) node.kind = NodeKind::global_var_declaration;
-            // TODO: resolve Type::_undetermined by finding the symbol associated to it
+            if (var.value) analyze(*var.value.value());
+            if (node.type.kind == TypeKind::Undetermined) {
+                report_error(node.source_token, 
+                             "declaring a variable with deduced type requires an initializer.");
+            }
         }
         holds(FunctionDecl&, func) {
             if (func.body) {
                 symbol_tree.depth++;
-                // add parameters to the body's depth
+                // TODO: add parameters to the body's depth
                 symbol_tree.depth--;
                 analyze(*func.body.value());
             }
         }
         holds(BlockScope&, scope) {
+            // NOTE: consider taking the last node and passing that value to the scope
+            // (and returning it like rust)
             symbol_tree.depth++;
             for (auto& node : scope.nodes) analyze(*node);
             symbol_tree.depth--;

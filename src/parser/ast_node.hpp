@@ -85,13 +85,14 @@ struct BlockScope {
 
 struct StructDecl {};
 struct EnumDecl {};
+struct NamespaceDecl {};
 
 // struct IfStmt {}; struct ForStmt {};
 struct ASTNode {
 
     using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
                                     VariableDecl, FunctionDecl, BlockScope,
-                                    StructDecl, EnumDecl>;
+                                    StructDecl, EnumDecl, NamespaceDecl>;
 
     Token source_token; // token that originated this Node
     NodeKind kind;
@@ -100,7 +101,7 @@ struct ASTNode {
 
     constexpr operator std::unique_ptr<ASTNode>()&& { return std::make_unique<ASTNode>(std::move(*this)); }
 
-    [[nodiscard]] str to_str(int64_t depth) const;
+    [[nodiscard]] str to_str(int64_t depth = 0) const;
     [[nodiscard]] str kind_name() const;
 
 };

@@ -1,10 +1,7 @@
 #include "parser/ast_node.hpp"
 
-#define gray(symbol) str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
-#define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
-#define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
 
-[[nodiscard]]  str ASTNode::to_str(int64_t depth = 0) const {
+[[nodiscard]]  str ASTNode::to_str(int64_t depth) const {
     depth++;
     str result = std::format("{} ", kind_name());
 

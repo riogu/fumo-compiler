@@ -53,14 +53,14 @@
     dot_dot_dot,                        \
     minus_greater
 #define builtin_types                   \
-    void             ,                  \
+    Void             ,                  \
     i8               ,                  \
     i32              ,                  \
     i64              ,                  \
     f32              ,                  \
     f64              ,                  \
     str              ,                  \
-    bool
+    Bool
 #define keywords                        \
     let              ,                  \
     fn               ,                  \
