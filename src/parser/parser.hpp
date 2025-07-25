@@ -3,7 +3,7 @@
 
 struct Parser {
     Parser(const File & file) { file_stream << file.contents; }
-    [[nodiscard]] Scope parse_tokens(vec<Token>& tokens);
+    [[nodiscard]] BlockScope parse_tokens(vec<Token>& tokens);
 
   private:
 
@@ -35,8 +35,8 @@ struct Parser {
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();
-    [[nodiscard]] Struct struct_declaration();
-    [[nodiscard]] Enum enum_declaration();
+    [[nodiscard]] unique_ptr<ASTNode> struct_declaration();
+    [[nodiscard]] unique_ptr<ASTNode> enum_declaration();
     // variable
     [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
     // function

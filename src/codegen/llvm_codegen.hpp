@@ -20,11 +20,9 @@ struct Codegen {
         file_stream << file.contents;
     }
 
-    void codegen(Scope& file_scope);
+    void codegen(BlockScope& file_scope);
 
-    void print_llvm_ir() {
-        llvm_module->print(llvm::outs(), nullptr);
-    }
+    void print_llvm_ir() { llvm_module->print(llvm::outs(), nullptr); }
 
     [[nodiscard]] str llvm_ir_to_str() {
         std::string outstr;
@@ -35,12 +33,12 @@ struct Codegen {
 
   private:
     llvm::Value* codegen(const ASTNode& node);
-    llvm::Value* codegen(const ASTNode& node, const Primary& branch);
-    llvm::Value* codegen(const ASTNode& node, const Unary& branch);
-    llvm::Value* codegen(const ASTNode& node, const Binary& branch);
-    llvm::Value* codegen(const ASTNode& node, const Variable& branch);
-    llvm::Value* codegen(const ASTNode& node, const Function& branch);
-    llvm::Value* codegen(const ASTNode& node, const Scope& branch);
+    llvm::Value* codegen(const ASTNode& node, const PrimaryExpr& branch);
+    llvm::Value* codegen(const ASTNode& node, const UnaryExpr& branch);
+    llvm::Value* codegen(const ASTNode& node, const BinaryExpr& branch);
+    llvm::Value* codegen(const ASTNode& node, const VariableDecl& branch);
+    llvm::Value* codegen(const ASTNode& node, const FunctionDecl& branch);
+    llvm::Value* codegen(const ASTNode& node, const BlockScope& branch);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

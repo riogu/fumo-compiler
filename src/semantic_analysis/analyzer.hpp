@@ -6,11 +6,16 @@
 /*  
     turn identifiers into nodes that represent their respective variable declarations,
     or provide an error
+    advanced type checking like generics, polymorphism will be done on a separate pass
 */
 
-struct SymbolTable {
+struct Namespace {
+
+};
+
+struct SymbolScopeTree {
     // updates the ASTNodes to represent a fully compliant program
-    vec<std::map<str, ASTNode*>> scope_to_nodes;
+    vec<std::map<str, ASTNode*>> scope_to_nodes{};
     i64 depth = 0; // each scope moves forward 1 element in the vector
     // we clear the current depth when entering a new scope
     // information about structs/namespaces is kept separately
@@ -27,14 +32,14 @@ struct Analyzer {
   public:
     Analyzer(const File& file) { file_stream << file.contents; }
         
-    void semantic_analysis(Scope& file_scope);
+    void semantic_analysis(BlockScope& file_scope);
 
   private:
     std::stringstream file_stream;
-    SymbolTable sym_table {};
+    SymbolScopeTree symbol_tree {};
 
     void analyze(ASTNode& node);
-    void report_binary_error(const ASTNode& node, const Binary& bin) {
+    void report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
         switch (node.kind) {
           case NodeKind::add:       case NodeKind::sub:
           case NodeKind::multiply:  case NodeKind::divide:

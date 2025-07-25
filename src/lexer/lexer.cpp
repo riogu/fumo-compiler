@@ -1,6 +1,5 @@
 // clang-format off
 #include "lexer.hpp"
-#include "token_definitions.hpp"
 #include <fstream>
 #include <iostream>
 

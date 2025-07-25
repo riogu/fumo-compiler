@@ -1,21 +1,14 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "parser/ast_node.hpp"
-#include "semantic_analysis/type_cheker.hpp"
+#include "type_system/type_cheker.hpp"
 
-void Analyzer::semantic_analysis(Scope& file_scope) {
+void Analyzer::semantic_analysis(BlockScope& file_scope) {
     for (auto& node : file_scope.nodes) analyze(*node);
 }
 
-struct gaming {static int wow; static void func();};
 void Analyzer::analyze(ASTNode& node) {
-    gaming gaming{};
-    gaming.wow = 123;
-    gaming::wow = 213;
-    gaming.func();
-    gaming::func();
-
     match(node) {
-        holds(Primary&, prim) {
+        holds(PrimaryExpr&, prim) {
             switch (node.kind) {
                 case NodeKind::integer:
                     node.type.name = "i32", node.type.kind = TypeKind::_i32; break;
@@ -24,38 +17,38 @@ void Analyzer::analyze(ASTNode& node) {
                 case NodeKind::str:
                     node.type.name = "str", node.type.kind = TypeKind::_str; break;
                 case NodeKind::identifier:
-                    prim.var_declaration = sym_table.find_node(std::get<str>(prim.value));
+                    prim.var_declaration = symbol_tree.find_node(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
                     break;
                 default:
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
-        holds(Unary&, un) {
+        holds(UnaryExpr&, un) {
             analyze(*un.expr);
             node.type = un.expr->type;
         }
-        holds(Binary&, bin) {
+        holds(BinaryExpr&, bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
             if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
         }
-        holds(Variable&, var) {
-            if (sym_table.depth == 0) node.kind = NodeKind::global_var_declaration;
+        holds(VariableDecl&, var) {
+            if (symbol_tree.depth == 0) node.kind = NodeKind::global_var_declaration;
             // TODO: resolve Type::_undetermined by finding the symbol associated to it
         }
-        holds(Function&, func) {
+        holds(FunctionDecl&, func) {
             if (func.body) {
-                sym_table.depth++;
+                symbol_tree.depth++;
                 // add parameters to the body's depth
-                sym_table.depth--;
+                symbol_tree.depth--;
                 analyze(*func.body.value());
             }
         }
-        holds(Scope&, scope) {
-            sym_table.depth++;
+        holds(BlockScope&, scope) {
+            symbol_tree.depth++;
             for (auto& node : scope.nodes) analyze(*node);
-            sym_table.depth--;
+            symbol_tree.depth--;
         }
         _ INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }

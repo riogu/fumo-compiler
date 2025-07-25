@@ -1,5 +1,4 @@
 #include "lexer.hpp"
-#include "lexer/token_definitions.hpp"
 #include <iostream>
 
 #define symbol_case(v_) case int(Symbol::v_): return true;

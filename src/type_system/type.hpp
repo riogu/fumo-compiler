@@ -1,17 +1,9 @@
 #pragma once
 #include <libassert/assert.hpp>
-#include "lexer/symbol_definitions.hpp"
+#include "type_system/symbol_definitions.hpp"
 #include "utils/common_utils.hpp"
 
-using str = std::string;
-template<typename T>
-using Opt = std::optional<T>;
-template<typename T>
-using unique_ptr = std::unique_ptr<T>;
-
-struct Struct{};
-struct Enum{};
-
+struct ASTNode;
 
 #define make_enum_member(_v) _##_v,
 enum struct TypeKind {
@@ -31,11 +23,14 @@ struct TypeQualifier {
     TypeQualifier() {}
 };
 
+struct Struct {};
+struct Enum {};
+
 struct Type {
     str name = "undetermined";
     TypeKind kind = TypeKind::_undetermined;
     TypeQualifier qualifier;
-    Opt<std::variant<Struct, Enum>> struct_or_enum {}; // or union
+    Opt<ASTNode*> struct_or_enum {}; // or union
     int ptr_count = 0;
 };
 
@@ -48,3 +43,4 @@ struct Type {
 
 #undef make_enum_member
 #undef each_builtin_type
+

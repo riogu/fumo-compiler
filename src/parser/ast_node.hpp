@@ -1,6 +1,7 @@
 #pragma once
-#include "lexer/token_definitions.hpp"
-#include "parser/type.hpp"
+#include "type_system/token_definitions.hpp"
+#include "type_system/type.hpp"
+#include "utils/match_construct.hpp"
 // clang-format off
 
 enum struct NodeKind { 
@@ -8,7 +9,7 @@ enum struct NodeKind {
     /* ----------------------------------------                   */ \
     /* simple expressions                                         */ \
     /* binary                                                     */ \
-    /* empty_expr,*/              /* ;                                 */ \
+    /* empty_expr,*/              /* ;                            */ \
     add,                     /* +                                 */ \
     sub,                     /* -                                 */ \
     multiply,                /* *                                 */ \
@@ -53,40 +54,43 @@ enum struct NodeKind {
     all_node_kinds
 };
 
-struct ASTNode; struct Unary; struct Binary; struct If; struct For; struct Variable; struct Primary;
-struct Function; struct Scope; 
+struct ASTNode; 
 
-using NodeBranch = std::variant<Primary, Unary, Binary, Variable, Function, Scope>;
-
-struct Primary {
+struct PrimaryExpr {
     Literal value; // can also be an identifier
-    Opt<ASTNode*> var_declaration; // identifiers map to this
+    Opt<ASTNode*> var_declaration {}; // identifiers map to this
 };
-struct Unary {
+struct UnaryExpr {
     ASTNode* expr;
 };
-struct Binary {
+struct BinaryExpr {
     ASTNode* lhs;
     ASTNode* rhs;
 };
-struct Variable {
+struct VariableDecl {
     std::string name;
-    Opt<ASTNode*> value;
+    Opt<ASTNode*> value {};
 };
-struct Function {
+struct FunctionDecl {
     std::string name;
-    vec<ASTNode*> parameters; // if its empty we have no params
-    Opt<ASTNode*> body; // scope
+    vec<ASTNode*> parameters {}; // if its empty we have no params
+    Opt<ASTNode*> body {}; // scope
 };
 
-// compound-statement | initializer-list | translation-unit | struct-body
-struct Scope {
-    vec<ASTNode*> nodes;
+// compound-statement | initializer-list
+struct BlockScope {
+    vec<ASTNode*> nodes {};
 };
-
+// block scopes arent used for name lookups after semantic analysis
+// once all identifiers are solved, these block scopes arent needed for name lookups
+// they are only used for bodies of function calls/if statements and so on 
 struct If {}; struct For {};
 
+
 struct ASTNode {
+
+    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr, VariableDecl, FunctionDecl, BlockScope>;
+
     Token source_token; // token that originated this Node
     NodeKind kind;
     NodeBranch branch;
@@ -109,92 +113,46 @@ struct ASTNode {
 
 };
 
-template<typename T, typename Head, typename... Tail>
-constexpr int type_index(int index = 0) {
-    if constexpr (std::is_same_v<T, Head>) return index;
-    else
-        return type_index<T, Tail...>(index + 1);
-}
-
-template<typename... Types>
-struct type_sequence {
-    constexpr type_sequence(const std::variant<Types...>&) {}
-    constexpr type_sequence(std::unique_ptr<std::variant<Types...>>&) {}
-
-    template<typename T>
-    constexpr static int idx = type_index<T, Types...>();
-};
-
+constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
-constexpr auto wrapped_type_seq(const std::shared_ptr<ASTNode>& node) { return type_sequence(node->branch); };
-constexpr auto wrapped_type_seq(const std::unique_ptr<ASTNode>& node) { return type_sequence(node->branch); };
 inline size_t index_of(ASTNode& node) { return node.branch.index(); }
 inline size_t index_of(const ASTNode& node) { return node.branch.index(); }
-inline size_t index_of(std::shared_ptr<ASTNode>& node) { return node->branch.index(); }
-inline size_t index_of(std::unique_ptr<ASTNode>& node) { return node->branch.index(); }
-template<typename T> auto& get_elem(std::unique_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
-template<typename T> auto& get_elem(std::shared_ptr<ASTNode>& node) { return std::get<T>(node->branch); }
 template<typename T> auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
-
-
-#define match(v)                                                                                    \
-{                                                                                                   \
-    auto& v___ = v;                                                                                 \
-    bool was_default = false;                                                                       \
-    switch (auto t_seq___ = wrapped_type_seq(v); index_of(v)) {                                   
-
-#define holds(T, ...)                                                                               \
-    break;                                                                                          \
-}                                                                                                   \
-    case t_seq___.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                    \
-        __VA_OPT__(T __VA_ARGS__ =                                                                  \
-            get_elem<std::remove_pointer<std::remove_cvref<T>::type>::type>(v___);)
-
-#define _                                                                                           \
-        break;                                                                                      \
-    }                                                                                               \
-        default:                                                                                    \
-            was_default = true;                                                                     \
-}                                                                                                   \
-    if (was_default)
-
 
 #define gray(symbol) str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
 #define yellow(symbol) str("\033[38;2;252;191;85m") + str(symbol) + str("\033[0m")
 #define blue(symbol) str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
-
 [[nodiscard]] constexpr str ASTNode::to_str(int64_t depth = 0) const {
     depth++;
     str result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(Primary) {
-            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-        }
-        holds(const Unary&, unary) {
+        holds(PrimaryExpr) result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
+        
+        holds(const UnaryExpr&, unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
             result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
         }
-        holds(const Binary&, bin) {
+        holds(const BinaryExpr&, bin) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
             result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
-        holds(const Variable&, var) {
+        holds(const VariableDecl&, var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));
             result += gray(": ") + yellow(type.name);
             if (var.value) {
                 result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
             }
         }
-        holds(const Function&, func) {
+        holds(const FunctionDecl&, func) {
             str temp = yellow("fn ") + blue(func.name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 ASTNode* var = func.parameters.at(i);
                 match(*var) {
-                    holds(const Variable&, param) {
+                    holds(const VariableDecl&, param) {
                         temp += param.name + gray(": ") + yellow(var->type.name);
                         if (param.value) temp += " = " + param.value.value()->to_str();
                     }
@@ -208,7 +166,7 @@ template<typename T> auto& get_elem(const ASTNode& node) { return std::get<T>(no
             if (func.body) result += std::format("\n{}{} {}", str(depth * 2, ' '), gray("↳"),
                                                  func.body.value()->to_str(depth)); 
         }
-        holds(const Scope&, scope) {
+        holds(const BlockScope&, scope) {
             result += gray("{");
             depth++;
             for(auto& node: scope.nodes) 

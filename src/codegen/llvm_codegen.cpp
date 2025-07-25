@@ -1,6 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 
-void Codegen::codegen(Scope& file_scope) {
+void Codegen::codegen(BlockScope& file_scope) {
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "main", llvm_module.get());
@@ -14,18 +14,18 @@ void Codegen::codegen(Scope& file_scope) {
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
 
     match(node) {
-        holds(const Primary&,  v) return codegen(node, v);
-        holds(const Unary&,    v) return codegen(node, v);
-        holds(const Binary&,   v) return codegen(node, v);
-        holds(const Variable&, v) return codegen(node, v);
-        holds(const Function&, v) return codegen(node, v);
-        holds(const Scope&,    v) return codegen(node, v);
+        holds(const PrimaryExpr&,  v) return codegen(node, v);
+        holds(const UnaryExpr&,    v) return codegen(node, v);
+        holds(const BinaryExpr&,   v) return codegen(node, v);
+        holds(const VariableDecl&, v) return codegen(node, v);
+        holds(const FunctionDecl&, v) return codegen(node, v);
+        holds(const BlockScope&,    v) return codegen(node, v);
         _ INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
     }
     std::unreachable();
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node, const Primary& primary) {
+llvm::Value* Codegen::codegen(const ASTNode& node, const PrimaryExpr& primary) {
     switch (node.kind) {
         case NodeKind::integer:
             return llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*llvm_context),
@@ -42,7 +42,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const Primary& primary) {
     }
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node, const Unary& unary) {
+llvm::Value* Codegen::codegen(const ASTNode& node, const UnaryExpr& unary) {
     switch (node.kind) {
         case NodeKind::negate:
             return ir_builder->CreateNeg(codegen(*unary.expr));
@@ -56,7 +56,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const Unary& unary) {
     }
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node, const Binary& bin) {
+llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
 
     switch(node.kind){
         case NodeKind::add:
@@ -83,7 +83,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const Binary& bin) {
     }
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node, const Variable& var) {
+llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
     auto type = fumo_to_llvm_type(node.type);
     llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, var.name);
@@ -91,11 +91,11 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const Variable& var) {
     return ptr;
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node, const Function& branch) {
+llvm::Value* Codegen::codegen(const ASTNode& node, const FunctionDecl& branch) {
 
 
     return {};
 }
-llvm::Value* Codegen::codegen(const ASTNode& node, const Scope& branch) { return {};}
+llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) { return {};}
 
 

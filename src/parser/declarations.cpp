@@ -7,7 +7,7 @@
     // TODO: should be identifier list (add later)
     expect_token(identifier);
     auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
-    Variable variable {.name = std::get<str>(prev_tkn->literal.value())};
+    VariableDecl variable {.name = std::get<str>(prev_tkn->literal.value())};
 
     if (token_is(:)) node.type = declaration_specifier();
 
@@ -24,7 +24,7 @@
 //                            {<compound-statement>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
     expect_token(identifier);
-    Function function {.name = std::get<str>(prev_tkn->literal.value())};
+    FunctionDecl function {.name = std::get<str>(prev_tkn->literal.value())};
     Token token = *prev_tkn;
 
     function.parameters = parameter_list(); // could be an empty vector
@@ -57,7 +57,7 @@
         expect_token(identifier);
         ASTNode node {*prev_tkn,
                       NodeKind::parameter,
-                      Variable {.name = std::get<str>(prev_tkn->literal.value())}};
+                      VariableDecl {.name = std::get<str>(prev_tkn->literal.value())}};
 
         expect_token(:);
         node.type = declaration_specifier();
@@ -87,7 +87,7 @@
         else
             nodes.push_back(push(statement()));
     }
-    return ASTNode {*prev_tkn, NodeKind::compound_statement, Scope {nodes}};
+    return ASTNode {*prev_tkn, NodeKind::compound_statement, BlockScope {nodes}};
 }
 // <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str
@@ -100,16 +100,18 @@
     while (token_is_keyword(const) || token_is_keyword(volatile) 
         || token_is_keyword(static)|| token_is_keyword(extern)) {}
         // we recognize but ignore these keywords atm
-    
+
+    if (token_is_keyword(union)) INTERNAL_PANIC("unions aren't implemented.");
+
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_struct,
-                     .struct_or_enum = struct_declaration()};
-    } // add unions later
+                     .struct_or_enum = push(struct_declaration())};
+    }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = TypeKind::_enum,
-                     .struct_or_enum = enum_declaration()};
+                     .struct_or_enum = push(enum_declaration())};
     }
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());
@@ -127,12 +129,12 @@
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
 }
 
-[[nodiscard]] Struct Parser::struct_declaration() {
+[[nodiscard]] unique_ptr<ASTNode> Parser::struct_declaration() {
     // TODO: finish this 
-    return {};
+    INTERNAL_PANIC("structs aren't implemented.");
 }
 
-[[nodiscard]] Enum Parser::enum_declaration() {
+[[nodiscard]] unique_ptr<ASTNode> Parser::enum_declaration() {
     // TODO: finish this 
-    return {};
+    INTERNAL_PANIC("enums aren't implemented.");
 }

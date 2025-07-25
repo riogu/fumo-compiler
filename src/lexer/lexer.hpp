@@ -1,5 +1,5 @@
 #pragma once
-#include "token_definitions.hpp"
+#include "type_system/token_definitions.hpp"
 
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;
@@ -12,9 +12,9 @@ struct Lexer {
     [[nodiscard]] std::pair<vec<Token>, File> tokenize_file(const fs::path& _file_name);
     [[nodiscard]] std::pair<vec<Token>, File> tokenize_string(const std::string& testname,
                                                               const std::string& test_string);
-    [[nodiscard]] vec<Token> tokenize();
 
   private:
+    [[nodiscard]] vec<Token> tokenize();
     [[nodiscard]] Token parse_numeric_literal();
     [[nodiscard]] Token parse_identifier();
     [[nodiscard]] bool is_keyword(const str identifier);

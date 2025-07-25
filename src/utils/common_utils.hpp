@@ -4,18 +4,20 @@
 #include <filesystem>
 #include <iostream>
 #include <vector>
-// #include <expected>
 
-using str = std::string;
+// #include <expected>
 // template<typename Ok, typename Err>
 // using Result = std::expected<Ok, Err>;
 // template<typename T>
 // using Err = std::unexpected<T>;
 //
 namespace fs = std::filesystem; 
-
+using str = std::string;
 template<typename  T> using vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
+template<typename T>
+using unique_ptr = std::unique_ptr<T>;
+
 using i64 = int64_t;
 
 struct File {
@@ -23,7 +25,7 @@ struct File {
     std::string contents;
 };
 
-#define INTERNAL_PANIC(fmt, ...) PANIC(std::format("internal fumo error: " fmt, __VA_ARGS__))
+#define INTERNAL_PANIC(fmt, ...) PANIC(std::format("internal fumo error: " fmt __VA_OPT__(, __VA_ARGS__)))
 
 // print nice errors
 #define report_error(tok, ...)                                                          \
