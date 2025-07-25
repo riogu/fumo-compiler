@@ -90,7 +90,7 @@ struct ASTNode {
     Token source_token; // token that originated this Node
     NodeKind kind;
     NodeBranch branch;
-    Type type;
+    Type type {};
 
     constexpr operator std::unique_ptr<ASTNode>()&& { 
         return std::make_unique<ASTNode>(std::move(*this));

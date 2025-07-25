@@ -1,11 +1,19 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "parser/ast_node.hpp"
+#include "semantic_analysis/type_cheker.hpp"
 
 void Analyzer::semantic_analysis(Scope& file_scope) {
     for (auto& node : file_scope.nodes) analyze(*node);
 }
 
+struct gaming {static int wow; static void func();};
 void Analyzer::analyze(ASTNode& node) {
+    gaming gaming{};
+    gaming.wow = 123;
+    gaming::wow = 213;
+    gaming.func();
+    gaming::func();
+
     match(node) {
         holds(Primary&, prim) {
             switch (node.kind) {

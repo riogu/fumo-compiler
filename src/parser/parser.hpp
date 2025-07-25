@@ -1,7 +1,5 @@
 #pragma once
-#include "lexer/lexer.hpp"
 #include "parser/ast_node.hpp"
-#include "parser/parser_errors.hpp"
 
 struct Parser {
     Parser(const File & file) { file_stream << file.contents; }

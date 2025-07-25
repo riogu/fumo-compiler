@@ -26,7 +26,6 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const Primary& primary) {
-
     switch (node.kind) {
         case NodeKind::integer:
             return llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*llvm_context),

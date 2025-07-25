@@ -2,8 +2,6 @@
 #include <libassert/assert.hpp>
 #include "lexer/symbol_definitions.hpp"
 #include "utils/common_utils.hpp"
-#include <memory>
-#include <optional>
 
 using str = std::string;
 template<typename T>
@@ -34,11 +32,10 @@ struct TypeQualifier {
 };
 
 struct Type {
-    str name;
-    TypeKind kind;
+    str name = "undetermined";
+    TypeKind kind = TypeKind::_undetermined;
     TypeQualifier qualifier;
-    Opt<std::variant<Struct, Enum>> struct_or_enum; // or union
-
+    Opt<std::variant<Struct, Enum>> struct_or_enum {}; // or union
     int ptr_count = 0;
 };
 

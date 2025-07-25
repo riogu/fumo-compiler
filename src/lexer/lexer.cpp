@@ -35,7 +35,7 @@
             tokens.push_back(parse_identifier());
             continue;
         }
-        // FIXME: - add string literal parsing
+        // TODO: - add string literal parsing
         switch (curr) {
             //
             // -----------------------------------------------------------
