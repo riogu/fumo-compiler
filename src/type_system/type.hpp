@@ -23,9 +23,6 @@ struct TypeQualifier {
     TypeQualifier() {}
 };
 
-struct Struct {};
-struct Enum {};
-
 struct Type {
     str name = "undetermined";
     TypeKind kind = TypeKind::_undetermined;

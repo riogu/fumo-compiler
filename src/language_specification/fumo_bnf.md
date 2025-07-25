@@ -97,7 +97,7 @@ Current structure for the AST parser in BNF format
                    | f64
                    | str
                    | bool
-                   | <struct-or-union-specifier>
+                   | <struct-specifier>
                    | <enum-specifier>
                    | <typedef-name>
 <type-qualifier> ::= const

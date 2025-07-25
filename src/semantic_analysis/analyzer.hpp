@@ -9,11 +9,11 @@
     advanced type checking like generics, polymorphism will be done on a separate pass
 */
 
+// struct | enum | namespace
 struct Namespace {
-
 };
 
-struct SymbolScopeTree {
+struct SymbolTableTree {
     // updates the ASTNodes to represent a fully compliant program
     vec<std::map<str, ASTNode*>> scope_to_nodes{};
     i64 depth = 0; // each scope moves forward 1 element in the vector
@@ -36,7 +36,7 @@ struct Analyzer {
 
   private:
     std::stringstream file_stream;
-    SymbolScopeTree symbol_tree {};
+    SymbolTableTree symbol_tree {};
 
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
