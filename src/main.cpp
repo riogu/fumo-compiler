@@ -10,14 +10,15 @@ auto main(int argc, char** argv) -> int {
 
     Lexer lexer {};
     auto [tokens, file] = lexer.tokenize_string("fumo_module", test);
-    // for(auto& token: tokens) std::print("{} and ", token.to_str());
+    // for(auto& token: tokens) std::cerr <<  token.to_str() + "| ";
 
     Parser parser {file};
     auto file_scope = parser.parse_tokens(tokens);
-    for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+    // for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
 
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_scope);
+    for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
 
     Codegen codegen {file};
     codegen.codegen(file_scope);

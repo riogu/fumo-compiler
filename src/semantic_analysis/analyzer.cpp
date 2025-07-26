@@ -7,12 +7,9 @@ void Analyzer::analyze(ASTNode& node) {
     match(node) {
         holds(PrimaryExpr&, prim) {
             switch (prim.kind) {
-                case PrimaryExpr::integer:
-                    node.type.name = "i32", node.type.kind = Type::i32_; break;
-                case PrimaryExpr::floating_point:
-                    node.type.name = "f64", node.type.kind = Type::f64_; break;
-                case PrimaryExpr::str:
-                    node.type.name = "str", node.type.kind = Type::str_; break;
+                case PrimaryExpr::integer:        node.type.name = "i32"; node.type.kind = Type::i32_; break;
+                case PrimaryExpr::floating_point: node.type.name = "f64"; node.type.kind = Type::f64_; break;
+                case PrimaryExpr::str:            node.type.name = "str"; node.type.kind = Type::str_; break;
                 case PrimaryExpr::identifier:
                     prim.var_declaration = find_node(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
@@ -111,7 +108,7 @@ void Analyzer::push_named_scope(ASTNode& node) {
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
-        _default {}
+        _default { INTERNAL_PANIC("expected named scope, got '{}'.", node.kind_name()); }
     }
 }
 
@@ -125,10 +122,5 @@ void Analyzer::push_to_scope(ASTNode& node) {
     }
 }
 
-[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name) {
-    INTERNAL_PANIC("not implemented.");
-}
-
-[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
-    PANIC("not implemented");
-}
+[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }

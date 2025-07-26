@@ -16,7 +16,7 @@ struct PrimaryExpr {
 
         PrimaryExpr_kinds
     } kind;
-    Literal value; // can also be an identifier
+    Literal value;                    // can also be an identifier
     Opt<ASTNode*> var_declaration {}; // identifiers map to this
 };
 struct UnaryExpr {
@@ -71,7 +71,7 @@ struct FunctionDecl {
     } kind;
     std::string name;
     vec<ASTNode*> parameters {}; // if its empty we have no params
-    Opt<ASTNode*> body {}; // scope
+    Opt<ASTNode*> body {}; // compound statement {...}
 };
 struct BlockScope {
     enum {

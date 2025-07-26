@@ -83,8 +83,6 @@ struct Token {
     PANIC(std::format("provided unknown token name: '{}'.", str));
 }
 
-
-
 #undef each_token
 #undef tkntype
 #undef _make_hashmap1_
