@@ -20,12 +20,12 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
 
 using Literal = std::variant<int64_t, double, std::string>;
 
-#define int_pink(symbol)         str("\033[38;2;224;180;187m") + str(symbol) + str("\033[0m")
-#define id_gold(symbol)          str("\033[38;2;252;191;85m")  + str(symbol) + str("\033[0m")
-#define token_grey_green(symbol) str("\033[38;2;140;170;190m") + str(symbol) + str("\033[0m")
-#define gray(symbol)             str("\033[38;2;134;149;179m") + str(symbol) + str("\033[0m")
-#define yellow(symbol)           str("\033[38;2;252;191;85m")  + str(symbol) + str("\033[0m")
-#define blue(symbol)             str("\033[38;2;156;209;255m") + str(symbol) + str("\033[0m")
+#define int_pink(symbol)         std::string("\033[38;2;224;180;187m") + std::string(symbol) + std::string("\033[0m")
+#define id_gold(symbol)          std::string("\033[38;2;252;191;85m")  + std::string(symbol) + std::string("\033[0m")
+#define token_grey_green(symbol) std::string("\033[38;2;140;170;190m") + std::string(symbol) + std::string("\033[0m")
+#define gray(symbol)             std::string("\033[38;2;134;149;179m") + std::string(symbol) + std::string("\033[0m")
+#define yellow(symbol)           std::string("\033[38;2;252;191;85m")  + std::string(symbol) + std::string("\033[0m")
+#define blue(symbol)             std::string("\033[38;2;156;209;255m") + std::string(symbol) + std::string("\033[0m")
 
 struct Token {
     TokenType type;
@@ -34,7 +34,7 @@ struct Token {
     std::string file_name;
 
     #define each_token(_v) case TokenType::_v: return token_grey_green(all_token_strings.at(TokenType::_v));
-    [[nodiscard]] constexpr str to_str() const {
+    [[nodiscard]] constexpr std::string to_str() const {
         switch (type) {
             map_macro(each_token, punctuators)
             case TokenType::integer:
@@ -57,7 +57,7 @@ struct Token {
 
 #define tkntype(v_) case TokenType::v_: return #v_;
 
-    [[nodiscard]] constexpr str type_name() const {
+    [[nodiscard]] constexpr std::string type_name() const {
         switch (type) {
             map_macro(tkntype, all_tokens);
             default: PANIC(std::format("provided unknown TokenType '{}'.", (int)type));

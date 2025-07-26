@@ -44,19 +44,19 @@ struct Codegen {
         switch (fumo_type.kind) {
             // case TypeKind::_union:
             // case TypeKind::_enum:
-            case TypeKind::struct_: {
+            case Type::struct_: {
                 auto type = llvm::StructType::getTypeByName(*llvm_context, fumo_type.name);
                 if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", fumo_type.name);
                 return type;
             }
-            case TypeKind::Nothing:  return llvm::Type::getVoidTy(*llvm_context);
-            case TypeKind::i8_:      return llvm::Type::getInt8Ty(*llvm_context);
-            case TypeKind::i32_:     return llvm::Type::getInt32Ty(*llvm_context);
-            case TypeKind::i64_:     return llvm::Type::getInt64Ty(*llvm_context);
-            case TypeKind::f32_:     return llvm::Type::getFloatTy(*llvm_context);
-            case TypeKind::f64_:     return llvm::Type::getDoubleTy(*llvm_context);
-            case TypeKind::bool_:    return llvm::Type::getInt1Ty(*llvm_context);
-            case TypeKind::str_:   // TODO: add string types
+            case Type::Nothing:  return llvm::Type::getVoidTy(*llvm_context);
+            case Type::i8_:      return llvm::Type::getInt8Ty(*llvm_context);
+            case Type::i32_:     return llvm::Type::getInt32Ty(*llvm_context);
+            case Type::i64_:     return llvm::Type::getInt64Ty(*llvm_context);
+            case Type::f32_:     return llvm::Type::getFloatTy(*llvm_context);
+            case Type::f64_:     return llvm::Type::getDoubleTy(*llvm_context);
+            case Type::bool_:    return llvm::Type::getInt1Ty(*llvm_context);
+            case Type::str_:   // TODO: add string types
             default:
                 INTERNAL_PANIC("couldn't get llvm::Type for '{}'", fumo_type.name);
         }

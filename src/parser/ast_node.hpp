@@ -3,58 +3,6 @@
 #include "type_system/type.hpp"
 #include "utils/match_construct.hpp"
 
-enum struct NodeKind { 
-#define all_node_kinds                                               \
-    /* ----------------------------------------                   */ \
-    /* simple expressions                                         */ \
-    /* binary                                                     */ \
-    /* empty_expr,*/              /* ;                            */ \
-    add,                     /* +                                 */ \
-    sub,                     /* -                                 */ \
-    multiply,                /* *                                 */ \
-    divide,                  /* /                                 */ \
-    equal,                   /* ==                                */ \
-    not_equal,               /* !=                                */ \
-    less_than,               /* < | >                             */ \
-    less_equals,             /* <= | >=                           */ \
-    assignment,              /* =                                 */ \
-    /* unary                                                      */ \
-    negate,                  /* unary -                           */ \
-    logic_not,               /* !                                 */ \
-    bitwise_not,             /* ~                                 */ \
-    /* ----------------------------------------                   */ \
-    /* postfix                                                    */ \
-    function_call,           /* function call                     */ \
-                             /* | (enum | struct | union) member  */ \
-    /* ----------------------------------------                   */ \
-    /* primary                                                    */ \
-    integer,                 /* i32 | int64_t                     */ \
-    floating_point,          /*                                   */ \
-    str,                     /*                                   */ \
-    identifier,              /* (variable | function) name        */ \
-    /* ----------------------------------------                   */ \
-    /* statements                                                 */ \
-    /* if, for, while, compound-statement, etc                    */ \
-    return_statement,        /* return                            */ \
-    /* ----------------------------------------                   */ \
-    /* scopes                                                     */ \
-    compound_statement,      /* {...}                             */ \
-    initializer_list,        /*                                   */ \
-    /* ----------------------------------------                   */ \
-    /* top levels                                                 */ \
-    translation_unit,        /*                                   */ \
-    expression,              /*                                   */ \
-    statement,               /*                                   */ \
-    global_var_declaration,  /*                                   */ \
-    variable_declaration,    /*                                   */ \
-    function_declaration,    /*                                   */ \
-    parameter,               /*                                   */ \
-    struct_declaration,      /*                                   */ \
-    enum_declaration,        /*                                   */ \
-    namespace_declaration   /*                                   */ \
-
-    all_node_kinds
-};
 
 struct ASTNode; 
 
@@ -91,14 +39,66 @@ struct ASTNode {
                                     VariableDecl, FunctionDecl, BlockScope>;
 
     Token source_token; // token that originated this Node
-    NodeKind kind;
+    enum Kind { 
+    #define all_node_kinds                                               \
+        /* ----------------------------------------                   */ \
+        /* simple expressions                                         */ \
+        /* binary                                                     */ \
+        /* empty_expr,*/              /* ;                            */ \
+        add,                     /* +                                 */ \
+        sub,                     /* -                                 */ \
+        multiply,                /* *                                 */ \
+        divide,                  /* /                                 */ \
+        equal,                   /* ==                                */ \
+        not_equal,               /* !=                                */ \
+        less_than,               /* < | >                             */ \
+        less_equals,             /* <= | >=                           */ \
+        assignment,              /* =                                 */ \
+        /* unary                                                      */ \
+        negate,                  /* unary -                           */ \
+        logic_not,               /* !                                 */ \
+        bitwise_not,             /* ~                                 */ \
+        /* ----------------------------------------                   */ \
+        /* postfix                                                    */ \
+        function_call,           /* function call                     */ \
+                                 /* | (enum | struct | union) member  */ \
+        /* ----------------------------------------                   */ \
+        /* primary                                                    */ \
+        integer,                 /* i32 | int64_t                     */ \
+        floating_point,          /*                                   */ \
+        str,                     /*                                   */ \
+        identifier,              /* (variable | function) name        */ \
+        /* ----------------------------------------                   */ \
+        /* statements                                                 */ \
+        /* if, for, while, compound-statement, etc                    */ \
+        return_statement,        /* return                            */ \
+        /* ----------------------------------------                   */ \
+        /* scopes                                                     */ \
+        compound_statement,      /* {...}                             */ \
+        initializer_list,        /*                                   */ \
+        /* ----------------------------------------                   */ \
+        /* top levels                                                 */ \
+        translation_unit,        /*                                   */ \
+        expression,              /*                                   */ \
+        statement,               /*                                   */ \
+        global_var_declaration,  /*                                   */ \
+        variable_declaration,    /*                                   */ \
+        function_declaration,    /*                                   */ \
+        parameter,               /*                                   */ \
+        struct_declaration,      /*                                   */ \
+        enum_declaration,        /*                                   */ \
+        namespace_declaration   /*                                   */ \
+
+        all_node_kinds
+    } kind;
+
     NodeBranch branch;
     Type type {};
 
     constexpr operator std::unique_ptr<ASTNode>()&& { return std::make_unique<ASTNode>(std::move(*this)); }
 
-    [[nodiscard]] str to_str(int64_t depth = 0) const;
-    [[nodiscard]] str kind_name() const;
+    [[nodiscard]] std::string to_str(int64_t depth = 0) const;
+    [[nodiscard]] std::string kind_name() const;
 
 };
 
@@ -108,3 +108,4 @@ inline size_t index_of(ASTNode& node) { return node.branch.index(); }
 inline size_t index_of(const ASTNode& node) { return node.branch.index(); }
 template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
+

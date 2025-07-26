@@ -6,7 +6,7 @@
 [[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
-    auto node = ASTNode {*prev_tkn, NodeKind::variable_declaration};
+    auto node = ASTNode {*prev_tkn, ASTNode::variable_declaration};
     VariableDecl variable {.name = std::get<str>(prev_tkn->literal.value())};
 
     if (token_is(:)) node.type = declaration_specifier();
@@ -33,7 +33,7 @@
     Type type = declaration_specifier();
 
     if (const auto& kind = type.kind;
-        kind == TypeKind::enum_ || kind == TypeKind::struct_) {
+        kind == Type::enum_ || kind == Type::struct_) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
@@ -42,7 +42,7 @@
     } else
         expect_token(;);
 
-    return ASTNode {token, NodeKind::function_declaration, std::move(function), type};
+    return ASTNode {token, ASTNode::function_declaration, std::move(function), type};
 }
 
 // <parameter> ::= <declarator-specifier> <identifier> 
@@ -56,14 +56,14 @@
     while (1) {
         expect_token(identifier);
         ASTNode node {*prev_tkn,
-                      NodeKind::parameter,
+                      ASTNode::parameter,
                       VariableDecl {.name = std::get<str>(prev_tkn->literal.value())}};
 
         expect_token(:);
         node.type = declaration_specifier();
 
         if (const auto& kind = node.type.kind;
-            kind == TypeKind::enum_ || kind == TypeKind::struct_) {
+            kind == Type::enum_ || kind == Type::struct_) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
 
@@ -91,7 +91,7 @@
         else
             nodes.push_back(push(statement()));
     }
-    return ASTNode {*prev_tkn, NodeKind::compound_statement, BlockScope {nodes}};
+    return ASTNode {*prev_tkn, ASTNode::compound_statement, BlockScope {nodes}};
 }
 // <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str
@@ -107,12 +107,12 @@
 
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::struct_,
+                     .kind = Type::struct_,
                      .struct_or_enum_or_function = push(struct_declaration())};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::enum_,
+                     .kind = Type::enum_,
                      .struct_or_enum_or_function = push(enum_declaration())};
     }
     if (token_is(builtin_type)) {
@@ -124,7 +124,7 @@
     }
     if (token_is(identifier)) {
         type.name = std::get<str>(prev_tkn->literal.value());
-        type.kind = TypeKind::Undetermined;
+        type.kind = Type::Undetermined;
         while (token_is(*)) { type.name += "*"; type.ptr_count++; }
         return type;
     }
