@@ -6,8 +6,9 @@
 [[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
-    auto node = ASTNode {*prev_tkn, ASTNode::variable_declaration};
-    VariableDecl variable {.name = std::get<str>(prev_tkn->literal.value())};
+    auto node = ASTNode {*prev_tkn};
+    VariableDecl variable {VariableDecl::variable_declaration,
+                           std::get<str>(prev_tkn->literal.value())};
 
     if (token_is(:)) node.type = declaration_specifier();
 
@@ -24,7 +25,8 @@
 //                            {<compound-statement>}?
 [[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
     expect_token(identifier);
-    FunctionDecl function {.name = std::get<str>(prev_tkn->literal.value())};
+    FunctionDecl function {FunctionDecl::function_declaration,
+                           std::get<str>(prev_tkn->literal.value())};
     Token token = *prev_tkn;
 
     function.parameters = parameter_list(); // could be an empty vector
@@ -40,7 +42,7 @@
     else
         expect_token(;);
 
-    return ASTNode {token, ASTNode::function_declaration, std::move(function), type};
+    return ASTNode {token,  std::move(function), type};
 }
 
 // <parameter> ::= <declarator-specifier> <identifier> 
@@ -54,8 +56,8 @@
     while (1) {
         expect_token(identifier);
         ASTNode node {*prev_tkn,
-                      ASTNode::parameter,
-                      VariableDecl {.name = std::get<str>(prev_tkn->literal.value())}};
+                      VariableDecl {VariableDecl::parameter,
+                                    std::get<str>(prev_tkn->literal.value())}};
 
         expect_token(:);
         node.type = declaration_specifier();
@@ -88,7 +90,7 @@
         else // NOTE: currently all local functions/structs/enums become global (change later)
             nodes.push_back(push(statement()));
     }
-    return ASTNode {*prev_tkn, ASTNode::compound_statement, BlockScope {nodes}};
+    return ASTNode {*prev_tkn, BlockScope {BlockScope::compound_statement, nodes}};
 }
 // <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str

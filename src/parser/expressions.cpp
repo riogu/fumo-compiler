@@ -1,3 +1,4 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 NamedScope Parser::parse_tokens(vec<Token>& tkns) {
@@ -16,15 +17,15 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
         else
             AST.push_back(push(statement()));
     }
-    return NamedScope {std::move(AST)};
+    return NamedScope {NamedScope::translation_unit, std::move(AST)};
 }
 
 // <statement> ::= <expression-statement>
 [[nodiscard]] unique_ptr<ASTNode> Parser::statement() {
     if (token_is_keyword(return)) {
         return ASTNode {*prev_tkn,
-                        ASTNode::return_statement,
-                        UnaryExpr {push(expression_statement())}};
+                        UnaryExpr {UnaryExpr::return_statement, 
+                                   push(expression_statement())}};
     }
     return expression_statement();
 }
@@ -50,15 +51,13 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     auto node = equality();
 
     if (token_is(=)) {
-        if (node->kind != ASTNode::identifier) {
-            // NOTE: error wont work later when we add postfix operators
-            // you can change this to  == NodeKind::literal and its fine
-            report_error(node->source_token,
-                         "expected lvalue on left-hand side of assignment.");
-        }
+        // NOTE: this error should be handled by semantic analysis
+        // report_error(node->source_token,
+        //              "expected lvalue on left-hand side of assignment.");
         return ASTNode {*prev_tkn,
-                        ASTNode::assignment,
-                        BinaryExpr {push(std::move(node)), push(initializer())}};
+                        BinaryExpr {BinaryExpr::assignment,
+                                    push(std::move(node)),
+                                    push(initializer())}};
     }
     return node;
 }
@@ -78,19 +77,18 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
     // TODO: add optional named elements syntax "{.foo = 123123}"
-    BlockScope init_list {};
+    BlockScope init_list {BlockScope::initializer_list};
     init_list.nodes.push_back(push(initializer()));
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
                 return ASTNode {*prev_tkn,
-                                ASTNode::initializer_list,
                                 std::move(init_list)};
             }
             init_list.nodes.push_back(push(initializer()));
             continue;
         }
-        return ASTNode {*prev_tkn, ASTNode::initializer_list, std::move(init_list)};
+        return ASTNode {*prev_tkn, std::move(init_list)};
     }
 }
 
@@ -100,12 +98,14 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     while (1) {
         if (token_is(==))
             return ASTNode {*prev_tkn,
-                            ASTNode::equal,
-                            BinaryExpr {push(std::move(node)), push(relational())}};
+                            BinaryExpr {BinaryExpr::equal,
+                                        push(std::move(node)),
+                                        push(relational())}};
         if (token_is(!=))
             return ASTNode {*prev_tkn,
-                            ASTNode::not_equal,
-                            BinaryExpr {push(std::move(node)), push(relational())}};
+                            BinaryExpr {BinaryExpr::not_equal,
+                                        push(std::move(node)),
+                                        push(relational())}};
         return node;
     }
 }
@@ -114,21 +114,21 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
 [[nodiscard]] unique_ptr<ASTNode> Parser::relational() {
     auto node = add();
     if (token_is(<))
-        return ASTNode {*prev_tkn,
-                        ASTNode::less_than,
-                        BinaryExpr {push(std::move(node)), push(add())}};
+        return ASTNode {
+            *prev_tkn,
+            BinaryExpr {BinaryExpr::less_than, push(std::move(node)), push(add())}};
     if (token_is(>))
-        return ASTNode {*prev_tkn,
-                        ASTNode::less_than,
-                        BinaryExpr {push(add()), push(std::move(node))}};
+        return ASTNode {
+            *prev_tkn,
+            BinaryExpr {BinaryExpr::less_than, push(add()), push(std::move(node))}};
     if (token_is(<=))
-        return ASTNode {*prev_tkn,
-                        ASTNode::less_equals,
-                        BinaryExpr {push(std::move(node)), push(add())}};
+        return ASTNode {
+            *prev_tkn,
+            BinaryExpr {BinaryExpr::less_equals, push(std::move(node)), push(add())}};
     if (token_is(>=))
-        return ASTNode {*prev_tkn,
-                        ASTNode::less_equals,
-                        BinaryExpr {push(add()), push(std::move(node))}};
+        return ASTNode {
+            *prev_tkn,
+            BinaryExpr {BinaryExpr::less_equals, push(add()), push(std::move(node))}};
     return node;
 }
 
@@ -137,15 +137,15 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     auto node = multiply();
     while (1) {
         if (token_is(+)) {
-            node = ASTNode {*prev_tkn,
-                            ASTNode::add,
-                            BinaryExpr {push(std::move(node)), push(multiply())}};
+            node = ASTNode {
+                *prev_tkn,
+                BinaryExpr {BinaryExpr::add, push(std::move(node)), push(multiply())}};
             continue;
         }
         if (token_is(-)) {
-            node = ASTNode {*prev_tkn,
-                            ASTNode::sub,
-                            BinaryExpr {push(std::move(node)), push(multiply())}};
+            node = ASTNode {
+                *prev_tkn,
+                BinaryExpr {BinaryExpr::sub, push(std::move(node)), push(multiply())}};
             continue;
         }
         return node;
@@ -157,15 +157,15 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     auto node = unary();
     while (1) {
         if (token_is(*)) {
-            node = ASTNode {*prev_tkn,
-                            ASTNode::multiply,
-                            BinaryExpr {push(std::move(node)), push(unary())}};
+            node = ASTNode {
+                *prev_tkn,
+                BinaryExpr {BinaryExpr::multiply, push(std::move(node)), push(unary())}};
             continue;
         }
         if (token_is(/)) {
-            node = ASTNode {*prev_tkn,
-                            ASTNode::divide,
-                            BinaryExpr {push(std::move(node)), push(unary())}};
+            node = ASTNode {
+                *prev_tkn,
+                BinaryExpr {BinaryExpr::divide, push(std::move(node)), push(unary())}};
             continue;
         }
         return node;
@@ -176,11 +176,11 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
 //           | <primary>
 [[nodiscard]] unique_ptr<ASTNode> Parser::unary() {
     if (token_is(-))
-        return ASTNode {*prev_tkn, ASTNode::negate, UnaryExpr {push(unary())}};
+        return ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate, push(unary())}};
     if (token_is(!))
-        return ASTNode {*prev_tkn, ASTNode::logic_not, UnaryExpr {push(unary())}};
+        return ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not, push(unary())}};
     if (token_is(~))
-        return ASTNode {*prev_tkn, ASTNode::bitwise_not, UnaryExpr {push(unary())}};
+        return ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, push(unary())}};
     return primary();
 }
 
@@ -195,20 +195,16 @@ NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     }
     if (token_is(int))
         return ASTNode {*prev_tkn,
-                        ASTNode::integer,
-                        PrimaryExpr {prev_tkn->literal.value()}};
+                        PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()}};
     if (token_is(float))
         return ASTNode {*prev_tkn,
-                        ASTNode::floating_point,
-                        PrimaryExpr {prev_tkn->literal.value()}};
+                        PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()}};
     if (token_is(string))
         return ASTNode {*prev_tkn,
-                        ASTNode::str,
-                        PrimaryExpr {prev_tkn->literal.value()}};
+                        PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()}};
     if (token_is(identifier))
         return ASTNode {*prev_tkn,
-                        ASTNode::identifier,
-                        PrimaryExpr {prev_tkn->literal.value()}};
+                        PrimaryExpr {PrimaryExpr::identifier, prev_tkn->literal.value()}};
 
     report_error((*curr_tkn), "expected expression.");
 }

@@ -6,48 +6,35 @@
 struct ASTNode; 
 
 struct PrimaryExpr {
+    enum {
+        #define PrimaryExpr_kinds                                        \
+        /* empty_expr,*/         /* ;                                 */ \
+        integer,                 /* i32 | i64 | i8                    */ \
+        floating_point,          /*                                   */ \
+        str,                     /*                                   */ \
+        identifier               /* (variable | function) name        */ \
+
+        PrimaryExpr_kinds
+    } kind;
     Literal value; // can also be an identifier
     Opt<ASTNode*> var_declaration {}; // identifiers map to this
 };
 struct UnaryExpr {
+    enum {
+        #define UnaryExpr_kinds                                          \
+        negate,                  /* unary -                           */ \
+        logic_not,               /* !                                 */ \
+        bitwise_not,             /* ~                                 */ \
+        return_statement         /* return                            */ \
+
+        UnaryExpr_kinds
+    } kind;
     ASTNode* expr;
 };
+
 struct BinaryExpr {
-    ASTNode* lhs;
-    ASTNode* rhs;
-};
-struct VariableDecl {
-    std::string name;
-    Opt<ASTNode*> value {};
-};
-struct FunctionDecl {
-    std::string name;
-    vec<ASTNode*> parameters {}; // if its empty we have no params
-    Opt<ASTNode*> body {}; // scope
-};
-// compound-statement | initializer-list 
-struct BlockScope {
-    vec<ASTNode*> nodes {};
-};
-// struct-declaration | enum-declaration | namespace-declaration | translation-unit 
-struct NamedScope {
-    vec<ASTNode*> nodes {};
-};
-
-// struct IfStmt {}; struct ForStmt {};
-struct ASTNode {
-
-    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
-                                    VariableDecl, FunctionDecl, 
-                                    BlockScope, NamedScope>;
-
-    Token source_token; // token that originated this Node
-    enum Kind { 
-    #define all_node_kinds                                               \
-        /* ----------------------------------------                   */ \
-        /* simple expressions                                         */ \
-        /* binary                                                     */ \
-        /* empty_expr,*/              /* ;                            */ \
+    enum {
+        #define BinaryExpr_kinds                                         \
         add,                     /* +                                 */ \
         sub,                     /* -                                 */ \
         multiply,                /* *                                 */ \
@@ -56,46 +43,66 @@ struct ASTNode {
         not_equal,               /* !=                                */ \
         less_than,               /* < | >                             */ \
         less_equals,             /* <= | >=                           */ \
-        assignment,              /* =                                 */ \
-        /* unary                                                      */ \
-        negate,                  /* unary -                           */ \
-        logic_not,               /* !                                 */ \
-        bitwise_not,             /* ~                                 */ \
-        /* ----------------------------------------                   */ \
-        /* postfix                                                    */ \
-        function_call,           /* function call                     */ \
-                                 /* | (enum | struct | union) member  */ \
-        /* ----------------------------------------                   */ \
-        /* primary                                                    */ \
-        integer,                 /* i32 | int64_t                     */ \
-        floating_point,          /*                                   */ \
-        str,                     /*                                   */ \
-        identifier,              /* (variable | function) name        */ \
-        /* ----------------------------------------                   */ \
-        /* statements                                                 */ \
-        /* if, for, while, compound-statement, etc                    */ \
-        return_statement,        /* return                            */ \
-        /* ----------------------------------------                   */ \
-        /* scopes                                                     */ \
-        compound_statement,      /* {...}                             */ \
-        initializer_list,        /*                                   */ \
-        /* ----------------------------------------                   */ \
-        /* top levels                                                 */ \
-        translation_unit,        /*                                   */ \
-        expression,              /*                                   */ \
-        statement,               /*                                   */ \
+        assignment               /* =                                 */ \
+
+        BinaryExpr_kinds
+    } kind;
+    ASTNode* lhs;
+    ASTNode* rhs;
+};
+struct VariableDecl {
+    enum {
+        #define VariableDecl_kinds                                       \
         global_var_declaration,  /*                                   */ \
         variable_declaration,    /*                                   */ \
-        /* FunctionDecl                                               */ \
-        function_declaration,    /*                                   */ \
-        parameter,               /*                                   */ \
+        parameter                /*                                   */ \
+
+        VariableDecl_kinds
+    } kind;
+    std::string name;
+    Opt<ASTNode*> value {};
+};
+struct FunctionDecl {
+    enum {
+        #define FunctionDecl_kinds                                       \
+        function_declaration     /*                                   */ \
+    
+        FunctionDecl_kinds
+    } kind;
+    std::string name;
+    vec<ASTNode*> parameters {}; // if its empty we have no params
+    Opt<ASTNode*> body {}; // scope
+};
+struct BlockScope {
+    enum {
+        #define BlockScope_kinds                                         \
+        compound_statement,      /* {...}                             */ \
+        initializer_list         /*                                   */ \
+
+        BlockScope_kinds
+    } kind;
+    vec<ASTNode*> nodes {};
+};
+struct NamedScope {
+    enum {
+        #define NamedScope_kinds                                         \
+        translation_unit,        /*                                   */ \
         struct_declaration,      /*                                   */ \
         enum_declaration,        /*                                   */ \
-        namespace_declaration   /*                                   */ \
+        namespace_declaration    /*                                   */ \
 
-        all_node_kinds
+        NamedScope_kinds
     } kind;
+    vec<ASTNode*> nodes {};
+};
 
+struct ASTNode {
+
+    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
+                                    VariableDecl, FunctionDecl, 
+                                    BlockScope, NamedScope>;
+
+    Token source_token; // token that originated this Node
     NodeBranch branch;
     Type type {};
 

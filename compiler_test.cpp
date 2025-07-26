@@ -80,8 +80,8 @@ auto main() -> int {
         //   "}                                                        \n"
         //     ,"pass"),
         t("fn func_name(a: i32, b: f64) -> const i32* {                 \n"
-          "    let x:i32 = 1111111;                                     \n"
-          "    let x:i32 = 1111;                                        \n"
+          "    let x: i32 = 1111111;                                    \n"
+          "    let x: i32 = 1111;                                       \n"
           "}                                                            \n"
             ,"fail"),
     };
