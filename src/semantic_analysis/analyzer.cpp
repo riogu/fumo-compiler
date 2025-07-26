@@ -1,13 +1,9 @@
 #include "semantic_analysis/analyzer.hpp"
-#include "parser/ast_node.hpp"
-#include "semantic_analysis/type_cheker.hpp"
 
-void Analyzer::semantic_analysis(BlockScope& file_scope) {
+void Analyzer::semantic_analysis(NamedScope& file_scope) {
     for (auto& node : file_scope.nodes) analyze(*node);
 }
-
 void Analyzer::analyze(ASTNode& node) {
-    
     match(node) {
         holds(PrimaryExpr&, prim) {
             switch (node.kind) {
@@ -36,40 +32,45 @@ void Analyzer::analyze(ASTNode& node) {
             if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
         }
         holds(VariableDecl&, var) {
-            if (symbol_tree.depth == 0) node.kind = ASTNode::global_var_declaration;
+            if (symbol_tree.symbols_to_nodes.size() == 1) node.kind = ASTNode::global_var_declaration;
 
             if (var.value) analyze(*var.value.value());
             if (node.type.kind == Type::Undetermined)
                 report_error(node.source_token, "declaring a variable with deduced type requires an initializer.");
-            if (node.type.kind == Type::struct_) add_namespace(&node);
-            if (node.type.kind == Type::enum_)   add_namespace(&node);
+            if (node.type.kind == Type::struct_) push_named_scope(node); // TODO: will become global not local (fix)
+            if (node.type.kind == Type::enum_)   push_named_scope(node); // TODO: will become global not local (fix)
 
-            add_node(&node);
+            push_to_scope(node);
         }
         holds(FunctionDecl&, func) {
-            symbol_tree.depth++;
-            add_node(&node); // TODO: add parameters to the body's symbol_tree.depth
-            symbol_tree.depth--;
+            // push_named_scope(node); // TODO: add parameters to the body's symbol_tree.depth
+            open_scope();
             if (func.body) {
                 func.body.value()->type = node.type;
-                analyze(*func.body.value());
+                match(*func.body.value()) {
+                    holds(BlockScope&, scope) for (auto& node_ : scope.nodes) analyze(*node_);
+                    _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
+                }
             }
+            close_scope();
         }
         holds(BlockScope&, scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch(node.kind) {
-                case ASTNode::initializer_list:
-                    break;
                 case ASTNode::compound_statement:
-                    symbol_tree.depth++;
+                    open_scope();
                     for (auto& node : scope.nodes) analyze(*node);
-                    symbol_tree.depth--;
+                    close_scope();
                     break;
+                case ASTNode::initializer_list: 
                 default:
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
-        _ INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+
+        holds(NamedScope&, n_scope) push_named_scope(node);
+        
+        _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }
 }
 
@@ -79,14 +80,56 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
       case ASTNode::multiply:  case ASTNode::divide:
       case ASTNode::equal:     case ASTNode::not_equal:
       case ASTNode::less_than: case ASTNode::less_equals:
-          report_error(node.source_token,
-                       "invalid operands to binary expression: '{}' {} '{}'.",
-                        bin.lhs->type.name, node.source_token.to_str(), bin.rhs->type.name);
+          report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
+                       bin.lhs->type.name, node.source_token.to_str(), bin.rhs->type.name);
       case ASTNode::assignment:
-          report_error(node.source_token,
-                       "assigning to '{}'from incompatible type '{}'.",
-                        bin.lhs->type.name, bin.rhs->type.name);
+          report_error(node.source_token,"assigning to '{}'from incompatible type '{}'.",
+                       bin.lhs->type.name, bin.rhs->type.name);
         default:
             INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
+}
+
+
+void Analyzer::push_named_scope(ASTNode& node) {
+    match(node) {
+        holds(FunctionDecl&, func) {
+            auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(func.name, node);
+            if (!was_inserted && func.body) {
+                match(*node_iterator->second) {
+                    holds(FunctionDecl&, _func) 
+                        if(_func.body) report_error(node.source_token, "Redefinition of '{}'.", func.name);
+                    _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
+                }
+            }
+        }
+        holds(NamedScope&, scope) {
+            switch(node.kind) {
+                case ASTNode::struct_declaration:
+                case ASTNode::enum_declaration:
+                case ASTNode::namespace_declaration: 
+                default:
+                    INTERNAL_PANIC("expected named scope declaration, got '{}'.", node.kind_name());
+            }
+        }
+        _default {}
+    }
+}
+
+void Analyzer::push_to_scope(ASTNode& node) {
+    match(node) {
+        holds(VariableDecl&, var) {
+            auto [_, was_inserted] = symbol_tree.push_to_scope(var.name, node);
+            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
+        }
+        _default { INTERNAL_PANIC("expected block scope, got '{}'.", node.kind_name()); }
+    }
+}
+
+[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name) {
+    INTERNAL_PANIC("not implemented.");
+}
+
+[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
+    PANIC("not implemented");
 }

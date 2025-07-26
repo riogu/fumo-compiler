@@ -1,5 +1,5 @@
 #pragma once
-#include "parser/ast_node.hpp"
+#include "base_definitions/ast_node.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 #include <map>
@@ -20,7 +20,7 @@ struct Codegen {
         file_stream << file.contents;
     }
 
-    void codegen(BlockScope& file_scope);
+    void codegen(NamedScope& file_scope);
 
     void print_llvm_ir() { llvm_module->print(llvm::outs(), nullptr); }
 

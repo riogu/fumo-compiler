@@ -1,6 +1,6 @@
 #include "parser/parser.hpp"
 
-BlockScope Parser::parse_tokens(vec<Token>& tkns) {
+NamedScope Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
     vec<ASTNode*> AST;
 
@@ -16,7 +16,7 @@ BlockScope Parser::parse_tokens(vec<Token>& tkns) {
         else
             AST.push_back(push(statement()));
     }
-    return BlockScope {std::move(AST)};
+    return NamedScope {std::move(AST)};
 }
 
 // <statement> ::= <expression-statement>

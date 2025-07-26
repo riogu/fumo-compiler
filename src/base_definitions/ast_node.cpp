@@ -1,5 +1,4 @@
-#include "parser/ast_node.hpp"
-
+#include "base_definitions/ast_node.hpp"
 
 [[nodiscard]]  std::string ASTNode::to_str(int64_t depth) const {
     depth++;
@@ -34,7 +33,7 @@
                         temp += param.name + gray(": ") + yellow(var->type.name);
                         if (param.value) temp += " = " + param.value.value()->to_str();
                     }
-                    _ { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
+                    _default { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
                 }
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
@@ -52,7 +51,7 @@
             depth--;
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
-        _ { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
+        _default { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }
 
     return result;

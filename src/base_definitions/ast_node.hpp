@@ -3,7 +3,6 @@
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
 
-
 struct ASTNode; 
 
 struct PrimaryExpr {
@@ -26,9 +25,12 @@ struct FunctionDecl {
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // scope
 };
-// compound-statement | initializer-list | struct-declaration 
-// | enum-declaration | translation-unit | namespace-declaration
+// compound-statement | initializer-list 
 struct BlockScope {
+    vec<ASTNode*> nodes {};
+};
+// struct-declaration | enum-declaration | namespace-declaration | translation-unit 
+struct NamedScope {
     vec<ASTNode*> nodes {};
 };
 
@@ -36,7 +38,8 @@ struct BlockScope {
 struct ASTNode {
 
     using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
-                                    VariableDecl, FunctionDecl, BlockScope>;
+                                    VariableDecl, FunctionDecl, 
+                                    BlockScope, NamedScope>;
 
     Token source_token; // token that originated this Node
     enum Kind { 

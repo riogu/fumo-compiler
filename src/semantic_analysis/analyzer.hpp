@@ -1,5 +1,5 @@
 #pragma once
-#include "parser/ast_node.hpp"
+#include "base_definitions/ast_node.hpp"
 #include <llvm/IR/Function.h>
 #include <map>
 
@@ -9,29 +9,47 @@
     also performs basic type checking
 */
 
-struct SymbolTableTree {
-    vec<std::map<str, ASTNode*>> scoped_symbols_to_nodes {};
-    // we clear the current depth when entering a new scope
-    i64 depth = 0; // each scope moves forward 1 element in the vector
+// works just like a stack of scopes
+// we push a std::map when entering a new scope
+// we pop the current std::map when leaving a scope
+struct SymbolTableStack {
     // struct | enum | namespace
-    vec<ASTNode*> named_scopes {}; // these are kept separately 
+    std::map<str, ASTNode*> named_scopes {}; // these are kept separately
+    vec<std::map<str, ASTNode*>> symbols_to_nodes {};
+    // all declarations are flattened internally and identifiers are changed to match them
+    // for example:
+    //   namespace foo {struct bar {};} => struct "foo::bar" {};
+    //   struct    foo {struct bar {};} => struct "foo@bar" {};
+    // they are "global" but renamed
+    auto push_to_scope(str identifier, ASTNode& node) {
+        return symbols_to_nodes.back().insert({identifier, &node});
+    }
+    auto push_named_scope(str identifier, ASTNode& node) {
+        return named_scopes.insert({identifier, &node});
+    }
 
+    // auto replace_node(str identifier, ASTNode& node) {
+    //     symbols_to_nodes.back()[identifier] = &node;
+    // }
 };
 
 struct Analyzer {
     Analyzer(const File& file) { file_stream << file.contents; }
-    void semantic_analysis(BlockScope& file_scope);
+    void semantic_analysis(NamedScope& file_scope);
 
   private:
     std::stringstream file_stream;
-    SymbolTableTree symbol_tree {};
+    SymbolTableStack symbol_tree {};
 
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
-    void open_scope()                                           { INTERNAL_PANIC("not implemented."); }
-    void close_scope()                                          { INTERNAL_PANIC("not implemented."); }
-    void add_node(ASTNode* node)                                { INTERNAL_PANIC("not implemented."); }
-    void add_namespace(ASTNode* node)                           { INTERNAL_PANIC("not implemented."); }
-    [[nodiscard]] ASTNode* find_node(std::string_view var_name) { INTERNAL_PANIC("not implemented."); }
+    void open_scope()  { symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*>{}); }
+    void close_scope() { symbol_tree.symbols_to_nodes.pop_back(); }
+
+    void push_to_scope(ASTNode& node);
+    void push_named_scope(ASTNode& node);
+
+    [[nodiscard]] ASTNode* find_node(std::string_view var_name);
+    [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b);
 };

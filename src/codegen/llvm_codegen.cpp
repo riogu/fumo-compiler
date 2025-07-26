@@ -1,6 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 
-void Codegen::codegen(BlockScope& file_scope) {
+void Codegen::codegen(NamedScope& file_scope) {
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "main", llvm_module.get());
@@ -20,7 +20,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         holds(const VariableDecl&, v) return codegen(node, v);
         holds(const FunctionDecl&, v) return codegen(node, v);
         holds(const BlockScope&,   v) return codegen(node, v);
-        _ INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+        _default INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
     }
     std::unreachable();
 }

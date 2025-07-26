@@ -1,4 +1,4 @@
-#include "parser/ast_node.hpp"
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}? 
@@ -32,14 +32,12 @@
     expect_token(->);
     Type type = declaration_specifier();
 
-    if (const auto& kind = type.kind;
-        kind == Type::enum_ || kind == Type::struct_) {
+    if (const auto& kind = type.kind; kind == Type::enum_ || kind == Type::struct_) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
-    if (token_is_str("{")) {
-        function.body = push(compound_statement());
-    } else
+    if (token_is_str("{")) function.body = push(compound_statement());
+    else
         expect_token(;);
 
     return ASTNode {token, ASTNode::function_declaration, std::move(function), type};
@@ -62,8 +60,7 @@
         expect_token(:);
         node.type = declaration_specifier();
 
-        if (const auto& kind = node.type.kind;
-            kind == Type::enum_ || kind == Type::struct_) {
+        if (auto& kind = node.type.kind; kind == Type::enum_ || kind == Type::struct_) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
 
@@ -88,7 +85,7 @@
             nodes.push_back(push(struct_declaration()));
         else if (token_is_keyword(enum))
             nodes.push_back(push(enum_declaration()));
-        else
+        else // NOTE: currently all local functions/structs/enums become global (change later)
             nodes.push_back(push(statement()));
     }
     return ASTNode {*prev_tkn, ASTNode::compound_statement, BlockScope {nodes}};

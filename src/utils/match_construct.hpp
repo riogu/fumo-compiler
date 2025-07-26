@@ -27,7 +27,7 @@ struct type_sequence {
         __VA_OPT__(T __VA_ARGS__ =                                                                  \
             get_elem<std::remove_pointer<std::remove_cvref<T>::type>::type>(v___);)
 
-#define _                                                                                           \
+#define _default                                                                                           \
         break;                                                                                      \
     }                                                                                               \
         default:                                                                                    \

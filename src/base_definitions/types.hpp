@@ -3,9 +3,8 @@
 #include <unordered_set>
 #include "base_definitions/symbols.hpp"
 #include "utils/common_utils.hpp"
-
-#define make_enum_member(_v) _v##_,
 struct ASTNode;
+#define make_enum_member(_v) _v##_,
 
 
 
@@ -31,10 +30,6 @@ struct Type {
     map_macro(each_builtin_type, builtin_types);
     INTERNAL_PANIC("internal compiler error: provided unknown type name: {}", type_name);
 }
-
-
-
-
 
 
 #undef make_enum_member

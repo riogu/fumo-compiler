@@ -1,9 +1,9 @@
 #pragma once
-#include "parser/ast_node.hpp"
+#include "base_definitions/ast_node.hpp"
 
 struct Parser {
     Parser(const File & file) { file_stream << file.contents; }
-    [[nodiscard]] BlockScope parse_tokens(vec<Token>& tokens);
+    [[nodiscard]] NamedScope parse_tokens(vec<Token>& tokens);
 
   private:
 
@@ -17,6 +17,7 @@ struct Parser {
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
     std::stringstream file_stream;
+
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
     // --------------------------------------------------------------
     // expressions
