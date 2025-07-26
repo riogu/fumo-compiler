@@ -98,16 +98,16 @@ void Analyzer::push_named_scope(ASTNode& node) {
             if (!was_inserted && func.body) {
                 match(*node_iterator->second) {
                     holds(FunctionDecl&, _func) 
-                        if(_func.body) report_error(node.source_token, "Redefinition of '{}'.", func.name);
+                        if(_func.body) report_error(node.source_token, "Redefinition of '{}'.", _func.name);
                     _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
                 }
             }
         }
         holds(NamedScope&, scope) {
             switch(node.kind) {
-                case ASTNode::struct_declaration:
-                case ASTNode::enum_declaration:
-                case ASTNode::namespace_declaration: 
+                case ASTNode::struct_declaration:    INTERNAL_PANIC("not implemented.");
+                case ASTNode::enum_declaration:      INTERNAL_PANIC("not implemented.");
+                case ASTNode::namespace_declaration: INTERNAL_PANIC("not implemented."); 
                 default:
                     INTERNAL_PANIC("expected named scope declaration, got '{}'.", node.kind_name());
             }

@@ -86,6 +86,7 @@ struct ASTNode {
         statement,               /*                                   */ \
         global_var_declaration,  /*                                   */ \
         variable_declaration,    /*                                   */ \
+        /* FunctionDecl                                               */ \
         function_declaration,    /*                                   */ \
         parameter,               /*                                   */ \
         struct_declaration,      /*                                   */ \
