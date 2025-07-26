@@ -1,6 +1,6 @@
 #pragma once
-#include "type_system/token_definitions.hpp"
-#include "type_system/type.hpp"
+#include "base_definitions/tokens.hpp"
+#include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
 
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "type_system/token_definitions.hpp"
+#include "base_definitions/tokens.hpp"
 
 struct Lexer {
     i64 __FUMO_LINE_NUM__ = 1;

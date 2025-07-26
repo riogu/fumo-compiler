@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <variant>
 #include "utils/common_utils.hpp"
-#include "symbol_definitions.hpp"
+#include "symbols.hpp"
 #include "utils/zip-macro.hpp"
 #include <libassert/assert.hpp>
 

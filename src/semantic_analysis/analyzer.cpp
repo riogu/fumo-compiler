@@ -1,6 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "parser/ast_node.hpp"
-#include "type_system/type_cheker.hpp"
+#include "semantic_analysis/type_cheker.hpp"
 
 void Analyzer::semantic_analysis(BlockScope& file_scope) {
     for (auto& node : file_scope.nodes) analyze(*node);

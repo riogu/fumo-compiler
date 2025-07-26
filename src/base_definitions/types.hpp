@@ -1,11 +1,12 @@
 #pragma once
 #include <libassert/assert.hpp>
 #include <unordered_set>
-#include "type_system/symbol_definitions.hpp"
+#include "base_definitions/symbols.hpp"
 #include "utils/common_utils.hpp"
 
 #define make_enum_member(_v) _v##_,
 struct ASTNode;
+
 
 
 struct Type {
@@ -30,6 +31,9 @@ struct Type {
     map_macro(each_builtin_type, builtin_types);
     INTERNAL_PANIC("internal compiler error: provided unknown type name: {}", type_name);
 }
+
+
+
 
 
 
