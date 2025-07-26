@@ -9,13 +9,18 @@ struct ASTNode;
 enum struct TypeKind {
     Undetermined, // should be converted in the type checker or give error
     Nothing,      // bottom type, used for if statements and other typeless constructs
+    Any,
+    // Function, // add this later if you want function objects/pointers
+    namespace_,
     struct_,
     enum_,
     map_macro(make_enum_member, builtin_types)
 };
 
+// FIXME: finish implementing our basic type system
+
 struct TypeQualifier {
-    enum impl { Const, Volatile, Extern, Static };
+    enum impl { const_, volatile_, extern_, static_ };
     constexpr operator impl() { return value; }
     TypeQualifier(impl some) : value(some) {}
     TypeQualifier() {}
@@ -24,10 +29,10 @@ struct TypeQualifier {
 };
 
 struct Type {
-    str name = "undetermined";
+    str name = "Undetermined";
     TypeKind kind = TypeKind::Undetermined;
     TypeQualifier qualifier;
-    Opt<ASTNode*> struct_or_enum {};
+    Opt<ASTNode*> struct_or_enum_or_function {};
     int ptr_count = 0;
 };
 

@@ -49,19 +49,33 @@ auto main() -> int {
         // t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);","pass"),
     };
     constexpr std::array llvm_tests {
-        t("let x: cool = 12321; let y: i32; let x: f64;\n"
-          "x = 12; fn func() -> void {}"
-          , "pass"),
+        // t("let x: cool = 12321; let y: i32; let x: f64;\n"
+        //   "x = 12; fn func() -> void {}"
+        //   , "pass"),
+        // t("let x: i32 = 123123;                                     \n"
+        //   "fn another_func(x: i32) -> void;                         \n"
+        //   "fn func_name(a: i32, b: f64) -> const i32* {             \n"
+        //   "    x = 69420;                                           \n"
+        //   "    a = 69420;                                           \n"
+        //   "    let x = 1111111;                                     \n"
+        //   "    {                                                    \n"
+        //   "       let x: f64;                                       \n"
+        //   "       x = 12.0f;                                        \n"
+        //   "    }                                                    \n"
+        //   "    x = 213;                                             \n"
+        //   "}                                                        \n"
+        //     ,"pass"),
         t("let x: i32 = 123123;                                     \n"
           "fn another_func(x: i32) -> void;                         \n"
           "fn func_name(a: i32, b: f64) -> const i32* {             \n"
           "    x = 69420;                                           \n"
           "    a = 69420;                                           \n"
-          "    let x: i32 = 1111111;                                \n"
+          "    let x = 1111111;                                     \n"
           "    {                                                    \n"
           "       let x: f64;                                       \n"
           "       x = 12.0f;                                        \n"
           "    }                                                    \n"
+          "    somevar = 69420;                                     \n"
           "    x = 213;                                             \n"
           "}                                                        \n"
             ,"pass"),

@@ -77,6 +77,7 @@ BlockScope Parser::parse_tokens(vec<Token>& tkns) {
 // <initializer-list> ::= <initializer> {","}?
 //                      | <initializer> , <initializer-list>
 [[nodiscard]] unique_ptr<ASTNode> Parser::initializer_list() {
+    // TODO: add optional named elements syntax "{.foo = 123123}"
     BlockScope init_list {};
     init_list.nodes.push_back(push(initializer()));
     while (1) {

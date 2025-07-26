@@ -7,15 +7,16 @@ void Analyzer::semantic_analysis(BlockScope& file_scope) {
 }
 
 void Analyzer::analyze(ASTNode& node) {
+    
     match(node) {
         holds(PrimaryExpr&, prim) {
             switch (node.kind) {
                 case NodeKind::integer:
-                    node.type.name = "i32", node.type.kind = TypeKind::i32; break;
+                    node.type.name = "i32", node.type.kind = TypeKind::i32_; break;
                 case NodeKind::floating_point:
-                    node.type.name = "f64", node.type.kind = TypeKind::f64; break;
+                    node.type.name = "f64", node.type.kind = TypeKind::f64_; break;
                 case NodeKind::str:
-                    node.type.name = "str", node.type.kind = TypeKind::str; break;
+                    node.type.name = "str", node.type.kind = TypeKind::str_; break;
                 case NodeKind::identifier:
                     prim.var_declaration = find_node(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
@@ -25,6 +26,7 @@ void Analyzer::analyze(ASTNode& node) {
             }
         }
         holds(UnaryExpr&, un) {
+            // TODO: add checks for '!' and such to only work on arithmetic types
             analyze(*un.expr);
             node.type = un.expr->type;
         }
@@ -35,32 +37,37 @@ void Analyzer::analyze(ASTNode& node) {
         }
         holds(VariableDecl&, var) {
             if (symbol_tree.depth == 0) node.kind = NodeKind::global_var_declaration;
+
             if (var.value) analyze(*var.value.value());
-            if (node.type.kind == TypeKind::Undetermined) {
-                report_error(node.source_token, 
-                             "declaring a variable with deduced type requires an initializer.");
-            }
-            if (node.type.kind == TypeKind::struct_) {
-                add_namespace(&node);
-            }
-            if (node.type.kind == TypeKind::enum_) {}
+            if (node.type.kind == TypeKind::Undetermined)
+                report_error(node.source_token, "declaring a variable with deduced type requires an initializer.");
+            if (node.type.kind == TypeKind::struct_) add_namespace(&node);
+            if (node.type.kind == TypeKind::enum_)   add_namespace(&node);
+
             add_node(&node);
         }
         holds(FunctionDecl&, func) {
+            symbol_tree.depth++;
+            add_node(&node); // TODO: add parameters to the body's symbol_tree.depth
+            symbol_tree.depth--;
             if (func.body) {
-                symbol_tree.depth++;
-                add_node(&node);
-                // TODO: add parameters to the body's symbol_tree.depth
-                symbol_tree.depth--;
+                func.body.value()->type = node.type;
                 analyze(*func.body.value());
             }
         }
         holds(BlockScope&, scope) {
-            // NOTE: consider taking the last node and passing that value to the scope
-            // (and returning it like rust)
-            symbol_tree.depth++;
-            for (auto& node : scope.nodes) analyze(*node);
-            symbol_tree.depth--;
+            // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
+            switch(node.kind) {
+                case NodeKind::initializer_list:
+                    break;
+                case NodeKind::compound_statement:
+                    symbol_tree.depth++;
+                    for (auto& node : scope.nodes) analyze(*node);
+                    symbol_tree.depth--;
+                    break;
+                default:
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+            }
         }
         _ INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }

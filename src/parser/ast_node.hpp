@@ -40,9 +40,9 @@ enum struct NodeKind {
     /* scopes                                                     */ \
     compound_statement,      /* {...}                             */ \
     initializer_list,        /*                                   */ \
-    translation_unit,        /*                                   */ \
     /* ----------------------------------------                   */ \
     /* top levels                                                 */ \
+    translation_unit,        /*                                   */ \
     expression,              /*                                   */ \
     statement,               /*                                   */ \
     global_var_declaration,  /*                                   */ \
@@ -50,7 +50,8 @@ enum struct NodeKind {
     function_declaration,    /*                                   */ \
     parameter,               /*                                   */ \
     struct_declaration,      /*                                   */ \
-    enum_declaration        /*                                   */ \
+    enum_declaration,        /*                                   */ \
+    namespace_declaration   /*                                   */ \
 
     all_node_kinds
 };
@@ -77,22 +78,17 @@ struct FunctionDecl {
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // scope
 };
-// compound-statement | initializer-list
-// block scopes arent used for name lookups after semantic analysis
+// compound-statement | initializer-list | struct-declaration 
+// | enum-declaration | translation-unit | namespace-declaration
 struct BlockScope {
     vec<ASTNode*> nodes {};
 };
-
-struct StructDecl {};
-struct EnumDecl {};
-struct NamespaceDecl {};
 
 // struct IfStmt {}; struct ForStmt {};
 struct ASTNode {
 
     using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
-                                    VariableDecl, FunctionDecl, BlockScope,
-                                    StructDecl, EnumDecl, NamespaceDecl>;
+                                    VariableDecl, FunctionDecl, BlockScope>;
 
     Token source_token; // token that originated this Node
     NodeKind kind;
