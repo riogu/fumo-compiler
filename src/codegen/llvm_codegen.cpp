@@ -19,7 +19,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         holds(const BinaryExpr&,   v) return codegen(node, v);
         holds(const VariableDecl&, v) return codegen(node, v);
         holds(const FunctionDecl&, v) return codegen(node, v);
-        holds(const BlockScope&,    v) return codegen(node, v);
+        holds(const BlockScope&,   v) return codegen(node, v);
         _ INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
     }
     std::unreachable();
@@ -92,8 +92,6 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const FunctionDecl& branch) {
-
-
     return {};
 }
 llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) { return {};}

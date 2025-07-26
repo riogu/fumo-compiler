@@ -73,14 +73,14 @@ struct Token {
 #define tkn(tok) str_to_tkn_type(#tok)
 [[nodiscard]] constexpr TokenType str_to_tkn_type(std::string_view str) {
     zip_to_macro(each_str_to_tkn, symbol_reprs_, punctuators_)
-    if (str == "keyword") return TokenType::keyword;
-    else if (str == "int") return TokenType::integer;
-    else if (str == "float") return TokenType::floating_point;
-    else if (str == "string") return TokenType::string;
-    else if (str == "identifier") return TokenType::identifier;
-    else if(str == "is_EOF") return TokenType::is_EOF;
-    else if(str == "builtin_type") return TokenType::builtin_type;
-    else PANIC(std::format("provided unknown token name: '{}'.", str));
+    if (str == "keyword")       return TokenType::keyword;
+    if (str == "int")           return TokenType::integer;
+    if (str == "float")         return TokenType::floating_point;
+    if (str == "string")        return TokenType::string;
+    if (str == "identifier")    return TokenType::identifier;
+    if (str == "is_EOF")        return TokenType::is_EOF;
+    if (str == "builtin_type")  return TokenType::builtin_type;
+    PANIC(std::format("provided unknown token name: '{}'.", str));
 }
 
 

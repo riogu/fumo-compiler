@@ -53,14 +53,14 @@
     dot_dot_dot,                        \
     minus_greater
 #define builtin_types                   \
-    Void             ,                  \
     i8               ,                  \
     i32              ,                  \
     i64              ,                  \
     f32              ,                  \
     f64              ,                  \
     str              ,                  \
-    Bool
+    void             ,                  \
+    bool
 #define keywords                        \
     let              ,                  \
     fn               ,                  \
@@ -149,6 +149,7 @@
 #define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
 #define punctuators_ map_macro(add_parens, punctuators)
 
+
 //-----------------------------------------------------------------------------
 // for switch case usage in lexer
 enum struct Symbol {
@@ -226,3 +227,4 @@ enum struct Symbol {
     alert          
 
 #define all_symbols singular, has_equals, has_double_and_equals, has_triple, ignore
+

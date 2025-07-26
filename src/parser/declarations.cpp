@@ -33,7 +33,7 @@
     Type type = declaration_specifier();
 
     if (const auto& kind = type.kind;
-        kind == TypeKind::Enum || kind == TypeKind::Struct) {
+        kind == TypeKind::enum_ || kind == TypeKind::struct_) {
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
@@ -63,7 +63,7 @@
         node.type = declaration_specifier();
 
         if (const auto& kind = node.type.kind;
-            kind == TypeKind::Enum || kind == TypeKind::Struct) {
+            kind == TypeKind::enum_ || kind == TypeKind::struct_) {
             report_error((*prev_tkn), "type cannot be defined in a parameter type.");
         }
 
@@ -105,16 +105,14 @@
         || token_is_keyword(static)|| token_is_keyword(extern)) {}
         // we recognize but ignore these keywords atm
 
-    if (token_is_keyword(union)) INTERNAL_PANIC("unions aren't implemented.");
-
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::Struct,
+                     .kind = TypeKind::struct_,
                      .struct_or_enum = push(struct_declaration())};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = TypeKind::Enum,
+                     .kind = TypeKind::enum_,
                      .struct_or_enum = push(enum_declaration())};
     }
     if (token_is(builtin_type)) {

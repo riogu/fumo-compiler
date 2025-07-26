@@ -17,7 +17,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case NodeKind::str:
                     node.type.name = "str", node.type.kind = TypeKind::str; break;
                 case NodeKind::identifier:
-                    prim.var_declaration = symbol_tree.find_node(std::get<str>(prim.value));
+                    prim.var_declaration = find_node(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
                     break;
                 default:
@@ -40,11 +40,17 @@ void Analyzer::analyze(ASTNode& node) {
                 report_error(node.source_token, 
                              "declaring a variable with deduced type requires an initializer.");
             }
+            if (node.type.kind == TypeKind::struct_) {
+                add_namespace(&node);
+            }
+            if (node.type.kind == TypeKind::enum_) {}
+            add_node(&node);
         }
         holds(FunctionDecl&, func) {
             if (func.body) {
                 symbol_tree.depth++;
-                // TODO: add parameters to the body's depth
+                add_node(&node);
+                // TODO: add parameters to the body's symbol_tree.depth
                 symbol_tree.depth--;
                 analyze(*func.body.value());
             }
@@ -57,5 +63,23 @@ void Analyzer::analyze(ASTNode& node) {
             symbol_tree.depth--;
         }
         _ INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+    }
+}
+
+void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
+    switch (node.kind) {
+      case NodeKind::add:       case NodeKind::sub:
+      case NodeKind::multiply:  case NodeKind::divide:
+      case NodeKind::equal:     case NodeKind::not_equal:
+      case NodeKind::less_than: case NodeKind::less_equals:
+          report_error(node.source_token,
+                       "invalid operands to binary expression '{}' and '{}'.",
+                        bin.lhs->type.name, bin.rhs->type.name);
+      case NodeKind::assignment:
+          report_error(node.source_token,
+                       "assigning to '{}'from incompatible type '{}'.",
+                        bin.lhs->type.name, bin.rhs->type.name);
+        default:
+            INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
 }

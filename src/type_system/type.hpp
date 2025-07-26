@@ -5,17 +5,17 @@
 
 struct ASTNode;
 
-#define make_enum_member(_v) _v,
+#define make_enum_member(_v) _v##_,
 enum struct TypeKind {
     Undetermined, // should be converted in the type checker or give error
-    Nothing,
-    Struct,
-    Enum,
+    Nothing,      // bottom type, used for if statements and other typeless constructs
+    struct_,
+    enum_,
     map_macro(make_enum_member, builtin_types)
 };
 
 struct TypeQualifier {
-    enum impl { _const, _volatile };
+    enum impl { Const, Volatile, Extern, Static };
     constexpr operator impl() { return value; }
     TypeQualifier(impl some) : value(some) {}
     TypeQualifier() {}
@@ -27,11 +27,11 @@ struct Type {
     str name = "undetermined";
     TypeKind kind = TypeKind::Undetermined;
     TypeQualifier qualifier;
-    Opt<ASTNode*> struct_or_enum {}; // or union
+    Opt<ASTNode*> struct_or_enum {};
     int ptr_count = 0;
 };
 
-#define each_builtin_type(builtin_name) if (type_name == #builtin_name) return TypeKind::builtin_name;
+#define each_builtin_type(builtin_name) if (type_name == #builtin_name) return TypeKind::builtin_name##_;
 
 [[nodiscard]] constexpr TypeKind builtin_type_kind(std::string_view type_name) {
     map_macro(each_builtin_type, builtin_types);
