@@ -26,30 +26,30 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const PrimaryExpr& primary) {
-    switch (node.kind) {
-        case ASTNode::integer:
+    switch (primary.kind) {
+        case PrimaryExpr::integer:
             return llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*llvm_context),
                                                 std::get<int64_t>(primary.value));
-        case ASTNode::floating_point:
+        case PrimaryExpr::floating_point:
             return llvm::ConstantInt::getSigned(llvm::Type::getFloatTy(*llvm_context),
                                                 std::get<double>(primary.value));
-        case ASTNode::identifier:
+        case PrimaryExpr::identifier:
             // TODO: make a proper symbol table
             // return variable_env[std::get<str>(primary.value)];
-        case ASTNode::str:
+        case PrimaryExpr::str:
         default:
             INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
     }
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const UnaryExpr& unary) {
-    switch (node.kind) {
-        case ASTNode::negate:
+    switch (unary.kind) {
+        case UnaryExpr::negate:
             return ir_builder->CreateNeg(codegen(*unary.expr));
-        case ASTNode::logic_not:
+        case UnaryExpr::logic_not:
             return ir_builder->CreateICmpEQ(codegen(*unary.expr),
                                             llvm::ConstantInt::getBool(*llvm_context, 0));
-        case ASTNode::bitwise_not:
+        case UnaryExpr::bitwise_not:
             return ir_builder->CreateNot(codegen(*unary.expr));
         default:
             INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
@@ -58,24 +58,24 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const UnaryExpr& unary) {
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
 
-    switch(node.kind){
-        case ASTNode::add:
+    switch(bin.kind){
+        case BinaryExpr::add:
             return ir_builder->CreateAdd(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::sub:
+        case BinaryExpr::sub:
             return ir_builder->CreateSub(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::multiply:
+        case BinaryExpr::multiply:
             return ir_builder->CreateMul(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::divide:
+        case BinaryExpr::divide:
             return ir_builder->CreateSDiv(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::equal:
+        case BinaryExpr::equal:
             return ir_builder->CreateICmpEQ(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::not_equal:
+        case BinaryExpr::not_equal:
             return ir_builder->CreateICmpNE(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::less_than:
+        case BinaryExpr::less_than:
             return ir_builder->CreateICmpSLT(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::less_equals:
+        case BinaryExpr::less_equals:
             return ir_builder->CreateICmpSLE(codegen(*bin.lhs), codegen(*bin.rhs));
-        case ASTNode::assignment:
+        case BinaryExpr::assignment:
             // FIXME: we shouldnt codegen a new alloca on assignment
             return ir_builder->CreateStore(codegen(*bin.rhs), codegen(*bin.lhs));
         default:
