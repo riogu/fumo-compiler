@@ -15,12 +15,11 @@
     node.branch = std::move(variable);
 
     if (token_is(=)) {
-        ASTNode* variable_decl = push(std::move(node));
-        push(ASTNode {*prev_tkn,
-                      BinaryExpr {BinaryExpr::assignment, variable_decl, initializer()}});
-
+        ASTNode* assignment = push(ASTNode {*prev_tkn,
+                                            BinaryExpr {BinaryExpr::assignment,
+                                                        push(std::move(node)), initializer()}});
         expect_token(;);
-        return variable_decl;
+        return assignment;
     } else if (node.type.kind == Type::Undetermined) {
         report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }

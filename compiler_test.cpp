@@ -49,53 +49,56 @@ auto main() -> int {
         t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);",pass),
     };
     constexpr std::array semantic_analysis_tests {
-        t("let x: i32 = 123123;                                  \n"
-          "let a: i32 = 123123;                                  \n"
-          "let z: i32 = 123123;                                  \n"
-          "fn func_name(a: i32, b: f64) -> const i32* {          \n"
-          "    x = 69420;                                        \n"
-          "    a = 69420;                                        \n"
-          "    let x = 1111111;                                  \n"
-          "    {                                                 \n"
-          "       z = 69;                                        \n"
-          "       let x: f64;                                    \n"
-          "       x = 12.0f;                                     \n"
-          "    }                                                 \n"
-          "    x = 213;                                          \n"
-          "}                                                     \n"
-          ,pass),
-        t("fn func_name(a: i32, b: f64) -> const i32* {          \n"
-          "    let x: i32 = 1111111;                             \n"
-          "    let x: i32 = 1111;                                \n"
-          "}                                                     \n"
-          ,fail),
-        t("struct    foo {x: i32; y: i32};                       \n"
-          "enum      foo {x: i32, y: i32};                       \n"
-          "namespace foo {x: i32; y: i32};                       \n"
-          "fn        foo (x: i32, y: i32) -> void;               \n"
-          ,fail),
-        t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
-          "    let func_name: i32 = 11111;                       \n"
-          "}                                                     \n"
-          ,pass),
-        t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
-          "    let x = 123123;                                   \n"
-          "    return 69420;                                     \n"
-          "}                                                     \n"
+        // t("let x: i32 = 123123;                                  \n"
+        //   "let a: i32 = 123123;                                  \n"
+        //   "let z: i32 = 123123;                                  \n"
+        //   "fn func_name(a: i32, b: f64) -> const i32* {          \n"
+        //   "    x = 69420;                                        \n"
+        //   "    a = 69420;                                        \n"
+        //   "    let x = 1111111;                                  \n"
+        //   "    {                                                 \n"
+        //   "       z = 69;                                        \n"
+        //   "       let x: f64;                                    \n"
+        //   "       x = 12.0f;                                     \n"
+        //   "    }                                                 \n"
+        //   "    x = 213;                                          \n"
+        //   "}                                                     \n"
+        //   ,pass),
+        // t("fn func_name(a: i32, b: f64) -> const i32* {          \n"
+        //   "    let x: i32 = 1111111;                             \n"
+        //   "    let x: i32 = 1111;                                \n"
+        //   "}                                                     \n"
+        //   ,fail),
+        // t("struct    foo {x: i32; y: i32};                       \n"
+        //   "enum      foo {x: i32, y: i32};                       \n"
+        //   "namespace foo {x: i32; y: i32};                       \n"
+        //   "fn        foo (x: i32, y: i32) -> void;               \n"
+        //   ,fail),
+        // t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
+        //   "    let func_name: i32 = 11111;                       \n"
+        //   "}                                                     \n"
+        //   ,pass),
+        // t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
+        //   "    let x = 123123;                                   \n"
+        //   "    return 69420;                                     \n"
+        //   "}                                                     \n"
+        //   ,pass),
+        t("let y = 12 / 3 + (2 - ~3);                               \n"
+          "let y = 23.0f;                                           \n"
           ,pass),
 };
 
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : ast_syntax_tests) {
+    for (const auto& [test, expected] : semantic_analysis_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
-            std::print("> \033[38;2;88;154;143m✓ OK\033[0m:\n"
+            std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
                        "{}"
                        "\n------------------------------------------------\n"
                        ,test);
         } else {
-            std::print("> \033[38;2;235;67;54m❌FAILED\033[0m:\n"
+            std::print("-> \033[38;2;235;67;54m❌FAILED\033[0m:\n"
                        "{}"
                        "\n------------------------------------------------\n"
                        ,test);

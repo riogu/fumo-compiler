@@ -46,4 +46,6 @@ struct Analyzer {
 
     [[nodiscard]] ASTNode* find_node(std::string_view var_name);
     [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b);
+    [[nodiscard]] constexpr bool is_arithmetic_t(const Type& a);
+
 };

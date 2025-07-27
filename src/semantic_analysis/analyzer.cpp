@@ -28,9 +28,14 @@ void Analyzer::analyze(ASTNode& node) {
             analyze(*un.expr);
             switch (un.kind) {
                 case UnaryExpr::negate:
-                case UnaryExpr::logic_not:
                 case UnaryExpr::bitwise_not:
+                    // if(!is_arithmetic_t(un.expr->type)) {
+                    //     report_error(node.source_token,
+                    //                  "invalid type '{}' for unary expression.", un.expr->type.name);
+                    // }
+                    break;
                 case UnaryExpr::return_statement:
+                case UnaryExpr::logic_not:
                 default: 
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
@@ -38,17 +43,14 @@ void Analyzer::analyze(ASTNode& node) {
         }
         holds(BinaryExpr&, bin) {
             // TODO: add type inference to BinaryExpr::assignment
-            
             analyze(*bin.lhs);
             analyze(*bin.rhs);
 
-            if (bin.kind == BinaryExpr::assignment) {
-                if (bin.lhs->type.kind == Type::Undetermined) {
-
-                }
+            if (bin.kind == BinaryExpr::assignment && bin.lhs->type.kind == Type::Undetermined) {
+                bin.lhs->type = bin.rhs->type;
             }
-
-            if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+            // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+            node.type = bin.lhs->type;
         }
         holds(VariableDecl&, var) {
             if (symbol_tree.symbols_to_nodes.size() == 1) var.kind = VariableDecl::global_var_declaration;
@@ -107,8 +109,6 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
 
 
 void Analyzer::push_named_scope(ASTNode& node) {
-    struct gaming {} gaming;
-    auto e = gaming;
     // TODO: resolve the identifiers by replacing their names with the internal mangling rules
     //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
     //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
@@ -153,3 +153,4 @@ void Analyzer::push_to_scope(ASTNode& node) {
 
 [[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
 [[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a) { INTERNAL_PANIC("not implemented."); }

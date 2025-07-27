@@ -3,7 +3,6 @@
 
 ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
-    vec<ASTNode*> AST;
 
     while (curr_tkn + 1 != tkns.end()) {
         if (token_is_keyword(let)) //
@@ -17,8 +16,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else
             AST.push_back(statement());
     }
-    return push(ASTNode {*tkns.begin(),
-                         NamedScope {NamedScope::translation_unit, std::move(AST)}});
+    return push(ASTNode {*tkns.begin(), NamedScope {NamedScope::translation_unit, std::move(AST)}});
 }
 
 // <statement> ::= <expression-statement>

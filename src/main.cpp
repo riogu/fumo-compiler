@@ -14,7 +14,11 @@ auto main(int argc, char** argv) -> int {
 
     Parser parser {file};
     auto file_root_node = parser.parse_tokens(tokens);
-    // for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+    match(*file_root_node) {
+        holds(const NamedScope&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+        _default {}
+    }
+    std::cerr << "\n";
 
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
@@ -23,8 +27,9 @@ auto main(int argc, char** argv) -> int {
         holds(const NamedScope&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
         _default {}
     }
+    std::cerr << "\n";
 
-    Codegen codegen {file};
-    codegen.codegen(file_root_node);
+    // Codegen codegen {file};
+    // codegen.codegen(file_root_node);
     // std::cerr << "\ncodegen:\n" + codegen.llvm_ir_to_str() + "\n";
 }

@@ -107,8 +107,6 @@ struct ASTNode {
     NodeBranch branch;
     Type type {};
 
-    constexpr operator std::unique_ptr<ASTNode>()&& { return std::make_unique<ASTNode>(std::move(*this)); }
-
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
 

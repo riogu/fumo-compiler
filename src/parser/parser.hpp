@@ -7,8 +7,8 @@ struct Parser {
 
   private:
 
-    ASTNode* push(unique_ptr<ASTNode> node) {
-        all_nodes.push_back(std::move(node));
+    ASTNode* push(const ASTNode& node) {
+        all_nodes.push_back(std::make_unique<ASTNode>(node));
         return all_nodes.back().get();
     }
 
@@ -17,6 +17,7 @@ struct Parser {
     std::vector<Token>::iterator curr_tkn;
     std::vector<Token>::iterator prev_tkn;
     std::stringstream file_stream;
+    vec<ASTNode*> AST;
 
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
     // --------------------------------------------------------------
