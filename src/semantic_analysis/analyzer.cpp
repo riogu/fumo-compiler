@@ -1,7 +1,12 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "base_definitions/ast_node.hpp"
 
-void Analyzer::semantic_analysis(NamedScope& file_scope) {
-    for (auto& node : file_scope.nodes) analyze(*node);
+void Analyzer::semantic_analysis(ASTNode* file_root_node) {
+    symbol_tree.symbols_to_nodes.push_back({});
+    match(*file_root_node) {
+        holds(const NamedScope&, file_scope) for (auto& node : file_scope.nodes) analyze(*node);
+        _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
+    }
 }
 void Analyzer::analyze(ASTNode& node) {
     match(node) {
@@ -21,19 +26,33 @@ void Analyzer::analyze(ASTNode& node) {
         holds(UnaryExpr&, un) {
             // TODO: add checks for '!' and such to only work on arithmetic types
             analyze(*un.expr);
+            switch (un.kind) {
+                case UnaryExpr::negate:
+                case UnaryExpr::logic_not:
+                case UnaryExpr::bitwise_not:
+                case UnaryExpr::return_statement:
+                default: 
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+            }
             node.type = un.expr->type;
         }
         holds(BinaryExpr&, bin) {
+            // TODO: add type inference to BinaryExpr::assignment
+            
             analyze(*bin.lhs);
             analyze(*bin.rhs);
+
+            if (bin.kind == BinaryExpr::assignment) {
+                if (bin.lhs->type.kind == Type::Undetermined) {
+
+                }
+            }
+
             if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
         }
         holds(VariableDecl&, var) {
             if (symbol_tree.symbols_to_nodes.size() == 1) var.kind = VariableDecl::global_var_declaration;
 
-            if (var.value) analyze(*var.value.value());
-            if (node.type.kind == Type::Undetermined)
-                report_error(node.source_token, "declaring a variable with deduced type requires an initializer.");
             if (node.type.kind == Type::struct_) push_named_scope(node); // TODO: will become global not local (fix)
             if (node.type.kind == Type::enum_)   push_named_scope(node); // TODO: will become global not local (fix)
 
@@ -88,13 +107,23 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
 
 
 void Analyzer::push_named_scope(ASTNode& node) {
+    struct gaming {} gaming;
+    auto e = gaming;
+    // TODO: resolve the identifiers by replacing their names with the internal mangling rules
+    //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
+    //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
+    //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
+    //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
     match(node) {
         holds(FunctionDecl&, func) {
+            // TODO: member function calls should be rewritten to take
+            // a pointer to an instance of the class they are defined in.
+            // the "this" implicit pointer in C++
             auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(func.name, node);
             if (!was_inserted && func.body) {
                 match(*node_iterator->second) {
-                    holds(FunctionDecl&, _func) 
-                        if(_func.body) report_error(node.source_token, "Redefinition of '{}'.", _func.name);
+                    holds(FunctionDecl&, func_) 
+                        if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", func_.name);
                     _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
                 }
             }

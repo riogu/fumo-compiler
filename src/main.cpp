@@ -13,14 +13,18 @@ auto main(int argc, char** argv) -> int {
     // for(auto& token: tokens) std::cerr <<  token.to_str() + "| ";
 
     Parser parser {file};
-    auto file_scope = parser.parse_tokens(tokens);
+    auto file_root_node = parser.parse_tokens(tokens);
     // for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
 
     Analyzer analyzer {file};
-    analyzer.semantic_analysis(file_scope);
-    for (auto& node : file_scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+    analyzer.semantic_analysis(file_root_node);
+
+    match(*file_root_node) {
+        holds(const NamedScope&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+        _default {}
+    }
 
     Codegen codegen {file};
-    codegen.codegen(file_scope);
+    codegen.codegen(file_root_node);
     // std::cerr << "\ncodegen:\n" + codegen.llvm_ir_to_str() + "\n";
 }

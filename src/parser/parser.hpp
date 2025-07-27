@@ -3,7 +3,7 @@
 
 struct Parser {
     Parser(const File & file) { file_stream << file.contents; }
-    [[nodiscard]] NamedScope parse_tokens(vec<Token>& tokens);
+    [[nodiscard]] ASTNode* parse_tokens(vec<Token>& tokens);
 
   private:
 
@@ -21,28 +21,28 @@ struct Parser {
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)
     // --------------------------------------------------------------
     // expressions
-    [[nodiscard]] unique_ptr<ASTNode> statement();
-    [[nodiscard]] unique_ptr<ASTNode> expression_statement();
-    [[nodiscard]] unique_ptr<ASTNode> expression();
-    [[nodiscard]] unique_ptr<ASTNode> assignment();
-    [[nodiscard]] unique_ptr<ASTNode> initializer();
-    [[nodiscard]] unique_ptr<ASTNode> initializer_list();
-    [[nodiscard]] unique_ptr<ASTNode> equality();
-    [[nodiscard]] unique_ptr<ASTNode> relational();
-    [[nodiscard]] unique_ptr<ASTNode> add();
-    [[nodiscard]] unique_ptr<ASTNode> multiply();
-    [[nodiscard]] unique_ptr<ASTNode> unary();
-    [[nodiscard]] unique_ptr<ASTNode> primary();
+    [[nodiscard]] ASTNode* statement();
+    [[nodiscard]] ASTNode* expression_statement();
+    [[nodiscard]] ASTNode* expression();
+    [[nodiscard]] ASTNode* assignment();
+    [[nodiscard]] ASTNode* initializer();
+    [[nodiscard]] ASTNode* initializer_list();
+    [[nodiscard]] ASTNode* equality();
+    [[nodiscard]] ASTNode* relational();
+    [[nodiscard]] ASTNode* add();
+    [[nodiscard]] ASTNode* multiply();
+    [[nodiscard]] ASTNode* unary();
+    [[nodiscard]] ASTNode* primary();
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();
-    [[nodiscard]] unique_ptr<ASTNode> struct_declaration();
-    [[nodiscard]] unique_ptr<ASTNode> enum_declaration();
+    [[nodiscard]] ASTNode* struct_declaration();
+    [[nodiscard]] ASTNode* enum_declaration();
     // variable
-    [[nodiscard]] unique_ptr<ASTNode> variable_declaration();
+    [[nodiscard]] ASTNode* variable_declaration();
     // function
-    [[nodiscard]] unique_ptr<ASTNode> function_declaration();
-    [[nodiscard]] unique_ptr<ASTNode> compound_statement();
+    [[nodiscard]] ASTNode* function_declaration();
+    [[nodiscard]] ASTNode* compound_statement();
     [[nodiscard]] vec<ASTNode*> parameter_list();
     // --------------------------------------------------------------
 

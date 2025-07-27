@@ -3,7 +3,7 @@
 
 // <variable-declaration> ::= <declarator-list> {":"}? 
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
-[[nodiscard]] unique_ptr<ASTNode> Parser::variable_declaration() {
+[[nodiscard]] ASTNode* Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
     auto node = ASTNode {*prev_tkn};
@@ -12,18 +12,27 @@
 
     if (token_is(:)) node.type = declaration_specifier();
 
-    variable.value = token_is(=) ? std::make_optional(push(initializer())) 
-                                 : std::nullopt;
     node.branch = std::move(variable);
 
+    if (token_is(=)) {
+        ASTNode* variable_decl = push(std::move(node));
+        push(ASTNode {*prev_tkn,
+                      BinaryExpr {BinaryExpr::assignment, variable_decl, initializer()}});
+
+        expect_token(;);
+        return variable_decl;
+    } else if (node.type.kind == Type::Undetermined) {
+        report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
+    }
+
     expect_token(;);
-    return node;
+    return push(std::move(node));
 }
 
 // <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
 //                            "->" {<declaration-specifier>}+ 
 //                            {<compound-statement>}?
-[[nodiscard]] unique_ptr<ASTNode> Parser::function_declaration() {
+[[nodiscard]] ASTNode* Parser::function_declaration() {
     expect_token(identifier);
     FunctionDecl function {FunctionDecl::function_declaration,
                            std::get<str>(prev_tkn->literal.value())};
@@ -38,11 +47,11 @@
         report_error(token, "type cannot be defined in the result type of a function.");
     }
 
-    if (token_is_str("{")) function.body = push(compound_statement());
+    if (token_is_str("{")) function.body = compound_statement();
     else
         expect_token(;);
 
-    return ASTNode {token,  std::move(function), type};
+    return push(ASTNode {token, function, type});
 }
 
 // <parameter> ::= <declarator-specifier> <identifier> 
@@ -74,23 +83,23 @@
 }
 
 // <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement}* }
-[[nodiscard]] unique_ptr<ASTNode> Parser::compound_statement() {
+[[nodiscard]] ASTNode* Parser::compound_statement() {
     vec<ASTNode*> nodes {};
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //
-            nodes.push_back(push(variable_declaration()));
+            nodes.push_back(variable_declaration());
         else if (token_is_keyword(fn))
-            nodes.push_back(push(function_declaration()));
+            nodes.push_back(function_declaration());
         else if (token_is_str("{"))
-            nodes.push_back(push(compound_statement()));
+            nodes.push_back(compound_statement());
         else if (token_is_keyword(struct))
-            nodes.push_back(push(struct_declaration()));
+            nodes.push_back(struct_declaration());
         else if (token_is_keyword(enum))
-            nodes.push_back(push(enum_declaration()));
+            nodes.push_back(enum_declaration());
         else // NOTE: currently all local functions/structs/enums become global (change later)
-            nodes.push_back(push(statement()));
+            nodes.push_back(statement());
     }
-    return ASTNode {*prev_tkn, BlockScope {BlockScope::compound_statement, nodes}};
+    return push(ASTNode {*prev_tkn, BlockScope {BlockScope::compound_statement, nodes}});
 }
 // <declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}* 
 // <type-specifier> ::= void | i8 | i32 | i64 | f32 | f64 | str
@@ -107,12 +116,12 @@
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::struct_,
-                     .struct_or_enum_or_function = push(struct_declaration())};
+                     .struct_or_enum_or_function = struct_declaration()};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::enum_,
-                     .struct_or_enum_or_function = push(enum_declaration())};
+                     .struct_or_enum_or_function = enum_declaration()};
     }
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());
@@ -130,12 +139,12 @@
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
 }
 
-[[nodiscard]] unique_ptr<ASTNode> Parser::struct_declaration() {
+[[nodiscard]] ASTNode* Parser::struct_declaration() {
     // TODO: finish this 
     INTERNAL_PANIC("structs aren't implemented.");
 }
 
-[[nodiscard]] unique_ptr<ASTNode> Parser::enum_declaration() {
+[[nodiscard]] ASTNode* Parser::enum_declaration() {
     // TODO: finish this 
     INTERNAL_PANIC("enums aren't implemented.");
 }

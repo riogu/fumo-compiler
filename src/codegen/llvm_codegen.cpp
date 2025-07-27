@@ -1,6 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 
-void Codegen::codegen(NamedScope& file_scope) {
+void Codegen::codegen(ASTNode* file_root_node) {
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "main", llvm_module.get());
@@ -8,7 +8,11 @@ void Codegen::codegen(NamedScope& file_scope) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    for (auto& node : file_scope.nodes) codegen(*node);
+    match(*file_root_node) {
+        holds(const NamedScope&, scope) for (auto& node : scope.nodes) codegen(*node);
+        _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
+    }
+
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
@@ -58,7 +62,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const UnaryExpr& unary) {
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
 
-    switch(bin.kind){
+    switch(bin.kind) {
         case BinaryExpr::add:
             return ir_builder->CreateAdd(codegen(*bin.lhs), codegen(*bin.rhs));
         case BinaryExpr::sub:
@@ -77,6 +81,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
             return ir_builder->CreateICmpSLE(codegen(*bin.lhs), codegen(*bin.rhs));
         case BinaryExpr::assignment:
             // FIXME: we shouldnt codegen a new alloca on assignment
+            // should get the ptr from the current var environment instead
             return ir_builder->CreateStore(codegen(*bin.rhs), codegen(*bin.lhs));
         default:
             INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
@@ -87,13 +92,15 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
     auto type = fumo_to_llvm_type(node.type);
     llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, var.name);
-    if (var.value) ir_builder->CreateStore(codegen(*var.value.value()), ptr);
+    // if (var.assignment) ir_builder->CreateStore(codegen(*var.assignment.value()), ptr);
     return ptr;
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const FunctionDecl& branch) {
-    return {};
+    INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
 }
-llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) { return {};}
+llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) { 
+    INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+}
 
 

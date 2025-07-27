@@ -22,16 +22,16 @@ std::pair<std::string, int> exec(const char* cmd) {
 }
 
 #define t std::pair
-constexpr std::string fail = "fail", pass = "pass";
+constexpr bool fail = false, pass = true;
 auto main() -> int {
     // teststring + expected output (only for arithmetic for now)
     constexpr std::array ast_syntax_tests {
-        t("let var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nlet epic = 213;", "fail"),
-        t("123123 + ~213213* 3123;", "pass"),
-        t("let gamer = 69420;let gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);","pass"),
-        t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));","pass"),
-        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", "pass"),
-        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", "fail"),
+        t("let var = 69 + 21 + (3 + 3 = 2) * (-2 - 3 / ~3) + 3 + 30;\nlet epic = 213;", fail),
+        t("123123 + ~213213* 3123;", pass),
+        t("let gamer = 69420;let gamer = ~1231 + 21312 * 3213 / (1231230 + 2130 + 2 * 3 - 45 + 3123 + 10);",pass),
+        t("(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-(-1))))))))))))))))))))))))))))))))))));",pass),
+        t("let var: i64 = {69213 * 2 , {2, {323213, 123123}}};\n", pass),
+        t("fn func_name(a: i32, b: struct gaming{}) -> const i32* {}", fail),
         t("fn another_f() -> const i32****;\n"
           "fn func_name(a: i32, b: f64) -> const i32* {\n"
           "    let var: i32 = 213123;\n"
@@ -42,52 +42,51 @@ auto main() -> int {
           "    var = 213;\n"
           "}\n"
           // "fn main() -> i32 {\n    let var = 1;\n    return 0;\n}\n"
-          ,"pass"),
-        t("let var;", "fail"),
-        // t("fn main() -> i32 {\n    let var: i32 = (-1) * ~3 - -8 * -1 + 2;\n}", "pass"),
-        // t(" 1 * 3 - 8 * 1 + 69;","pass"),
-        // t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);","pass"),
+          ,pass),
+        t("let var;", fail),
+        // t("fn main() -> i32 {\n    let var: i32 = (-1) * ~3 - -8 * -1 + 2;\n}", pass),
+        // t(" 1 * 3 - 8 * 1 + 69;",pass),
+        t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);",pass),
     };
-    constexpr std::array llvm_tests {
-        // t("let x: cool = 12321; let y: i32; let x: f64;\n"
-        //   "x = 12; fn func() -> void {}"
-        //   , "pass"),
-        // t("let x: i32 = 123123;                                     \n"
-        //   "fn another_func(x: i32) -> void;                         \n"
-        //   "fn func_name(a: i32, b: f64) -> const i32* {             \n"
-        //   "    x = 69420;                                           \n"
-        //   "    a = 69420;                                           \n"
-        //   "    let x = 1111111;                                     \n"
-        //   "    {                                                    \n"
-        //   "       let x: f64;                                       \n"
-        //   "       x = 12.0f;                                        \n"
-        //   "    }                                                    \n"
-        //   "    x = 213;                                             \n"
-        //   "}                                                        \n"
-        //     ,"pass"),
-        // t("let x: i32 = 123123;                                     \n"
-        //   "fn another_func(x: i32) -> void;                         \n"
-        //   "fn func_name(a: i32, b: f64) -> const i32* {             \n"
-        //   "    x = 69420;                                           \n"
-        //   "    a = 69420;                                           \n"
-        //   "    let x = 1111111;                                     \n"
-        //   "    {                                                    \n"
-        //   "       let x: f64;                                       \n"
-        //   "       x = 12.0f;                                        \n"
-        //   "    }                                                    \n"
-        //   "    somevar = 69420;                                     \n"
-        //   "    x = 213;                                             \n"
-        //   "}                                                        \n"
-        //     ,"pass"),
-        t("fn func_name(a: i32, b: f64) -> const i32* {                 \n"
-          "    let x: i32 = 1111111;                                    \n"
-          "    let x: i32 = 1111;                                       \n"
-          "}                                                            \n"
-            ,"fail"),
-    };
+    constexpr std::array semantic_analysis_tests {
+        t("let x: i32 = 123123;                                  \n"
+          "let a: i32 = 123123;                                  \n"
+          "let z: i32 = 123123;                                  \n"
+          "fn func_name(a: i32, b: f64) -> const i32* {          \n"
+          "    x = 69420;                                        \n"
+          "    a = 69420;                                        \n"
+          "    let x = 1111111;                                  \n"
+          "    {                                                 \n"
+          "       z = 69;                                        \n"
+          "       let x: f64;                                    \n"
+          "       x = 12.0f;                                     \n"
+          "    }                                                 \n"
+          "    x = 213;                                          \n"
+          "}                                                     \n"
+          ,pass),
+        t("fn func_name(a: i32, b: f64) -> const i32* {          \n"
+          "    let x: i32 = 1111111;                             \n"
+          "    let x: i32 = 1111;                                \n"
+          "}                                                     \n"
+          ,fail),
+        t("struct    foo {x: i32; y: i32};                       \n"
+          "enum      foo {x: i32, y: i32};                       \n"
+          "namespace foo {x: i32; y: i32};                       \n"
+          "fn        foo (x: i32, y: i32) -> void;               \n"
+          ,fail),
+        t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
+          "    let func_name: i32 = 11111;                       \n"
+          "}                                                     \n"
+          ,pass),
+        t("fn func_name(a: i32, b: i32) -> const i32* {          \n"
+          "    let x = 123123;                                   \n"
+          "    return 69420;                                     \n"
+          "}                                                     \n"
+          ,pass),
+};
 
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : llvm_tests) {
+    for (const auto& [test, expected] : ast_syntax_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

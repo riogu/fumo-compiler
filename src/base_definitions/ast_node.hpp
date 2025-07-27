@@ -5,6 +5,8 @@
 
 struct ASTNode; 
 
+// these ugly macros are just for printing the enums later in the debug
+
 struct PrimaryExpr {
     enum {
         #define PrimaryExpr_kinds                                        \
@@ -60,7 +62,6 @@ struct VariableDecl {
         VariableDecl_kinds
     } kind;
     std::string name;
-    Opt<ASTNode*> value {};
 };
 struct FunctionDecl {
     enum {

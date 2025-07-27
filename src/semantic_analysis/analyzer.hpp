@@ -2,7 +2,6 @@
 #include "base_definitions/ast_node.hpp"
 #include <llvm/IR/Function.h>
 #include <map>
-
 /*  
     turn identifiers into nodes that represent their respective variable declarations,
     or provide an error
@@ -16,26 +15,21 @@ struct SymbolTableStack {
     // struct | enum | namespace
     std::map<str, ASTNode*> named_scopes {}; // these are kept separately
     vec<std::map<str, ASTNode*>> symbols_to_nodes {};
-    // all declarations are flattened internally and identifiers are changed to match them
+    // all declarations are flattened and identifiers are changed to match them
     // for example:
-    //   namespace foo {struct bar {};} => struct "foo::bar" {};
-    //   struct    foo {struct bar {};} => struct "foo@bar" {};
-    // they are "global" but renamed
-    auto push_to_scope(str identifier, ASTNode& node) {
-        return symbols_to_nodes.back().insert({identifier, &node});
-    }
-    auto push_named_scope(str identifier, ASTNode& node) {
-        return named_scopes.insert({identifier, &node});
-    }
-
-    // auto replace_node(str identifier, ASTNode& node) {
-    //     symbols_to_nodes.back()[identifier] = &node;
-    // }
+    //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
+    //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
+    //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
+    //   struct    foo  {fn func()->void;} =>  fn "foo{}::func"() -> void;
+    // they are "global" but renamed internally
+    // enums cant have other declarations inside them
+    auto push_to_scope(str identifier, ASTNode& node)    { return symbols_to_nodes.back().insert({identifier, &node}); }
+    auto push_named_scope(str identifier, ASTNode& node) { return named_scopes.insert({identifier, &node}); }
 };
 
 struct Analyzer {
     Analyzer(const File& file) { file_stream << file.contents; }
-    void semantic_analysis(NamedScope& file_scope);
+    void semantic_analysis(ASTNode* file_scope);
 
   private:
     std::stringstream file_stream;

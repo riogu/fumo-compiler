@@ -20,9 +20,6 @@
         holds(const VariableDecl&, var) {
             result += std::format("{} {}", gray("=>"), yellow(var.name));
             result += gray(": ") + yellow(type.name);
-            if (var.value) {
-                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), var.value.value()->to_str(depth));
-            }
         }
         holds(const FunctionDecl&, func) {
             std::string temp = yellow("fn ") + blue(func.name) + gray("(");
@@ -31,7 +28,6 @@
                 match(*var) {
                     holds(const VariableDecl&, param) {
                         temp += param.name + gray(": ") + yellow(var->type.name);
-                        if (param.value) temp += " = " + param.value.value()->to_str();
                     }
                     _default { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
                 }
