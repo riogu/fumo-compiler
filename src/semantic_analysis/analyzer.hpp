@@ -20,11 +20,17 @@ struct SymbolTableStack {
     //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
     //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
     //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
-    //   struct    foo  {fn func()->void;} =>  fn "foo{}::func"() -> void;
+    //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
+    //   namespace foo  {fn func()->void;} => fn "foo::func"() -> void;
     // they are "global" but renamed internally
     // enums cant have other declarations inside them
-    auto push_to_scope(str identifier, ASTNode& node)    { return symbols_to_nodes.back().insert({identifier, &node}); }
-    auto push_named_scope(str identifier, ASTNode& node) { return named_scopes.insert({identifier, &node}); }
+    str curr_scope_name = "";
+    auto push_to_scope(str identifier, ASTNode& node) {
+        return symbols_to_nodes.back().insert({curr_scope_name + identifier, &node});
+    }
+    auto push_named_scope(str identifier, ASTNode& node) {
+        return named_scopes.insert({curr_scope_name + identifier, &node});
+    }
 };
 
 struct Analyzer {
@@ -38,11 +44,12 @@ struct Analyzer {
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
-    void open_scope()  { symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*>{}); }
+    void open_scope()  { 
+        symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*>{}); 
+    }
     void close_scope() { symbol_tree.symbols_to_nodes.pop_back(); }
 
     void push_to_scope(ASTNode& node);
-    void push_named_scope(ASTNode& node);
 
     [[nodiscard]] ASTNode* find_node(std::string_view var_name);
     [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b);

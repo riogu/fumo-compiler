@@ -8,6 +8,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
     }
 }
+
 void Analyzer::analyze(ASTNode& node) {
     match(node) {
         holds(PrimaryExpr&, prim) {
@@ -29,10 +30,10 @@ void Analyzer::analyze(ASTNode& node) {
             switch (un.kind) {
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
-                    // if(!is_arithmetic_t(un.expr->type)) {
-                    //     report_error(node.source_token,
-                    //                  "invalid type '{}' for unary expression.", un.expr->type.name);
-                    // }
+                    if(!is_arithmetic_t(un.expr->type)) {
+                        report_error(node.source_token,
+                                     "invalid type '{}' for unary expression.", un.expr->type.name);
+                    }
                     break;
                 case UnaryExpr::return_statement:
                 case UnaryExpr::logic_not:
@@ -42,26 +43,27 @@ void Analyzer::analyze(ASTNode& node) {
             node.type = un.expr->type;
         }
         holds(BinaryExpr&, bin) {
-            // TODO: add type inference to BinaryExpr::assignment
             analyze(*bin.lhs);
             analyze(*bin.rhs);
 
             if (bin.kind == BinaryExpr::assignment && bin.lhs->type.kind == Type::Undetermined) {
                 bin.lhs->type = bin.rhs->type;
             }
-            // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+            if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
         }
         holds(VariableDecl&, var) {
             if (symbol_tree.symbols_to_nodes.size() == 1) var.kind = VariableDecl::global_var_declaration;
 
-            if (node.type.kind == Type::struct_) push_named_scope(node); // TODO: will become global not local (fix)
-            if (node.type.kind == Type::enum_)   push_named_scope(node); // TODO: will become global not local (fix)
+            // TODO: will become global not local (fix)
+            if(node.type.struct_or_enum) analyze(*node.type.struct_or_enum.value()); 
 
             push_to_scope(node);
         }
         holds(FunctionDecl&, func) {
-            push_named_scope(node); // TODO: add parameters to the body's symbol_tree.depth
+            // FIXME: delete local structs and functions after closing a function/block scope
+            // they are treated like normal variables in the case of functions
+            push_to_scope(node); // TODO: add parameters to the body's symbol_tree.depth
             open_scope();
             if (func.body) {
                 func.body.value()->type = node.type;
@@ -84,13 +86,55 @@ void Analyzer::analyze(ASTNode& node) {
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
-
-        holds(NamedScope&, n_scope) push_named_scope(node);
+        holds(const NamedScope&, scope) {
+            // TODO: resolve the identifiers by replacing their names with the internal mangling rules
+            //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
+            //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
+            //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
+            //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
+            //   namespace foo  {fn func()->void;} => fn "foo::func"() -> void;
+            switch(scope.kind) {
+                case NamedScope::struct_declaration:
+                    // "foo{s}::bar"
+                case NamedScope::enum_declaration:
+                    // "foo{e}::bar"
+                case NamedScope::namespace_declaration:
+                    // "foo{n}::bar"
+                default:
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+            }
+        }
         
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }
 }
 
+
+void Analyzer::push_to_scope(ASTNode& node) {
+    match(node) {
+        holds(FunctionDecl&, func) {
+            // TODO: member function calls should be rewritten to take a pointer 
+            // to an instance of the class they are defined in. the "this" implicit pointer in C++
+            auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(func.name, node);
+            if (!was_inserted && func.body) {
+                match(*node_iterator->second) {
+                    holds(FunctionDecl&, func_) 
+                        if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", func_.name);
+                    _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
+                }
+            }
+        }
+        holds(VariableDecl&, var) {
+            auto [_, was_inserted] = symbol_tree.push_to_scope(var.name, node);
+            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
+        }
+        _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
+    }
+}
+
+[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a)                { INTERNAL_PANIC("not implemented."); }
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
         case BinaryExpr::add:       case BinaryExpr::sub:
@@ -106,51 +150,3 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
             INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
 }
-
-
-void Analyzer::push_named_scope(ASTNode& node) {
-    // TODO: resolve the identifiers by replacing their names with the internal mangling rules
-    //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
-    //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
-    //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
-    //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
-    match(node) {
-        holds(FunctionDecl&, func) {
-            // TODO: member function calls should be rewritten to take
-            // a pointer to an instance of the class they are defined in.
-            // the "this" implicit pointer in C++
-            auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(func.name, node);
-            if (!was_inserted && func.body) {
-                match(*node_iterator->second) {
-                    holds(FunctionDecl&, func_) 
-                        if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", func_.name);
-                    _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
-                }
-            }
-        }
-        holds(NamedScope&, scope) {
-            switch(scope.kind) {
-                case NamedScope::struct_declaration:    INTERNAL_PANIC("not implemented.");
-                case NamedScope::enum_declaration:      INTERNAL_PANIC("not implemented.");
-                case NamedScope::namespace_declaration: INTERNAL_PANIC("not implemented."); 
-                default:
-                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
-            }
-        }
-        _default { INTERNAL_PANIC("expected named scope, got '{}'.", node.kind_name()); }
-    }
-}
-
-void Analyzer::push_to_scope(ASTNode& node) {
-    match(node) {
-        holds(VariableDecl&, var) {
-            auto [_, was_inserted] = symbol_tree.push_to_scope(var.name, node);
-            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
-        }
-        _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
-    }
-}
-
-[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
-[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
-[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a) { INTERNAL_PANIC("not implemented."); }

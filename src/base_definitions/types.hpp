@@ -21,7 +21,7 @@ struct Type {
     } kind = Undetermined;
     enum TypeQualifier { const_, volatile_, extern_, static_ };
     std::unordered_set<TypeQualifier> qualifiers;
-    Opt<ASTNode*> struct_or_enum_or_function {};
+    Opt<ASTNode*> struct_or_enum {};
     int ptr_count = 0;
 };
 

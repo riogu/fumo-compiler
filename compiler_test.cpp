@@ -49,21 +49,21 @@ auto main() -> int {
         t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);",pass),
     };
     constexpr std::array semantic_analysis_tests {
-        // t("let x: i32 = 123123;                                  \n"
-        //   "let a: i32 = 123123;                                  \n"
-        //   "let z: i32 = 123123;                                  \n"
-        //   "fn func_name(a: i32, b: f64) -> const i32* {          \n"
-        //   "    x = 69420;                                        \n"
-        //   "    a = 69420;                                        \n"
-        //   "    let x = 1111111;                                  \n"
-        //   "    {                                                 \n"
-        //   "       z = 69;                                        \n"
-        //   "       let x: f64;                                    \n"
-        //   "       x = 12.0f;                                     \n"
-        //   "    }                                                 \n"
-        //   "    x = 213;                                          \n"
-        //   "}                                                     \n"
-        //   ,pass),
+        t("let x: i32 = 123123;                                  \n"
+          "let a: i32 = 123123;                                  \n"
+          "let z: i32 = 123123;                                  \n"
+          "fn func_name(a: i32, b: f64) -> const i32* {          \n"
+          "    x = 69420;                                        \n"
+          "    a = 69420;                                        \n"
+          "    let x = 1111111;                                  \n"
+          "    {                                                 \n"
+          "       z = 69;                                        \n"
+          "       let x: f64;                                    \n"
+          "       x = 12.0f;                                     \n"
+          "    }                                                 \n"
+          "    x = 213;                                          \n"
+          "}                                                     \n"
+          ,pass),
         // t("fn func_name(a: i32, b: f64) -> const i32* {          \n"
         //   "    let x: i32 = 1111111;                             \n"
         //   "    let x: i32 = 1111;                                \n"
@@ -84,7 +84,7 @@ auto main() -> int {
         //   "}                                                     \n"
         //   ,pass),
         t("let y = 12 / 3 + (2 - ~3);                               \n"
-          "let y = 23.0f;                                           \n"
+          "let x = 23.0f;                                           \n"
           ,pass),
 };
 

@@ -115,12 +115,12 @@
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::struct_,
-                     .struct_or_enum_or_function = struct_declaration()};
+                     .struct_or_enum = struct_declaration()};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::enum_,
-                     .struct_or_enum_or_function = enum_declaration()};
+                     .struct_or_enum = enum_declaration()};
     }
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());

@@ -94,6 +94,7 @@ struct NamedScope {
 
         NamedScope_kinds
     } kind;
+    std::string name = "";
     vec<ASTNode*> nodes {};
 };
 
