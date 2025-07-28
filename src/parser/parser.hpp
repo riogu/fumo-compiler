@@ -36,8 +36,11 @@ struct Parser {
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();
+
+    [[nodiscard]] ASTNode* namespace_declaration();
     [[nodiscard]] ASTNode* struct_declaration();
     [[nodiscard]] ASTNode* enum_declaration();
+    [[nodiscard]] vec<ASTNode*> named_scope_definition();
     // variable
     [[nodiscard]] ASTNode* variable_declaration();
     // function

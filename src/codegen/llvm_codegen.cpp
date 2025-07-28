@@ -9,7 +9,7 @@ void Codegen::codegen(ASTNode* file_root_node) {
     ir_builder->SetInsertPoint(bblock);
 
     match(*file_root_node) {
-        holds(const NamedScope&, scope) for (auto& node : scope.nodes) codegen(*node);
+        holds(const NamespaceDecl&, scope) for (auto& node : scope.nodes) codegen(*node);
         _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
     }
 

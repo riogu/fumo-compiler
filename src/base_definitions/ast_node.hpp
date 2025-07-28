@@ -74,6 +74,7 @@ struct FunctionDecl {
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
 };
+
 struct BlockScope {
     enum {
         #define BlockScope_kinds                                         \
@@ -84,25 +85,38 @@ struct BlockScope {
     } kind;
     vec<ASTNode*> nodes {};
 };
-struct NamedScope {
+
+struct NamespaceDecl {
     enum {
-        #define NamedScope_kinds                                         \
+        #define NamespaceDecl_kinds                                      \
         translation_unit,        /*                                   */ \
-        struct_declaration,      /*                                   */ \
-        enum_declaration,        /*                                   */ \
         namespace_declaration    /*                                   */ \
 
-        NamedScope_kinds
+        NamespaceDecl_kinds
     } kind;
     std::string name = "";
     vec<ASTNode*> nodes {};
 };
 
+// a struct/enum introduces a named scope when defined
+struct TypeDecl {
+    enum {
+        #define TypeDecl_kinds                                           \
+        struct_declaration        /*                                  */ \
+        /* enum_declaration */    /*                                  */ \
+
+        TypeDecl_kinds
+    } kind;
+    std::string name = "";
+    Opt<vec<ASTNode*>> definition {};
+};
+
 struct ASTNode {
 
     using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
-                                    VariableDecl, FunctionDecl, 
-                                    BlockScope, NamedScope>;
+                                    VariableDecl, FunctionDecl,
+                                    BlockScope, NamespaceDecl,
+                                    TypeDecl>;
 
     Token source_token; // token that originated this Node
     NodeBranch branch;

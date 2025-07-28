@@ -5,18 +5,21 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
 
     while (curr_tkn + 1 != tkns.end()) {
-        if (token_is_keyword(let)) //
+        if (token_is_keyword(let))
             AST.push_back(variable_declaration());
         else if (token_is_keyword(fn))
             AST.push_back(function_declaration());
+        else if (token_is_keyword(namespace))
+            AST.push_back(namespace_declaration());
         else if (token_is_keyword(struct))
             AST.push_back(struct_declaration());
         else if (token_is_keyword(enum))
             AST.push_back(enum_declaration());
         else
-            AST.push_back(statement());
+            // AST.push_back(statement()); NOTE: no longer valid in global
+            report_error((*curr_tkn), "expected declaration.");
     }
-    return push(ASTNode {*tkns.begin(), NamedScope {NamedScope::translation_unit, "fumo_module", std::move(AST)}});
+    return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, "fumo_module", std::move(AST)}});
 }
 
 // <statement> ::= <expression-statement>

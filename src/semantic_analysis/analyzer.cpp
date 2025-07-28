@@ -1,34 +1,11 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
 
-// namespace foo {
-//     void func();
-//     struct bar {
-//         struct foo {
-//             static int func();
-//         };
-//         str x; 
-//         int y;
-//         void f();
-//     };
-// } // namespace foo
-//
-//
-// void foo::func() {
-//     bar var = foo::bar {"foo", 1};
-// }
-// void foo::bar::f() {
-//     foo var;
-//     foo::func();
-//     ::foo::func();
-// }
-//
-// foo::bar::foo var;
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     // symbol_tree.symbols_to_nodes.push_back({});
     match(*file_root_node) {
-        holds(const NamedScope&, file_scope) for (auto& node : file_scope.nodes) analyze(*node);
+        holds(const NamespaceDecl&, file_scope) for (auto& node : file_scope.nodes) analyze(*node);
         _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
     }
 }
@@ -36,6 +13,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 void Analyzer::analyze(ASTNode& node) {
 
     match(node) {
+
         holds(PrimaryExpr&, prim) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:        node.type.name = "i32"; node.type.kind = Type::i32_; break;
@@ -49,6 +27,7 @@ void Analyzer::analyze(ASTNode& node) {
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
+
         holds(UnaryExpr&, un) {
             // TODO: add checks for '!' and such to only work on arithmetic types
             analyze(*un.expr);
@@ -67,6 +46,7 @@ void Analyzer::analyze(ASTNode& node) {
             }
             node.type = un.expr->type;
         }
+
         holds(BinaryExpr&, bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
@@ -77,14 +57,16 @@ void Analyzer::analyze(ASTNode& node) {
             if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
         }
+
         holds(VariableDecl&, var) {
             if (symbol_tree.symbols_to_nodes.size() == 1) var.kind = VariableDecl::global_var_declaration;
 
             // TODO: will become global not local (fix)
-            if(node.type.struct_or_enum) analyze(*node.type.struct_or_enum.value()); 
+            if(node.type.declaration) analyze(*node.type.declaration.value()); 
 
             add_to_scope(node);
         }
+
         holds(FunctionDecl&, func) {
             // FIXME: delete local structs and functions after closing a function/block scope
             // they are treated like normal variables in the case of functions
@@ -105,13 +87,14 @@ void Analyzer::analyze(ASTNode& node) {
                 // put them in a separate map for codegen, but wont show up in name lookups
             }
         }
+
         holds(BlockScope&, scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch(scope.kind) {
                 case BlockScope::compound_statement:
                     push_scope(node);
-                // change the names of struct/function declarations that happen inside of functions
-                // and just codegen for that new mangled named that is unique
+                    // change the names of struct/function declarations that happen inside of functions
+                    // and just codegen for that new mangled named that is unique
                     for (auto& node : scope.nodes) analyze(*node);
                     pop_scope(node);
                     break;
@@ -119,20 +102,25 @@ void Analyzer::analyze(ASTNode& node) {
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
-        holds(const NamedScope&, scope) {
+
+        holds(const NamespaceDecl&, scope) {
             // TODO: resolve the identifiers by replacing their names with the internal mangling rules
             //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
             //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
             //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
             //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
             //   namespace foo  {fn func()->void;} => fn "foo::func"() -> void;
-            switch(scope.kind) {
-                case NamedScope::struct_declaration:
-                    // "foo{s}::bar"
-                case NamedScope::enum_declaration:
-                    // "foo{e}::bar"
-                case NamedScope::namespace_declaration:
-                    // "foo{n}::bar"
+            // "foo{n}::bar"
+            // "foo{s}::bar"
+            // "foo{e}::bar"
+            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+            
+        }
+        holds(const TypeDecl&, type_decl) {
+            switch (type_decl.kind) {
+                case TypeDecl::struct_declaration:
+                    if(type_decl.definition) for (auto& node: type_decl.definition.value()) analyze(*node);
+                    
                 default:
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
@@ -161,15 +149,6 @@ void Analyzer::add_to_scope(ASTNode& node) {
             if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
         }
         _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
-    }
-}
-void func() {
-    struct foo{}var;
-    {
-        struct foo{}var;
-        while(1) {
-            struct foo{}var;
-        }
     }
 }
 

@@ -62,6 +62,7 @@
     void             ,                  \
     bool
 #define keywords                        \
+    namespace        ,                  \
     let              ,                  \
     fn               ,                  \
     const            ,                  \

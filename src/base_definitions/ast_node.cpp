@@ -18,7 +18,7 @@
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
         holds(const VariableDecl&, var) {
-            result += std::format("{} {}", gray("=>"), yellow(var.name));
+            result += std::format("{} {}", gray("=>"), var.name);
             result += gray(": ") + yellow(type.name);
         }
         holds(const FunctionDecl&, func) {
@@ -47,6 +47,30 @@
             depth--;
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
+        holds(const TypeDecl&, type_decl) {
+            result += gray("=> ") + purple_blue("struct ") + yellow(type_decl.name);
+            if (type_decl.definition) {
+                result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
+                result += purple_blue("definition ") + gray("{");
+                depth++;
+                depth++;
+                for(auto& node: type_decl.definition.value()) 
+                    result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+                depth--;
+                result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+            }
+        }
+        holds(const NamespaceDecl&, namespace_decl) {
+            result += gray("=> ") + purple_blue("struct ") + yellow(namespace_decl.name);
+            result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
+            result += purple_blue("definition ") + gray("{");
+            depth++;
+            depth++;
+            for(auto& node: namespace_decl.nodes) 
+                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+            depth--;
+            result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+        }
         _default { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }
     return result;
@@ -63,7 +87,8 @@
         branch_kind_name(VariableDecl);
         branch_kind_name(FunctionDecl);
         branch_kind_name(BlockScope);
-        branch_kind_name(NamedScope);
+        branch_kind_name(NamespaceDecl);
+        branch_kind_name(TypeDecl);
         _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
     }
     std::unreachable();

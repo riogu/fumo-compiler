@@ -32,6 +32,8 @@ struct SymbolTableStack {
     auto push_named_scope(str identifier, ASTNode& node) {
         return named_scopes.insert({curr_scope_name + identifier, &node});
     }
+
+
     // let x: i32 = 123123;                                  
     // let a: i32 = 123123;                                  
     // let z: i32 = 123123;                                  
@@ -48,6 +50,32 @@ struct SymbolTableStack {
     //     x = 213;                                          
     // }                                                     
 };
+
+// namespace foo {
+//     void func();
+//     struct bar {
+//         struct inner {
+//             static int func();
+//         };
+//         str x; 
+//         int y;
+//         void f();
+//     };
+//     struct wow;
+// }
+//
+// struct gaming {
+//     int x;
+//     void func() {
+//         x++;
+//     }
+//     int y;
+// };
+
+
+// struct foo::bar {};
+// struct foo::bar::inner {};
+// fn foo::func() -> void;
 
 struct Analyzer {
     Analyzer(const File& file) { file_stream << file.contents; }

@@ -1,4 +1,3 @@
-#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}? 
@@ -89,13 +88,13 @@
             nodes.push_back(variable_declaration());
         else if (token_is_str("{"))
             nodes.push_back(compound_statement());
-        // else if (token_is_keyword(fn))
-        //     nodes.push_back(function_declaration());
-        // else if (token_is_keyword(struct))
-        //     nodes.push_back(struct_declaration());
+        else if (token_is_keyword(fn))
+            nodes.push_back(function_declaration());
+        else if (token_is_keyword(struct))
+            nodes.push_back(struct_declaration());
         // else if (token_is_keyword(enum))
         //     nodes.push_back(enum_declaration());
-        else // NOTE: currently all local functions/structs/enums become global (change later)
+        else
             nodes.push_back(statement());
     }
     return push(ASTNode {*prev_tkn, BlockScope {BlockScope::compound_statement, nodes}});
@@ -115,12 +114,12 @@
     if (token_is_keyword(struct)) {
         return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::struct_,
-                     .struct_or_enum = struct_declaration()};
+                     .declaration = struct_declaration()};
     }
     if (token_is_keyword(enum)) {
         return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
                      .kind = Type::enum_,
-                     .struct_or_enum = enum_declaration()};
+                     .declaration = enum_declaration()};
     }
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());
@@ -137,13 +136,57 @@
     }
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
 }
+[[nodiscard]] ASTNode* Parser::namespace_declaration() {
+    expect_token(identifier);
+    auto node = ASTNode {*prev_tkn};
+    auto nmspace = NamespaceDecl {NamespaceDecl::namespace_declaration,
+                                  std::get<str>(prev_tkn->literal.value())};
+
+    expect_token_str("{");
+    while(!token_is_str("}")) {
+        if (token_is_keyword(let))
+            nmspace.nodes.push_back(variable_declaration());
+        else if (token_is_keyword(fn))
+            nmspace.nodes.push_back(function_declaration());
+        else if (token_is_keyword(namespace))
+            nmspace.nodes.push_back(namespace_declaration());
+        else if (token_is_keyword(struct))
+            nmspace.nodes.push_back(struct_declaration());
+        else if (token_is_keyword(enum))
+            nmspace.nodes.push_back(enum_declaration());
+        else
+            report_error((*curr_tkn), "expected namespace member declaration.");
+    }
+    node.branch = nmspace;
+    return push(node);
+}
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
-    // TODO: finish this 
-    INTERNAL_PANIC("structs aren't implemented.");
-}
+    expect_token(identifier);
+    auto node = ASTNode {*prev_tkn};
 
-[[nodiscard]] ASTNode* Parser::enum_declaration() {
-    // TODO: finish this 
-    INTERNAL_PANIC("enums aren't implemented.");
+    TypeDecl type_decl {TypeDecl::struct_declaration,
+                        std::get<str>(prev_tkn->literal.value())};
+
+    if (token_is_str("{")) {
+        vec<ASTNode*> nodes {};
+        while(!token_is_str("}")) {
+            if (token_is_keyword(let))
+                nodes.push_back(variable_declaration());
+            else if (token_is_keyword(fn))
+                nodes.push_back(function_declaration());
+            else if (token_is_keyword(struct))
+                nodes.push_back(struct_declaration());
+            else if (token_is_keyword(enum))
+                nodes.push_back(enum_declaration());
+            else
+                report_error((*curr_tkn), "expected struct member declaration.");
+        }
+        type_decl.definition = std::move(nodes);
+    }
+
+    node.branch = type_decl;
+    expect_token(;);
+    return push(node);
 }
+[[nodiscard]] ASTNode* Parser::enum_declaration() { INTERNAL_PANIC("enums are not implemented."); }

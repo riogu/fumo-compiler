@@ -86,10 +86,35 @@ auto main() -> int {
         t("let y = 12 / 3 + (2 - ~3);                               \n"
           "let x = 23.0f;                                           \n"
           ,pass),
-};
+    };
+
+
+    constexpr std::array type_decl_tests {
+        t("struct gaming {                                          \n"
+          "    struct foo{let x:i32;};                              \n"
+          "    let x = 23.0f;                                       \n"
+          "    fn func_mem() -> void {x = 2;}                       \n"
+          "};                                                       \n"
+          "struct somevar;                                          \n"
+          ,pass),
+        t("namespace foo {                                       \n"
+          "    fn func() -> void;                                \n"
+          "    struct bar {                                      \n"
+          "        struct inner {                                \n"
+          "            fn func() -> int;                         \n"
+          "        };                                            \n"
+          "        let x: str;                                   \n"
+          "        let y: i32;                                   \n"
+          "        fn f() -> void;                               \n"
+          "    };                                                \n"
+          "    struct outer;                                     \n"
+          "}                                                     \n"
+          ,pass),
+    };
+
 
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : semantic_analysis_tests) {
+    for (const auto& [test, expected] : type_decl_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

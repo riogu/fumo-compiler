@@ -7,7 +7,6 @@ struct ASTNode;
 #define make_enum_member(_v) _v##_,
 
 
-
 struct Type {
     std::string name = "Undetermined";
     enum Kind {
@@ -21,7 +20,7 @@ struct Type {
     } kind = Undetermined;
     enum TypeQualifier { const_, volatile_, extern_, static_ };
     std::unordered_set<TypeQualifier> qualifiers;
-    Opt<ASTNode*> struct_or_enum {};
+    Opt<ASTNode*> declaration {};
     int ptr_count = 0;
 };
 

@@ -20,19 +20,24 @@ Current structure for the AST parser in BNF format
 ---
 - Declarations
 
-<declaration> ::= "let" <variable-declaration> ";"
-                | "fn" <function-declaration> ";"
-                | "struct" <struct-declaration> ";"
-                | "enum" <enum-declaration> ";"
-                | "namespace" <namespace-declaration> ";"
+<declaration> ::= "let"         <variable-declaration>  ";"
+                | "fn"          <function-declaration>  ";"
+                | "struct"      <struct-declaration>    ";"
+                | "namespace"   <namespace-declaration> ";"
+                | "enum"        <enum-declaration>      ";"
 
-<variable-declaration> ::= <declarator-list> {":"}?
-                           {<declaration-specifier>}+
-                           {"=" <initializer>}?
+---
 
-<function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
-                           "->" {<declaration-specifier>}+ {<compound-statement>}?
+<struct-declaration>      ::= <named-scope-declaration>
+<namespace-declaration>   ::= <named-scope-declaration>
+<enum-declaration>        ::= [TODO]
 
+<named-scope-declaration> ::= <identifier> "{" {<declaration>}* "}"
+
+<variable-declaration>    ::= <declarator-list> {":"}? {<declaration-specifier>}+ {"=" <initializer>}?
+<function-declaration>    ::=  <declarator> "(" {<parameter-list>}? ")" "->" {<declaration-specifier>}+ {<compound-statement>}?
+
+---
 <compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement>}* }
 
 <declarator> ::= <identifier>
