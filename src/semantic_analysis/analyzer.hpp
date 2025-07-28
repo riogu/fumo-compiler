@@ -12,9 +12,10 @@
 // we push a std::map when entering a new scope
 // we pop the current std::map when leaving a scope
 struct SymbolTableStack {
-    // struct | enum | namespace
+    std::map<str, ASTNode*> local_declarations {};
+    vec<std::map<str, ASTNode*>> symbols_to_nodes {{}};
+    // struct | enum | namespace 
     std::map<str, ASTNode*> named_scopes {}; // these are kept separately
-    vec<std::map<str, ASTNode*>> symbols_to_nodes {};
     // all declarations are flattened and identifiers are changed to match them
     // for example:
     //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
@@ -31,6 +32,21 @@ struct SymbolTableStack {
     auto push_named_scope(str identifier, ASTNode& node) {
         return named_scopes.insert({curr_scope_name + identifier, &node});
     }
+    // let x: i32 = 123123;                                  
+    // let a: i32 = 123123;                                  
+    // let z: i32 = 123123;                                  
+    // fn func_name(a: i32, b: f64) -> const i32* {          
+    //     x = 69420;                                        
+    //     a = 69420;                                        
+    //     let x = 1111111;                                  
+    //     let var = foo::func();
+    //     {                                                 
+    //        z = 69;                                        
+    //        let x: f64;                                    
+    //        x = 12.0f;                                     
+    //     }                                                 
+    //     x = 213;                                          
+    // }                                                     
 };
 
 struct Analyzer {
@@ -44,12 +60,10 @@ struct Analyzer {
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
-    void open_scope()  { 
-        symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*>{}); 
-    }
-    void close_scope() { symbol_tree.symbols_to_nodes.pop_back(); }
+    void push_scope(ASTNode& node);  
+    void pop_scope(ASTNode& node); 
 
-    void push_to_scope(ASTNode& node);
+    void add_to_scope(ASTNode& node);
 
     [[nodiscard]] ASTNode* find_node(std::string_view var_name);
     [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b);

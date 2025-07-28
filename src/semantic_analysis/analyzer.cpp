@@ -1,8 +1,32 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
 
+// namespace foo {
+//     void func();
+//     struct bar {
+//         struct foo {
+//             static int func();
+//         };
+//         str x; 
+//         int y;
+//         void f();
+//     };
+// } // namespace foo
+//
+//
+// void foo::func() {
+//     bar var = foo::bar {"foo", 1};
+// }
+// void foo::bar::f() {
+//     foo var;
+//     foo::func();
+//     ::foo::func();
+// }
+//
+// foo::bar::foo var;
+
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
-    symbol_tree.symbols_to_nodes.push_back({});
+    // symbol_tree.symbols_to_nodes.push_back({});
     match(*file_root_node) {
         holds(const NamedScope&, file_scope) for (auto& node : file_scope.nodes) analyze(*node);
         _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
@@ -10,6 +34,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 }
 
 void Analyzer::analyze(ASTNode& node) {
+
     match(node) {
         holds(PrimaryExpr&, prim) {
             switch (prim.kind) {
@@ -58,29 +83,37 @@ void Analyzer::analyze(ASTNode& node) {
             // TODO: will become global not local (fix)
             if(node.type.struct_or_enum) analyze(*node.type.struct_or_enum.value()); 
 
-            push_to_scope(node);
+            add_to_scope(node);
         }
         holds(FunctionDecl&, func) {
             // FIXME: delete local structs and functions after closing a function/block scope
             // they are treated like normal variables in the case of functions
-            push_to_scope(node); // TODO: add parameters to the body's symbol_tree.depth
-            open_scope();
+            add_to_scope(node); 
+
             if (func.body) {
+                // TODO: add parameters to the body's symbol_tree.depth
+                push_scope(node);
+
                 func.body.value()->type = node.type;
                 match(*func.body.value()) {
                     holds(BlockScope&, scope) for (auto& node_ : scope.nodes) analyze(*node_);
                     _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
                 }
+
+                pop_scope(node);
+                // should cleanup all local functions and structs from the declaration list
+                // put them in a separate map for codegen, but wont show up in name lookups
             }
-            close_scope();
         }
         holds(BlockScope&, scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch(scope.kind) {
                 case BlockScope::compound_statement:
-                    open_scope();
+                    push_scope(node);
+                // change the names of struct/function declarations that happen inside of functions
+                // and just codegen for that new mangled named that is unique
                     for (auto& node : scope.nodes) analyze(*node);
-                    close_scope();
+                    pop_scope(node);
                     break;
                 case BlockScope::initializer_list: 
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
@@ -109,8 +142,7 @@ void Analyzer::analyze(ASTNode& node) {
     }
 }
 
-
-void Analyzer::push_to_scope(ASTNode& node) {
+void Analyzer::add_to_scope(ASTNode& node) {
     match(node) {
         holds(FunctionDecl&, func) {
             // TODO: member function calls should be rewritten to take a pointer 
@@ -131,10 +163,28 @@ void Analyzer::push_to_scope(ASTNode& node) {
         _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
     }
 }
+void func() {
+    struct foo{}var;
+    {
+        struct foo{}var;
+        while(1) {
+            struct foo{}var;
+        }
+    }
+}
+
+void Analyzer::push_scope(ASTNode& node) {
+    symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*> {});
+}
+
+void Analyzer::pop_scope(ASTNode& node) {
+    symbol_tree.symbols_to_nodes.pop_back();
+}
 
 [[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
 [[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
 [[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a)                { INTERNAL_PANIC("not implemented."); }
+
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
         case BinaryExpr::add:       case BinaryExpr::sub:

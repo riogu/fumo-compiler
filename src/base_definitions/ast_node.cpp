@@ -1,6 +1,6 @@
 #include "base_definitions/ast_node.hpp"
 
-[[nodiscard]]  std::string ASTNode::to_str(int64_t depth) const {
+[[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
     std::string result = std::format("{} ", kind_name());
 

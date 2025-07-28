@@ -17,8 +17,7 @@ auto main(int argc, char** argv) -> int {
     match(*file_root_node) {
         holds(const NamedScope&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
         _default {}
-    }
-    std::cerr << "\n";
+    } std::cerr << "\n";
 
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
@@ -26,8 +25,8 @@ auto main(int argc, char** argv) -> int {
     match(*file_root_node) {
         holds(const NamedScope&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
         _default {}
-    }
-    std::cerr << "\n";
+    } std::cerr << "\n";
+
 
     // Codegen codegen {file};
     // codegen.codegen(file_root_node);

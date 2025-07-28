@@ -87,14 +87,14 @@
     while(!token_is_str("}")) {
         if (token_is_keyword(let)) //
             nodes.push_back(variable_declaration());
-        else if (token_is_keyword(fn))
-            nodes.push_back(function_declaration());
         else if (token_is_str("{"))
             nodes.push_back(compound_statement());
-        else if (token_is_keyword(struct))
-            nodes.push_back(struct_declaration());
-        else if (token_is_keyword(enum))
-            nodes.push_back(enum_declaration());
+        // else if (token_is_keyword(fn))
+        //     nodes.push_back(function_declaration());
+        // else if (token_is_keyword(struct))
+        //     nodes.push_back(struct_declaration());
+        // else if (token_is_keyword(enum))
+        //     nodes.push_back(enum_declaration());
         else // NOTE: currently all local functions/structs/enums become global (change later)
             nodes.push_back(statement());
     }

@@ -16,7 +16,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else
             AST.push_back(statement());
     }
-    return push(ASTNode {*tkns.begin(), NamedScope {NamedScope::translation_unit, std::move(AST)}});
+    return push(ASTNode {*tkns.begin(), NamedScope {NamedScope::translation_unit, "fumo_module", std::move(AST)}});
 }
 
 // <statement> ::= <expression-statement>
