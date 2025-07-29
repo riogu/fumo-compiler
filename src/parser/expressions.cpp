@@ -16,8 +16,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else if (token_is_keyword(enum))
             AST.push_back(enum_declaration());
         else
-            // AST.push_back(statement()); NOTE: no longer valid in global
-            report_error((*curr_tkn), "expected declaration.");
+            AST.push_back(statement()); /* NOTE: no longer valid in global */
+            // report_error((*curr_tkn), "expected declaration.");
     }
     return push(ASTNode {.source_token = *tkns.begin(),
                          .branch = NamespaceDecl {NamespaceDecl::translation_unit, std::move(AST)},

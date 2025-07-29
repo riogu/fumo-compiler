@@ -9,7 +9,7 @@
                          .name = std::get<str>(prev_tkn->literal.value())};
     VariableDecl variable {VariableDecl::variable_declaration};
 
-    if (token_is( :)) node.type = declaration_specifier();
+    if (token_is(:)) node.type = declaration_specifier();
 
     node.branch = std::move(variable);
 
@@ -19,7 +19,7 @@
             BinaryExpr {BinaryExpr::assignment, push(std::move(node)), initializer()}});
         expect_token(;);
         return assignment;
-    } else if (node.type.kind == Type::Undetermined) {
+    } else if (node.type.name == "Undetermined") {
         report_error((*prev_tkn),
                      "declaring a variable with deduced type requires an initializer.");
     }

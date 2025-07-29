@@ -4,7 +4,7 @@
 #include <string>
 
 std::pair<std::string, int> exec(const char* cmd) {
-   char buffer[128];
+    char buffer[128];
     std::string result = "";
     FILE* pipe = popen(cmd, "r");
     if (!pipe) throw std::runtime_error("popen() failed!");
@@ -38,19 +38,25 @@ int main() {
     };
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : scope_basic_tests) {
-        auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
+    for (const auto& [test, expected] : ast_syntax_tests) {
+        auto [output, status] = exec(std::format("./build/fumo-compiler 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
-                       "{}"
+                       // "{}\n"
+                       // "{}"
                        "------------------------------------------------\n"
-                       ,test);
+                       ,test
+                       ,output
+                       );
         } else {
             std::print("-> \033[38;2;235;67;54m❌FAILED\033[0m:\n"
+                       "{}\n"
                        "{}"
                        "------------------------------------------------\n"
-                       ,test);
+                       ,test
+                       ,output
+                       );
         }
     }
 }
