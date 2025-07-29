@@ -1,4 +1,5 @@
 #include "base_definitions/ast_node.hpp"
+#include "base_definitions/tokens.hpp"
 
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
@@ -19,7 +20,8 @@
         }
         holds(const VariableDecl&, var) {
             result += std::format("{} {}", gray("=>"), mangled_name);
-            result += gray(": ") + yellow(type.name);
+            str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
+            result += gray(": ") + yellow(type.name) + purple_blue(ptr_str);
         }
         holds(const FunctionDecl&, func) {
             std::string temp = purple_blue("fn ") + blue(mangled_name) + gray("(");
@@ -27,14 +29,17 @@
                 ASTNode* var = func.parameters.at(i);
                 match(*var) {
                     holds(const VariableDecl&, param) {
-                        temp += var->name + gray(": ") + yellow(var->type.name);
+                        str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
+                        temp += var->name + gray(": ") + yellow(var->type.name) + gray(ptr_str);;
                     }
                     _default { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
                 }
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
-            temp += gray(" -> ") + yellow(type.name);
+            str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
+            temp += gray(" -> ") + yellow(type.name) + gray(ptr_str);
+
             result += std::format("{} {}", gray("=>"), temp);
             if (func.body) result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"),
                                                  func.body.value()->to_str(depth)); 

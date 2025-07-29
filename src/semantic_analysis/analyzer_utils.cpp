@@ -1,6 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 
-void Analyzer::determine_type(ASTNode& node) {
+void Analyzer::determine_type(Type& type) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
 }
 [[nodiscard]] ASTNode* Analyzer::find_function_decl(std::string_view var_name) {
@@ -10,10 +10,10 @@ void Analyzer::determine_type(ASTNode& node) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
 }
 
-[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
+[[nodiscard]] bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
 }
-[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a) {
+[[nodiscard]] bool Analyzer::is_arithmetic_t(const Type& a) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
 }
 

@@ -67,7 +67,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (node.type.declaration) analyze(*node.type.declaration.value());  // TODO: will become global not local (fix)
             // NOTE: make sure you dont analyze a variable twice else it will trigger .declaration above
             
-            if (node.type.kind == Type::Undetermined) determine_type(node);
+            if (node.type.kind == Type::Undetermined) determine_type(node.type);
 
             add_to_scope(node);
         }
@@ -75,18 +75,19 @@ void Analyzer::analyze(ASTNode& node) {
         holds(FunctionDecl&, func) {
             // FIXME: delete local structs and functions after closing a function/block scope
             // they are treated like normal variables in the case of functions
-            add_to_scope(node); 
-
+            add_to_scope(node);
             str prev_name = push_scope(node.name + "()::", node, ScopeKind::Local);
-            for (auto& param : func.parameters) add_to_scope(*param); 
+
+            for (auto& param : func.parameters) analyze(*param);
 
             if (func.body) {
-                func.body.value()->type = node.type;
+                func.body.value()->type = node.type; // NOTE: passing the function's type to the body
                 match(*func.body.value()) {
                     holds(BlockScope&, scope) for (auto& node : scope.nodes) analyze(*node);
                     _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
                 }
             }
+
             pop_scope(prev_name, node);
         }
 

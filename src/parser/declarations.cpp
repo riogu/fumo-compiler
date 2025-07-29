@@ -131,7 +131,6 @@
         type.kind = builtin_type_kind(type.name);
         // NOTE: consider redoing the ptr implementation
         while (token_is(*)) {
-            type.name += "*";
             type.ptr_count++;
         }
         return type;
@@ -140,7 +139,6 @@
         type.name = std::get<str>(prev_tkn->literal.value());
         type.kind = Type::Undetermined;
         while (token_is(*)) {
-            type.name += "*";
             type.ptr_count++;
         }
         return type;
