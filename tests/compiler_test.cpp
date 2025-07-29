@@ -1,0 +1,56 @@
+#include <cstdlib>
+#include <format>
+#include <print>
+#include <string>
+
+std::pair<std::string, int> exec(const char* cmd) {
+   char buffer[128];
+    std::string result = "";
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    try {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            result += buffer;
+        }
+    } catch (...) {
+        pclose(pipe);
+        throw;
+    }
+    int status = pclose(pipe);
+    return {result, status};
+}
+#define t std::pair
+constexpr bool fail = false, pass = true;
+
+int main() {
+
+    constexpr std::array ast_syntax_tests {
+        #include "ast_syntax.fm"
+    };
+    constexpr std::array basic_sem_analysis_tests {
+        #include "basic_sem_analysis.fm"
+    };
+    constexpr std::array scope_basic_tests {
+        #include "scope_basic_checks.fm"
+    };
+    constexpr std::array scope_name_lookup_tests {
+        #include "scope_name_lookup.fm"
+    };
+
+    std::print("{}",   "------------------------------------------------\n");
+    for (const auto& [test, expected] : scope_name_lookup_tests) {
+        auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
+        if ((expected == fail && WEXITSTATUS(status)) 
+         || (expected == pass && !WEXITSTATUS(status))) {
+            std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
+                       // "{}"
+                       "------------------------------------------------\n"
+                       ,test);
+        } else {
+            std::print("-> \033[38;2;235;67;54m❌FAILED\033[0m:\n"
+                       "{}"
+                       "------------------------------------------------\n"
+                       ,test);
+        }
+    }
+}
