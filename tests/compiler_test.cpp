@@ -38,12 +38,12 @@ int main() {
     };
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : scope_name_lookup_tests) {
+    for (const auto& [test, expected] : scope_basic_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
-                       // "{}"
+                       "{}"
                        "------------------------------------------------\n"
                        ,test);
         } else {

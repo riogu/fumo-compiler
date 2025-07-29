@@ -8,27 +8,29 @@
     also performs basic type checking
 */
 
+
 // works just like a stack of scopes
 // we push a std::map when entering a new scope
 // we pop the current std::map when leaving a scope
+enum struct ScopeKind {Local, Global};
+
 struct SymbolTableStack {
-    // std::map<str, ASTNode*> local_declarations {};
-    vec<std::map<str, ASTNode*>> symbols_to_nodes {{}};
+    vec<std::map<str, ASTNode*>> symbols_to_nodes_stack {};
     // struct | enum | namespace 
-    std::map<str, ASTNode*> named_scopes {}; // these are kept separately
-    std::map<str, ASTNode*> function_names {}; // these are kept separately
+    std::map<str, ASTNode*> named_scopes {};
+    std::map<str, ASTNode*> function_names {}; 
     // all declarations are flattened and identifiers are changed to match them
     // for example:
     //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
     //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
     //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
-    //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
-    //   namespace foo  {fn func()->void;} => fn "foo::func"() -> void;
+    //   struct    foo  {fn func()->void;} => fn   "foo{}::func"(this: foo*) -> void;
+    //   namespace foo  {fn func()->void;} => fn   "foo::func"() -> void;
     // they are "global" but renamed internally
-    // enums cant have other declarations inside them
     str curr_scope_name = "";
+    ScopeKind curr_scope_kind;
     auto push_to_scope(str identifier, ASTNode& node) {
-        return symbols_to_nodes.back().insert({curr_scope_name + identifier, &node});
+        return symbols_to_nodes_stack.back().insert({curr_scope_name + identifier, &node});
     }
     auto push_named_scope(str identifier, ASTNode& node) {
         return named_scopes.insert({curr_scope_name + identifier, &node});
@@ -37,49 +39,7 @@ struct SymbolTableStack {
         return function_names.insert({curr_scope_name + identifier, &node});
     }
 
-
-    // let x: i32 = 123123;                                  
-    // let a: i32 = 123123;                                  
-    // let z: i32 = 123123;                                  
-    // fn func_name(a: i32, b: f64) -> const i32* {          
-    //     x = 69420;                                        
-    //     a = 69420;                                        
-    //     let x = 1111111;                                  
-    //     let var = foo::func();
-    //     {                                                 
-    //        z = 69;                                        
-    //        let x: f64;                                    
-    //        x = 12.0f;                                     
-    //     }                                                 
-    //     x = 213;                                          
-    // }                                                     
 };
-
-// namespace foo {
-//     void func();
-//     struct bar {
-//         struct inner {
-//             static int func();
-//         };
-//         str x; 
-//         int y;
-//         void f();
-//     };
-//     struct wow;
-// }
-//
-// struct gaming {
-//     int x;
-//     void func() {
-//         x++;
-//     }
-//     int y;
-// };
-
-
-// struct foo::bar {};
-// struct foo::bar::inner {};
-// fn foo::func() -> void;
 
 struct Analyzer {
     Analyzer(const File& file) { file_stream << file.contents; }
@@ -87,13 +47,23 @@ struct Analyzer {
 
   private:
     std::stringstream file_stream;
+
     SymbolTableStack symbol_tree {};
 
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
-    [[nodiscard]] str push_scope(str name, ASTNode& node);  
-    void pop_scope(str prev_scope_name, ASTNode& node); 
+    [[nodiscard]] str push_scope(str name, ASTNode& node, ScopeKind scope_kind) {
+        str prev_scope_name = symbol_tree.curr_scope_name;
+        symbol_tree.curr_scope_name += name;
+        symbol_tree.symbols_to_nodes_stack.push_back(std::map<str, ASTNode*> {});
+        return prev_scope_name;
+    }
+
+    void pop_scope(str prev_scope_name, ASTNode& node) {
+        symbol_tree.curr_scope_name = prev_scope_name;
+        symbol_tree.symbols_to_nodes_stack.pop_back();
+    }
 
     void add_to_scope(ASTNode& node);
 

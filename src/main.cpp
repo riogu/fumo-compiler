@@ -23,10 +23,10 @@ auto main(int argc, char** argv) -> int {
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
 
-    // match(*file_root_node) {
-    //     holds(const NamespaceDecl&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
-    //     _default {}
-    // } std::cerr << "\n";
+    match(*file_root_node) {
+        holds(const NamespaceDecl&, scope) for (auto& node : scope.nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+        _default {}
+    } std::cerr << "\n";
 
     // Codegen codegen {file};
     // codegen.codegen(file_root_node);

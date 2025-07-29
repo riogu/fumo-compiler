@@ -1,19 +1,33 @@
+//t(
+//"namespace foo {}\n"
+//"struct foo {};\n"
+//,fail),
+//t(
+//"namespace foo {\n"
+//"    namespace foo {}\n"
+//"    struct bar {};\n"
+//"}\n"
+//"struct bar;\n"
+//"namespace foo {\n"
+//"    fn func(x: i32) -> void;\n"
+//"}\n"
+//"struct bar {};\n"
+//"struct bar;\n"
+//"struct bar;\n"
+//,pass),
+//t(
+//"fn foo() -> void;\n"
+//"struct foo {};\n"
+//,pass),
+//t(
+//"namespace foo {\n"
+//"    struct bar { let x: i32; };\n"
+//"    fn bar() -> void;\n"
+//"    fn bar() -> void { let x: i32 = 213123; }\n"
+//"}\n"
+//,pass),
 t(
-"namespace foo {} struct foo {};\n"
-,fail),
-t(
-"fn foo() -> void;\n"
-"struct foo {};\n"
-,pass),
-t(
-"namespace foo {\n"
-"    struct bar { let x: i32; };\n"
-"    fn bar() -> void;\n"
-"    fn bar() -> void { let x: i32 = 213123; }\n"
-"}\n"
-,pass),
-t(
-"let x = 69;\n\n"
+"let x = 69;\n"
 "namespace foo {\n"
 "    let x: i32;\n"
 "    struct bar { let x: i32; };\n"

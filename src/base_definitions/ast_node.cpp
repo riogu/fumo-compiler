@@ -47,6 +47,17 @@
             depth--;
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
+        holds(const NamespaceDecl&, namespace_decl) {
+            result += gray("=> ") + purple_blue("namespace ") + yellow(mangled_name);
+            result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
+            result += purple_blue("definition ") + gray("{");
+            depth++;
+            depth++;
+            for(auto& node: namespace_decl.nodes) 
+                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+            depth--;
+            result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+        }
         holds(const TypeDecl&, type_decl) {
             result += gray("=> ") + purple_blue("struct ") + yellow(mangled_name);
             if (type_decl.definition) {
@@ -59,17 +70,6 @@
                 depth--;
                 result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
             }
-        }
-        holds(const NamespaceDecl&, namespace_decl) {
-            result += gray("=> ") + purple_blue("namespace ") + yellow(mangled_name);
-            result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
-            result += purple_blue("definition ") + gray("{");
-            depth++;
-            depth++;
-            for(auto& node: namespace_decl.nodes) 
-                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
-            depth--;
-            result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
         _default { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
     }
