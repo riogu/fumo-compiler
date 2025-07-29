@@ -73,20 +73,19 @@ void Analyzer::analyze(ASTNode& node) {
             // they are treated like normal variables in the case of functions
             add_to_scope(node); 
 
-            if (func.body) {
-                // TODO: add parameters to the body's symbol_tree.depth
-                str prev_name = push_scope(node.name + "()::", node, ScopeKind::Local);
+            str prev_name = push_scope(node.name + "()::", node, ScopeKind::Local);
+            for (auto& param : func.parameters) add_to_scope(*param); 
 
+            if (func.body) {
                 func.body.value()->type = node.type;
                 match(*func.body.value()) {
                     holds(BlockScope&, scope) for (auto& node : scope.nodes) analyze(*node);
                     _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
                 }
-
-                pop_scope(prev_name, node);
-                // should cleanup all local functions and structs from the declaration list
-                // put them in a separate map for codegen, but wont show up in name lookups
             }
+            pop_scope(prev_name, node);
+            // should cleanup all local functions and structs from the declaration list
+            // put them in a separate map for codegen, but wont show up in name lookups
         }
 
         holds(const BlockScope&, scope) {
@@ -195,11 +194,14 @@ void Analyzer::add_to_scope(ASTNode& node) {
 
 
 [[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name) {
-
-    INTERNAL_PANIC("not implemented.");
+    INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
 }
-[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
-[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a)                { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
+    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
+}
+[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a) {
+    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
+}
 
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {

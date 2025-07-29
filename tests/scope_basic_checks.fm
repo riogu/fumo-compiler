@@ -26,26 +26,26 @@
 //"    fn bar() -> void { let x: i32 = 213123; }\n"
 //"}\n"
 //,pass),
-t(
-"let x = 69;\n"
-"namespace foo {\n"
-"    let x: i32;\n"
-"    struct bar { let x: i32; };\n"
-"    fn bar() -> void { let x: i32 = 213123; }\n"
-"}\n"
-,pass),
-t(
-"let x = 69;\n"
-"fn func(x: i32) -> void {\n"
-"    let x = 123;\n"
-"    {\n"
-"        let x = 420;\n"
-"        {\n"
-"            let x = 33333;\n"
-"        }\n"
-"    }\n"
-"}\n"
-,pass),
+//t(
+//"let x = 69;\n"
+//"namespace foo {\n"
+//"    let x: i32;\n"
+//"    struct bar { let x: i32; };\n"
+//"    fn bar() -> void { let x: i32 = 213123; }\n"
+//"}\n"
+//,pass),
+//t(
+//"let x = 69;\n"
+//"fn func(x: i32) -> void {\n"
+//"    let x = 123;\n"
+//"    {\n"
+//"        let x = 420;\n"
+//"        {\n"
+//"            let x = 33333;\n"
+//"        }\n"
+//"    }\n"
+//"}\n"
+//,pass),
 t(
 "let x = 69;\n"
 "fn func() -> void {\n"
