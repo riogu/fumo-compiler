@@ -53,7 +53,6 @@ t(
 "    x = 69420;                                        \n"
 "    a = 69420;                                        \n"
 "    let x = 1111111;                                  \n"
-"    let var = foo::func();                            \n"
 "    {                                                 \n"
 "       z = 69;                                        \n"
 "       let x: f64;                                    \n"

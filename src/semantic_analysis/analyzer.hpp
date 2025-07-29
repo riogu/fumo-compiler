@@ -59,16 +59,17 @@ struct Analyzer {
         symbol_tree.symbols_to_nodes_stack.push_back(std::map<str, ASTNode*> {});
         return prev_scope_name;
     }
-
     void pop_scope(str prev_scope_name, ASTNode& node) {
         symbol_tree.curr_scope_name = prev_scope_name;
         symbol_tree.symbols_to_nodes_stack.pop_back();
     }
-
     void add_to_scope(ASTNode& node);
 
-    [[nodiscard]] ASTNode* find_node(std::string_view var_name);
-    [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b);
-    [[nodiscard]] constexpr bool is_arithmetic_t(const Type& a);
+    [[nodiscard]] ASTNode* find_function_decl(std::string_view var_name);
+    [[nodiscard]] ASTNode* find_variable_decl(std::string_view var_name);
+
+    void determine_type(ASTNode& node);
+    [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
+    [[nodiscard]] bool is_arithmetic_t(const Type& a);
 
 };

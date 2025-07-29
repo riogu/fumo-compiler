@@ -1,7 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
 
-
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
     str prev_scope = push_scope("", *file_root_node, ScopeKind::Global);
@@ -24,7 +23,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case PrimaryExpr::floating_point: node.type.name = "f64"; node.type.kind = Type::f64_; break;
                 case PrimaryExpr::str:            node.type.name = "str"; node.type.kind = Type::str_; break;
                 case PrimaryExpr::identifier:
-                    prim.var_declaration = find_node(std::get<str>(prim.value));
+                    prim.var_declaration = find_variable_decl(std::get<str>(prim.value));
                     node.type = prim.var_declaration.value()->type;
                     break;
                 default:
@@ -64,7 +63,12 @@ void Analyzer::analyze(ASTNode& node) {
 
         holds(VariableDecl&, var) {
             if (symbol_tree.curr_scope_kind == ScopeKind::Global) var.kind = VariableDecl::global_var_declaration;
+
             if (node.type.declaration) analyze(*node.type.declaration.value());  // TODO: will become global not local (fix)
+            // NOTE: make sure you dont analyze a variable twice else it will trigger .declaration above
+            
+            if (node.type.kind == Type::Undetermined) determine_type(node);
+
             add_to_scope(node);
         }
 
@@ -84,8 +88,6 @@ void Analyzer::analyze(ASTNode& node) {
                 }
             }
             pop_scope(prev_name, node);
-            // should cleanup all local functions and structs from the declaration list
-            // put them in a separate map for codegen, but wont show up in name lookups
         }
 
         holds(const BlockScope&, scope) {
@@ -115,9 +117,9 @@ void Analyzer::analyze(ASTNode& node) {
                 case TypeDecl::struct_declaration: {
                     add_to_scope(node);
 
-                    if(type_decl.definition) {
+                    if(type_decl.definition_body) {
                         str prev_scope = push_scope(node.name + "{}::", node, ScopeKind::Local);
-                        for (auto& node: type_decl.definition.value()) analyze(*node);
+                        for (auto& node: type_decl.definition_body.value()) analyze(*node);
                         pop_scope(prev_scope, node);
                     }
                     break;
@@ -163,8 +165,7 @@ void Analyzer::add_to_scope(ASTNode& node) {
             auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(node.name, node);
 
             if (!was_inserted && !std::holds_alternative<NamespaceDecl>(node_iterator->second->branch)) {
-                report_error(node.source_token,
-                             "Redefinition of '{}' as a different kind of symbol.", node.name);
+                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", node.name);
             }
         }
 
@@ -179,7 +180,7 @@ void Analyzer::add_to_scope(ASTNode& node) {
             if (!was_inserted) {
                 match(*node_iterator->second) {
                     holds(TypeDecl&, t_decl) {
-                        if (type_decl.definition && t_decl.definition) {
+                        if (type_decl.definition_body && t_decl.definition_body) {
                             report_error(node.source_token, "Redefinition of '{}'.", node.name);
                         }
                     }
@@ -189,32 +190,5 @@ void Analyzer::add_to_scope(ASTNode& node) {
             }
         }
         _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
-    }
-}
-
-
-[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
-}
-[[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
-}
-[[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
-}
-
-void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
-    switch (bin.kind) {
-        case BinaryExpr::add:       case BinaryExpr::sub:
-        case BinaryExpr::multiply:  case BinaryExpr::divide:
-        case BinaryExpr::equal:     case BinaryExpr::not_equal:
-        case BinaryExpr::less_than: case BinaryExpr::less_equals:
-            report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
-                         bin.lhs->type.name, node.source_token.to_str(), bin.rhs->type.name);
-        case BinaryExpr::assignment:
-            report_error(node.source_token,"assigning to '{}'from incompatible type '{}'.",
-                         bin.lhs->type.name, bin.rhs->type.name);
-        default:
-            INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
 }

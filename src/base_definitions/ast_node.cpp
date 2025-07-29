@@ -60,12 +60,12 @@
         }
         holds(const TypeDecl&, type_decl) {
             result += gray("=> ") + purple_blue("struct ") + yellow(mangled_name);
-            if (type_decl.definition) {
+            if (type_decl.definition_body) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
                 result += purple_blue("definition ") + gray("{");
                 depth++;
                 depth++;
-                for(auto& node: type_decl.definition.value()) 
+                for(auto& node: type_decl.definition_body.value()) 
                     result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
                 depth--;
                 result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));

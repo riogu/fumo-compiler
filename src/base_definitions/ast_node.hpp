@@ -104,7 +104,7 @@ struct TypeDecl {
 
         TypeDecl_kinds
     } kind;
-    Opt<vec<ASTNode*>> definition {};
+    Opt<vec<ASTNode*>> definition_body {};
 };
 
 struct ASTNode {

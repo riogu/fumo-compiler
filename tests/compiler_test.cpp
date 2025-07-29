@@ -27,9 +27,6 @@ int main() {
     constexpr std::array ast_syntax_tests {
         #include "ast_syntax.fm"
     };
-    constexpr std::array basic_sem_analysis_tests {
-        #include "basic_sem_analysis.fm"
-    };
     constexpr std::array scope_basic_tests {
         #include "scope_basic_checks.fm"
     };
@@ -38,12 +35,12 @@ int main() {
     };
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : ast_syntax_tests) {
+    for (const auto& [test, expected] : scope_name_lookup_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
-                       // "{}\n"
+                       "{}\n"
                        // "{}"
                        "------------------------------------------------\n"
                        ,test

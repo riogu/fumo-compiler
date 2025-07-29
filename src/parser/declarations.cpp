@@ -192,7 +192,7 @@
             else
                 report_error((*curr_tkn), "expected struct member declaration.");
         }
-        type_decl.definition = std::move(nodes);
+        type_decl.definition_body = std::move(nodes);
     }
 
     node.branch = type_decl;
