@@ -12,10 +12,11 @@
 // we push a std::map when entering a new scope
 // we pop the current std::map when leaving a scope
 struct SymbolTableStack {
-    std::map<str, ASTNode*> local_declarations {};
+    // std::map<str, ASTNode*> local_declarations {};
     vec<std::map<str, ASTNode*>> symbols_to_nodes {{}};
     // struct | enum | namespace 
     std::map<str, ASTNode*> named_scopes {}; // these are kept separately
+    std::map<str, ASTNode*> function_names {}; // these are kept separately
     // all declarations are flattened and identifiers are changed to match them
     // for example:
     //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
@@ -31,6 +32,9 @@ struct SymbolTableStack {
     }
     auto push_named_scope(str identifier, ASTNode& node) {
         return named_scopes.insert({curr_scope_name + identifier, &node});
+    }
+    auto push_function(str identifier, ASTNode& node) {
+        return function_names.insert({curr_scope_name + identifier, &node});
     }
 
 
@@ -88,8 +92,8 @@ struct Analyzer {
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
-    void push_scope(ASTNode& node);  
-    void pop_scope(ASTNode& node); 
+    [[nodiscard]] str push_scope(str name, ASTNode& node);  
+    void pop_scope(str prev_scope_name, ASTNode& node); 
 
     void add_to_scope(ASTNode& node);
 

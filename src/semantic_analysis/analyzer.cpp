@@ -54,7 +54,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (bin.kind == BinaryExpr::assignment && bin.lhs->type.kind == Type::Undetermined) {
                 bin.lhs->type = bin.rhs->type;
             }
-            if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+            // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
         }
 
@@ -74,7 +74,7 @@ void Analyzer::analyze(ASTNode& node) {
 
             if (func.body) {
                 // TODO: add parameters to the body's symbol_tree.depth
-                push_scope(node);
+                str prev_name = push_scope(func.name + "()::", node);
 
                 func.body.value()->type = node.type;
                 match(*func.body.value()) {
@@ -82,45 +82,55 @@ void Analyzer::analyze(ASTNode& node) {
                     _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
                 }
 
-                pop_scope(node);
+                pop_scope(prev_name, node);
                 // should cleanup all local functions and structs from the declaration list
                 // put them in a separate map for codegen, but wont show up in name lookups
             }
         }
 
-        holds(BlockScope&, scope) {
+        holds(const BlockScope&, scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch(scope.kind) {
-                case BlockScope::compound_statement:
-                    push_scope(node);
+                case BlockScope::compound_statement: {
+                    str prev_scope = push_scope("", node);
                     // change the names of struct/function declarations that happen inside of functions
-                    // and just codegen for that new mangled named that is unique
                     for (auto& node : scope.nodes) analyze(*node);
-                    pop_scope(node);
+                    pop_scope(prev_scope, node);
                     break;
+                }
                 case BlockScope::initializer_list: 
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
 
-        holds(const NamespaceDecl&, scope) {
-            // TODO: resolve the identifiers by replacing their names with the internal mangling rules
-            //   namespace foo  {struct bar {};} => struct "foo::bar"    {};
-            //   struct    foo  {struct bar {};} => struct "foo{}::bar"  {};
-            //   fn f() -> void {struct bar {};} => struct "foo()::bar"  {};
-            //   struct    foo  {fn func()->void;} => fn "foo{}::func"(this: foo*) -> void;
-            //   namespace foo  {fn func()->void;} => fn "foo::func"() -> void;
-            // "foo{n}::bar"
-            // "foo{s}::bar"
-            // "foo{e}::bar"
-            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+        holds(const NamespaceDecl&, nmspace_decl) {
+        // TODO: (07-29) write tests to try out the mangled names for namespaces/structs and functions with inner scopes
+            switch (nmspace_decl.kind) {
+                case NamespaceDecl::namespace_declaration:  {
+                    str prev_scope = push_scope(nmspace_decl.name + "::", node);
+                    for (auto& node : nmspace_decl.nodes) analyze(*node);
+                    pop_scope(prev_scope, node);
+                    break;
+                }
+                case NamespaceDecl::translation_unit:
+                default:
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+            }
             
         }
         holds(const TypeDecl&, type_decl) {
+            // struct foo {let var: i32; let b: f64;};
             switch (type_decl.kind) {
-                case TypeDecl::struct_declaration:
+                case TypeDecl::struct_declaration: {
+
+                    add_to_scope(node);
+                    str prev_scope = push_scope(type_decl.name + "{}::", node);
                     if(type_decl.definition) for (auto& node: type_decl.definition.value()) analyze(*node);
-                    
+                    pop_scope(prev_scope, node);
+
+                    // symbol_tree.curr_scope_name  = temp;
+                    break;
+                }
                 default:
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
@@ -131,11 +141,13 @@ void Analyzer::analyze(ASTNode& node) {
 }
 
 void Analyzer::add_to_scope(ASTNode& node) {
+
     match(node) {
         holds(FunctionDecl&, func) {
+            node.mangled_name = symbol_tree.curr_scope_name + func.name;
             // TODO: member function calls should be rewritten to take a pointer 
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
-            auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(func.name, node);
+            auto [node_iterator, was_inserted] = symbol_tree.push_function(func.name, node);
             if (!was_inserted && func.body) {
                 match(*node_iterator->second) {
                     holds(FunctionDecl&, func_) 
@@ -145,22 +157,36 @@ void Analyzer::add_to_scope(ASTNode& node) {
             }
         }
         holds(VariableDecl&, var) {
+            node.mangled_name = symbol_tree.curr_scope_name + var.name;
             auto [_, was_inserted] = symbol_tree.push_to_scope(var.name, node);
             if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
+        }
+        holds(TypeDecl&, type_decl) {
+            // FIXME: check redefinitions here
+            node.mangled_name = symbol_tree.curr_scope_name + type_decl.name;
         }
         _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
     }
 }
 
-void Analyzer::push_scope(ASTNode& node) {
+[[nodiscard]] str Analyzer::push_scope(str name, ASTNode& node) {
+    str prev_scope_name = symbol_tree.curr_scope_name;
+    symbol_tree.curr_scope_name += name;
     symbol_tree.symbols_to_nodes.push_back(std::map<str, ASTNode*> {});
+    return prev_scope_name;
 }
 
-void Analyzer::pop_scope(ASTNode& node) {
+// 
+
+void Analyzer::pop_scope(str prev_scope_name, ASTNode& node) {
+    symbol_tree.curr_scope_name = prev_scope_name;
     symbol_tree.symbols_to_nodes.pop_back();
 }
 
-[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name)                { INTERNAL_PANIC("not implemented."); }
+[[nodiscard]] ASTNode* Analyzer::find_node(std::string_view var_name) {
+
+    INTERNAL_PANIC("not implemented.");
+}
 [[nodiscard]] constexpr bool Analyzer::is_compatible_t(const Type& a, const Type& b) { INTERNAL_PANIC("not implemented."); }
 [[nodiscard]] constexpr bool Analyzer::is_arithmetic_t(const Type& a)                { INTERNAL_PANIC("not implemented."); }
 

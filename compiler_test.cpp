@@ -93,9 +93,9 @@ auto main() -> int {
         t("struct gaming {                                          \n"
           "    struct foo{let x:i32;};                              \n"
           "    let x = 23.0f;                                       \n"
-          "    fn func_mem() -> void {x = 2;}                       \n"
+          "    fn func_mem() -> void {let x = 2;}                       \n"
           "};                                                       \n"
-          "struct somevar;                                          \n"
+          "let somevar = 213123213;                                 \n"
           ,pass),
         t("namespace foo {                                       \n"
           "    fn func() -> void;                                \n"

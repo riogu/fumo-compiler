@@ -18,11 +18,11 @@
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
         holds(const VariableDecl&, var) {
-            result += std::format("{} {}", gray("=>"), var.name);
+            result += std::format("{} {}", gray("=>"), mangled_name);
             result += gray(": ") + yellow(type.name);
         }
         holds(const FunctionDecl&, func) {
-            std::string temp = yellow("fn ") + blue(func.name) + gray("(");
+            std::string temp = yellow("fn ") + blue(mangled_name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 ASTNode* var = func.parameters.at(i);
                 match(*var) {
@@ -48,7 +48,7 @@
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
         holds(const TypeDecl&, type_decl) {
-            result += gray("=> ") + purple_blue("struct ") + yellow(type_decl.name);
+            result += gray("=> ") + purple_blue("struct ") + yellow(mangled_name);
             if (type_decl.definition) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
                 result += purple_blue("definition ") + gray("{");
@@ -61,7 +61,7 @@
             }
         }
         holds(const NamespaceDecl&, namespace_decl) {
-            result += gray("=> ") + purple_blue("struct ") + yellow(namespace_decl.name);
+            result += gray("=> ") + purple_blue("namespace ") + yellow(mangled_name);
             result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
             result += purple_blue("definition ") + gray("{");
             depth++;
