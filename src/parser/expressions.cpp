@@ -19,7 +19,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             // AST.push_back(statement()); NOTE: no longer valid in global
             report_error((*curr_tkn), "expected declaration.");
     }
-    return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, "fumo_module", std::move(AST)}});
+    return push(ASTNode {.source_token = *tkns.begin(),
+                         .branch = NamespaceDecl {NamespaceDecl::translation_unit, std::move(AST)},
+                         .name = "fumo_module"});
 }
 
 // <statement> ::= <expression-statement>

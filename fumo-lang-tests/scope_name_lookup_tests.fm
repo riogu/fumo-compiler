@@ -1,0 +1,46 @@
+t(
+namespace x {let x: i32;}
+let x = 69;
+fn bar() -> void { 
+    struct x {};
+    x = 420;
+    let x: i32 = 213123; 
+    {
+        x = 696969;
+        {
+            x = 11111;
+        }
+    }
+}
+fn func() -> void { x = 44444444; }
+,pass),
+t(
+let x = 69;
+namespace foo {
+    let x: i32 = 69420;
+    namespace gaming {
+        let x: i32;
+        fn func() -> void {
+            x = 222222;
+        }
+    }
+    fn func() -> void {
+        x = 111111;
+        gaming::x = 333333;
+    }
+}
+,pass),
+t(
+let x = 69;
+namespace foo {
+    let x: i32 = 69420;
+    namespace gaming {
+        let x: i32;
+    }
+}
+fn func() -> void {
+    x = 111111;
+    foo::x = 222222; 
+    foo::gaming::x = 333333;
+}
+,pass),

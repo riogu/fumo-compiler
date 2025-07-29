@@ -61,7 +61,6 @@ struct VariableDecl {
 
         VariableDecl_kinds
     } kind;
-    std::string name;
 };
 struct FunctionDecl {
     enum {
@@ -70,7 +69,6 @@ struct FunctionDecl {
     
         FunctionDecl_kinds
     } kind;
-    std::string name;
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
 };
@@ -94,7 +92,6 @@ struct NamespaceDecl {
 
         NamespaceDecl_kinds
     } kind;
-    std::string name = "";
     vec<ASTNode*> nodes {};
 };
 
@@ -107,7 +104,6 @@ struct TypeDecl {
 
         TypeDecl_kinds
     } kind;
-    std::string name = "";
     Opt<vec<ASTNode*>> definition {};
 };
 
@@ -121,6 +117,7 @@ struct ASTNode {
     Token source_token; // token that originated this Node
     NodeBranch branch;
     Type type {};
+    std::string name = "";
     str mangled_name;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;

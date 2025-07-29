@@ -22,12 +22,12 @@
             result += gray(": ") + yellow(type.name);
         }
         holds(const FunctionDecl&, func) {
-            std::string temp = yellow("fn ") + blue(mangled_name) + gray("(");
+            std::string temp = purple_blue("fn ") + blue(mangled_name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 ASTNode* var = func.parameters.at(i);
                 match(*var) {
                     holds(const VariableDecl&, param) {
-                        temp += param.name + gray(": ") + yellow(var->type.name);
+                        temp += var->name + gray(": ") + yellow(var->type.name);
                     }
                     _default { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
                 }

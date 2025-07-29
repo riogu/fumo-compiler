@@ -48,7 +48,7 @@ auto main() -> int {
         // t(" 1 * 3 - 8 * 1 + 69;",pass),
         t("~1 + !0.0f;~-0; 1 + !(~3 - 4 * 3 + 9);",pass),
     };
-    constexpr std::array semantic_analysis_tests {
+    constexpr std::array basic_sem_analysis_tests {
         t("let x: i32 = 123123;                                  \n"
           "let a: i32 = 123123;                                  \n"
           "let z: i32 = 123123;                                  \n"
@@ -89,7 +89,7 @@ auto main() -> int {
     };
 
 
-    constexpr std::array type_decl_tests {
+    constexpr std::array scope_name_lookup_tests {
         t("struct gaming {                                          \n"
           "    struct foo{let x:i32;};                              \n"
           "    let x = 23.0f;                                       \n"
@@ -105,7 +105,7 @@ auto main() -> int {
           "        };                                            \n"
           "        let x: str;                                   \n"
           "        let y: i32;                                   \n"
-          "        fn f() -> void;                               \n"
+          "        fn f() -> void {let x: i32;}                               \n"
           "    };                                                \n"
           "    struct outer;                                     \n"
           "}                                                     \n"
@@ -114,7 +114,7 @@ auto main() -> int {
 
 
     std::print("{}",   "\n------------------------------------------------\n");
-    for (const auto& [test, expected] : type_decl_tests) {
+    for (const auto& [test, expected] : scope_name_lookup_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

@@ -91,7 +91,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
 llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
     auto type = fumo_to_llvm_type(node.type);
-    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, var.name);
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, node.name);
     // if (var.assignment) ir_builder->CreateStore(codegen(*var.assignment.value()), ptr);
     return ptr;
 }

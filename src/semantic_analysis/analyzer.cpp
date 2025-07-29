@@ -74,11 +74,11 @@ void Analyzer::analyze(ASTNode& node) {
 
             if (func.body) {
                 // TODO: add parameters to the body's symbol_tree.depth
-                str prev_name = push_scope(func.name + "()::", node);
+                str prev_name = push_scope(node.name + "()::", node);
 
                 func.body.value()->type = node.type;
                 match(*func.body.value()) {
-                    holds(BlockScope&, scope) for (auto& node_ : scope.nodes) analyze(*node_);
+                    holds(BlockScope&, scope) for (auto& node : scope.nodes) analyze(*node);
                     _default { INTERNAL_PANIC("expected compound statement, got '{}'.", node.kind_name()); }
                 }
 
@@ -107,7 +107,7 @@ void Analyzer::analyze(ASTNode& node) {
         // TODO: (07-29) write tests to try out the mangled names for namespaces/structs and functions with inner scopes
             switch (nmspace_decl.kind) {
                 case NamespaceDecl::namespace_declaration:  {
-                    str prev_scope = push_scope(nmspace_decl.name + "::", node);
+                    str prev_scope = push_scope(node.name + "::", node);
                     for (auto& node : nmspace_decl.nodes) analyze(*node);
                     pop_scope(prev_scope, node);
                     break;
@@ -124,7 +124,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case TypeDecl::struct_declaration: {
 
                     add_to_scope(node);
-                    str prev_scope = push_scope(type_decl.name + "{}::", node);
+                    str prev_scope = push_scope(node.name + "{}::", node);
                     if(type_decl.definition) for (auto& node: type_decl.definition.value()) analyze(*node);
                     pop_scope(prev_scope, node);
 
@@ -144,26 +144,28 @@ void Analyzer::add_to_scope(ASTNode& node) {
 
     match(node) {
         holds(FunctionDecl&, func) {
-            node.mangled_name = symbol_tree.curr_scope_name + func.name;
+            node.mangled_name = symbol_tree.curr_scope_name + node.name;
+            symbol_tree.curr_scope_name = "";
             // TODO: member function calls should be rewritten to take a pointer 
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
-            auto [node_iterator, was_inserted] = symbol_tree.push_function(func.name, node);
+            auto [node_iterator, was_inserted] = symbol_tree.push_function(node.name, node);
             if (!was_inserted && func.body) {
                 match(*node_iterator->second) {
                     holds(FunctionDecl&, func_) 
-                        if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", func_.name);
+                        if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", 
+                                                    node_iterator->second->name);
                     _default { INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); }
                 }
             }
         }
         holds(VariableDecl&, var) {
-            node.mangled_name = symbol_tree.curr_scope_name + var.name;
-            auto [_, was_inserted] = symbol_tree.push_to_scope(var.name, node);
-            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", var.name);
+            node.mangled_name = symbol_tree.curr_scope_name + node.name;
+            auto [_, was_inserted] = symbol_tree.push_to_scope(node.name, node);
+            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", node.name);
         }
         holds(TypeDecl&, type_decl) {
             // FIXME: check redefinitions here
-            node.mangled_name = symbol_tree.curr_scope_name + type_decl.name;
+            node.mangled_name = symbol_tree.curr_scope_name + node.name;
         }
         _default { INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name()); }
     }

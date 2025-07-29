@@ -1,0 +1,51 @@
+t(
+namespace foo {} struct foo {};
+,fail),
+t(
+fn foo() -> void;
+struct foo {};
+,pass),
+t(
+namespace foo {
+    struct bar { let x: i32; };
+    fn bar() -> void;
+    fn bar() -> void { let x: i32 = 213123; }
+}
+,pass),
+t(
+let x = 69;
+namespace foo {
+    let x: i32;
+    struct bar { let x: i32; };
+    fn bar() -> void { let x: i32 = 213123; }
+}
+,pass),
+t(
+let x = 69;
+fn func(x: i32) -> void {
+    let x = 123;
+    {
+        let x = 420;
+        {
+            let x = 33333;
+        }
+    }
+}
+,pass),
+t(
+let x = 69;
+fn func() -> void {
+    let x = 123;
+    {
+        let x = 420;
+        {
+            let x = 33333;
+        }
+    }
+    let x: i32;
+}
+,fail),
+t(
+let x = 69;
+fn func(x: i32) -> void { let x: i32 = 123; }
+,fail),
