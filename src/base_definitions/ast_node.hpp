@@ -131,8 +131,8 @@ struct ASTNode {
 
     Token source_token; // token that originated this Node
     NodeBranch branch;
-    Type type {};
     str name = "";
+    Type type {};
     str mangled_name = "";
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;

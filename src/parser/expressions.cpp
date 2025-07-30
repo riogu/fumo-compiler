@@ -153,22 +153,39 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
     auto node = temp_node.value();
 
+    if (token_is_str("(")) {
+            node = push(ASTNode {node->source_token,
+                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()},
+                                 std::get<str>(node->source_token.literal.value())});
+            expect_token_str(")");
+    }
+
+    // thing->wow->that;
+
     while(1) {
         if (token_is(->)) {
             expect_token(identifier);
-            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::deref_member_access, node, identifier()}});
+            node = push(ASTNode {*(prev_tkn-1),
+                                 PostfixExpr {PostfixExpr::deref_member_access, node, identifier()},
+                                 std::get<str>(prev_tkn->literal.value())});
             continue;
         }
         if (token_is(.)) {
             expect_token(identifier);
-            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::member_access, node, identifier()}});
+            node = push(ASTNode {*(prev_tkn-1),
+                                 PostfixExpr {PostfixExpr::member_access, node, identifier()},
+                                 std::get<str>(prev_tkn->literal.value())});
             continue;
         }
+        // thing->other.func()->wow.huh();
         if (token_is_str("(")) {
-            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
+            node = push(ASTNode {node->source_token,
+                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()},
+                                 node->name});
             expect_token_str(")");
             continue;
         }
+        
         return node;
     }   
 
@@ -239,7 +256,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     str id_name = std::get<str>(prev_tkn->literal.value());
     while (token_is(::)) {
         expect_token(identifier);
-        id_name += std::get<str>(prev_tkn->literal.value());
+        id_name += "::" + std::get<str>(prev_tkn->literal.value());
     }
     return push(ASTNode {.source_token = *prev_tkn,
                          .branch = PrimaryExpr {PrimaryExpr::identifier, id_name},

@@ -5,8 +5,21 @@
     std::string result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(PrimaryExpr) result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-        
+        holds(const PrimaryExpr&, prim) {
+            switch (prim.kind) {
+                case PrimaryExpr::integer:
+                    result += std::format("{}{}{}", gray("⟮"), std::get<int64_t>(prim.value), gray("⟯"));
+                    break;
+                case PrimaryExpr::floating_point:
+                    result += std::format("{}{}{}", gray("⟮"), std::get<double>(prim.value), gray("⟯"));
+                    break;
+                case PrimaryExpr::str:
+                case PrimaryExpr::identifier: 
+                    result += std::format("{}{}{}", gray("⟮"), std::get<str>(prim.value), gray("⟯"));
+                    break;
+            }
+        }
+
         holds(const UnaryExpr&, unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
@@ -21,18 +34,9 @@
             // TODO: improve printing for postfix expressions here 
             switch (postfix.kind) {
                 case PostfixExpr::member_access:
-                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-                    result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
-                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
-                    break;
                 case PostfixExpr::deref_member_access:
-                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
-                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
-                    break;
                 case PostfixExpr::function_call: 
-                    std::string temp = blue(mangled_name);
-                    // TODO: continue  here
+                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
                     break;

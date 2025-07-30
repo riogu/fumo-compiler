@@ -19,5 +19,5 @@ t(
 ,pass),
 
 t(
-"var.three->func(this, that->other.gaming(), lasthting);\n"
+"var::one::two.three->func(this, that->other.gaming(), lasthting);\n"
 ,pass),
