@@ -88,10 +88,11 @@ Current structure for the AST parser in BNF format
             | <postfix> "::" <postfix>
 
 <primary> ::= "(" <equality> ")"
-            | <identifier> 
+            | <qualified-identifier> 
             | <literal>
 
 
+<qualified-identifier> ::= <identifier> {"::" <identifier>}*
 
 ---
 ---

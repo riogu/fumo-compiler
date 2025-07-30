@@ -15,8 +15,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else if (token_is_keyword(enum))
             AST.push_back(enum_declaration());
         else
-            // AST.push_back(statement()); /* NOTE: no longer valid in global */
-            report_error((*curr_tkn), "expected declaration.");
+            AST.push_back(statement()); /* NOTE: no longer valid in global */
+            // report_error((*curr_tkn), "expected declaration.");
     }
     return push(ASTNode {.source_token = *tkns.begin(),
                          .branch = NamespaceDecl {NamespaceDecl::translation_unit, std::move(AST)},
@@ -54,8 +54,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         // TODO: this error should be handled by semantic analysis
         // report_error(node->source_token,
         //              "expected lvalue on left-hand side of assignment.");
-        return push(ASTNode {*prev_tkn,
-                             BinaryExpr {BinaryExpr::assignment, node, initializer()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, postfix()}});
     }
     return node;
 }
@@ -133,78 +132,75 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 }
 
 // <postfix> ::= <primary>
+//             | <postfix> "{" <initializer-list> "}" <postfix>
 //             | <postfix> "->" <postfix>
 //             | <postfix> "." <postfix>
 //             | <postfix> "(" {<initializer>}* ")" <postfix>
-//             | <postfix> "{" <initializer-list> "}" <postfix>
-//             | <postfix> "::" <postfix>
 [[nodiscard]] ASTNode* Parser::postfix() {
-    auto node = initializer();
+
+    auto temp_node = primary();
+
+    if (token_is_str("{")) {
+        auto init_list = initializer_list();
+
+        if (temp_node) init_list->type.name = init_list->name = temp_node.value()->name, all_nodes.pop_back();
+
+        expect_token_str("}");
+        return init_list;
+    }
+
+    if(!temp_node) report_error((*curr_tkn), "expected expression.");
+
+    auto node = temp_node.value();
+
     while(1) {
         if (token_is(->)) {
             expect_token(identifier);
-            node = push(ASTNode {*prev_tkn,
-                                 PostfixExpr {PostfixExpr::deref_member_access, node, identifier()}});
+            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::deref_member_access, node, identifier()}});
             continue;
         }
         if (token_is(.)) {
             expect_token(identifier);
-            node = push(ASTNode {*prev_tkn,
-                                 PostfixExpr {PostfixExpr::member_access, node, identifier()}});
+            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::member_access, node, identifier()}});
             continue;
         }
         if (token_is_str("(")) {
-
-            if(token_is_str(")"))  {
-                node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::function_call}});
-                continue;
-            }
-
-            vec<ASTNode*> arguments {};
-            while(1) {
-                arguments.push_back(postfix());
-                if (token_is_str(")")) {
-                    node = push(ASTNode {*prev_tkn, PostfixExpr {.kind = PostfixExpr::function_call,
-                                                                  .function_args = arguments}});
-                    break;
-                }
-            } 
-
+            node = push(ASTNode {*prev_tkn, PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
+            expect_token_str(")");
             continue;
         }
         return node;
     }   
 
 }
-[[nodiscard]] ASTNode* Parser::initializer() {
-    // TODO: add array access operator '[]'
-    auto node = primary();
 
-    if (token_is_str("{")) {
-        auto init_list = initializer_list();
+[[nodiscard]] ASTNode* Parser::argument_list() {
 
-        if (node) init_list->type.name = init_list->name = node.value()->name, all_nodes.pop_back();
+    if (peek_token_str(")")) return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, {}}});
 
-        expect_token_str("}");
-        return init_list;
+    vec<ASTNode*> arguments {};
+    arguments.push_back(postfix());
+    while(1) {
+        if (token_is_str(",")) {
+            arguments.push_back(postfix());
+            continue;
+        }
+        return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, arguments}});
     }
-
-    if(!node) report_error((*curr_tkn), "expected expression.");
-    return node.value();
 }
 
-// <initializer-list> ::= <initializer> {","}?
-//                      | <initializer> , <initializer-list>
+// <initializer-list> ::= <postfix> {","}?
+//                      | <postfix> , <initializer-list>
 [[nodiscard]] ASTNode* Parser::initializer_list() {
     // TODO: add optional named elements syntax "{.foo = 123123}"
     BlockScope init_list {BlockScope::initializer_list};
-    init_list.nodes.push_back(initializer());
+    init_list.nodes.push_back(postfix());
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
                 return push(ASTNode {*prev_tkn, std::move(init_list)});
             }
-            init_list.nodes.push_back(initializer());
+            init_list.nodes.push_back(postfix());
             continue;
         }
         return push(ASTNode {*prev_tkn, std::move(init_list)});

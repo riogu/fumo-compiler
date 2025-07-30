@@ -108,6 +108,7 @@ void Analyzer::analyze(ASTNode& node) {
                     // in most contexts, not providing a type is illegal (might be able to solve types anyway)
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
                     if (node.type.kind == Type::Undetermined) determine_type(node.type);
+                case BlockScope::argument_list: break;
             }
         }
 

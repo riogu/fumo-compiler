@@ -16,7 +16,7 @@
     if (token_is(=)) {
         ASTNode* assignment = push(ASTNode {
             *prev_tkn,
-            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), initializer()}});
+            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), postfix()}});
         expect_token(;);
         return assignment;
     } else if (node.type.name == "Undetermined") {

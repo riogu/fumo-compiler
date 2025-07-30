@@ -55,16 +55,15 @@ struct BinaryExpr {
 
 struct PostfixExpr {
     enum {
-        #define Postfix_kinds                                            \
+        #define PostfixExpr_kinds                                        \
         member_access,           /*                                   */ \
         deref_member_access,     /*                                   */ \
-        function_call,           /*                                   */ \
+        function_call            /*                                   */ \
     
-        Postfix_kinds
+        PostfixExpr_kinds
     } kind;
     ASTNode* lhs;
     ASTNode* rhs;
-    vec<ASTNode*> function_args {}; // if its empty we have no args
 };
 
 
@@ -93,7 +92,8 @@ struct BlockScope {
     enum {
         #define BlockScope_kinds                                         \
         compound_statement,      /* {...}                             */ \
-        initializer_list         /*                                   */ \
+        initializer_list,        /*                                   */ \
+        argument_list            /*                                   */ \
 
         BlockScope_kinds
     } kind;

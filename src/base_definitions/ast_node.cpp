@@ -1,5 +1,4 @@
 #include "base_definitions/ast_node.hpp"
-#include "base_definitions/tokens.hpp"
 
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
@@ -17,6 +16,27 @@
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
+        }
+        holds(const PostfixExpr&, postfix) {
+            // TODO: improve printing for postfix expressions here 
+            switch (postfix.kind) {
+                case PostfixExpr::member_access:
+                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
+                    result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
+                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
+                    break;
+                case PostfixExpr::deref_member_access:
+                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
+                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
+                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
+                    break;
+                case PostfixExpr::function_call: 
+                    std::string temp = blue(mangled_name);
+                    // TODO: continue  here
+                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
+                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
+                    break;
+            }
         }
         holds(const VariableDecl&, var) {
             result += std::format("{} {}", gray("=>"), mangled_name);
@@ -45,12 +65,25 @@
                                                  func.body.value()->to_str(depth)); 
         }
         holds(const BlockScope&, scope) {
-            result += gray("{");
-            depth++;
-            for(auto& node: scope.nodes) 
-                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
-            depth--;
-            result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+            switch (scope.kind) {
+                case BlockScope::compound_statement:
+                case BlockScope::initializer_list:
+                    result += gray("{");
+                    depth++;
+                    for(auto& node: scope.nodes) 
+                        result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+                    depth--;
+                    result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+                    break;
+                case BlockScope::argument_list: 
+                    result += gray("(");
+                    depth++;
+                    for(auto& node: scope.nodes) 
+                        result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+                    depth--;
+                    result += std::format("\n{}{}", std::string(depth * 2, ' '), gray(")"));
+                    break;
+            }
         }
         holds(const NamespaceDecl&, namespace_decl) {
             result += gray("=> ") + purple_blue("namespace ") + yellow(mangled_name);
@@ -89,6 +122,7 @@
         branch_kind_name(PrimaryExpr);
         branch_kind_name(UnaryExpr);
         branch_kind_name(BinaryExpr);
+        branch_kind_name(PostfixExpr);
         branch_kind_name(VariableDecl);
         branch_kind_name(FunctionDecl);
         branch_kind_name(BlockScope);

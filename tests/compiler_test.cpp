@@ -28,6 +28,9 @@ int main() {
     constexpr std::array ast_syntax_tests {
         #include "ast_syntax.fm"
     };
+    constexpr std::array postfix_tests {
+        #include "postfix.fm"
+    };
     constexpr std::array scope_basic_tests {
         #include "scope_basic_checks.fm"
     };
@@ -36,7 +39,7 @@ int main() {
     };
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : scope_name_lookup_tests) {
+    for (const auto& [test, expected] : postfix_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
