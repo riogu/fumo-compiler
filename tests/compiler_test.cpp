@@ -20,7 +20,8 @@ std::pair<std::string, int> exec(const char* cmd) {
     return {result, status};
 }
 #define t std::pair
-constexpr bool fail = false, pass = true;
+    constexpr bool fail = false,
+                   pass = true;
 
 int main() {
 

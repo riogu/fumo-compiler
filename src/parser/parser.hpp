@@ -25,14 +25,14 @@ struct Parser {
     [[nodiscard]] ASTNode* expression_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
-    [[nodiscard]] ASTNode* initializer();
     [[nodiscard]] ASTNode* initializer_list();
     [[nodiscard]] ASTNode* equality();
     [[nodiscard]] ASTNode* relational();
     [[nodiscard]] ASTNode* add();
     [[nodiscard]] ASTNode* multiply();
     [[nodiscard]] ASTNode* unary();
-    [[nodiscard]] ASTNode* primary();
+    [[nodiscard]] ASTNode* postfix(); // NOTE: new addition
+    [[nodiscard]] Opt<ASTNode*> primary();
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();

@@ -52,6 +52,21 @@ struct BinaryExpr {
     ASTNode* lhs;
     ASTNode* rhs;
 };
+
+struct PostfixExpr {
+    enum {
+        #define Postfix_kinds                                            \
+        member_access,           /*                                   */ \
+        deref_member_access,     /*                                   */ \
+        function_call,           /*                                   */ \
+    
+        Postfix_kinds
+    } kind;
+    str identifier;
+    ASTNode* next;
+};
+
+
 struct VariableDecl {
     enum {
         #define VariableDecl_kinds                                       \
@@ -109,16 +124,15 @@ struct TypeDecl {
 
 struct ASTNode {
 
-    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr,
-                                    VariableDecl, FunctionDecl,
-                                    BlockScope, NamespaceDecl,
-                                    TypeDecl>;
+    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr, PostfixExpr,
+                                    VariableDecl, FunctionDecl, TypeDecl,
+                                    BlockScope, NamespaceDecl>;
 
     Token source_token; // token that originated this Node
     NodeBranch branch;
     Type type {};
     str name = "";
-    str mangled_name;
+    str mangled_name = "";
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;

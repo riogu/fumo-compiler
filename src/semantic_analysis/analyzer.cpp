@@ -101,7 +101,13 @@ void Analyzer::analyze(ASTNode& node) {
                     break;
                 }
                 case BlockScope::initializer_list: 
+                    // TODO: we need to also solve the type for initializer lists
+                    // they can either have a name `ASTNode {x = 123};` or have nothing `{x = 123};`
+                    // in some contexts we might not be able to infer the type
+                    // let var: ASTNode {.x = 213123};
+                    // in most contexts, not providing a type is illegal (might be able to solve types anyway)
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                    if (node.type.kind == Type::Undetermined) determine_type(node.type);
             }
         }
 

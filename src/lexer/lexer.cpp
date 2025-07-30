@@ -45,6 +45,10 @@
             cases(ignore);
             // -----------------------------------------------------------
             // triple cases are handled individually
+            case ':':
+                tokens.push_back(next_char_is(:) ? make_and_consume_token(::)
+                                                 : make_token(:));
+                break;
             case '.':
                 if ((next_char_is(.))) {
                     if (get_curr(); (next_char_is(.))) add_and_consume_token(...);
@@ -94,12 +98,12 @@
                     while (!next_char_is(EOF) && !next_char_is(\n)) curr = get_curr();
                 else
                     tokens.push_back(next_char_is(=) ? make_and_consume_token(/=)
-                                                  : make_token(/));
+                                                     : make_token(/));
                 break;
 
             case '#':
                 tokens.push_back(next_char_is(#) ? make_and_consume_token(##)
-                                 : make_token(#));
+                                                 : make_token(#));
                 break;
 
             case '\n': __FUMO_LINE_NUM__++; __FUMO_LINE_OFFSET__ = 0; __FUMO_LINE__ = peek_line(); break;

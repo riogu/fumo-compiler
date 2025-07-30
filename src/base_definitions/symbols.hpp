@@ -51,7 +51,8 @@
     less_less_equals,                   \
     greater_greater_equals,             \
     dot_dot_dot,                        \
-    minus_greater
+    minus_greater,                      \
+    colon_colon
 #define builtin_types                   \
     i8               ,                  \
     i32              ,                  \
@@ -144,7 +145,8 @@
 "<<=",                  \
 ">>=",                  \
 "...",                  \
-"->" 
+"->" ,                  \
+"::" 
 
 #define add_parens(S) (S)
 #define symbol_reprs_ map_macro(add_parens, symbol_reprs__)
@@ -193,7 +195,6 @@ enum struct Symbol {
 
 #define singular                    \
     question_mark   ,               \
-    colon           ,               \
     open_bracket    ,               \
     close_bracket   ,               \
     open_paren      ,               \
@@ -214,6 +215,7 @@ enum struct Symbol {
     plus            ,               \
     equals
 #define has_triple                  \
+    colon           ,               \
     minus           ,               \
     dot             ,               \
     greater         ,               \

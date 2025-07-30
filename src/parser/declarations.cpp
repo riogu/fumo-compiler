@@ -16,7 +16,7 @@
     if (token_is(=)) {
         ASTNode* assignment = push(ASTNode {
             *prev_tkn,
-            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), initializer()}});
+            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), postfix()}});
         expect_token(;);
         return assignment;
     } else if (node.type.name == "Undetermined") {
@@ -56,7 +56,7 @@
     return push(node);
 }
 
-// <parameter> ::= <declarator-specifier> <identifier>
+// <parameter> ::=  <identifier> ":" <declarator-specifier>
 // <parameter-list> ::= <parameter>
 //                    | <parameter-list> "," <parameter>
 [[nodiscard]] vec<ASTNode*> Parser::parameter_list() {
@@ -70,7 +70,7 @@
                       .branch = VariableDecl {VariableDecl::parameter},
                       .name = std::get<str>(prev_tkn->literal.value())};
 
-        expect_token( :);
+        expect_token(:);
         node.type = declaration_specifier();
 
         if (auto& kind = node.type.kind; kind == Type::enum_ || kind == Type::struct_) {
@@ -130,17 +130,19 @@
         type.name = std::get<str>(prev_tkn->literal.value());
         type.kind = builtin_type_kind(type.name);
         // NOTE: consider redoing the ptr implementation
-        while (token_is(*)) {
-            type.ptr_count++;
-        }
+        while (token_is(*)) type.ptr_count++;
+        
         return type;
     }
     if (token_is(identifier)) {
         type.name = std::get<str>(prev_tkn->literal.value());
         type.kind = Type::Undetermined;
-        while (token_is(*)) {
-            type.ptr_count++;
+        while(token_is(::)) {
+            expect_token(identifier);
+            type.name += std::get<str>(prev_tkn->literal.value());
         }
+        while (token_is(*)) type.ptr_count++;
+        
         return type;
     }
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
@@ -148,9 +150,9 @@
 
 [[nodiscard]] ASTNode* Parser::namespace_declaration() {
     expect_token(identifier);
-    auto node = ASTNode {.source_token = *prev_tkn,
-                         .name = std::get<str>(prev_tkn->literal.value())};
-    auto nmspace = NamespaceDecl {NamespaceDecl::namespace_declaration};
+
+    ASTNode node {.source_token = *prev_tkn, .name = std::get<str>(prev_tkn->literal.value())};
+    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration};
 
     expect_token_str("{");
     while (!token_is_str("}")) {
@@ -172,8 +174,8 @@
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
     expect_token(identifier);
-    auto node = ASTNode {.source_token = *prev_tkn,
-                         .name = std::get<str>(prev_tkn->literal.value())};
+    ASTNode node {.source_token = *prev_tkn,
+                  .name = std::get<str>(prev_tkn->literal.value())};
 
     TypeDecl type_decl {TypeDecl::struct_declaration};
 

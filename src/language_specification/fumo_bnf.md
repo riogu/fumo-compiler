@@ -53,7 +53,7 @@ Current structure for the AST parser in BNF format
 <parameter-list> ::= <parameter>
                    | <parameter-list> "," <parameter> 
 
-<parameter> ::= <declarator-specifier> <identifier> 
+<parameter> ::=  <identifier> ":" <declarator-specifier>
 
 ---
 ---
@@ -79,11 +79,18 @@ Current structure for the AST parser in BNF format
 <multiplication> ::=  <unary> { \"*" <unary> |"/" <unary> }*
 
 <unary> ::= <unary-op> <unary> 
-          | <primary>
+          | <postfix>
+
+<postfix> ::= <primary>
+            | <postfix> "->" <postfix>
+            | <postfix> "." <postfix>
+            | <postfix> "(" {<initializer>}* ")" <postfix>
+            | <postfix> "::" <postfix>
 
 <primary> ::= "(" <equality> ")"
             | <identifier> 
             | <literal>
+
 
 
 ---
