@@ -5,6 +5,8 @@
     std::string result = std::format("{} ", kind_name());
 
     match(*this) {
+        holds(const Identifier&, id) result += std::format("{}{}{}", gray("⟮"), id.name, gray("⟯"));
+       
         holds(const PrimaryExpr&, prim) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:
@@ -14,7 +16,7 @@
                     result += std::format("{}{}{}", gray("⟮"), std::get<double>(prim.value), gray("⟯"));
                     break;
                 case PrimaryExpr::str:
-                case PrimaryExpr::identifier: 
+                // case PrimaryExpr::identifier: 
                     result += std::format("{}{}{}", gray("⟮"), std::get<str>(prim.value), gray("⟯"));
                     break;
             }
@@ -43,21 +45,17 @@
             }
         }
         holds(const VariableDecl&, var) {
-            result += std::format("{} {}", gray("=>"), mangled_name);
+            result += std::format("{} {}", gray("=>"), get_id(var).mangled_name);
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
             result += gray(": ") + yellow(type.name) + purple_blue(ptr_str);
         }
         holds(const FunctionDecl&, func) {
-            std::string temp = purple_blue("fn ") + blue(mangled_name) + gray("(");
+            std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 ASTNode* var = func.parameters.at(i);
-                match(*var) {
-                    holds(const VariableDecl&, param) {
-                        str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
-                        temp += var->name + gray(": ") + yellow(var->type.name) + gray(ptr_str);;
-                    }
-                    _default { INTERNAL_PANIC("function parameter must be a variable'{}'", kind_name()); }
-                }
+                const auto& param = get<VariableDecl>(var);
+                str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
+                temp += get_id(param).name + gray(": ") + yellow(var->type.name) + gray(ptr_str);;
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
@@ -90,7 +88,7 @@
             }
         }
         holds(const NamespaceDecl&, namespace_decl) {
-            result += gray("=> ") + purple_blue("namespace ") + yellow(mangled_name);
+            result += gray("=> ") + purple_blue("namespace ") + yellow(get_id(namespace_decl).mangled_name);
             result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
             result += purple_blue("definition ") + gray("{");
             depth++;
@@ -101,7 +99,7 @@
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
         holds(const TypeDecl&, type_decl) {
-            result += gray("=> ") + purple_blue("struct ") + yellow(mangled_name);
+            result += gray("=> ") + purple_blue("struct ") + yellow(get_id(type_decl).mangled_name);
             if (type_decl.definition_body) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
                 result += purple_blue("definition ") + gray("{");
@@ -123,6 +121,7 @@
 
 [[nodiscard]] std::string ASTNode::kind_name() const {
     match(*this) {
+        branch_kind_name(Identifier);
         branch_kind_name(PrimaryExpr);
         branch_kind_name(UnaryExpr);
         branch_kind_name(BinaryExpr);
@@ -139,3 +138,4 @@
 
 #undef nd_kind
 #undef branch_kind_name
+

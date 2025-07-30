@@ -61,15 +61,3 @@ t(
 "    x = 213;                                          \n"
 "}                                                     \n"
 , pass)
-// namespace foo {
-//     void func();
-//     struct bar {
-//         struct inner {
-//             static int func();
-//         };
-//         str x; 
-//         int y;
-//         void f();
-//     };
-//     struct wow;
-// }

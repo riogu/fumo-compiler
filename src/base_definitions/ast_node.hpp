@@ -2,24 +2,34 @@
 #include "base_definitions/tokens.hpp"
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
+#include <variant>
 
 struct ASTNode; 
 
 // these ugly macros are just for printing the enums later in the debug
+struct Identifier {
+    enum {
+        #define Identifier_kinds                                       \
+        unqualified,           /* (variable | function) name        */ \
+        qualified             /* (variable | function) name        */ \
 
+        Identifier_kinds
+    } kind = unqualified;
+    str name = "";
+    Opt<ASTNode*> declaration {}; // identifiers are solved to this
+    str mangled_name = name;
+};
 struct PrimaryExpr {
     enum {
         #define PrimaryExpr_kinds                                        \
         /* empty_expr,*/         /* ;                                 */ \
         integer,                 /* i32 | i64 | i8                    */ \
         floating_point,          /*                                   */ \
-        str,                     /*                                   */ \
-        identifier               /* (variable | function) name        */ \
+        str                      /*                                   */ \
 
         PrimaryExpr_kinds
     } kind;
-    Literal value;                    // can also be an identifier
-    Opt<ASTNode*> var_declaration {}; // identifiers map to this
+    Literal value; // NOTE: not an identifier
 };
 struct UnaryExpr {
     enum {
@@ -66,7 +76,6 @@ struct PostfixExpr {
     ASTNode* rhs;
 };
 
-
 struct VariableDecl {
     enum {
         #define VariableDecl_kinds                                       \
@@ -76,6 +85,7 @@ struct VariableDecl {
 
         VariableDecl_kinds
     } kind;
+    ASTNode* identifier;
 };
 struct FunctionDecl {
     enum {
@@ -84,6 +94,7 @@ struct FunctionDecl {
     
         FunctionDecl_kinds
     } kind;
+    ASTNode* identifier;
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
 };
@@ -98,6 +109,7 @@ struct BlockScope {
         BlockScope_kinds
     } kind;
     vec<ASTNode*> nodes {};
+    Opt<ASTNode*> identifier {};
 };
 
 struct NamespaceDecl {
@@ -108,6 +120,7 @@ struct NamespaceDecl {
 
         NamespaceDecl_kinds
     } kind;
+    ASTNode* identifier;
     vec<ASTNode*> nodes {};
 };
 
@@ -120,6 +133,7 @@ struct TypeDecl {
 
         TypeDecl_kinds
     } kind;
+    ASTNode* identifier;
     Opt<vec<ASTNode*>> definition_body {};
 };
 
@@ -127,18 +141,25 @@ struct ASTNode {
 
     using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr, PostfixExpr,
                                     VariableDecl, FunctionDecl, TypeDecl,
-                                    BlockScope, NamespaceDecl>;
+                                    BlockScope, NamespaceDecl,
+                                    Identifier>;
 
     Token source_token; // token that originated this Node
     NodeBranch branch;
-    str name = "";
     Type type {};
-    str mangled_name = name;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
-
 };
+
+
+#define get_id(branch_) get<Identifier>(branch_.identifier)
+template<typename Branch>
+constexpr Branch& get(ASTNode* node) {
+    if (std::holds_alternative<Branch>(node->branch)) return std::get<Branch>(node->branch);
+    else
+        INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->kind_name());
+}
 
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };

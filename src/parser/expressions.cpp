@@ -18,9 +18,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(statement()); /* NOTE: no longer valid in global */
             // report_error((*curr_tkn), "expected declaration.");
     }
+    auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::unqualified, "fumo_module"}});
     return push(ASTNode {.source_token = *tkns.begin(),
-                         .branch = NamespaceDecl {NamespaceDecl::translation_unit, std::move(AST)},
-                         .name = "fumo_module"});
+                         .branch = NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
 }
 
 // <statement> ::= <expression-statement>
@@ -141,10 +141,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto temp_node = primary();
 
     if (token_is_str("{")) {
-        auto init_list = initializer_list();
-
-        if (temp_node) init_list->type.name = init_list->name = temp_node.value()->name, all_nodes.pop_back();
-
+        auto init_list = initializer_list(temp_node);
         expect_token_str("}");
         return init_list;
     }
@@ -154,31 +151,27 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto node = temp_node.value();
 
     if (token_is_str("(")) {
-            node = push(ASTNode {node->source_token,
-                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()},
-                                 std::get<str>(node->source_token.literal.value())});
-            expect_token_str(")");
+        node = push(ASTNode {node->source_token, 
+                             PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
+        expect_token_str(")");
     }
 
     while(1) {
         if (token_is(->)) {
             expect_token(identifier);
-            node = push(ASTNode {*(prev_tkn-1),
-                                 PostfixExpr {PostfixExpr::deref_member_access, node, identifier()},
-                                 std::get<str>(prev_tkn->literal.value())});
+            node = push(ASTNode {*(prev_tkn-1), 
+                                 PostfixExpr {PostfixExpr::deref_member_access, node, identifier()}});
             continue;
         }
         if (token_is(.)) {
             expect_token(identifier);
-            node = push(ASTNode {*(prev_tkn-1),
-                                 PostfixExpr {PostfixExpr::member_access, node, identifier()},
-                                 std::get<str>(prev_tkn->literal.value())});
+            node = push(ASTNode {*(prev_tkn - 1), 
+                                 PostfixExpr {PostfixExpr::member_access, node, identifier()}});
             continue;
         }
         if (token_is_str("(")) {
-            node = push(ASTNode {node->source_token,
-                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()},
-                                 node->name});
+            node = push(ASTNode {node->source_token, 
+                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
             expect_token_str(")");
             continue;
         }
@@ -205,10 +198,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
 // <initializer-list> ::= <postfix> {","}?
 //                      | <postfix> , <initializer-list>
-[[nodiscard]] ASTNode* Parser::initializer_list() {
+[[nodiscard]] ASTNode* Parser::initializer_list(Opt<ASTNode*> identifier) {
     // TODO: add optional named elements syntax "{.foo = 123123}"
 
     BlockScope init_list {BlockScope::initializer_list};
+    if (identifier) init_list.identifier = identifier.value();
 
     if (peek_token_str("}")) return push(ASTNode {*prev_tkn, std::move(init_list)});
 
@@ -235,14 +229,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return node;
     }
     if (token_is(int))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()}});
     if (token_is(float))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()}});
     if (token_is(string))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()}});
 
     if (token_is(identifier)) return identifier();
 
@@ -254,12 +245,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // because every name is flattened (struct or namespace) and then we can find if that name
 // was what we expected in each context (a type, a namespace, etc)
 [[nodiscard]] ASTNode* Parser::identifier() {
-    str id_name = std::get<str>(prev_tkn->literal.value());
+    Identifier id {Identifier::unqualified, std::get<str>(prev_tkn->literal.value())};
     while (token_is(::)) {
         expect_token(identifier);
-        id_name += "::" + std::get<str>(prev_tkn->literal.value());
+        id.name += "::" + std::get<str>(prev_tkn->literal.value());
+        id.kind = Identifier::qualified;
     }
-    return push(ASTNode {.source_token = *prev_tkn,
-                         .branch = PrimaryExpr {PrimaryExpr::identifier, id_name},
-                         .name = id_name});
+    return push(ASTNode {.source_token = *prev_tkn, .branch = id});
 }

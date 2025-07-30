@@ -62,8 +62,8 @@ t(
 "let x = 69;\n"
 "fn func(x: i32) -> void { let x: i32 = 123; }\n"
 ,fail),
+
 t(
-"namespace foo {}\n"
-"struct foo::bar {};\n"
-"let var: struct gaming::foo {};\n"
+"let x: i32 = 213123;\n"
+"let y = 213123;\n"
 ,pass),

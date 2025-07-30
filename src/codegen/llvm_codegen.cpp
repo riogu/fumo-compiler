@@ -37,7 +37,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const PrimaryExpr& primary) {
         case PrimaryExpr::floating_point:
             return llvm::ConstantInt::getSigned(llvm::Type::getFloatTy(*llvm_context),
                                                 std::get<double>(primary.value));
-        case PrimaryExpr::identifier:
+        // case PrimaryExpr::identifier:
             // TODO: make a proper symbol table
             // return variable_env[std::get<str>(primary.value)];
         case PrimaryExpr::str:
@@ -91,7 +91,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
 llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
     // NOTE: type checker shouldn't allow "let x: void;" to exist
     auto type = fumo_to_llvm_type(node.type);
-    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, node.name);
+    llvm::AllocaInst* ptr = ir_builder->CreateAlloca(type, nullptr, get_id(var).name);
     // if (var.assignment) ir_builder->CreateStore(codegen(*var.assignment.value()), ptr);
     return ptr;
 }

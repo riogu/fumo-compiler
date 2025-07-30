@@ -25,7 +25,7 @@ struct Parser {
     [[nodiscard]] ASTNode* expression_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
-    [[nodiscard]] ASTNode* initializer_list();
+    [[nodiscard]] ASTNode* initializer_list(Opt<ASTNode*> identifier);
     [[nodiscard]] ASTNode* equality();
     [[nodiscard]] ASTNode* relational();
     [[nodiscard]] ASTNode* add();

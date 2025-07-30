@@ -1,14 +1,22 @@
 #include "semantic_analysis/analyzer.hpp"
 
-void Analyzer::determine_type(Type& type) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
+[[nodiscard]] ASTNode* Analyzer::find_declaration(ASTNode& node) {
+    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
+    match(node) {
+        holds(Identifier&, id) {
+            for (int i = symbol_tree.symbols_to_nodes_stack.size(); i != 0; i--) {
+                for (const auto& [name, node] : symbol_tree.symbols_to_nodes_stack.at(i)) {
+                    if (name == id.name) return node;
+                }
+            }
+            report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+        }
+        _default{}
+    }
+    report_error(node.source_token, "use of undeclared identifier.");
 }
-[[nodiscard]] ASTNode* Analyzer::find_function_decl(std::string_view var_name) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
-}
-[[nodiscard]] ASTNode* Analyzer::find_variable_decl(std::string_view var_name) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__);
-}
+
+
 
 [[nodiscard]] bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 

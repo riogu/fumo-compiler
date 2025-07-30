@@ -5,10 +5,9 @@
 [[nodiscard]] ASTNode* Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
-    auto node = ASTNode {.source_token = *prev_tkn, .name = identifier()->name};
-    all_nodes.pop_back();
+    auto node = ASTNode {*prev_tkn};
 
-    VariableDecl variable {VariableDecl::variable_declaration};
+    VariableDecl variable {VariableDecl::variable_declaration, identifier()};
 
     if (token_is(:)) node.type = declaration_specifier();
 
@@ -31,11 +30,9 @@
 //                            "->" {<declaration-specifier>}+
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
-
     expect_token(identifier);
-    FunctionDecl function {FunctionDecl::function_declaration};
-    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
-    all_nodes.pop_back();
+    FunctionDecl function {FunctionDecl::function_declaration, identifier()};
+    ASTNode node {*prev_tkn};
 
     function.parameters = parameter_list(); // could be an empty vector
 
@@ -61,9 +58,7 @@
     vec<ASTNode*> parameters {};
     while (1) {
         expect_token(identifier);
-        ASTNode node {.source_token = *prev_tkn,
-                      .branch = VariableDecl {VariableDecl::parameter},
-                      .name = std::get<str>(prev_tkn->literal.value())};
+        ASTNode node {*prev_tkn, VariableDecl {VariableDecl::parameter, identifier()}};
 
         expect_token(:);
         node.type = declaration_specifier();
@@ -120,8 +115,11 @@
         return type;
     }
     if (token_is(identifier)) {
-        type.name = identifier()->name, all_nodes.pop_back();
+        type.name =  std::get<str>(prev_tkn->literal.value());
+        while (token_is(::)) expect_token(identifier), type.name += "::" + std::get<str>(prev_tkn->literal.value());
+
         type.kind = Type::Undetermined;
+
         while (token_is(*)) type.ptr_count++;
         
         return type;
@@ -132,10 +130,9 @@
 [[nodiscard]] ASTNode* Parser::namespace_declaration() {
 
     expect_token(identifier);
-    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
-    all_nodes.pop_back();
+    ASTNode node {*prev_tkn};
 
-    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration};
+    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration, identifier()};
 
     expect_token_str("{");
     while (!token_is_str("}")) {
@@ -156,12 +153,9 @@
 }
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
-
+    ASTNode node {*prev_tkn};
     expect_token(identifier);
-    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
-    all_nodes.pop_back();
-
-    TypeDecl type_decl {TypeDecl::struct_declaration};
+    TypeDecl type_decl {TypeDecl::struct_declaration, identifier()};
 
     if (token_is_str("{")) {
         vec<ASTNode*> nodes {};
