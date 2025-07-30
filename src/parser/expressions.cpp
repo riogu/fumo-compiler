@@ -160,8 +160,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             expect_token_str(")");
     }
 
-    // thing->wow->that;
-
     while(1) {
         if (token_is(->)) {
             expect_token(identifier);
@@ -177,7 +175,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                                  std::get<str>(prev_tkn->literal.value())});
             continue;
         }
-        // thing->other.func()->wow.huh();
         if (token_is_str("(")) {
             node = push(ASTNode {node->source_token,
                                  PostfixExpr {PostfixExpr::function_call, node, argument_list()},
