@@ -17,7 +17,6 @@ t(
 "var->this();\n"
 "var->this()->another;\n"
 ,pass),
-
 t(
 "var::one::two.three->func(this, that->other.gaming(), lasthting);\n"
 ,pass),

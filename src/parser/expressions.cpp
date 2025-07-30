@@ -207,7 +207,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 //                      | <postfix> , <initializer-list>
 [[nodiscard]] ASTNode* Parser::initializer_list() {
     // TODO: add optional named elements syntax "{.foo = 123123}"
+
     BlockScope init_list {BlockScope::initializer_list};
+
+    if (peek_token_str("}")) return push(ASTNode {*prev_tkn, std::move(init_list)});
+
     init_list.nodes.push_back(equality());
     while (1) {
         if (token_is_str(",")) {
@@ -259,4 +263,3 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                          .branch = PrimaryExpr {PrimaryExpr::identifier, id_name},
                          .name = id_name});
 }
-

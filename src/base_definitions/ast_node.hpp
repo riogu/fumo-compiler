@@ -133,7 +133,7 @@ struct ASTNode {
     NodeBranch branch;
     str name = "";
     Type type {};
-    str mangled_name = "";
+    str mangled_name = name;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;

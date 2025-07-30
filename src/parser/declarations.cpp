@@ -5,8 +5,9 @@
 [[nodiscard]] ASTNode* Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
-    auto node = ASTNode {.source_token = *prev_tkn,
-                         .name = std::get<str>(prev_tkn->literal.value())};
+    auto node = ASTNode {.source_token = *prev_tkn, .name = identifier()->name};
+    all_nodes.pop_back();
+
     VariableDecl variable {VariableDecl::variable_declaration};
 
     if (token_is(:)) node.type = declaration_specifier();
@@ -19,8 +20,7 @@
         expect_token(;);
         return assignment;
     } else if (node.type.name == "Undetermined") {
-        report_error((*prev_tkn),
-                     "declaring a variable with deduced type requires an initializer.");
+        report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }
 
     expect_token(;);
@@ -31,21 +31,17 @@
 //                            "->" {<declaration-specifier>}+
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
+
     expect_token(identifier);
     FunctionDecl function {FunctionDecl::function_declaration};
-    Token token = *prev_tkn;
-    ASTNode node {.source_token = token,
-                  .name = std::get<str>(prev_tkn->literal.value())};
+    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
+    all_nodes.pop_back();
 
     function.parameters = parameter_list(); // could be an empty vector
 
     expect_token(->);
     Type type = declaration_specifier();
     node.type = type;
-
-    if (const auto& kind = type.kind; kind == Type::enum_ || kind == Type::struct_) {
-        report_error(token, "type cannot be defined in the result type of a function.");
-    }
 
     if (token_is_str("{")) function.body = compound_statement();
     else
@@ -95,8 +91,8 @@
             nodes.push_back(function_declaration());
         else if (token_is_keyword(struct))
             nodes.push_back(struct_declaration());
-        // else if (token_is_keyword(enum))
-        //     nodes.push_back(enum_declaration());
+        else if (token_is_keyword(enum))
+            nodes.push_back(enum_declaration());
         else
             nodes.push_back(statement());
     }
@@ -114,17 +110,7 @@
     while (token_is_keyword(const) || token_is_keyword(volatile)
            || token_is_keyword(static) || token_is_keyword(extern)) {}
     // we recognize but ignore these keywords atm
-
-    if (token_is_keyword(struct)) {
-        return Type {.name = "struct " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = Type::struct_,
-                     .declaration = struct_declaration()};
-    }
-    if (token_is_keyword(enum)) {
-        return Type {.name = "enum " + std::get<str>(prev_tkn->literal.value()),
-                     .kind = Type::enum_,
-                     .declaration = enum_declaration()};
-    }
+    
     if (token_is(builtin_type)) {
         type.name = std::get<str>(prev_tkn->literal.value());
         type.kind = builtin_type_kind(type.name);
@@ -134,12 +120,8 @@
         return type;
     }
     if (token_is(identifier)) {
-        type.name = std::get<str>(prev_tkn->literal.value());
+        type.name = identifier()->name, all_nodes.pop_back();
         type.kind = Type::Undetermined;
-        while(token_is(::)) {
-            expect_token(identifier);
-            type.name += std::get<str>(prev_tkn->literal.value());
-        }
         while (token_is(*)) type.ptr_count++;
         
         return type;
@@ -148,9 +130,11 @@
 }
 
 [[nodiscard]] ASTNode* Parser::namespace_declaration() {
-    expect_token(identifier);
 
-    ASTNode node {.source_token = *prev_tkn, .name = std::get<str>(prev_tkn->literal.value())};
+    expect_token(identifier);
+    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
+    all_nodes.pop_back();
+
     NamespaceDecl nmspace {NamespaceDecl::namespace_declaration};
 
     expect_token_str("{");
@@ -172,9 +156,10 @@
 }
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
+
     expect_token(identifier);
-    ASTNode node {.source_token = *prev_tkn,
-                  .name = std::get<str>(prev_tkn->literal.value())};
+    ASTNode node {.source_token = *prev_tkn, .name = identifier()->name};
+    all_nodes.pop_back();
 
     TypeDecl type_decl {TypeDecl::struct_declaration};
 
