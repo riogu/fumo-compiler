@@ -9,7 +9,7 @@ void Codegen::codegen(ASTNode* file_root_node) {
     ir_builder->SetInsertPoint(bblock);
 
     match(*file_root_node) {
-        holds(const NamespaceDecl&, scope) for (auto& node : scope.nodes) codegen(*node);
+        holds(NamespaceDecl, const& scope) for (auto& node : scope.nodes) codegen(*node);
         _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
     }
 
@@ -18,12 +18,12 @@ void Codegen::codegen(ASTNode* file_root_node) {
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
 
     match(node) {
-        holds(const PrimaryExpr&,  v) return codegen(node, v);
-        holds(const UnaryExpr&,    v) return codegen(node, v);
-        holds(const BinaryExpr&,   v) return codegen(node, v);
-        holds(const VariableDecl&, v) return codegen(node, v);
-        holds(const FunctionDecl&, v) return codegen(node, v);
-        holds(const BlockScope&,   v) return codegen(node, v);
+        holds(PrimaryExpr,  const& v) return codegen(node, v);
+        holds(UnaryExpr,    const& v) return codegen(node, v);
+        holds(BinaryExpr,   const& v) return codegen(node, v);
+        holds(VariableDecl, const& v) return codegen(node, v);
+        holds(FunctionDecl, const& v) return codegen(node, v);
+        holds(BlockScope,   const& v) return codegen(node, v);
         _default INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
     }
     std::unreachable();

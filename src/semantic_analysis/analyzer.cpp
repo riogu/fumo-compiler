@@ -15,16 +15,16 @@ void Analyzer::analyze(ASTNode& node) {
 
     match(node) {
 
-        holds(Identifier&, id) {
+        holds(Identifier, &id) {
             id.declaration = find_declaration(node);
             node.type = id.declaration.value()->type;
         }
 
-        holds(PrimaryExpr&, prim) {
+        holds(PrimaryExpr, prim) {
             switch (prim.kind) {
-                case PrimaryExpr::integer:        node.type.name = "i32"; node.type.kind = Type::i32_; break;
-                case PrimaryExpr::floating_point: node.type.name = "f64"; node.type.kind = Type::f64_; break;
-                case PrimaryExpr::str:            node.type.name = "str"; node.type.kind = Type::str_; break;
+                case integer:        node.type.name = "i32"; node.type.kind = Type::i32_; break;
+                case floating_point: node.type.name = "f64"; node.type.kind = Type::f64_; break;
+                case str:            node.type.name = "str"; node.type.kind = Type::str_; break;
                 // case PrimaryExpr::identifier:
                 //     break;
                 default:
@@ -32,26 +32,26 @@ void Analyzer::analyze(ASTNode& node) {
             }
         }
 
-        holds(UnaryExpr&, un) {
+        holds(UnaryExpr, &un) {
             // TODO: add checks for '!' and such to only work on arithmetic types
             analyze(*un.expr);
             switch (un.kind) {
-                case UnaryExpr::negate:
-                case UnaryExpr::bitwise_not:
+                case negate:
+                case bitwise_not:
                     if(!is_arithmetic_t(un.expr->type)) {
                         report_error(node.source_token,
                                      "invalid type '{}' for unary expression.", un.expr->type.name);
                     }
                     break;
-                case UnaryExpr::return_statement:
-                case UnaryExpr::logic_not:
+                case return_statement:
+                case logic_not:
                 default: 
                     INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
             node.type = un.expr->type;
         }
 
-        holds(BinaryExpr&, bin) {
+        holds(BinaryExpr, &bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
 
@@ -62,12 +62,12 @@ void Analyzer::analyze(ASTNode& node) {
             node.type = bin.lhs->type;
         }
 
-        holds(VariableDecl&, var) {
-            if (symbol_tree.curr_scope_kind == ScopeKind::Global) var.kind = VariableDecl::global_var_declaration;
+        holds(VariableDecl, &var) {
+            if (symbol_tree.curr_scope_kind == ScopeKind::Global) var.kind = global_var_declaration;
             add_to_scope(node);
         }
 
-        holds(FunctionDecl&, func) {
+        holds(FunctionDecl, &func) {
             // FIXME: delete local structs and functions after closing a function/block scope
             // they are treated like normal variables in the case of functions
             add_to_scope(node);
@@ -84,16 +84,16 @@ void Analyzer::analyze(ASTNode& node) {
             pop_scope(prev_name, node);
         }
 
-        holds(const BlockScope&, scope) {
+        holds(BlockScope, const& scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch(scope.kind) {
-                case BlockScope::compound_statement: {
+                case compound_statement: {
                     str prev_scope = push_scope("", node, ScopeKind::Local);
                     for (auto& node : scope.nodes) analyze(*node);
                     pop_scope(prev_scope, node);
                     break;
                 }
-                case BlockScope::initializer_list: 
+                case initializer_list: 
                     // TODO: we need to also solve the type for initializer lists
                     // they can either have a name `ASTNode {x = 123};` or have nothing `{x = 123};`
                     // in some contexts we might not be able to infer the type
@@ -105,7 +105,7 @@ void Analyzer::analyze(ASTNode& node) {
             }
         }
 
-        holds(const NamespaceDecl&, nmspace_decl) {
+        holds(NamespaceDecl, const& nmspace_decl) {
             add_to_scope(node);
 
             str prev_scope = push_scope(get_id(nmspace_decl).name + "::", node, ScopeKind::Global);
@@ -113,10 +113,10 @@ void Analyzer::analyze(ASTNode& node) {
             pop_scope(prev_scope, node);
         }
 
-        holds(const TypeDecl&, type_decl) {
+        holds(TypeDecl, const& type_decl) {
 
             switch (type_decl.kind) {
-                case TypeDecl::struct_declaration: {
+                case struct_declaration: {
                     add_to_scope(node);
 
                     if(type_decl.definition_body) {
@@ -144,7 +144,7 @@ void Analyzer::add_to_scope(ASTNode& node) {
 
     match(node) {
 
-        holds(FunctionDecl&, func) {
+        holds(FunctionDecl, &func) {
             // TODO: member function calls should be rewritten to take a pointer 
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
             get_id(func).mangled_name = symbol_tree.curr_scope_name + get_id(func).name;
@@ -153,21 +153,21 @@ void Analyzer::add_to_scope(ASTNode& node) {
 
             if (!was_inserted && func.body) {
                 match(*node_iterator->second) {
-                    holds(FunctionDecl&, func_) 
+                    holds(FunctionDecl, &func_) 
                         if(func_.body) report_error(node.source_token, "Redefinition of '{}'.", get_id(func).name);
                     _default INTERNAL_PANIC("expected function, got '{}'.", node.kind_name()); 
                 }
             }
         }
 
-        holds(VariableDecl&, var) {
+        holds(VariableDecl, &var) {
             get_id(var).mangled_name = symbol_tree.curr_scope_name + get_id(var).name;
             auto [_, was_inserted] = symbol_tree.push_to_scope(get_id(var).name, node);
 
             if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", get_id(var).name);
         }
 
-        holds(const NamespaceDecl&, nmspace_decl) {
+        holds(NamespaceDecl, const& nmspace_decl) {
             get_id(nmspace_decl).mangled_name = symbol_tree.curr_scope_name + get_id(nmspace_decl).name;
             auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(get_id(nmspace_decl).name, node);
 
@@ -176,7 +176,7 @@ void Analyzer::add_to_scope(ASTNode& node) {
             }
         }
 
-        holds(TypeDecl&, type_decl) {
+        holds(TypeDecl, &type_decl) {
             get_id(type_decl).mangled_name = symbol_tree.curr_scope_name + get_id(type_decl).name;
             auto [node_iterator, was_inserted] = symbol_tree.push_named_scope(get_id(type_decl).name, node);
 
@@ -186,7 +186,7 @@ void Analyzer::add_to_scope(ASTNode& node) {
 
             if (!was_inserted) {
                 match(*node_iterator->second) {
-                    holds(TypeDecl&, t_decl) {
+                    holds(TypeDecl, &t_decl) {
                         if (type_decl.definition_body && t_decl.definition_body) {
                             report_error(node.source_token, "Redefinition of '{}'.", get_id(type_decl).name);
                         }

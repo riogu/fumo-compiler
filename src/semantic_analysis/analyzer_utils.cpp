@@ -3,7 +3,7 @@
 [[nodiscard]] ASTNode* Analyzer::find_declaration(ASTNode& node) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
     match(node) {
-        holds(Identifier&, id) {
+        holds(Identifier, &id) {
             for (int i = symbol_tree.symbols_to_nodes_stack.size(); i != 0; i--) {
                 for (const auto& [name, node] : symbol_tree.symbols_to_nodes_stack.at(i)) {
                     if (name == id.name) return node;

@@ -5,55 +5,55 @@
     std::string result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(const Identifier&, id) result += std::format("{}{}{}", gray("⟮"), id.name, gray("⟯"));
+        holds(Identifier, const& id) result += std::format("{}{}{}", gray("⟮"), id.name, gray("⟯"));
        
-        holds(const PrimaryExpr&, prim) {
+        holds(PrimaryExpr, const& prim) {
             switch (prim.kind) {
-                case PrimaryExpr::integer:
+                case integer:
                     result += std::format("{}{}{}", gray("⟮"), std::get<int64_t>(prim.value), gray("⟯"));
                     break;
-                case PrimaryExpr::floating_point:
+                case floating_point:
                     result += std::format("{}{}{}", gray("⟮"), std::get<double>(prim.value), gray("⟯"));
                     break;
-                case PrimaryExpr::str:
+                case str:
                 // case PrimaryExpr::identifier: 
                     result += std::format("{}{}{}", gray("⟮"), std::get<str>(prim.value), gray("⟯"));
                     break;
             }
         }
 
-        holds(const UnaryExpr&, unary) {
+        holds(UnaryExpr, const& unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
             result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
         }
-        holds(const BinaryExpr&, bin) {
+        holds(BinaryExpr, const& bin) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.lhs->to_str(depth));
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), bin.rhs->to_str(depth));
         }
-        holds(const PostfixExpr&, postfix) {
+        holds(PostfixExpr, const& postfix) {
             // TODO: improve printing for postfix expressions here 
             switch (postfix.kind) {
-                case PostfixExpr::member_access:
-                case PostfixExpr::deref_member_access:
-                case PostfixExpr::function_call: 
+                case member_access:
+                case deref_member_access:
+                case function_call: 
                     result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
                     break;
             }
         }
-        holds(const VariableDecl&, var) {
+        holds(VariableDecl, const& var) {
             result += std::format("{} {}", gray("=>"), get_id(var).mangled_name);
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
             result += gray(": ") + yellow(type.name) + purple_blue(ptr_str);
         }
-        holds(const FunctionDecl&, func) {
+        holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
                 ASTNode* var = func.parameters.at(i);
-                const auto& param = get<VariableDecl>(var);
+                auto& param = get<VariableDecl>(var);
                 str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
                 temp += get_id(param).name + gray(": ") + yellow(var->type.name) + gray(ptr_str);;
                 if (i != func.parameters.size() - 1) temp += gray(", ");
@@ -66,10 +66,10 @@
             if (func.body) result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"),
                                                  func.body.value()->to_str(depth)); 
         }
-        holds(const BlockScope&, scope) {
+        holds(BlockScope, const& scope) {
             switch (scope.kind) {
-                case BlockScope::compound_statement:
-                case BlockScope::initializer_list:
+                case compound_statement:
+                case initializer_list:
                     result += gray("{");
                     depth++;
                     for(auto& node: scope.nodes) 
@@ -87,7 +87,7 @@
                     break;
             }
         }
-        holds(const NamespaceDecl&, namespace_decl) {
+        holds(NamespaceDecl, const& namespace_decl) {
             result += gray("=> ") + purple_blue("namespace ") + yellow(get_id(namespace_decl).mangled_name);
             result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
             result += purple_blue("definition ") + gray("{");
@@ -98,7 +98,7 @@
             depth--;
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
-        holds(const TypeDecl&, type_decl) {
+        holds(TypeDecl, const& type_decl) {
             result += gray("=> ") + purple_blue("struct ") + yellow(get_id(type_decl).mangled_name);
             if (type_decl.definition_body) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
@@ -117,7 +117,7 @@
 }
 
 #define nd_kind(v_) case v.v_: return std::format("\033[38;2;142;163;217m{}\033[0m",#v_);
-#define branch_kind_name(Branch) holds(const Branch&, v) switch(v.kind) { map_macro(nd_kind, Branch##_kinds) } 
+#define branch_kind_name(Branch) holds(Branch, const& v) switch(v.kind) { map_macro(nd_kind, Branch##_kinds) } 
 
 [[nodiscard]] std::string ASTNode::kind_name() const {
     match(*this) {

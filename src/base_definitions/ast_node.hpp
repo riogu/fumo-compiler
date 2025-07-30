@@ -8,7 +8,7 @@ struct ASTNode;
 
 // these ugly macros are just for printing the enums later in the debug
 struct Identifier {
-    enum {
+    enum Kind {
         #define Identifier_kinds                                       \
         unqualified,           /* (variable | function) name        */ \
         qualified             /* (variable | function) name        */ \
@@ -20,7 +20,7 @@ struct Identifier {
     str mangled_name = name;
 };
 struct PrimaryExpr {
-    enum {
+    enum Kind {
         #define PrimaryExpr_kinds                                        \
         /* empty_expr,*/         /* ;                                 */ \
         integer,                 /* i32 | i64 | i8                    */ \
@@ -32,7 +32,7 @@ struct PrimaryExpr {
     Literal value; // NOTE: not an identifier
 };
 struct UnaryExpr {
-    enum {
+    enum Kind {
         #define UnaryExpr_kinds                                          \
         negate,                  /* unary -                           */ \
         logic_not,               /* !                                 */ \
@@ -45,7 +45,7 @@ struct UnaryExpr {
 };
 
 struct BinaryExpr {
-    enum {
+    enum Kind {
         #define BinaryExpr_kinds                                         \
         add,                     /* +                                 */ \
         sub,                     /* -                                 */ \
@@ -64,7 +64,7 @@ struct BinaryExpr {
 };
 
 struct PostfixExpr {
-    enum {
+    enum Kind {
         #define PostfixExpr_kinds                                        \
         member_access,           /*                                   */ \
         deref_member_access,     /*                                   */ \
@@ -77,7 +77,7 @@ struct PostfixExpr {
 };
 
 struct VariableDecl {
-    enum {
+    enum Kind {
         #define VariableDecl_kinds                                       \
         global_var_declaration,  /*                                   */ \
         variable_declaration,    /*                                   */ \
@@ -88,7 +88,7 @@ struct VariableDecl {
     ASTNode* identifier;
 };
 struct FunctionDecl {
-    enum {
+    enum Kind {
         #define FunctionDecl_kinds                                       \
         function_declaration     /*                                   */ \
     
@@ -100,7 +100,7 @@ struct FunctionDecl {
 };
 
 struct BlockScope {
-    enum {
+    enum Kind {
         #define BlockScope_kinds                                         \
         compound_statement,      /* {...}                             */ \
         initializer_list,        /*                                   */ \
@@ -113,7 +113,7 @@ struct BlockScope {
 };
 
 struct NamespaceDecl {
-    enum {
+    enum Kind {
         #define NamespaceDecl_kinds                                      \
         translation_unit,        /*                                   */ \
         namespace_declaration    /*                                   */ \
@@ -124,9 +124,9 @@ struct NamespaceDecl {
     vec<ASTNode*> nodes {};
 };
 
-// a struct/enum introduces a named scope when defined
+// a struct/enum Kind introduces a named scope when defined
 struct TypeDecl {
-    enum {
+    enum Kind {
         #define TypeDecl_kinds                                           \
         struct_declaration        /*                                  */ \
         /* enum_declaration */    /*                                  */ \
