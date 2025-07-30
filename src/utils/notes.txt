@@ -1,3 +1,11 @@
 Stuff to do 20-7-2025
-- 
+- fix bug in initializer lists
+- add semantic analysis for postfix operators
+- finally finish the symbol table (find_variable, etc, util functions)
 
+Stuff to do 21-7-2025
+- fix all the missing parts of semantic analysis
+- finish codegen
+
+- add pointers (?)
+- add if, for, while statements (or expressions?)

@@ -208,13 +208,13 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 [[nodiscard]] ASTNode* Parser::initializer_list() {
     // TODO: add optional named elements syntax "{.foo = 123123}"
     BlockScope init_list {BlockScope::initializer_list};
-    init_list.nodes.push_back(postfix());
+    init_list.nodes.push_back(equality());
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
                 return push(ASTNode {*prev_tkn, std::move(init_list)});
             }
-            init_list.nodes.push_back(postfix());
+            init_list.nodes.push_back(equality());
             continue;
         }
         return push(ASTNode {*prev_tkn, std::move(init_list)});

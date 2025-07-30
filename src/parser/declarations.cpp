@@ -14,9 +14,8 @@
     node.branch = std::move(variable);
 
     if (token_is(=)) {
-        ASTNode* assignment = push(ASTNode {
-            *prev_tkn,
-            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), postfix()}});
+        ASTNode* assignment = push(ASTNode {*prev_tkn,
+                                            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), equality()}});
         expect_token(;);
         return assignment;
     } else if (node.type.name == "Undetermined") {
