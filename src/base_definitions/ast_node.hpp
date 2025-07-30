@@ -62,8 +62,9 @@ struct PostfixExpr {
     
         Postfix_kinds
     } kind;
-    str identifier;
-    ASTNode* next;
+    ASTNode* lhs;
+    ASTNode* rhs;
+    vec<ASTNode*> function_args {}; // if its empty we have no args
 };
 
 

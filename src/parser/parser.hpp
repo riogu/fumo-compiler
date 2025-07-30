@@ -31,8 +31,11 @@ struct Parser {
     [[nodiscard]] ASTNode* add();
     [[nodiscard]] ASTNode* multiply();
     [[nodiscard]] ASTNode* unary();
-    [[nodiscard]] ASTNode* postfix(); // NOTE: new addition
+    [[nodiscard]] ASTNode* initializer(); // NOTE: new addition
+    [[nodiscard]] ASTNode* postfix();     // NOTE: new addition
+    [[nodiscard]] vec<ASTNode*> argument_list();
     [[nodiscard]] Opt<ASTNode*> primary();
+    [[nodiscard]] ASTNode* identifier();
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();
