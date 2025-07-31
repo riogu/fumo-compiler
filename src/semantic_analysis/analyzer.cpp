@@ -15,11 +15,11 @@ void Analyzer::analyze(ASTNode& node) {
     match(node) {
 
         holds(Identifier, &id) {
-            id.declaration = find_declaration(id);
+            id.declaration = symbol_tree.find_declaration(id);
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+                // report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
             }
         }
 
@@ -139,7 +139,6 @@ void Analyzer::add_declaration(ASTNode& node) {
     //     fn foo::func() -> void {}
     // }   ^ this is not allowed.
 
-
     match(node) {
 
         holds(FunctionDecl, &func) {
@@ -193,3 +192,84 @@ void Analyzer::add_declaration(ASTNode& node) {
         }
     }
 }
+
+
+// struct gaming {let ahhh: i32;};
+// let x: gaming;
+// fn func() -> void {
+//      struct gaming {let bbbb: f32;};
+//      let x: gaming = 123123;
+//      {
+//          struct gaming {let vvvvv = 321;};
+//          let x: gaming;
+//          funcfunc();
+//      }
+// }
+//
+// somefunc();
+// namespace huh {
+//    struct foo {
+//         fn somefunc() -> void;
+//
+//         fn another() -> void {
+//             somefunc();
+//             struct bar {};
+//             "huh::foo::another()::bar"
+//             {
+//             "huh::foo::another()::::somefunc"();
+//             somefunc();
+//             }
+//         }
+//    };
+// }
+#define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
+
+[[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
+    id.mangled_name = curr_scope_name + id.name;
+
+    switch (id.kind) {
+
+        case Identifier::unsolved_type_name:
+            if find_value(id.name, type_decls) return iter->second;
+            break;
+
+        // TODO: function calls should not get mangled by the local function ever
+        case Identifier::unsolved_func_call_name:
+            switch (curr_scope_kind) {
+                case ScopeKind::TypeBody: {
+                    str curr_name = id.name;
+                    for (const auto& scope : scope_stack | std::views::reverse) {
+                        std::cerr << curr_name + " | ";
+                        curr_name = scope.name + curr_name;
+                    }
+                    break;
+                }
+                case ScopeKind::CompoundStatement:
+                    if find_value(id.name, function_decls) return iter->second;
+                    
+                case ScopeKind::Namespace: INTERNAL_PANIC("function call can't be global.");
+            }
+            break;
+
+        case Identifier::unsolved_var_name: {
+            for (const auto& scope : scope_stack | std::views::reverse) {
+                std::cerr <<  scope.name + id.name + " | ";
+            }
+        }
+
+        // for (const auto& [name, node] : local_variable_decls) {
+        //     if (name == id.mangled_name) return node;
+        // }
+        // for (const auto& [name, node] : global_variable_decls) {
+        //     if (name == id.mangled_name) return node;
+        // / }
+        break;
+
+        case Identifier::declaration_name: return id.declaration;
+        case Identifier::unknown_name:
+            INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
+    }
+
+    return std::nullopt;
+}
+

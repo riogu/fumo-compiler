@@ -13,6 +13,7 @@
 //
 namespace fs = std::filesystem; 
 using str = std::string;
+using str_view = std::string_view;
 template<typename  T> using vec = std::vector<T>;
 template<typename T> using Opt = std::optional<T>;
 template<typename T>

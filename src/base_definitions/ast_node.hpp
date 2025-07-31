@@ -5,15 +5,17 @@
 
 struct ASTNode; 
 
-// these ugly macros are just for printing the enums later in the debug
+// NOTE: identifiers always hold declarations, but we distinguish the codegen for them
+// based on if they are declaration_name or if they are one of the unsolved_names
+
 struct Identifier {
     enum Kind {
-        #define Identifier_kinds                                       \
-        unknown_name,         /* (variable | function) name        */  \
-        declaration_name,     /* (variable | function) name        */  \
-        unsolved_type_name,            /* (variable | function) name        */  \
-        unsolved_func_call_name,       /* (variable | function) name        */  \
-        unsolved_var_name              /* (variable | function) name        */  \
+        #define Identifier_kinds                                         \
+        unknown_name,           /* (variable | function) name        */  \
+        declaration_name,       /* (variable | function) name        */  \
+        unsolved_type_name,     /* (variable | function) name        */  \
+        unsolved_func_call_name,/* (variable | function) name        */  \
+        unsolved_var_name      /* (variable | function) name        */  \
 
         Identifier_kinds
     } kind;
