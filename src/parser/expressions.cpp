@@ -18,7 +18,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(statement()); /* NOTE: no longer valid in global */
             // report_error((*curr_tkn), "expected declaration.");
     }
-    auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::namespace_name, "fumo_module", Identifier::unqualified}});
+    auto id = push(ASTNode {*tkns.begin(),
+                            Identifier {Identifier::declaration_name, "fumo_module", Identifier::unqualified}});
     return push(ASTNode {.source_token = *tkns.begin(),
                          .branch = NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
 }
@@ -49,11 +50,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <assignment> ::= <equality> {"=" <initializer>}?
 [[nodiscard]] ASTNode* Parser::assignment() {
     auto node = equality();
-
+    
     if (token_is(=)) {
-        // TODO: this error should be handled by semantic analysis
-        // report_error(node->source_token,
-        //              "expected lvalue on left-hand side of assignment.");
+        is_branch<Identifier, PostfixExpr>(node) or_error(node->source_token, "expression is not assignable.");
+
         return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, postfix()}});
     }
     return node;
@@ -141,8 +141,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto temp_node = primary();
 
     if (token_is_str("{")) {
-        auto init_list = initializer_list(temp_node);
-        if (temp_node) init_list->type.identifier = temp_node.value();
+        auto init_list = initializer_list();
+        if (temp_node) {
+            is_branch<Identifier>(temp_node.value())
+                or_error(temp_node.value()->source_token, "expected identifier before initializer list.");
+            init_list->type.identifier = temp_node.value();
+        }
         expect_token_str("}");
         return init_list;
     }
@@ -199,13 +203,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
 // <initializer-list> ::= <postfix> {","}?
 //                      | <postfix> , <initializer-list>
-[[nodiscard]] ASTNode* Parser::initializer_list(Opt<ASTNode*> primary) {
+[[nodiscard]] ASTNode* Parser::initializer_list() {
     // TODO: add optional named elements syntax "{.foo = 123123}"
 
     BlockScope init_list {BlockScope::initializer_list};
-    if (primary) {
-        init_list.identifier = primary.value();
-    }
 
     if (peek_token_str("}")) return push(ASTNode {*prev_tkn, std::move(init_list)});
 
@@ -234,15 +235,15 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(int))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
     if (token_is(float))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "f64"}}), Type::f64_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
     if (token_is(string))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
 
     if (token_is(identifier)) return identifier();
 

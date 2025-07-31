@@ -1,8 +1,8 @@
 #pragma once
-#include "base_definitions/ast_node.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 #include <map>
+#include "base_definitions/ast_node.hpp"
 
 struct Codegen {
   private:

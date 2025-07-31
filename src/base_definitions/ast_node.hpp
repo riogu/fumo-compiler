@@ -112,7 +112,6 @@ struct BlockScope {
         BlockScope_kinds
     } kind;
     vec<ASTNode*> nodes {};
-    Opt<ASTNode*> identifier {};
 };
 
 struct NamespaceDecl {
@@ -158,15 +157,23 @@ struct ASTNode {
 
 #define get_name(branch_) get<Identifier>(branch_.identifier).name
 #define get_id(branch_) get<Identifier>(branch_.identifier)
+
 template<typename Branch>
 constexpr Branch& get(ASTNode* node) {
     if (std::holds_alternative<Branch>(node->branch)) return std::get<Branch>(node->branch);
     else
         INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->kind_name());
 }
+#define is_branch (void)({ bool held; bool branch_ = held = is_impl_
+
+template<typename... Branches>
+constexpr bool is_impl_(ASTNode* node) {
+    return (std::holds_alternative<Branches>(node->branch) || ...);
+}
 
 #define get_if *({ auto [branch_, held] = get_if_impl_
 #define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
+
 template<typename Branch>
 constexpr auto get_if_impl_(ASTNode* node) {
     if (bool v = std::holds_alternative<Branch>(node->branch); v) return std::pair{&std::get<Branch>(node->branch), v};

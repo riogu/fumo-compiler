@@ -9,13 +9,13 @@
        
         holds(PrimaryExpr, const& prim) {
             switch (prim.kind) {
-                case integer:
+                case PrimaryExpr::integer:
                     result += std::format("{}{}{}", gray("⟮"), std::get<int64_t>(prim.value), gray("⟯"));
                     break;
-                case floating_point:
+                case PrimaryExpr::floating_point:
                     result += std::format("{}{}{}", gray("⟮"), std::get<double>(prim.value), gray("⟯"));
                     break;
-                case str:
+                case PrimaryExpr::str:
                 // case PrimaryExpr::identifier: 
                     result += std::format("{}{}{}", gray("⟮"), std::get<str>(prim.value), gray("⟯"));
                     break;
@@ -35,9 +35,9 @@
         holds(PostfixExpr, const& postfix) {
             // TODO: improve printing for postfix expressions here 
             switch (postfix.kind) {
-                case member_access:
-                case deref_member_access:
-                case function_call: 
+                case PostfixExpr::member_access:
+                case PostfixExpr::deref_member_access:
+                case PostfixExpr::function_call: 
                     result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
                     result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
@@ -68,8 +68,8 @@
         }
         holds(BlockScope, const& scope) {
             switch (scope.kind) {
-                case compound_statement:
-                case initializer_list:
+                case BlockScope::compound_statement:
+                case BlockScope::initializer_list:
                     result += gray("{");
                     depth++;
                     for(auto& node: scope.nodes) 

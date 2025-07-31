@@ -1,12 +1,13 @@
 Stuff to do 20-7-2025
 - [X] fix bug in initializer lists
-- finally finish the symbol table (find_variable, etc, util functions)
-
+->>>> finally finish the symbol table (find_variable, etc, util functions)
 - add semantic analysis for postfix operators
 
 Stuff to do 21-7-2025
-- fix all the missing parts of semantic analysis
-- finish codegen
+- finish analyzer_utils.cpp (symbol table find, etc)
+- add postfix operator analysis
+- add codegen for everything new that we added (structs mainly)
 
+- finish codegen
 - add pointers (?)
 - add if, for, while statements (or expressions?)

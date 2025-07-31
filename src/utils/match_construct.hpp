@@ -24,7 +24,6 @@ struct type_sequence {
     break;                                                                                          \
 }                                                                                                   \
     case t_seq___.idx<std::remove_pointer<std ::remove_cvref<T>::type>::type>: {                    \
-        using enum T::Kind;                                                                         \
         __VA_OPT__(T __VA_ARGS__ =                                                                  \
             get_elem<std::remove_pointer<std::remove_cvref<T>::type>::type>(v___);)
 

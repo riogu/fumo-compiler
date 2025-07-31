@@ -25,7 +25,7 @@ struct Parser {
     [[nodiscard]] ASTNode* expression_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
-    [[nodiscard]] ASTNode* initializer_list(Opt<ASTNode*> identifier);
+    [[nodiscard]] ASTNode* initializer_list();
     [[nodiscard]] ASTNode* equality();
     [[nodiscard]] ASTNode* relational();
     [[nodiscard]] ASTNode* add();
@@ -79,9 +79,6 @@ struct Parser {
     #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
     #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), #tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
-        if (!is_tkn(type)) {
-            prev_tkn->line_offset++;
-            report_error((*prev_tkn), "expected '{}'.", repr);
-        }
+        if (!is_tkn(type)) report_error((*curr_tkn), "expected '{}'.", repr);
     }
 };

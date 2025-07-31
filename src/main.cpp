@@ -1,6 +1,6 @@
+#include "codegen/llvm_codegen.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
-#include "codegen/llvm_codegen.hpp"
 #include "semantic_analysis/analyzer.hpp"
 
 
