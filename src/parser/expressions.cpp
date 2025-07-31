@@ -161,6 +161,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         expect_token_str(")");
     }
 
+    // TODO: specify what kind of identifier each part of the postfix is in the call
     while(1) {
         if (token_is(->)) {
             expect_token(identifier);
@@ -235,29 +236,28 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(int))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "i32"}}), Type::i32_}});
     if (token_is(float))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "f64"}}), Type::f64_}});
     if (token_is(string))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "i32"}}), Type::i32_}});
 
-    if (token_is(identifier)) return identifier();
+    // NOTE: only variable names go through primary() to be found
+    if (token_is(identifier)) return identifier(Identifier::unsolved_var_name);
 
     return std::nullopt;
 
 }
 
-// NOTE: i expect to be able to just use the actual string for solving these identifiers
-// because every name is flattened (struct or namespace) and then we can find if that name
-// was what we expected in each context (a type, a namespace, etc)
 [[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind, Opt<ASTNode*> declaration) {
-    if(id_kind == Identifier::declaration_name && !declaration) INTERNAL_PANIC("forgot to provide declaration to identifier.");
+    if (id_kind == Identifier::declaration_name && !declaration) [[unlikely]]
+        INTERNAL_PANIC("forgot to provide declaration to identifier.");
     auto token = *prev_tkn;
-    Identifier id {.name = std::get<str>(prev_tkn->literal.value()), .qualifier = Identifier::unqualified};
+    Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     while (token_is(::)) {
         expect_token(identifier);
         id.name += "::" + std::get<str>(prev_tkn->literal.value());

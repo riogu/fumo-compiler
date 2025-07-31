@@ -5,8 +5,12 @@
     std::string result = std::format("{} ", kind_name());
 
     match(*this) {
-        holds(Identifier, const& id) result += std::format("{}{}{}", gray("⟮"), id.name, gray("⟯"));
-       
+        holds(Identifier, const& id) {
+            if (id.declaration) 
+                result += id.declaration.value()->to_str(depth);
+            else
+                result += std::format("{}{}{}", gray("⟮"), id.mangled_name, gray("⟯"));
+        }
         holds(PrimaryExpr, const& prim) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:

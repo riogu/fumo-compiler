@@ -1,38 +1,26 @@
 #include "semantic_analysis/analyzer.hpp"
-#include "base_definitions/ast_node.hpp"
-#include "utils/common_utils.hpp"
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
-    str prev_scope = push_scope("", *file_root_node, ScopeKind::Global);
+    symbol_tree.push_scope("", ScopeKind::Namespace);
 
     auto& file_scope = get<NamespaceDecl>(file_root_node);
     for (auto& node : file_scope.nodes) analyze(*node);
 
-    pop_scope(prev_scope, *file_root_node);
+    symbol_tree.pop_scope();
 }
 
 void Analyzer::analyze(ASTNode& node) {
 
-    // struct gaming {let ahhh: i32;};
-    // let x: gaming;
-    // fn func() -> void {
-    //      struct gaming {let bbbb: f32;};
-    //      let x: gaming = 123123;
-    //      {
-    //          struct gaming {let vvvvv = 321;};
-    //          let x: gaming;
-    //      }
-    // }
-
     match(node) {
 
         holds(Identifier, &id) {
-            id.mangled_name = symbol_tree.curr_scope_name + id.name;
             id.declaration = find_declaration(id);
-            if (id.declaration) node.type = id.declaration.value()->type;
-            else
+            if (id.declaration) {
+                node.type = id.declaration.value()->type;
+            } else {
                 report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+            }
         }
 
         holds(PrimaryExpr, prim) {
@@ -74,17 +62,16 @@ void Analyzer::analyze(ASTNode& node) {
             node.type = bin.lhs->type;
         }
 
-        holds(VariableDecl, &var) {
-            if (symbol_tree.curr_scope_kind == ScopeKind::Global) var.kind = VariableDecl::global_var_declaration;
-            // NOTE: doesnt handle determining its own type, assignment does that
+        holds(VariableDecl, &var) { // doesnt handle determining its own type, assignment does that
+            analyze(*var.identifier);
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
 
         holds(FunctionDecl, &func) {
-            // FIXME: delete local structs and functions after closing a function/block scope
-            // they are treated like normal variables in the case of functions
+            analyze(*func.identifier);
             add_declaration(node);
-            str prev_name = push_scope(get_name(func) + "()::", node, ScopeKind::CompoundStatement);
+            symbol_tree.push_scope(get_name(func) + "()::", ScopeKind::CompoundStatement);
 
             for (auto& param : func.parameters) {
                 if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
@@ -92,20 +79,20 @@ void Analyzer::analyze(ASTNode& node) {
             }
 
             if (func.body) {
-                func.body.value()->type = node.type; // NOTE: passing the function's type to the body
+                func.body.value()->type = node.type; // passing the function's type to the body
                 for (auto& node : get<BlockScope>(func.body.value()).nodes) analyze(*node);
             }
 
-            pop_scope(prev_name, node);
+            symbol_tree.pop_scope();
         }
 
         holds(BlockScope, &scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch (scope.kind) {
                 case BlockScope::compound_statement: {
-                    str prev_scope = push_scope("", node, ScopeKind::CompoundStatement);
+                    symbol_tree.push_scope("::", ScopeKind::CompoundStatement);
                     for (auto& node : scope.nodes) analyze(*node);
-                    pop_scope(prev_scope, node);
+                    symbol_tree.pop_scope();
                     break;
                 }
                 case BlockScope::initializer_list:
@@ -116,22 +103,24 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(NamespaceDecl, const& nmspace_decl) {
+            analyze(*nmspace_decl.identifier);
             add_declaration(node);
-            str prev_scope = push_scope(get_name(nmspace_decl) + "::", node, ScopeKind::Global);
+            symbol_tree.push_scope(get_name(nmspace_decl) + "::", ScopeKind::Namespace);
             for (auto& node : nmspace_decl.nodes) analyze(*node);
-            pop_scope(prev_scope, node);
+            symbol_tree.pop_scope();
         }
 
         holds(TypeDecl, const& type_decl) {
+            analyze(*type_decl.identifier);
 
             switch (type_decl.kind) {
                 case TypeDecl::struct_declaration: {
                     add_declaration(node);
 
                     if (type_decl.definition_body) {
-                        str prev_scope = push_scope(get_name(type_decl) + "::", node, ScopeKind::TypeBody);
+                        symbol_tree.push_scope(get_name(type_decl) + "::", ScopeKind::TypeBody);
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
-                        pop_scope(prev_scope, node);
+                        symbol_tree.pop_scope();
                     }
                     break;
                 }
@@ -158,9 +147,7 @@ void Analyzer::add_declaration(ASTNode& node) {
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
             Identifier& id = get_id(func);
             id.declaration = &node;
-            // id.mangled_name = symbol_tree.curr_scope_name + id.name;
-            // symbol_tree.curr_scope_name = "";
-            auto [node_iterator, was_inserted] = symbol_tree.push_function(id.name, node);
+            auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id.name, node);
 
             if (!was_inserted && func.body) {
                 auto& func_ = get<FunctionDecl>(node_iterator->second);
@@ -171,8 +158,7 @@ void Analyzer::add_declaration(ASTNode& node) {
         holds(VariableDecl, &var) {
             Identifier& id = get_id(var);
             id.declaration = &node;
-            // id.mangled_name = symbol_tree.curr_scope_name + id.name;
-            auto [_, was_inserted] = symbol_tree.push_variable(id.name, node);
+            auto [_, was_inserted] = symbol_tree.push_variable_decl(id.name, node);
 
             if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", id.name);
         }
@@ -180,16 +166,14 @@ void Analyzer::add_declaration(ASTNode& node) {
         holds(NamespaceDecl, &nmspace_decl) {
             Identifier& id = get_id(nmspace_decl);
             id.declaration = &node;
-            // id.mangled_name = symbol_tree.curr_scope_name + id.name;
-            if (symbol_tree.type_names.contains(id.name))
+            if (symbol_tree.type_decls.contains(id.name))
                 report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.name);
-            symbol_tree.push_namespace(id.name, node);
+            symbol_tree.push_namespace_decl(id.name, node);
         }
 
         holds(TypeDecl, &type_decl) {
             Identifier& id = get_id(type_decl);
-            id.mangled_name = symbol_tree.curr_scope_name + id.name;
-            auto [node_iterator, was_inserted] = symbol_tree.push_type(id.name, node);
+            auto [node_iterator, was_inserted] = symbol_tree.push_type_decl(id.name, node);
 
             // TODO: add each member of the struct to the type decl info.
             // we need to store offsets and the names of the members (for solving lookups later)

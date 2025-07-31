@@ -1,30 +1,76 @@
 #include "semantic_analysis/analyzer.hpp"
 
+// struct gaming {let ahhh: i32;};
+// let x: gaming;
+// fn func() -> void {
+//      struct gaming {let bbbb: f32;};
+//      let x: gaming = 123123;
+//      {
+//          struct gaming {let vvvvv = 321;};
+//          let x: gaming;
+//          funcfunc();
+//      }
+// }
+//
+        // somefunc();
+        // namespace huh {
+        //    struct foo {
+        //         fn somefunc() -> void;
+        //
+        //         fn another() -> void {
+        //             somefunc();
+        //             struct bar {};
+        //             "huh::foo::another()::bar"
+        //             {
+        //             "huh::foo::another()::::somefunc"();
+        //             somefunc();
+        //             }
+        //         }
+        //    };
+        // }
 [[nodiscard]] Opt<ASTNode*> Analyzer::find_declaration(Identifier& id) {
+    id.mangled_name = symbol_tree.curr_scope_name + id.name;
+
+    // FIXME: replace for loops with reverse iteration through the scope_name_stack
     switch (id.kind) {
-        case Identifier::type_name:
+
+        case Identifier::unsolved_type_name:
+            for (const auto& [name, node] : symbol_tree.type_decls) {
+                if (name == id.mangled_name) return node;
+            }
+            break;
+
+        // TODO: function calls should not get mangled by the local function ever
+        case Identifier::unsolved_func_call_name:
             switch (symbol_tree.curr_scope_kind) {
-                case ScopeKind::Global:
-                case ScopeKind::TypeBody:
-                case ScopeKind::CompoundStatement: 
-            }
-            for (const auto& [name, node] : symbol_tree.type_names) {
-                if (name == id.name) return node;
-            }
-            break;
-        case Identifier::func_name:
-            for (const auto& [name, node] : symbol_tree.function_names) {
-                if (name == id.name) return node;
-            }
-            break;
-        case Identifier::var_name:
-            for (int i = symbol_tree.variable_env_stack.size(); i != 0; i--) {
-                for (const auto& [name, node] : symbol_tree.variable_env_stack.at(i)) {
-                    if (name == id.name) return node;
-                }
+                case ScopeKind::TypeBody: // search mangled names first
+                    for (const auto& [name, node] : symbol_tree.function_decls) {
+                        if (name == id.mangled_name) return node;
+                    }
+                    for (const auto& [name, node] : symbol_tree.function_decls) {
+                        if (name == id.name) return node;
+                    }
+                    break;
+                case ScopeKind::CompoundStatement:
+                    for (const auto& [name, node] : symbol_tree.function_decls) {
+                        if (name == id.mangled_name) return node;
+                    }
+                case ScopeKind::Namespace: INTERNAL_PANIC("function call can't be global.");
             }
             break;
+
+        case Identifier::unsolved_var_name:
+            for (const auto& [name, node] : symbol_tree.local_variable_decls) {
+                if (name == id.mangled_name) return node;
+            }
+            for (const auto& [name, node] : symbol_tree.global_variable_decls) {
+                if (name == id.mangled_name) return node;
+            }
+            break;
+
         case Identifier::declaration_name: return id.declaration;
+        case Identifier::unknown_name:
+            INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
     }
 
     return std::nullopt;

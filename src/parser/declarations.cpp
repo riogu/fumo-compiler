@@ -12,7 +12,7 @@
     if (token_is(:)) {
         node->type = declaration_specifier();
     } else
-        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
+        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "Undetermined"}});
 
     node->branch = std::move(variable);
 
@@ -107,7 +107,7 @@
     
     if (token_is(builtin_type)) {
         type.identifier = push(ASTNode {*prev_tkn, 
-                                        Identifier {Identifier::type_name,
+                                        Identifier {Identifier::unsolved_type_name,
                                                     std::get<str>(prev_tkn->literal.value())}});
         type.kind = builtin_type_kind(get_name(type));
         while (token_is(*)) type.ptr_count++; // NOTE: consider redoing the ptr implementation
@@ -115,7 +115,7 @@
         return type;
     }
     if (token_is(identifier)) {
-        type.identifier = identifier(Identifier::type_name);
+        type.identifier = identifier(Identifier::unsolved_type_name);
         type.kind = Type::Undetermined;
 
         while (token_is(*)) type.ptr_count++;

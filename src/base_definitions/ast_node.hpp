@@ -9,10 +9,11 @@ struct ASTNode;
 struct Identifier {
     enum Kind {
         #define Identifier_kinds                                       \
+        unknown_name,         /* (variable | function) name        */  \
         declaration_name,     /* (variable | function) name        */  \
-        type_name,            /* (variable | function) name        */  \
-        func_name,            /* (variable | function) name        */  \
-        var_name              /* (variable | function) name        */  \
+        unsolved_type_name,            /* (variable | function) name        */  \
+        unsolved_func_call_name,       /* (variable | function) name        */  \
+        unsolved_var_name              /* (variable | function) name        */  \
 
         Identifier_kinds
     } kind;
