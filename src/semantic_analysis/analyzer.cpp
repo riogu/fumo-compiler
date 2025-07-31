@@ -237,10 +237,7 @@ void Analyzer::add_declaration(ASTNode& node) {
         case Identifier::unsolved_func_call_name:
             switch (curr_scope_kind) {
                 case ScopeKind::TypeBody: {
-                    str curr_name = id.name;
                     for (const auto& scope : scope_stack | std::views::reverse) {
-                        std::cerr << curr_name + " | ";
-                        curr_name = scope.name + curr_name;
                     }
                     break;
                 }
@@ -251,19 +248,13 @@ void Analyzer::add_declaration(ASTNode& node) {
             }
             break;
 
-        case Identifier::unsolved_var_name: {
+        case Identifier::unsolved_var_name:
+            // std::cerr <<  scope.name + id.name + " | ";
             for (const auto& scope : scope_stack | std::views::reverse) {
-                std::cerr <<  scope.name + id.name + " | ";
+                if find_value (scope.name + id.name, local_variable_decls) return iter->second;
+                if find_value (scope.name + id.name, global_variable_decls) return iter->second;
             }
-        }
-
-        // for (const auto& [name, node] : local_variable_decls) {
-        //     if (name == id.mangled_name) return node;
-        // }
-        // for (const auto& [name, node] : global_variable_decls) {
-        //     if (name == id.mangled_name) return node;
-        // / }
-        break;
+            break;
 
         case Identifier::declaration_name: return id.declaration;
         case Identifier::unknown_name:

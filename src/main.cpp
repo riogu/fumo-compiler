@@ -21,8 +21,8 @@ auto main(int argc, char** argv) -> int {
     analyzer.semantic_analysis(file_root_node);
 
 
-    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
-    // std::cerr << "\n";
+    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
+    std::cerr << "\n";
 
     // Codegen codegen {file};
     // codegen.codegen(file_root_node);

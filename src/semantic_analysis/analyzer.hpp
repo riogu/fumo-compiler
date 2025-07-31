@@ -33,7 +33,7 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> namespace_decls {};
     std::map<str, ASTNode*> function_decls {};
     std::map<str, ASTNode*> global_variable_decls {};
-    vec<Scope> scope_stack = {};
+    vec<Scope> scope_stack {};
 
     str curr_scope_name = "";
     ScopeKind curr_scope_kind;
