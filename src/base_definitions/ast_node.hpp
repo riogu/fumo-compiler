@@ -153,6 +153,7 @@ struct ASTNode {
 };
 
 
+#define get_name(branch_) get<Identifier>(branch_.identifier).name
 #define get_id(branch_) get<Identifier>(branch_.identifier)
 template<typename Branch>
 constexpr Branch& get(ASTNode* node) {
@@ -161,10 +162,20 @@ constexpr Branch& get(ASTNode* node) {
         INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->kind_name());
 }
 
+#define get_if *({ auto [branch_, held] = get_if_impl_
+#define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
+template<typename Branch>
+constexpr auto get_if_impl_(ASTNode* node) {
+    if (bool v = std::holds_alternative<Branch>(node->branch); v) return std::pair{&std::get<Branch>(node->branch), v};
+    else {
+        Branch* dummy {};
+        return std::pair{dummy, false};
+    }
+}
+
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
 inline size_t index_of(ASTNode& node) { return node.branch.index(); }
 inline size_t index_of(const ASTNode& node) { return node.branch.index(); }
 template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
-

@@ -229,11 +229,17 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return node;
     }
     if (token_is(int))
-        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn,
+                             PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
+                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "i32"}}), Type::i32_}});
     if (token_is(float))
-        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn,
+                             PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
+                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "f64"}}), Type::f64_}});
     if (token_is(string))
-        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()}});
+        return push(ASTNode {*prev_tkn,
+                             PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
+                             Type {push(ASTNode {*prev_tkn, Identifier {.name = "i32"}}), Type::i32_}});
 
     if (token_is(identifier)) return identifier();
 

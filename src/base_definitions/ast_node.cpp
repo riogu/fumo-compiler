@@ -47,7 +47,7 @@
         holds(VariableDecl, const& var) {
             result += std::format("{} {}", gray("=>"), get_id(var).mangled_name);
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            result += gray(": ") + yellow(type.name) + purple_blue(ptr_str);
+            result += gray(": ") + yellow(get_name(type)) + purple_blue(ptr_str);
         }
         holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
@@ -55,12 +55,12 @@
                 ASTNode* var = func.parameters.at(i);
                 auto& param = get<VariableDecl>(var);
                 str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
-                temp += get_id(param).name + gray(": ") + yellow(var->type.name) + gray(ptr_str);;
+                temp += get_id(param).name + gray(": ") + yellow(get_name(var->type)) + gray(ptr_str);;
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            temp += gray(" -> ") + yellow(type.name) + gray(ptr_str);
+            temp += gray(" -> ") + yellow(get_name(type)) + gray(ptr_str);
 
             result += std::format("{} {}", gray("=>"), temp);
             if (func.body) result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"),

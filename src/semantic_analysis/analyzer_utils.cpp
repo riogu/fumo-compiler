@@ -17,7 +17,6 @@
 }
 
 
-
 [[nodiscard]] bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
     INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
 }
@@ -32,10 +31,10 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
         case BinaryExpr::equal:     case BinaryExpr::not_equal:
         case BinaryExpr::less_than: case BinaryExpr::less_equals:
             report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
-                         bin.lhs->type.name, node.source_token.to_str(), bin.rhs->type.name);
+                         get_name(bin.lhs->type), node.source_token.to_str(),get_name(bin.rhs->type));
         case BinaryExpr::assignment:
             report_error(node.source_token,"assigning to '{}'from incompatible type '{}'.",
-                         bin.lhs->type.name, bin.rhs->type.name);
+                         get_name(bin.lhs->type), get_name(bin.rhs->type));
         default:
             INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }

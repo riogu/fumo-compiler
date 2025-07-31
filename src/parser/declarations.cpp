@@ -9,7 +9,10 @@
 
     VariableDecl variable {VariableDecl::variable_declaration, identifier()};
 
-    if (token_is(:)) node.type = declaration_specifier();
+    if (token_is( :)) {
+        node.type = declaration_specifier();
+    } else
+        node.type.identifier = push(ASTNode {*prev_tkn, Identifier {.name = "Undetermined"}});
 
     node.branch = std::move(variable);
 
@@ -18,7 +21,7 @@
                                             BinaryExpr {BinaryExpr::assignment, push(std::move(node)), equality()}});
         expect_token(;);
         return assignment;
-    } else if (node.type.name == "Undetermined") {
+    } else if (get_name(node.type) == "Undetermined") {
         report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }
 
@@ -107,17 +110,15 @@
     // we recognize but ignore these keywords atm
     
     if (token_is(builtin_type)) {
-        type.name = std::get<str>(prev_tkn->literal.value());
-        type.kind = builtin_type_kind(type.name);
+        type.identifier = push(ASTNode {*prev_tkn, Identifier {.name = std::get<str>(prev_tkn->literal.value())}});
+        type.kind = builtin_type_kind(get_name(type));
         // NOTE: consider redoing the ptr implementation
         while (token_is(*)) type.ptr_count++;
         
         return type;
     }
     if (token_is(identifier)) {
-        type.name =  std::get<str>(prev_tkn->literal.value());
-        while (token_is(::)) expect_token(identifier), type.name += "::" + std::get<str>(prev_tkn->literal.value());
-
+        type.identifier =  identifier();
         type.kind = Type::Undetermined;
 
         while (token_is(*)) type.ptr_count++;

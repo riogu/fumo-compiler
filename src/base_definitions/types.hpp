@@ -8,7 +8,7 @@ struct ASTNode;
 
 
 struct Type {
-    std::string name = "Undetermined";
+    ASTNode* identifier;
     enum Kind {
         Undetermined, // should be converted in the type checker or give error
         Nothing,      // bottom type, used for if statements and other typeless constructs
@@ -20,7 +20,7 @@ struct Type {
     } kind = Undetermined;
     enum TypeQualifier { const_, volatile_, extern_, static_ };
     std::unordered_set<TypeQualifier> qualifiers;
-    Opt<ASTNode*> declaration {};
+    // Opt<ASTNode*> declaration {}; NOTE: is present in identifier node
     int ptr_count = 0;
 };
 

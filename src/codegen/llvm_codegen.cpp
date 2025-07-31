@@ -8,11 +8,7 @@ void Codegen::codegen(ASTNode* file_root_node) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    match(*file_root_node) {
-        holds(NamespaceDecl, const& scope) for (auto& node : scope.nodes) codegen(*node);
-        _default INTERNAL_PANIC("expected file scope, got '{}'.", file_root_node->kind_name());
-    }
-
+    for (auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
