@@ -254,7 +254,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // NOTE: i expect to be able to just use the actual string for solving these identifiers
 // because every name is flattened (struct or namespace) and then we can find if that name
 // was what we expected in each context (a type, a namespace, etc)
-[[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind) {
+[[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind, Opt<ASTNode*> declaration) {
+    if(id_kind == Identifier::declaration_name && !declaration) INTERNAL_PANIC("forgot to provide declaration to identifier.");
     auto token = *prev_tkn;
     Identifier id {.name = std::get<str>(prev_tkn->literal.value()), .qualifier = Identifier::unqualified};
     while (token_is(::)) {
@@ -262,5 +263,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         id.name += "::" + std::get<str>(prev_tkn->literal.value());
         id.qualifier = Identifier::qualified;
     }
+    id.mangled_name = id.name;
     return push(ASTNode {.source_token = token, .branch = id});
 }

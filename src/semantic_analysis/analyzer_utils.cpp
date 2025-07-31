@@ -3,11 +3,10 @@
 [[nodiscard]] Opt<ASTNode*> Analyzer::find_declaration(Identifier& id) {
     switch (id.kind) {
         case Identifier::type_name:
-            if (is_builtin_type(id.name)) {}
             switch (symbol_tree.curr_scope_kind) {
                 case ScopeKind::Global:
                 case ScopeKind::TypeBody:
-                case ScopeKind::CompoundStatement: break;
+                case ScopeKind::CompoundStatement: 
             }
             for (const auto& [name, node] : symbol_tree.type_names) {
                 if (name == id.name) return node;

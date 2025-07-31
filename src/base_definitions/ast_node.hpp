@@ -2,7 +2,6 @@
 #include "base_definitions/tokens.hpp"
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
-#include <variant>
 
 struct ASTNode; 
 
@@ -155,13 +154,19 @@ struct ASTNode {
 };
 
 
-#define get_name(branch_) get<Identifier>(branch_.identifier).name
-#define get_id(branch_) get<Identifier>(branch_.identifier)
+#define get_name(branch_) get_id(branch_).name
+#define get_id(branch_)                                                             \
+(*({ if (!branch_.identifier) [[unlikely]] {                                        \
+        INTERNAL_PANIC("forgot to initialize an Identifier for '{}'.", #branch_);   \
+     }                                                                              \
+    &get<Identifier>(branch_.identifier);                                           \
+   }))
 
 template<typename Branch>
 constexpr Branch& get(ASTNode* node) {
+    if(!node) [[unlikely]] INTERNAL_PANIC("node was uninitialized (FIX THIS).");
     if (std::holds_alternative<Branch>(node->branch)) return std::get<Branch>(node->branch);
-    else
+    else [[unlikely]]
         INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->kind_name());
 }
 

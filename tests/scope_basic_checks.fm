@@ -68,3 +68,8 @@ t(
 "1\n"
 "let y = 213123;\n"
 ,fail),
+
+t(
+"    fn func(x: i32) -> void;\n"
+"\n"
+,pass),

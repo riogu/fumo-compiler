@@ -52,10 +52,13 @@
         holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
             for(size_t i = 0; i < func.parameters.size(); i++) {
-                ASTNode* var = func.parameters.at(i);
-                auto& param = get<VariableDecl>(var);
-                str ptr_str; for (int i = 0; i < var->type.ptr_count; i++) ptr_str += "*";
-                temp += get_id(param).name + gray(": ") + yellow(get_name(var->type)) + gray(ptr_str);;
+                ASTNode* param = func.parameters.at(i);
+                auto& var = get<VariableDecl>(param);
+
+                str ptr_str; for (int i = 0; i < param->type.ptr_count; i++) ptr_str += "*";
+
+                temp += get_id(var).name + gray(": ") + yellow(get_name(param->type)) + gray(ptr_str);
+
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");

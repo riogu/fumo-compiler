@@ -5,28 +5,27 @@
 [[nodiscard]] ASTNode* Parser::variable_declaration() {
     // TODO: should be identifier list (add later)
     expect_token(identifier);
-    auto node = ASTNode {*prev_tkn};
+    auto* node = push(ASTNode {*prev_tkn});
 
-    VariableDecl variable {VariableDecl::variable_declaration, identifier()};
+    VariableDecl variable {VariableDecl::variable_declaration, identifier(Identifier::declaration_name, node)};
 
     if (token_is(:)) {
-        node.type = declaration_specifier();
+        node->type = declaration_specifier();
     } else
-        node.type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
+        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
 
-    node.branch = std::move(variable);
+    node->branch = std::move(variable);
 
     if (token_is(=)) {
-        ASTNode* assignment = push(ASTNode {*prev_tkn,
-                                            BinaryExpr {BinaryExpr::assignment, push(std::move(node)), equality()}});
+        ASTNode* assignment = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
         expect_token(;);
         return assignment;
-    } else if (get_name(node.type) == "Undetermined") {
+    } else if (get_name(node->type) == "Undetermined") {
         report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }
 
     expect_token(;);
-    return push(std::move(node));
+    return node;
 }
 
 // <function-declaration> ::=  <declarator> "(" {<parameter-list>}? ")"
@@ -34,21 +33,21 @@
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
     expect_token(identifier);
-    ASTNode node {*prev_tkn};
-    FunctionDecl function {FunctionDecl::function_declaration, identifier()};
+    auto* node = push(ASTNode {*prev_tkn});
+    FunctionDecl function {FunctionDecl::function_declaration, identifier(Identifier::declaration_name, node)};
 
     function.parameters = parameter_list(); // could be an empty vector
 
     expect_token(->);
     Type type = declaration_specifier();
-    node.type = type;
+    node->type = type;
 
-    if (token_is_str("{")) function.body = compound_statement();
+    if (is_tkn(str_to_tkn_type("{"))) function.body = compound_statement();
     else
         expect_token(;);
 
-    node.branch = function;
-    return push(node);
+    node->branch = function;
+    return node;
 }
 
 // <parameter> ::=  <identifier> ":" <declarator-specifier>
@@ -61,16 +60,13 @@
     vec<ASTNode*> parameters {};
     while (1) {
         expect_token(identifier);
-        ASTNode node {*prev_tkn, VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name)}};
+        ASTNode* node = push(ASTNode {*prev_tkn});
+        node->branch = VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name, node)};
 
         expect_token(:);
-        node.type = declaration_specifier();
+        node->type = declaration_specifier();
 
-        if (auto& kind = node.type.kind; kind == Type::enum_ || kind == Type::struct_) {
-            report_error((*prev_tkn), "type cannot be defined in a parameter type.");
-        }
-
-        parameters.push_back(push(std::move(node)));
+        parameters.push_back(node);
 
         if (token_is_str(",")) continue;
         if (token_is_str(")")) return parameters;
@@ -110,15 +106,16 @@
     // we recognize but ignore these keywords atm
     
     if (token_is(builtin_type)) {
-        type.identifier = push(ASTNode {*prev_tkn, Identifier {.name = std::get<str>(prev_tkn->literal.value())}});
+        type.identifier = push(ASTNode {*prev_tkn, 
+                                        Identifier {Identifier::type_name,
+                                                    std::get<str>(prev_tkn->literal.value())}});
         type.kind = builtin_type_kind(get_name(type));
-        // NOTE: consider redoing the ptr implementation
-        while (token_is(*)) type.ptr_count++;
+        while (token_is(*)) type.ptr_count++; // NOTE: consider redoing the ptr implementation
         
         return type;
     }
     if (token_is(identifier)) {
-        type.identifier = identifier();
+        type.identifier = identifier(Identifier::type_name);
         type.kind = Type::Undetermined;
 
         while (token_is(*)) type.ptr_count++;
@@ -131,13 +128,14 @@
 [[nodiscard]] ASTNode* Parser::namespace_declaration() {
 
     expect_token(identifier);
-    ASTNode node {*prev_tkn};
 
-    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration, identifier()};
+    ASTNode* node = push(ASTNode {*prev_tkn});
+    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration, identifier(Identifier::declaration_name, node)};
 
     expect_token_str("{");
     while (!token_is_str("}")) {
-        if (token_is_keyword(let)) nmspace.nodes.push_back(variable_declaration());
+        if (token_is_keyword(let)) 
+            nmspace.nodes.push_back(variable_declaration());
         else if (token_is_keyword(fn))
             nmspace.nodes.push_back(function_declaration());
         else if (token_is_keyword(namespace))
@@ -149,14 +147,14 @@
         else
             report_error((*curr_tkn), "expected namespace member declaration.");
     }
-    node.branch = nmspace;
-    return push(node);
+    node->branch = nmspace;
+    return node;
 }
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
-    ASTNode node {*prev_tkn};
+    auto* node = push(ASTNode {*prev_tkn});
     expect_token(identifier);
-    TypeDecl type_decl {TypeDecl::struct_declaration, identifier()};
+    TypeDecl type_decl {TypeDecl::struct_declaration, identifier(Identifier::declaration_name, node)};
 
     if (token_is_str("{")) {
         vec<ASTNode*> nodes {};
@@ -174,9 +172,9 @@
         type_decl.definition_body = std::move(nodes);
     }
 
-    node.branch = type_decl;
+    node->branch = type_decl;
     expect_token(;);
-    return push(node);
+    return node;
 }
 
 [[nodiscard]] ASTNode* Parser::enum_declaration() {
