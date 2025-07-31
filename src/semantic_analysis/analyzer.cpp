@@ -82,7 +82,10 @@ void Analyzer::analyze(ASTNode& node) {
 
             str prev_name = push_scope(get_name(func) + "()::", node, ScopeKind::Local);
 
-            for (auto& param : func.parameters) analyze(*param->type.identifier);
+            for (auto& param : func.parameters) {
+                analyze(*param->type.identifier);
+                param->type = param->type.identifier->type;
+            }
 
             if (func.body) {
                 func.body.value()->type = node.type; // NOTE: passing the function's type to the body
