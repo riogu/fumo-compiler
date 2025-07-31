@@ -11,19 +11,6 @@
     }
 }
 
-#define check_keyword(v_) if(identifier == #v_) return true; else
-
-[[nodiscard]] bool Lexer::is_keyword(const str identifier) {
-    map_macro(check_keyword, keywords)
-    return false;
-}
-[[nodiscard]] bool Lexer::is_builtin_type(const str identifier) {
-    map_macro(check_keyword, builtin_types)
-    return false;
-}
-
-#undef symbol_case
-#undef check_keyword
 
 [[nodiscard]] str Lexer::peek_line() {
     std::string line;

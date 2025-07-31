@@ -95,9 +95,9 @@ struct Analyzer {
         symbol_tree.variable_env_stack.pop_back();
     }
 
-    void add_to_scope(ASTNode& node);
+    void add_declaration(ASTNode& node);
 
-    [[nodiscard]] ASTNode* find_declaration(ASTNode& node);
+    [[nodiscard]] Opt<ASTNode*> find_declaration(Identifier& id);
 
     [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
     [[nodiscard]] bool is_arithmetic_t(const Type& a);

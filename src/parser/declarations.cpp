@@ -34,8 +34,8 @@
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
     expect_token(identifier);
-    FunctionDecl function {FunctionDecl::function_declaration, identifier()};
     ASTNode node {*prev_tkn};
+    FunctionDecl function {FunctionDecl::function_declaration, identifier()};
 
     function.parameters = parameter_list(); // could be an empty vector
 

@@ -255,11 +255,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // because every name is flattened (struct or namespace) and then we can find if that name
 // was what we expected in each context (a type, a namespace, etc)
 [[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind) {
+    auto token = *prev_tkn;
     Identifier id {.name = std::get<str>(prev_tkn->literal.value()), .qualifier = Identifier::unqualified};
     while (token_is(::)) {
         expect_token(identifier);
         id.name += "::" + std::get<str>(prev_tkn->literal.value());
         id.qualifier = Identifier::qualified;
     }
-    return push(ASTNode {.source_token = *prev_tkn, .branch = id});
+    return push(ASTNode {.source_token = token, .branch = id});
 }

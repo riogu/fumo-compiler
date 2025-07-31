@@ -17,8 +17,6 @@ struct Lexer {
     [[nodiscard]] vec<Token> tokenize();
     [[nodiscard]] Token parse_numeric_literal();
     [[nodiscard]] Token parse_identifier();
-    [[nodiscard]] bool is_keyword(const str identifier);
-    [[nodiscard]] bool is_builtin_type(const str identifier);
     [[nodiscard]] str peek_line();
     [[nodiscard]] bool identifier_ended();
     int get_curr();

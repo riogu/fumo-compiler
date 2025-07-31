@@ -1,19 +1,34 @@
 #include "semantic_analysis/analyzer.hpp"
 
-[[nodiscard]] ASTNode* Analyzer::find_declaration(ASTNode& node) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
-    match(node) {
-        holds(Identifier, &id) {
+[[nodiscard]] Opt<ASTNode*> Analyzer::find_declaration(Identifier& id) {
+    switch (id.kind) {
+        case Identifier::type_name:
+            if (is_builtin_type(id.name)) {}
+            switch (symbol_tree.curr_scope_kind) {
+                case ScopeKind::Global:
+                case ScopeKind::TypeBody:
+                case ScopeKind::CompoundStatement: break;
+            }
+            for (const auto& [name, node] : symbol_tree.type_names) {
+                if (name == id.name) return node;
+            }
+            break;
+        case Identifier::func_name:
+            for (const auto& [name, node] : symbol_tree.function_names) {
+                if (name == id.name) return node;
+            }
+            break;
+        case Identifier::var_name:
             for (int i = symbol_tree.variable_env_stack.size(); i != 0; i--) {
                 for (const auto& [name, node] : symbol_tree.variable_env_stack.at(i)) {
                     if (name == id.name) return node;
                 }
             }
-            report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
-        }
-        _default{}
+            break;
+        case Identifier::declaration_name: return id.declaration;
     }
-    report_error(node.source_token, "use of undeclared identifier.");
+
+    return std::nullopt;
 }
 
 

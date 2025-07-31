@@ -32,6 +32,14 @@ struct File {
 {                                                                                               \
     file_stream.seekg(file_stream.beg);                                                         \
     std::string line;                                                                           \
+    if (tok.line_number != 1) {                                                                 \
+        file_stream.seekg(tok.file_offset, std::ios_base::beg);                                 \
+        while(file_stream.peek() != '\n' && file_stream.peek() != EOF) {                        \
+            long pos = file_stream.tellg();                                                     \
+            file_stream.seekg(pos-1);                                                           \
+        }                                                                                       \
+        file_stream.get();                                                                      \
+    }                                                                                           \
     std::getline(file_stream, line);                                                            \
                                                                                                 \
     std::cerr << std::format("-> \033[38;2;235;67;54m[error]\033[0m in file '{}' at line {}:\n" \
@@ -44,13 +52,3 @@ struct File {
                              std::format(__VA_ARGS__));                                         \
     std::exit(1);                                                                               \
 }
-
-// NOTE: this is for resetting the stream in case you want many errors
-/*if (tok.line_number != 1) {                                                                 \*/
-/*    file_stream.seekg(tok.file_offset, std::ios_base::beg);                                 \*/
-/*    while(file_stream.peek() != '\n') {                                                     \*/
-/*        long pos = file_stream.tellg();                                                     \*/
-/*        file_stream.seekg(pos-1);                                                           \*/
-/*    }                                                                                       \*/
-/*    file_stream.get();                                                                      \*/
-/*}                                                                                           \*/
