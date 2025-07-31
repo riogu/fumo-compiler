@@ -10,12 +10,15 @@ struct ASTNode;
 struct Identifier {
     enum Kind {
         #define Identifier_kinds                                       \
-        unqualified,           /* (variable | function) name        */ \
-        qualified             /* (variable | function) name        */ \
+        declaration_name,     /* (variable | function) name        */  \
+        type_name,            /* (variable | function) name        */  \
+        func_name,            /* (variable | function) name        */  \
+        var_name              /* (variable | function) name        */  \
 
         Identifier_kinds
-    } kind = unqualified;
+    } kind;
     str name = "";
+    enum Qualifier { unqualified, qualified } qualifier = unqualified;
     Opt<ASTNode*> declaration {}; // identifiers are solved to this
     str mangled_name = name;
 };

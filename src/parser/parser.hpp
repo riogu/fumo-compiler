@@ -34,7 +34,7 @@ struct Parser {
     [[nodiscard]] ASTNode* postfix();     // NOTE: new addition
     [[nodiscard]] ASTNode* argument_list();
     [[nodiscard]] Opt<ASTNode*> primary();
-    [[nodiscard]] ASTNode* identifier();
+    [[nodiscard]] ASTNode* identifier(Identifier::Kind id_kind = Identifier::declaration_name);
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();

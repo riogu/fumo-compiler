@@ -9,10 +9,10 @@
 
     VariableDecl variable {VariableDecl::variable_declaration, identifier()};
 
-    if (token_is( :)) {
+    if (token_is(:)) {
         node.type = declaration_specifier();
     } else
-        node.type.identifier = push(ASTNode {*prev_tkn, Identifier {.name = "Undetermined"}});
+        node.type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
 
     node.branch = std::move(variable);
 
@@ -61,7 +61,7 @@
     vec<ASTNode*> parameters {};
     while (1) {
         expect_token(identifier);
-        ASTNode node {*prev_tkn, VariableDecl {VariableDecl::parameter, identifier()}};
+        ASTNode node {*prev_tkn, VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name)}};
 
         expect_token(:);
         node.type = declaration_specifier();
@@ -118,7 +118,7 @@
         return type;
     }
     if (token_is(identifier)) {
-        type.identifier =  identifier();
+        type.identifier = identifier();
         type.kind = Type::Undetermined;
 
         while (token_is(*)) type.ptr_count++;

@@ -16,6 +16,7 @@ struct Type {
         // Function,  // add this later if you want function objects/pointers
         struct_,
         enum_,
+        namespace_,
         map_macro(make_enum_member, builtin_types)
     } kind = Undetermined;
     enum TypeQualifier { const_, volatile_, extern_, static_ };

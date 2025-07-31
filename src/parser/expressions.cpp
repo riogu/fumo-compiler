@@ -18,7 +18,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(statement()); /* NOTE: no longer valid in global */
             // report_error((*curr_tkn), "expected declaration.");
     }
-    auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::unqualified, "fumo_module"}});
+    auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::namespace_name, "fumo_module", Identifier::unqualified}});
     return push(ASTNode {.source_token = *tkns.begin(),
                          .branch = NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
 }
@@ -142,6 +142,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
     if (token_is_str("{")) {
         auto init_list = initializer_list(temp_node);
+        if (temp_node) init_list->type.identifier = temp_node.value();
         expect_token_str("}");
         return init_list;
     }
@@ -198,11 +199,13 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
 // <initializer-list> ::= <postfix> {","}?
 //                      | <postfix> , <initializer-list>
-[[nodiscard]] ASTNode* Parser::initializer_list(Opt<ASTNode*> identifier) {
+[[nodiscard]] ASTNode* Parser::initializer_list(Opt<ASTNode*> primary) {
     // TODO: add optional named elements syntax "{.foo = 123123}"
 
     BlockScope init_list {BlockScope::initializer_list};
-    if (identifier) init_list.identifier = identifier.value();
+    if (primary) {
+        init_list.identifier = primary.value();
+    }
 
     if (peek_token_str("}")) return push(ASTNode {*prev_tkn, std::move(init_list)});
 
@@ -250,12 +253,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // NOTE: i expect to be able to just use the actual string for solving these identifiers
 // because every name is flattened (struct or namespace) and then we can find if that name
 // was what we expected in each context (a type, a namespace, etc)
-[[nodiscard]] ASTNode* Parser::identifier() {
-    Identifier id {Identifier::unqualified, std::get<str>(prev_tkn->literal.value())};
+[[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind) {
+    Identifier id {.name = std::get<str>(prev_tkn->literal.value()), .qualifier = Identifier::unqualified};
     while (token_is(::)) {
         expect_token(identifier);
         id.name += "::" + std::get<str>(prev_tkn->literal.value());
-        id.kind = Identifier::qualified;
+        id.qualifier = Identifier::qualified;
     }
     return push(ASTNode {.source_token = *prev_tkn, .branch = id});
 }
