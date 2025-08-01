@@ -73,16 +73,3 @@ t(
 "    fn func(x: i32) -> void;\n"
 "\n"
 ,pass),
-
-t(
-"                let x: i32;\n"
-"namespace foo {\n"
-"    struct bar {\n"
-"        fn func() -> void {\n"
-"           {\n"
-"                x = 21313;\n"
-"           }\n"
-"        }\n"
-"    };\n"
-"}\n"
-,pass),

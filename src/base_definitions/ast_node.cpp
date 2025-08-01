@@ -2,28 +2,18 @@
 
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
-    std::string result = std::format("{} ", kind_name());
+    std::string result = std::format("{} ", yellow(branch_name()) + gray("::") +  enum_green(kind_name()));
 
     match(*this) {
         holds(Identifier, const& id) {
             if (id.declaration) 
-                result += id.declaration.value()->to_str(depth);
+                result += green("✓ SOLVED");
             else
-                result += std::format("{}{}{}", gray("⟮"), id.mangled_name, gray("⟯"));
+                result += red("❌NOT SOLVED");
+            result += std::format(" {}{}{}", gray("⟮"), white_gray(id.mangled_name), gray("⟯"));
         }
         holds(PrimaryExpr, const& prim) {
-            switch (prim.kind) {
-                case PrimaryExpr::integer:
-                    result += std::format("{}{}{}", gray("⟮"), std::get<int64_t>(prim.value), gray("⟯"));
-                    break;
-                case PrimaryExpr::floating_point:
-                    result += std::format("{}{}{}", gray("⟮"), std::get<double>(prim.value), gray("⟯"));
-                    break;
-                case PrimaryExpr::str:
-                // case PrimaryExpr::identifier: 
-                    result += std::format("{}{}{}", gray("⟮"), std::get<str>(prim.value), gray("⟯"));
-                    break;
-            }
+            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
         }
 
         holds(UnaryExpr, const& unary) {
@@ -49,9 +39,9 @@
             }
         }
         holds(VariableDecl, const& var) {
-            result += std::format("{} {}", gray("=>"), get_id(var).mangled_name);
+            result += std::format("{} {}", gray("=>"), white_gray(get_id(var).mangled_name));
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            result += gray(": ") + yellow(get_name(type)) + purple_blue(ptr_str);
+            result += gray(": ") + yellow(get_id(type).mangled_name) + purple_blue(ptr_str);
         }
         holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
@@ -61,7 +51,7 @@
 
                 str ptr_str; for (int i = 0; i < param->type.ptr_count; i++) ptr_str += "*";
 
-                temp += get_id(var).name + gray(": ") + yellow(get_name(param->type)) + gray(ptr_str);
+                temp += white_gray(get_name(var)) + gray(": ") + yellow(get_name(param->type)) + gray(ptr_str);
 
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
@@ -118,12 +108,12 @@
                 result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
             }
         }
-        _default { PANIC(std::format("couldn't print node of kind: {}.", kind_name())); }
+        _default { PANIC(std::format("couldn't print node of kind: {}.", yellow(branch_name()) + gray("::") + enum_green(kind_name()))); }
     }
     return result;
 }
 
-#define nd_kind(v_) case v.v_: return std::format("\033[38;2;142;163;217m{}\033[0m",#v_);
+#define nd_kind(v_) case v.v_: return #v_;
 #define branch_kind_name(Branch) holds(Branch, const& v) switch(v.kind) { map_macro(nd_kind, Branch##_kinds) } 
 
 [[nodiscard]] std::string ASTNode::kind_name() const {
@@ -146,3 +136,23 @@
 #undef nd_kind
 #undef branch_kind_name
 
+#define branch_kind_name(Branch) holds(Branch, const& v) return #Branch;
+
+[[nodiscard]] std::string ASTNode::branch_name() const {
+    match(*this) {
+        branch_kind_name(Identifier);
+        branch_kind_name(PrimaryExpr);
+        branch_kind_name(UnaryExpr);
+        branch_kind_name(BinaryExpr);
+        branch_kind_name(PostfixExpr);
+        branch_kind_name(VariableDecl);
+        branch_kind_name(FunctionDecl);
+        branch_kind_name(BlockScope);
+        branch_kind_name(NamespaceDecl);
+        branch_kind_name(TypeDecl);
+        _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
+    }
+    std::unreachable();
+}
+
+#undef branch_kind_name

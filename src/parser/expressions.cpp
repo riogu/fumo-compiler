@@ -18,10 +18,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(statement()); /* NOTE: no longer valid in global */
             // report_error((*curr_tkn), "expected declaration.");
     }
-    auto id = push(ASTNode {*tkns.begin(),
-                            Identifier {Identifier::declaration_name, "fumo_module", Identifier::unqualified}});
-    return push(ASTNode {.source_token = *tkns.begin(),
-                         .branch = NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
+    auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::declaration_name, "fumo_module"}});
+    return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
 }
 
 // <statement> ::= <expression-statement>
@@ -236,18 +234,18 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(int))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
     if (token_is(float))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "f64"}}), Type::f64_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
     if (token_is(string))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::unsolved_type_name, "i32"}}), Type::i32_}});
+                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
 
     // NOTE: only variable names go through primary() to be found
-    if (token_is(identifier)) return identifier(Identifier::unsolved_var_name);
+    if (token_is(identifier)) return identifier(Identifier::var_name);
 
     return std::nullopt;
 

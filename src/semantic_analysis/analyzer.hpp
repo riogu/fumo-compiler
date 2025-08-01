@@ -27,12 +27,11 @@ struct Scope {
     str isolated_name;
 };
 struct SymbolTableStack {
-    // these are for having local structs/functions/variables and then removing them
     std::map<str, ASTNode*> local_variable_decls {};
+    std::map<str, ASTNode*> global_variable_decls {};
     std::map<str, ASTNode*> type_decls {};
     std::map<str, ASTNode*> namespace_decls {};
     std::map<str, ASTNode*> function_decls {};
-    std::map<str, ASTNode*> global_variable_decls {};
     vec<Scope> scope_stack {};
 
     str curr_scope_name = "";
@@ -48,23 +47,27 @@ struct SymbolTableStack {
         scope_stack.pop_back();
     }
 
-    auto push_variable_decl(str identifier, ASTNode& node) {
+    auto push_variable_decl(Identifier& identifier, ASTNode& node) {
+        identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::Namespace:
-                return global_variable_decls.insert({curr_scope_name + identifier, &node});
+                return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
             case ScopeKind::CompoundStatement: 
-                return local_variable_decls.insert({curr_scope_name + identifier, &node});
+                return local_variable_decls.insert({identifier.mangled_name, &node});
         }
     }
-    auto push_type_decl(str identifier, ASTNode& node) {
-        return type_decls.insert({curr_scope_name + identifier, &node});
+    auto push_type_decl(Identifier& identifier, ASTNode& node) {
+        identifier.mangled_name = curr_scope_name + identifier.name;
+        return type_decls.insert({identifier.mangled_name, &node});
     }
-    auto push_namespace_decl(str identifier, ASTNode& node) {
-        return namespace_decls.insert({curr_scope_name + identifier, &node});
+    auto push_namespace_decl(Identifier& identifier, ASTNode& node) {
+        identifier.mangled_name = curr_scope_name + identifier.name;
+        return namespace_decls.insert({identifier.mangled_name, &node});
     }
-    auto push_function_decl(str identifier, ASTNode& node) {
-        return function_decls.insert({curr_scope_name + identifier, &node});
+    auto push_function_decl(Identifier& identifier, ASTNode& node) {
+        identifier.mangled_name = curr_scope_name + identifier.name;
+        return function_decls.insert({identifier.mangled_name, &node});
     }
 
     [[nodiscard]] Opt<ASTNode*> find_declaration(Identifier& id);

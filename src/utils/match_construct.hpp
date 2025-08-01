@@ -35,3 +35,5 @@ struct type_sequence {
 }                                                                                                   \
     if (was_default)
 
+template<typename ...Types> constexpr std::size_t index_of(std::variant<Types...>& node) { return node.index(); }
+template<typename  T, typename ...Types> auto& get_elem(std::variant<Types...>& node) { return std::get<T>(node); }

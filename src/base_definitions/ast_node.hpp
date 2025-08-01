@@ -4,7 +4,6 @@
 #include "utils/match_construct.hpp"
 
 struct ASTNode; 
-
 // NOTE: identifiers always hold declarations, but we distinguish the codegen for them
 // based on if they are declaration_name or if they are one of the unsolved_names
 
@@ -13,9 +12,9 @@ struct Identifier {
         #define Identifier_kinds                                         \
         unknown_name,           /* (variable | function) name        */  \
         declaration_name,       /* (variable | function) name        */  \
-        unsolved_type_name,     /* (variable | function) name        */  \
-        unsolved_func_call_name,/* (variable | function) name        */  \
-        unsolved_var_name      /* (variable | function) name        */  \
+        type_name,              /* (variable | function) name        */  \
+        func_call_name,         /* (variable | function) name        */  \
+        var_name                /* (variable | function) name        */  \
 
         Identifier_kinds
     } kind;
@@ -154,6 +153,7 @@ struct ASTNode {
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
+    [[nodiscard]] std::string branch_name() const;
 };
 
 
@@ -175,7 +175,7 @@ constexpr Branch& get(ASTNode* node) {
 
 #define is_branch (void)({ bool held; bool branch_ = held = is_impl_
 template<typename... Branches>
-constexpr bool is_impl_(ASTNode* node) {
+constexpr bool is_impl_(const ASTNode* node) {
     return (std::holds_alternative<Branches>(node->branch) || ...);
 }
 #define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
@@ -192,7 +192,7 @@ constexpr auto get_if_impl_(ASTNode* node) {
 
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
-inline size_t index_of(ASTNode& node) { return node.branch.index(); }
-inline size_t index_of(const ASTNode& node) { return node.branch.index(); }
+constexpr std::size_t index_of(ASTNode& node) { return node.branch.index(); }
+constexpr std::size_t index_of(const ASTNode& node) { return node.branch.index(); }
 template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }

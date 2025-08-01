@@ -27,6 +27,13 @@ using Literal = std::variant<int64_t, double, std::string>;
 #define yellow(symbol)           std::string("\033[38;2;252;191;85m")  + std::string(symbol) + std::string("\033[0m")
 #define blue(symbol)             std::string("\033[38;2;156;209;255m") + std::string(symbol) + std::string("\033[0m")
 #define purple_blue(symbol)      std::string("\033[38;2;142;163;217m") + std::string(symbol) + std::string("\033[0m")
+#define enum_green(symbol)       std::string("\033[38;2;88;154;143m")  + std::string(symbol) + std::string("\033[0m")
+#define white_gray(symbol)       std::string("\033[38;2;205;212;232m") + std::string(symbol) + std::string("\033[0m")
+#define red(symbol)       std::string("\033[38;2;235;67;54m") + std::string(symbol) + std::string("\033[0m")
+#define green(symbol)       std::string("\033[38;2;88;154;143m") + std::string(symbol) + std::string("\033[0m")
+
+
+
 
 struct Token {
     TokenType type;
