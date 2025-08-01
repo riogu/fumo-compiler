@@ -20,17 +20,19 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
 
 using Literal = std::variant<int64_t, double, std::string>;
 
-#define int_pink(symbol)         std::string("\033[38;2;224;180;187m") + std::string(symbol) + std::string("\033[0m")
-#define id_gold(symbol)          std::string("\033[38;2;252;191;85m")  + std::string(symbol) + std::string("\033[0m")
-#define token_grey_green(symbol) std::string("\033[38;2;140;170;190m") + std::string(symbol) + std::string("\033[0m")
-#define gray(symbol)             std::string("\033[38;2;134;149;179m") + std::string(symbol) + std::string("\033[0m")
-#define yellow(symbol)           std::string("\033[38;2;252;191;85m")  + std::string(symbol) + std::string("\033[0m")
-#define blue(symbol)             std::string("\033[38;2;156;209;255m") + std::string(symbol) + std::string("\033[0m")
-#define purple_blue(symbol)      std::string("\033[38;2;142;163;217m") + std::string(symbol) + std::string("\033[0m")
-#define enum_green(symbol)       std::string("\033[38;2;88;154;143m")  + std::string(symbol) + std::string("\033[0m")
-#define white_gray(symbol)       std::string("\033[38;2;205;212;232m") + std::string(symbol) + std::string("\033[0m")
-#define red(symbol)       std::string("\033[38;2;235;67;54m") + std::string(symbol) + std::string("\033[0m")
-#define green(symbol)       std::string("\033[38;2;88;154;143m") + std::string(symbol) + std::string("\033[0m")
+
+#define make_color(rgb, symbol) std::string("\033[38;2;" #rgb "m") + std::string(symbol) + std::string("\033[0m")
+#define int_pink(symbol)         make_color(224;180;187, symbol)
+#define id_gold(symbol)          make_color(252;191;85,  symbol)  
+#define token_grey_green(symbol) make_color(140;170;190, symbol) 
+#define gray(symbol)             make_color(134;149;179, symbol) 
+#define yellow(symbol)           make_color(252;191;85,  symbol)  
+#define blue(symbol)             make_color(156;209;255, symbol) 
+#define purple_blue(symbol)      make_color(142;163;217, symbol) 
+#define enum_green(symbol)       make_color(88;154;143,  symbol)  
+#define white_gray(symbol)       make_color(205;212;232, symbol) 
+#define red(symbol)              make_color(235;67;54,   symbol)   
+#define green(symbol)            make_color(88;154;143,  symbol)  
 
 
 
@@ -49,8 +51,14 @@ struct Token {
                 return int_pink(std::to_string(std::get<int64_t>(literal.value())));
             case TokenType::floating_point:
                 return int_pink(std::to_string(std::get<double>(literal.value())));
-            case TokenType::identifier: case TokenType::keyword: case TokenType::builtin_type: case TokenType::string:
+            case TokenType::identifier:
+                return white_gray(std::get<std::string>(literal.value()));
+            case TokenType::keyword:
+                return purple_blue(std::get<std::string>(literal.value()));
+            case TokenType::builtin_type: 
                 return id_gold(std::get<std::string>(literal.value()));
+            case TokenType::string:
+                return enum_green(std::get<std::string>(literal.value()));
             case TokenType::is_EOF:
                 return "EOF";
             default: 

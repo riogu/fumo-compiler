@@ -1,9 +1,9 @@
 # TODO:
-   - Finish find_declaration()
-   - add function call postfix semantic analysis
-   - add codegen for function declarations and function calls
-   - add codegen for global variables
-   - make tests for the codegen
+   - [X] Finish find_declaration()
+   - [ ] add function call postfix semantic analysis
+   - [ ] add codegen for function declarations and function calls
+   - [ ] add codegen for global variables
+   - [ ] make tests for the codegen
 
 > this would make already a pretty nice "basic" imperative language subset of fumolang
 > only add more stuff if you finish everything in time somehow

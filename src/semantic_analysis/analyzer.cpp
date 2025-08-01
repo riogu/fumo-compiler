@@ -5,9 +5,15 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
     symbol_tree.push_scope("", ScopeKind::Namespace);
 
-    auto& file_scope = get<NamespaceDecl>(file_root_node);
-    for (auto& node : file_scope.nodes) analyze(*node);
+    // NOTE: this is here so the global namespace is unnamed
+    // in reality, everything global starts with "::"
+    // removing this changes nothing in functionality, only in debug printing
+    symbol_tree.curr_scope_name = ""; 
+    symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
+    for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
+
+    symbol_tree.curr_scope_name = "::"; 
     symbol_tree.pop_scope();
 }
 
@@ -16,13 +22,15 @@ void Analyzer::analyze(ASTNode& node) {
     match(node) {
 
         holds(Identifier, &id) {
+            // NOTE: initializer lists might be analyzed and get their types later
+            if (id.kind == Identifier::type_name && id.name == "Undetermined") return;
 
             id.declaration = symbol_tree.find_declaration(id);
 
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+                // report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
             }
         }
 
@@ -53,13 +61,25 @@ void Analyzer::analyze(ASTNode& node) {
             }
             node.type = un.expr->type;
         }
-
         holds(BinaryExpr, &bin) {
+            // let var: foo::bar = {123};
+            // let var = foo::bar {213};
+            // var = foo::bar {123};
+            // var = {123};
+            // let var = {}; should error
+            // let var = {123}; OK
+            // let var = {123, 213}; should error
             analyze(*bin.lhs);
             analyze(*bin.rhs);
 
-            if (bin.kind == BinaryExpr::assignment && bin.lhs->type.kind == Type::Undetermined) {
-                bin.lhs->type = bin.rhs->type;
+            if (bin.kind == BinaryExpr::assignment) {
+                if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
+                    report_error(node.source_token,
+                                 "cannot deduce type for '{}' from assignment.",
+                                 bin.lhs->source_token.to_str());
+                }
+                if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
+                if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
             }
             // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
@@ -90,15 +110,16 @@ void Analyzer::analyze(ASTNode& node) {
         holds(BlockScope, &scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch (scope.kind) {
-                case BlockScope::compound_statement: {
+                case BlockScope::compound_statement: 
                     symbol_tree.push_scope("", ScopeKind::CompoundStatement);
                     for (auto& node : scope.nodes) analyze(*node);
                     symbol_tree.pop_scope();
                     break;
-                }
                 case BlockScope::initializer_list:
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
-                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+
+                    // INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                    break;
                 case BlockScope::argument_list: break;
             }
         }
@@ -129,7 +150,6 @@ void Analyzer::analyze(ASTNode& node) {
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }
 }
-namespace foo{void func();}
 
 void Analyzer::add_declaration(ASTNode& node) {
     // NOTE: dont forget we cant redefine a outer namespaced identifier inside another namespace
@@ -199,38 +219,8 @@ void Analyzer::add_declaration(ASTNode& node) {
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
-
+    // NOTE: change the implementation so we dont keep all locals to the end of the program
     switch (id.kind) {
-        // struct gaming {let ahhh: i32;};
-        // let x: gaming;
-        // fn func() -> void {
-        //      struct gaming {let bbbb: f32;};
-        //      let x: gaming = 123123;
-        //      {
-        //          struct gaming {let vvvvv = 321;};
-        //          let x: gaming;
-        //          funcfunc();
-        //      }
-        // }
-        //
-        // somefunc();
-        // namespace huh {
-        //    let x = somefunc();
-        //    struct foo {
-        //         let member: i32;
-        //         fn somefunc() -> void;
-        //
-        //         fn another() -> void {
-        //             somefunc();
-        //             struct bar {};
-        //             {
-        //             somefunc();
-        //             }
-        //         }
-        //    };
-        //   let var: foo = {213123};
-        //   let x: foo = var;
-        // }
         case Identifier::type_name:
             for (const auto& scope : scope_stack | std::views::reverse) {
                 if find_value (scope.name + id.name, type_decls)
@@ -249,6 +239,7 @@ void Analyzer::add_declaration(ASTNode& node) {
                 case ScopeKind::CompoundStatement:
                 case ScopeKind::TypeBody:
                     for (const auto& scope : scope_stack | std::views::reverse) {
+                        std::cerr <<  scope.name + id.name + " | ";
                         if find_value (scope.name + id.name, local_variable_decls) {
                             return id.mangled_name = scope.name + id.name, iter->second;
                         }
@@ -273,7 +264,36 @@ void Analyzer::add_declaration(ASTNode& node) {
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
     }
 
-    // std::cerr <<  scope.name + id.name + " | ";
     return std::nullopt;
 }
 
+// struct gaming {let ahhh: i32;};
+// let x: gaming;
+// fn func() -> void {
+//      struct gaming {let bbbb: f32;};
+//      let x: gaming = 123123;
+//      {
+//          struct gaming {let vvvvv = 321;};
+//          let x: gaming;
+//          funcfunc();
+//      }
+// }
+//
+// somefunc();
+// namespace huh {
+//    let x = somefunc();
+//    struct foo {
+//         let member: i32;
+//         fn somefunc() -> void;
+//
+//         fn another() -> void {
+//             somefunc();
+//             struct bar {};
+//             {
+//             somefunc();
+//             }
+//         }
+//    };
+//   let var: foo = {213123};
+//   let x: foo = var;
+// }

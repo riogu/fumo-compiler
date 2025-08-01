@@ -46,7 +46,7 @@ struct SymbolTableStack {
             case ScopeKind::Namespace:    name += "::";   break;
             case ScopeKind::TypeBody:     name += "{}::"; break;
             case ScopeKind::FunctionBody: name += "()::"; break;
-            case ScopeKind::CompoundStatement:
+            case ScopeKind::CompoundStatement: // += "0::"
                 if (!scope_stack.empty()) {
                     int& prev_scope_count = scope_stack.back().inner_scope_count;
                     name = std::to_string(prev_scope_count) + "::";
@@ -77,7 +77,7 @@ struct SymbolTableStack {
     auto push_type_decl(Identifier& identifier, ASTNode& node) {
         switch (curr_scope_kind) {
             case ScopeKind::TypeBody: { // this allows struct declarations to exist inside other structs
-                str temp = curr_scope_name;
+                str temp = curr_scope_name; // doesnt add "{}" to the mangled name
                 temp.resize(curr_scope_name.size() - 4);
                 identifier.mangled_name = temp + "::" + identifier.name;
                 break;
@@ -85,7 +85,8 @@ struct SymbolTableStack {
             case ScopeKind::Namespace:
             case ScopeKind::CompoundStatement:
             case ScopeKind::FunctionBody: 
-                identifier.mangled_name = curr_scope_name + identifier.name; break;
+                identifier.mangled_name = curr_scope_name + identifier.name; 
+                break;
         }
         return type_decls.insert({identifier.mangled_name, &node});
     }
@@ -117,5 +118,6 @@ struct Analyzer {
 
     [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
     [[nodiscard]] bool is_arithmetic_t(const Type& a);
+    void determine_type(ASTNode& node);
 
 };

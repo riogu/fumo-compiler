@@ -16,7 +16,7 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
             report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
                          get_name(bin.lhs->type), node.source_token.to_str(),get_name(bin.rhs->type));
         case BinaryExpr::assignment:
-            report_error(node.source_token,"assigning to '{}'from incompatible type '{}'.",
+            report_error(node.source_token,"assigning to '{}' from incompatible type '{}'.",
                          get_name(bin.lhs->type), get_name(bin.rhs->type));
         default:
             INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
