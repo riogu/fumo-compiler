@@ -1,4 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
+#include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -71,7 +72,7 @@ void Analyzer::analyze(ASTNode& node) {
 
         holds(FunctionDecl, &func) {
             add_declaration(node);
-            symbol_tree.push_scope(get_name(func) + "()::", ScopeKind::CompoundStatement);
+            symbol_tree.push_scope(get_name(func), ScopeKind::FunctionBody);
 
             for (auto& param : func.parameters) {
                 if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
@@ -90,7 +91,7 @@ void Analyzer::analyze(ASTNode& node) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch (scope.kind) {
                 case BlockScope::compound_statement: {
-                    symbol_tree.push_scope("::", ScopeKind::CompoundStatement);
+                    symbol_tree.push_scope("", ScopeKind::CompoundStatement);
                     for (auto& node : scope.nodes) analyze(*node);
                     symbol_tree.pop_scope();
                     break;
@@ -104,7 +105,7 @@ void Analyzer::analyze(ASTNode& node) {
 
         holds(NamespaceDecl, const& nmspace_decl) {
             add_declaration(node);
-            symbol_tree.push_scope(get_name(nmspace_decl) + "::", ScopeKind::Namespace);
+            symbol_tree.push_scope(get_name(nmspace_decl), ScopeKind::Namespace);
             for (auto& node : nmspace_decl.nodes) analyze(*node);
             symbol_tree.pop_scope();
         }
@@ -112,16 +113,15 @@ void Analyzer::analyze(ASTNode& node) {
         holds(TypeDecl, const& type_decl) {
 
             switch (type_decl.kind) {
-                case TypeDecl::struct_declaration: {
+                case TypeDecl::struct_declaration:
                     add_declaration(node);
 
                     if (type_decl.definition_body) {
-                        symbol_tree.push_scope(get_name(type_decl) + "::", ScopeKind::TypeBody);
+                        symbol_tree.push_scope(get_name(type_decl), ScopeKind::TypeBody);
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
                         symbol_tree.pop_scope();
                     }
                     break;
-                }
                 default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
         }
@@ -129,6 +129,7 @@ void Analyzer::analyze(ASTNode& node) {
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
     }
 }
+namespace foo{void func();}
 
 void Analyzer::add_declaration(ASTNode& node) {
     // NOTE: dont forget we cant redefine a outer namespaced identifier inside another namespace
@@ -142,6 +143,8 @@ void Analyzer::add_declaration(ASTNode& node) {
         holds(FunctionDecl, &func) {
             // TODO: member function calls should be rewritten to take a pointer
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
+
+            // TODO: dont allow redeclarations of struct member functions inside the struct body itself
             Identifier& id = get_id(func);
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
 
@@ -193,72 +196,74 @@ void Analyzer::add_declaration(ASTNode& node) {
 }
 
 
-// struct gaming {let ahhh: i32;};
-// let x: gaming;
-// fn func() -> void {
-//      struct gaming {let bbbb: f32;};
-//      let x: gaming = 123123;
-//      {
-//          struct gaming {let vvvvv = 321;};
-//          let x: gaming;
-//          funcfunc();
-//      }
-// }
-//
-// somefunc();
-// namespace huh {
-//    struct foo {
-//         fn somefunc() -> void;
-//
-//         fn another() -> void {
-//             somefunc();
-//             struct bar {};
-//             "huh::foo::another()::bar"
-//             {
-//             "huh::foo::another()::::somefunc"();
-//             somefunc();
-//             }
-//         }
-//    };
-// }
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
 
     switch (id.kind) {
-
+        // struct gaming {let ahhh: i32;};
+        // let x: gaming;
+        // fn func() -> void {
+        //      struct gaming {let bbbb: f32;};
+        //      let x: gaming = 123123;
+        //      {
+        //          struct gaming {let vvvvv = 321;};
+        //          let x: gaming;
+        //          funcfunc();
+        //      }
+        // }
+        //
+        // somefunc();
+        // namespace huh {
+        //    let x = somefunc();
+        //    struct foo {
+        //         let member: i32;
+        //         fn somefunc() -> void;
+        //
+        //         fn another() -> void {
+        //             somefunc();
+        //             struct bar {};
+        //             {
+        //             somefunc();
+        //             }
+        //         }
+        //    };
+        //   let var: foo = {213123};
+        //   let x: foo = var;
+        // }
         case Identifier::type_name:
             for (const auto& scope : scope_stack | std::views::reverse) {
-                if find_value (scope.name + id.name, type_decls) {
-                    return iter->second;
-                }
+                if find_value (scope.name + id.name, type_decls)
+                    return id.mangled_name = scope.name + id.name, iter->second;
             }
             break;
-        // TODO: function calls should not get mangled by the local function ever
         case Identifier::func_call_name:
+            for (const auto& scope : scope_stack | std::views::reverse) {
+                if find_value (scope.name + id.name, type_decls)
+                    return id.mangled_name = scope.name + id.name, iter->second;
+            }
+            break;
+        case Identifier::var_name:
             switch (curr_scope_kind) {
-                case ScopeKind::TypeBody:
+                case ScopeKind::FunctionBody:
                 case ScopeKind::CompoundStatement:
+                case ScopeKind::TypeBody:
                     for (const auto& scope : scope_stack | std::views::reverse) {
-                        if find_value (scope.name + id.name, function_decls) {
-                            return iter->second;
+                        if find_value (scope.name + id.name, local_variable_decls) {
+                            return id.mangled_name = scope.name + id.name, iter->second;
+                        }
+                        if find_value (scope.name + id.name, global_variable_decls) {
+                            return id.mangled_name = scope.name + id.name, iter->second;
                         }
                     }
                     break;
-
-                case ScopeKind::Namespace: INTERNAL_PANIC("function call can't be global.");
-            }
-            break;
-
-        case Identifier::var_name:
-            for (const auto& scope : scope_stack | std::views::reverse) {
-                // std::cerr <<  scope.name + id.name + " | ";
-                if find_value (scope.name + id.name, local_variable_decls) {
-                    return iter->second;
-                }
-                if find_value (scope.name + id.name, global_variable_decls) {
-                    return iter->second;
-                }
+                case ScopeKind::Namespace: 
+                    for (const auto& scope : scope_stack | std::views::reverse) {
+                        if find_value (scope.name + id.name, global_variable_decls) {
+                            return id.mangled_name = scope.name + id.name, iter->second;
+                        }
+                    }
+                    break;
             }
             break;
 
@@ -268,6 +273,7 @@ void Analyzer::add_declaration(ASTNode& node) {
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
     }
 
+    // std::cerr <<  scope.name + id.name + " | ";
     return std::nullopt;
 }
 

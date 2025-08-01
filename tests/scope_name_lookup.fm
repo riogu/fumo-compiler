@@ -111,3 +111,44 @@ t(
 "    };\n"
 "}\n"
 ,pass),
+t(
+"fn func() -> void  {\n"
+"     //fnc()::x\n"
+"     let x = 123;\n"
+"     { //func()::0::\n"
+"        struct bar{};\n"
+"         let x = 21; //func()::0::x\n"
+"         { //func()::0::0\n"
+"             let x = 6969;\n"
+"         }\n"
+"     }\n"
+"     { //func()::1::\n"
+"        struct bar{};\n"
+"         let x = 2132; //func()::1::x\n"
+"         { //func()::1::0\n"
+"             let x = x; //func()::1::0::x\n"
+"         }\n"
+"         { //func()::1::1\n"
+"             let x = x; //func()::1::1::x\n"
+"         }\n"
+"     }\n"
+"}\n"
+,pass),
+
+t(
+"struct foo {\n"
+"    let x: i32 = 123213;\n"
+"};\n"
+"fn func() -> void {\n"
+"    let y = foo::x;\n"
+"}\n"
+,fail),
+
+t(
+"struct foo {\n"
+"    struct bar {\n"
+"        let x = 213;\n"
+"    };\n"
+"};\n"
+"let var: foo::bar = {};\n"
+,pass),
