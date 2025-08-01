@@ -66,7 +66,8 @@
         expect_token(:);
         node->type = declaration_specifier();
 
-        parameters.push_back(node);
+
+        parameters.push_back(std::move(node));
 
         if (token_is_str(",")) continue;
         if (token_is_str(")")) return parameters;

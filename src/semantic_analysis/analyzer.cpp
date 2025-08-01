@@ -1,4 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "base_definitions/tokens.hpp"
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -8,12 +9,13 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     // NOTE: this is here so the global namespace is unnamed
     // in reality, everything global starts with "::"
     // removing this changes nothing in functionality, only in debug printing
-    symbol_tree.curr_scope_name = ""; 
-    symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
+    // symbol_tree.curr_scope_name = ""; 
+    // symbol_tree.scope_stack.begin()->isolated_name = "";
+    // symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
     for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
 
-    symbol_tree.curr_scope_name = "::"; 
+    // symbol_tree.curr_scope_name = "::"; 
     symbol_tree.pop_scope();
 }
 
@@ -30,7 +32,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                // report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+                report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
             }
         }
 
@@ -49,15 +51,15 @@ void Analyzer::analyze(ASTNode& node) {
             switch (un.kind) {
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
-                    if (!is_arithmetic_t(un.expr->type)) {
-                        report_error(node.source_token,
-                                     "invalid type '{}' for unary expression.",
-                                     get_name(un.expr->type));
-                    }
-                    break;
+                    // if (!is_arithmetic_t(un.expr->type)) {
+                    //     report_error(node.source_token,
+                    //                  "invalid type '{}' for unary expression.",
+                    //                  get_name(un.expr->type));
+                    // }
+                    // break; 
                 case UnaryExpr::return_statement:
                 case UnaryExpr::logic_not:
-                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
             node.type = un.expr->type;
         }
@@ -81,11 +83,17 @@ void Analyzer::analyze(ASTNode& node) {
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
             }
+            if (bin.lhs->type.kind != bin.rhs->type.kind) {
+                // NOTE: this should be removed later (it is okay because all builtin types are numeric atm)
+                if (!(is_builtin_type(get_name(bin.lhs->type)) && is_builtin_type(get_name(bin.rhs->type))))
+                    report_binary_error(node, bin);
+            }
             // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
         }
 
-        holds(VariableDecl, &var) { // doesnt handle determining its own type, assignment does that
+        holds(VariableDecl, &var) {
+            if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
@@ -93,10 +101,13 @@ void Analyzer::analyze(ASTNode& node) {
         holds(FunctionDecl, &func) {
             add_declaration(node);
             symbol_tree.push_scope(get_name(func), ScopeKind::FunctionBody);
+            if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
 
             for (auto& param : func.parameters) {
+                analyze(*param);
                 if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
-                param->type = param->type.identifier->type;
+                // TODO: analyzing a type should automatically set the node's type
+                // param->type = param->type.identifier->type;
             }
 
             if (func.body) {
@@ -137,11 +148,12 @@ void Analyzer::analyze(ASTNode& node) {
                 case TypeDecl::struct_declaration:
                     add_declaration(node);
 
+                    symbol_tree.push_scope(get_name(type_decl), ScopeKind::TypeBody);
+
                     if (type_decl.definition_body) {
-                        symbol_tree.push_scope(get_name(type_decl), ScopeKind::TypeBody);
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
-                        symbol_tree.pop_scope();
                     }
+                    symbol_tree.pop_scope();
                     break;
                 default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
             }
@@ -192,21 +204,18 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         holds(TypeDecl, &type_decl) {
             Identifier& id = get_id(type_decl);
-            auto [node_iterator, was_inserted] = symbol_tree.push_type_decl(id, node);
+            const auto& [node_iterator, was_inserted] = symbol_tree.push_type_decl(id, node);
 
             // TODO: add each member of the struct to the type decl info.
             // we need to store offsets and the names of the members (for solving lookups later)
             // and also the conversion from normal function name -> mangled function name
+            auto& t_decl = get<TypeDecl>(node_iterator->second);
 
-            if (!was_inserted) {
-                auto& t_decl = get<TypeDecl>(node_iterator->second);
+            if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name))
+                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
 
-                if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name))
-                    report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
-
-                if (type_decl.definition_body && t_decl.definition_body) {
-                    report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
-                }
+            if (!was_inserted && type_decl.definition_body && t_decl.definition_body) {
+                report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
             }
         }
         _default {

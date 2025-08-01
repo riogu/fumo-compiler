@@ -51,7 +51,7 @@
 
                 str ptr_str; for (int i = 0; i < param->type.ptr_count; i++) ptr_str += "*";
 
-                temp += white_gray(get_name(var)) + gray(": ") + yellow(get_name(param->type)) + gray(ptr_str);
+                temp += white_gray(get_name(var)) + gray(": ") + yellow(get_id(param->type).mangled_name) + gray(ptr_str);
 
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }

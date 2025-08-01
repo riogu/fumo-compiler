@@ -61,6 +61,7 @@ struct SymbolTableStack {
     void pop_scope() {
         curr_scope_name.resize(curr_scope_name.size() - scope_stack.back().isolated_name.size());
         scope_stack.pop_back();
+        if (!scope_stack.empty()) curr_scope_kind = scope_stack.back().kind;
     }
 
     auto push_variable_decl(Identifier& identifier, ASTNode& node) {
@@ -78,7 +79,11 @@ struct SymbolTableStack {
         switch (curr_scope_kind) {
             case ScopeKind::TypeBody: { // this allows struct declarations to exist inside other structs
                 str temp = curr_scope_name; // doesnt add "{}" to the mangled name
-                temp.resize(curr_scope_name.size() - 4);
+                try {
+                    temp.resize(curr_scope_name.size() - 4);
+                } catch(...) {
+                    PANIC("you fucked up the scope name again.");
+                }
                 identifier.mangled_name = temp + "::" + identifier.name;
                 break;
             }

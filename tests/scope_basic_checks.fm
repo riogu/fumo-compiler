@@ -70,6 +70,7 @@ t(
 ,fail),
 
 t(
-"    fn func(x: i32) -> void;\n"
+"struct foo{};\n"
+"fn func(x: foo) -> void;\n"
 "\n"
 ,pass),
