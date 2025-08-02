@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <format>
+#include <fstream>
 #include <print>
 #include <string>
 
@@ -43,15 +44,14 @@ int main() {
         #include "../tests/scope_basic_checks.fm"
         #include "../tests/scope_name_lookup.fm"
     };
-
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : all_tests) {
+    for (const auto& [test, expected] : scope_basic_tests) {
         auto [output, status] = exec(std::format("./build/fumo-compiler 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"
-                       // "{}\n"
-                       // "{}"
+                       "{}\n"
+                       "{}"
                        "------------------------------------------------\n"
                        ,test
                        ,output

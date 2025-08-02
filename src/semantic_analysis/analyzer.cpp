@@ -9,13 +9,13 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     // NOTE: this is here so the global namespace is unnamed
     // in reality, everything global starts with "::"
     // removing this changes nothing in functionality, only in debug printing
-    // symbol_tree.curr_scope_name = ""; 
-    // symbol_tree.scope_stack.begin()->isolated_name = "";
-    // symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
+    symbol_tree.curr_scope_name = ""; 
+    symbol_tree.scope_stack.begin()->isolated_name = "";
+    symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
     for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
 
-    // symbol_tree.curr_scope_name = "::"; 
+    symbol_tree.curr_scope_name = "::"; 
     symbol_tree.pop_scope();
 }
 
@@ -25,7 +25,7 @@ void Analyzer::analyze(ASTNode& node) {
 
         holds(Identifier, &id) {
             // NOTE: initializer lists might be analyzed and get their types later
-            if (id.kind == Identifier::type_name && id.name == "Undetermined") return;
+            if (id.kind == Identifier::type_name && id.name == "Undetermined Type") return;
 
             id.declaration = symbol_tree.find_declaration(id);
 

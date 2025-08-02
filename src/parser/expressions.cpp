@@ -145,7 +145,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 or_error(temp_node.value()->source_token, "expected identifier before initializer list.");
             init_list->type.identifier = temp_node.value();
         } else {
-            init_list->type.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
+            init_list->type.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
         }
         expect_token_str("}");
         return init_list;

@@ -12,7 +12,7 @@
     if (token_is(:)) {
         node->type = declaration_specifier();
     } else
-        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined"}});
+        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
 
     node->branch = std::move(variable);
 
@@ -20,7 +20,7 @@
         ASTNode* assignment = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
         expect_token(;);
         return assignment;
-    } else if (get_name(node->type) == "Undetermined") {
+    } else if (get_name(node->type) == "Undetermined Type") {
         report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }
 
