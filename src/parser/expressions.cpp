@@ -168,14 +168,14 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             nodes.push_back(node);
 
             expect_token(identifier);
-            node = identifier(Identifier::deref_member_var_name);
+            node = identifier(Identifier::deref_postfix_var_name);
             continue;
         }
         if (token_is(.)) {
             nodes.push_back(node);
 
             expect_token(identifier);
-            node = identifier(Identifier::member_var_name);
+            node = identifier(Identifier::postfix_var_name);
             continue;
         }
         if (token_is_str("(")) {

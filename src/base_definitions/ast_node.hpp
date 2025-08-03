@@ -14,8 +14,8 @@ struct Identifier {
         declaration_name,       /*                                   */  \
         type_name,              /*                                   */  \
         func_call_name,         /*                                   */  \
-        member_var_name,        /*                                   */  \
-        deref_member_var_name,  /*                                   */  \
+        postfix_var_name,       /*                                   */  \
+        deref_postfix_var_name, /*                                   */  \
         var_name                /*                                   */  \
 
         Identifier_kinds
@@ -90,6 +90,7 @@ struct VariableDecl {
     } kind;
     ASTNode* identifier;
 };
+
 struct FunctionDecl {
     enum Kind {
         #define FunctionDecl_kinds                                       \
@@ -136,7 +137,6 @@ struct TypeDecl {
 
         TypeDecl_kinds
     } kind;
-    ASTNode* identifier;
     Opt<vec<ASTNode*>> definition_body {};
 };
 

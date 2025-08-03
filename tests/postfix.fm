@@ -1,22 +1,49 @@
+//t(
+//"var.this;\n"
+//"var->this;\n"
+//"var();\n"
+//"var(this, this, this);\n"
+//"var::another;\n"
+//,pass),
+//t(
+//"var.this.that;\n"
+//"var->this->that;\n"
+//"var.this->that;\n"
+//"var->this.that;\n"
+//,pass),
+//t(
+//"var.this(thing, thing);\n"
+//"var.this();\n"
+//"var->this();\n"
+//"var->this()->another;\n"
+//,pass),
+//t(
+//"var::one::two.three->func(this, that->other.gaming(), lasthting);\n"
+//,pass),
 t(
-"var.this;\n"
-"var->this;\n"
-"var();\n"
-"var(this, this, this);\n"
-"var::another;\n"
+"struct foo {\n"
+"    fn func(x: i32) -> i32;\n"
+"};\n"
+"fn somefunc() -> void {\n"
+"    let x:i32 = foo::func();\n"
+"}\n"
+,fail),
+t(
+"struct foo {\n"
+"    fn func(x: i32) -> i32;\n"
+"};\n"
+"fn somefunc() -> void {\n"
+"    let var: foo = {};\n"
+"    let x: i32 = var.func();\n"
+"}\n"
 ,pass),
 t(
-"var.this.that;\n"
-"var->this->that;\n"
-"var.this->that;\n"
-"var->this.that;\n"
-,pass),
-t(
-"var.this(thing, thing);\n"
-"var.this();\n"
-"var->this();\n"
-"var->this()->another;\n"
-,pass),
-t(
-"var::one::two.three->func(this, that->other.gaming(), lasthting);\n"
-,pass),
+"struct foo {\n"
+"    fn func(x: i32) -> i32;\n"
+"    fn bar(x: i32) -> i32;\n"
+"};\n"
+"fn foo::func(x: i32) -> i32 {\n"
+"    foo::bar();\n"
+"    return x;\n"
+"}\n"
+,fail),

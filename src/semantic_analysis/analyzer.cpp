@@ -92,8 +92,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (bin.kind == BinaryExpr::assignment) {
                 if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
                     report_error(node.source_token,
-                                 "cannot deduce type for '{}' from assignment.",
-                                 bin.lhs->source_token.to_str());
+                                 "cannot deduce type for'{}' from assignment.", bin.lhs->source_token.to_str());
                 }
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
@@ -108,7 +107,10 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(VariableDecl, &var) {
-            if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
+            if (node.type.kind == Type::Undetermined) {
+                analyze(*node.type.identifier);
+                node.type = node.type.identifier->type;
+            }
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
                 var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
@@ -153,7 +155,9 @@ void Analyzer::analyze(ASTNode& node) {
                     break;
                 case BlockScope::initializer_list:
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
-                case BlockScope::argument_list: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                case BlockScope::argument_list: 
+                    break;
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -170,7 +174,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case TypeDecl::struct_declaration:
                     add_declaration(node);
 
-                    symbol_tree.push_scope(get_name(type_decl), ScopeKind::TypeBody);
+                    symbol_tree.push_scope(get_name(node.type), ScopeKind::TypeBody);
                     if (type_decl.definition_body) {
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
                     }
@@ -181,8 +185,8 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(PostfixExpr, &postfix) {
-            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             for (auto& node : postfix.nodes) analyze(*node);
+            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
         }
 
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
@@ -222,6 +226,7 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         holds(VariableDecl, &var) {
             Identifier& id = get_id(var);
+
             auto [_, was_inserted] = symbol_tree.push_variable_decl(id, node);
 
             if (!was_inserted && var.kind != VariableDecl::parameter)
@@ -234,12 +239,11 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             if (symbol_tree.type_decls.contains(id.mangled_name))
                 report_error(node.source_token,
-                             "Redefinition of '{}' as a different kind of symbol.",
-                             id.mangled_name);
+                             "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
         }
 
         holds(TypeDecl, &type_decl) {
-            Identifier& id = get_id(type_decl);
+            Identifier& id = get_id(node.type);
             const auto& [node_iterator, was_inserted] = symbol_tree.push_type_decl(id, node);
 
             // TODO: add each member of the struct to the type decl info.

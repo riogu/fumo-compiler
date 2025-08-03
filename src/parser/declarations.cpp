@@ -9,6 +9,11 @@
 
     VariableDecl variable {VariableDecl::variable_declaration, identifier(Identifier::declaration_name, node)};
 
+    if (const auto& id = get_id(variable); id.qualifier == Identifier::qualified) {
+        report_error(variable.identifier->source_token, 
+                     "variable declaration '{}' can't be qualified.", id.mangled_name);
+    }
+
     if (token_is(:)) {
         node->type = declaration_specifier();
     } else
@@ -154,9 +159,11 @@
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
     auto* node = push(ASTNode {*prev_tkn});
-    expect_token(identifier);
-    TypeDecl type_decl {TypeDecl::struct_declaration, identifier(Identifier::declaration_name, node)};
 
+    expect_token(identifier);
+    node->type = {identifier(Identifier::declaration_name, node), Type::struct_};
+
+    TypeDecl type_decl {TypeDecl::struct_declaration};
     if (token_is_str("{")) {
         vec<ASTNode*> nodes {};
         while (!token_is_str("}")) {
