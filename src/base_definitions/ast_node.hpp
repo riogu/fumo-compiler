@@ -14,9 +14,9 @@ struct Identifier {
         declaration_name,       /*                                   */  \
         type_name,              /*                                   */  \
         func_call_name,         /*                                   */  \
-        postfix_var_name,       /*                                   */  \
-        deref_postfix_var_name, /*                                   */  \
-        var_name                /*                                   */  \
+        var_name,               /*                                   */  \
+        member_var_name,       /*                                   */  \
+        member_func_call_name  /*                                   */  \
 
         Identifier_kinds
     } kind;
@@ -43,7 +43,8 @@ struct UnaryExpr {
         negate,                  /* unary -                           */ \
         logic_not,               /* !                                 */ \
         bitwise_not,             /* ~                                 */ \
-        return_statement         /* return                            */ \
+        return_statement,        /* return                            */ \
+        dereference              /* return                            */ \
 
         UnaryExpr_kinds
     } kind;
@@ -173,8 +174,7 @@ constexpr Branch& get(ASTNode* node) {
     else [[unlikely]]
         INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->name());
 }
-
-#define is_branch (void)({ bool held; bool branch_ = held = is_impl_
+#define is_branch ({ bool held; bool branch_ = held = is_impl_
 template<typename... Branches>
 constexpr bool is_impl_(const ASTNode* node) {
     return (std::holds_alternative<Branches>(node->branch) || ...);
@@ -183,12 +183,10 @@ constexpr bool is_impl_(const ASTNode* node) {
 
 #define get_if *({ auto [branch_, held] = get_if_impl_
 template<typename Branch>
-constexpr auto get_if_impl_(ASTNode* node) {
-    if (bool v = std::holds_alternative<Branch>(node->branch); v) return std::pair{&std::get<Branch>(node->branch), v};
-    else {
-        Branch* dummy {};
-        return std::pair{dummy, false};
-    }
+constexpr std::pair<Branch*, bool> get_if_impl_(ASTNode* node) {
+    if (bool v = std::holds_alternative<Branch>(node->branch); v) return {&std::get<Branch>(node->branch), v};
+    else 
+        return {nullptr, false};
 }
 
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };

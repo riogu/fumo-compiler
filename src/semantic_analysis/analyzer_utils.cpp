@@ -10,8 +10,6 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
     map_macro(find_in_each_map, __VA_ARGS__);                         \
 }
 
-#define each_case_label(the_case) case the_case:
-#define case(...) map_macro(each_case_label, __VA_ARGS__)
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
@@ -53,14 +51,23 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
             }
             break;
 
-        case Identifier::postfix_var_name:
-        case Identifier::deref_postfix_var_name: 
+        case Identifier::member_var_name:
+            for (const auto& scope : scope_stack | std ::views ::reverse) {
+                if find_value(id.mangled_name, member_variable_decls) {}
+            }
+            break;
+        case Identifier::member_func_call_name:
+            for (const auto& scope : scope_stack | std ::views ::reverse) {
+                if find_value(id.mangled_name, member_variable_decls) {}
+            }
+            break;
 
         case Identifier::declaration_name: 
             INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
     }
+
     return std::nullopt;
 }
 

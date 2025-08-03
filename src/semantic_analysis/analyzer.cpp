@@ -1,5 +1,4 @@
 #include "semantic_analysis/analyzer.hpp"
-#include "base_definitions/tokens.hpp"
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -19,6 +18,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 }
 
 void Analyzer::determine_type(ASTNode& node) {
+    // TODO: move type checks from analyze() to this function
     match(node) {
         holds(Identifier) {}
         holds(PrimaryExpr) {}
@@ -66,26 +66,24 @@ void Analyzer::analyze(ASTNode& node) {
             switch (un.kind) {
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
+                case UnaryExpr::logic_not:
                     // if (!is_arithmetic_t(un.expr->type)) {
                     //     report_error(node.source_token,
                     //                  "invalid type '{}' for unary expression.",
                     //                  get_name(un.expr->type));
                     // }
                     // break;
-                case UnaryExpr::return_statement:
-                case UnaryExpr::logic_not:
+                case UnaryExpr::return_statement: 
+                // TODO: return should be moved to a new struct later
+                case UnaryExpr::dereference:
+                    // NOTE: unary expr doesnt have to do anything here other than 
+                    // check that the held expr is a pointer.
+                
                     // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
             node.type = un.expr->type;
         }
         holds(BinaryExpr, &bin) {
-            // let var: foo::bar = {123};
-            // let var = foo::bar {213};
-            // var = foo::bar {123};
-            // var = {123};
-            // let var = {}; should error
-            // let var = {123}; OK
-            // let var = {123, 213}; should error
             analyze(*bin.lhs);
             analyze(*bin.rhs);
 
@@ -127,7 +125,10 @@ void Analyzer::analyze(ASTNode& node) {
 
             symbol_tree.push_scope(get_name(func), scope_kind);
 
-            if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
+            if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
+                analyze(*node.type.identifier);
+                node.type = node.type.identifier->type;
+            }
 
             for (auto& param : func.parameters) {
                 analyze(*param);
@@ -155,9 +156,11 @@ void Analyzer::analyze(ASTNode& node) {
                     break;
                 case BlockScope::initializer_list:
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
-                case BlockScope::argument_list: 
-                    break;
-                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                    // INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                case BlockScope::argument_list:
+                    for (auto& node : scope.nodes) {
+                        analyze(*node);
+                    }
             }
         }
 
@@ -169,7 +172,6 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(TypeDecl, const& type_decl) {
-
             switch (type_decl.kind) {
                 case TypeDecl::struct_declaration:
                     add_declaration(node);
@@ -184,9 +186,25 @@ void Analyzer::analyze(ASTNode& node) {
             }
         }
 
-        holds(PostfixExpr, &postfix) {
-            for (auto& node : postfix.nodes) analyze(*node);
-            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+        holds(PostfixExpr, &postfix) { // nodes is never empty
+            str prev_name = "";
+            for (auto& node : postfix.nodes) {
+                match(*node) {
+                    holds(UnaryExpr, &un) {
+                        // NOTE: wont work if we add "(thing).stuff" to postfix expressions
+                        auto& id = get<Identifier>(un.expr);
+                        id.mangled_name = prev_name += id.name;
+                        analyze(*node);
+                    }
+                    holds(Identifier, &id) {
+                        id.mangled_name = prev_name += id.name;
+                        analyze(*node);
+                    }
+                    holds(BlockScope) analyze(*node);
+
+                    _default INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                }
+            }
         }
 
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());

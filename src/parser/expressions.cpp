@@ -1,11 +1,12 @@
 #include "parser/parser.hpp"
 
 ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
-    tokens = tkns; prev_tkn = tkns.begin(); curr_tkn = tkns.begin();
+    tokens = tkns;
+    prev_tkn = tkns.begin();
+    curr_tkn = tkns.begin();
 
     while (curr_tkn + 1 != tkns.end()) {
-        if (token_is_keyword(let))
-            AST.push_back(variable_declaration());
+        if (token_is_keyword(let)) AST.push_back(variable_declaration());
         else if (token_is_keyword(fn))
             AST.push_back(function_declaration());
         else if (token_is_keyword(namespace))
@@ -16,7 +17,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(enum_declaration());
         else
             AST.push_back(statement()); /* NOTE: no longer valid in global */
-            // report_error((*curr_tkn), "expected declaration.");
+        // report_error((*curr_tkn), "expected declaration.");
     }
     auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::declaration_name, "fumo_module"}});
     return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
@@ -25,8 +26,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <statement> ::= <expression-statement>
 [[nodiscard]] ASTNode* Parser::statement() {
     if (token_is_keyword(return)) {
-        return push(ASTNode {*prev_tkn,
-                             UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
+        return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
     }
     return expression_statement();
 }
@@ -48,7 +48,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <assignment> ::= <equality> {"=" <equality>}?
 [[nodiscard]] ASTNode* Parser::assignment() {
     auto node = equality();
-    
+
     if (token_is(=)) {
         is_branch<Identifier, PostfixExpr>(node) or_error(node->source_token, "expression is not assignable.");
 
@@ -61,12 +61,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 [[nodiscard]] ASTNode* Parser::equality() {
     auto node = relational();
     while (1) {
-        if (token_is(==))
-            return push(ASTNode {*prev_tkn,
-                                 BinaryExpr {BinaryExpr::equal, node, relational()}});
-        if (token_is(!=))
-            return push(ASTNode {*prev_tkn,
-                                 BinaryExpr {BinaryExpr::not_equal, node, relational()}});
+        if (token_is(==)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::equal, node, relational()}});
+        if (token_is(!=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::not_equal, node, relational()}});
         return node;
     }
 }
@@ -74,14 +70,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <relational> ::= <add> { ("<" | ">" | "<=" | ">=")  <add> }*
 [[nodiscard]] ASTNode* Parser::relational() {
     auto node = add();
-    if (token_is(<))
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than,   node, add()}});
-    if (token_is(>))
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than,   add(), node}});
-    if (token_is(<=))
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, node, add()}});
-    if (token_is(>=))
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, add(), node}});
+    if (token_is(<)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, node, add()}});
+    if (token_is(>)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, add(), node}});
+    if (token_is(<=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, node, add()}});
+    if (token_is(>=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, add(), node}});
     return node;
 }
 
@@ -90,11 +82,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto node = multiply();
     while (1) {
         if (token_is(+)) {
-            node = push(ASTNode { *prev_tkn, BinaryExpr {BinaryExpr::add, node, multiply()}});
+            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::add, node, multiply()}});
             continue;
         }
         if (token_is(-)) {
-            node = push(ASTNode { *prev_tkn, BinaryExpr {BinaryExpr::sub, node, multiply()}});
+            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::sub, node, multiply()}});
             continue;
         }
         return node;
@@ -110,22 +102,20 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (token_is(/)) {
-            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::divide,   node, unary()}});
+            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::divide, node, unary()}});
             continue;
         }
         return node;
     }
 }
 
-// <unary> ::= ("-" | "!" | "~" | "+") <unary>
+// <unary> ::= ("-" | "!" | "~" | "+" | "*") <unary>
 //           | <postfix>
 [[nodiscard]] ASTNode* Parser::unary() {
-    if (token_is(-))
-        return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate, unary()}});
-    if (token_is(!))
-        return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not, unary()}});
-    if (token_is(~))
-        return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, unary()}});
+    if (token_is(-)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate,      unary()}});
+    if (token_is(!)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not,   unary()}});
+    if (token_is(~)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, unary()}});
+    if (token_is(*)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, unary()}});
     return postfix();
 }
 
@@ -145,41 +135,42 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 or_error(temp_node.value()->source_token, "expected identifier before initializer list.");
             init_list->type.identifier = temp_node.value();
         } else {
-            init_list->type.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
+            init_list->type.identifier =
+                push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
         }
         expect_token_str("}");
         return init_list;
     }
 
-    if(!temp_node) report_error((*curr_tkn), "expected expression.");
+    if (!temp_node) report_error((*curr_tkn), "expected expression.");
 
     auto node = temp_node.value();
-
-    // if (token_is_str("(")) {
-    //     node = push(ASTNode {node->source_token, 
-    //                          PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
-    //     expect_token_str(")");
-    // }
-    vec<ASTNode*> nodes {};
     Token& tkn = node->source_token;
 
-    while(1) {
+    vec<ASTNode*> nodes {};
+    // NOTE: the current impl means you can't do "(this->that.this).this"
+    // (can't use parentheses in a postfix expression)
+    while (1) {
         if (token_is(->)) {
+            auto& id = get_if<Identifier>(node) or_error(node->source_token, "expected identifier before postfix operator");
             nodes.push_back(node);
 
             expect_token(identifier);
-            node = identifier(Identifier::deref_postfix_var_name);
+            node = push(ASTNode{*prev_tkn, 
+                                UnaryExpr {UnaryExpr::dereference, identifier(Identifier::member_var_name)}});
             continue;
         }
         if (token_is(.)) {
+            is_branch<Identifier>(node) or_error(node->source_token, "expected identifier before postfix operator");
             nodes.push_back(node);
 
             expect_token(identifier);
-            node = identifier(Identifier::postfix_var_name);
+            node = identifier(Identifier::member_var_name);
             continue;
         }
         if (token_is_str("(")) {
-            get<Identifier>(node).kind = Identifier::func_call_name;
+            auto& id = get_if<Identifier>(node) or_error(tkn, "expected identifier before postfix operator");
+            id.kind = Identifier::member_func_call_name;
             nodes.push_back(node);
 
             node = argument_list();
@@ -187,12 +178,18 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (!nodes.empty()) {
+
+            auto& first_id = get<Identifier>(*nodes.begin());
+            if (first_id.kind == Identifier::member_func_call_name) {
+                first_id.kind = Identifier::func_call_name;
+            } else {
+                first_id.kind = Identifier::var_name;
+            }
             nodes.push_back(node);
             return push(ASTNode {tkn, PostfixExpr {PostfixExpr::postfix_expr, nodes}});
         }
         return node;
-    }   
-
+    }
 }
 
 [[nodiscard]] ASTNode* Parser::argument_list() {
@@ -201,7 +198,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
     vec<ASTNode*> arguments {};
     arguments.push_back(postfix());
-    while(1) {
+    while (1) {
         if (token_is_str(",")) {
             arguments.push_back(postfix());
             continue;
@@ -242,23 +239,25 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return node;
     }
     if (token_is(int))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+        return push(
+            ASTNode {*prev_tkn,
+                     PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
+                     Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
     if (token_is(float))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
+        return push(
+            ASTNode {*prev_tkn,
+                     PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
+                     Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
     if (token_is(string))
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                             Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+        return push(
+            ASTNode {*prev_tkn,
+                     PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
+                     Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
 
     // NOTE: only variable names go through primary() to be found
     if (token_is(identifier)) return identifier(Identifier::var_name);
 
     return std::nullopt;
-
 }
 
 [[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind, Opt<ASTNode*> declaration) {
