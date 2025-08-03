@@ -12,15 +12,11 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
 
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
+
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
     switch (id.kind) {
         case Identifier::type_name:
-            for (const auto& scope : scope_stack | std ::views ::reverse) {
-                if (const auto& iter = type_decls.find(scope.name + id.name); iter != type_decls.end()) {
-                    // std::cerr << scope.name + id.name + " | ";
-                    return id.mangled_name = scope.name + id.name, iter->second;
-                };
-            };
+            search_maps(type_decls);
             break;
         case Identifier::func_call_name:
             switch (curr_scope_kind) {
@@ -31,7 +27,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
                         search_maps(function_decls);
                         break;
                     }
-                    search_maps(member_func_decls, function_decls); break;
+                    search_maps(member_function_decls, function_decls); break;
             }
             break;
         case Identifier::var_name:
@@ -52,13 +48,13 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
             break;
 
         case Identifier::member_var_name:
-            for (const auto& scope : scope_stack | std ::views ::reverse) {
-                if find_value(id.mangled_name, member_variable_decls) {}
+            if find_value (id.mangled_name, member_variable_decls) {
+                return iter->second;
             }
             break;
         case Identifier::member_func_call_name:
-            for (const auto& scope : scope_stack | std ::views ::reverse) {
-                if find_value(id.mangled_name, member_variable_decls) {}
+            if find_value (id.mangled_name, member_function_decls) {
+                return iter->second;
             }
             break;
 
@@ -66,9 +62,64 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
             INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
-    }
+            }
 
     return std::nullopt;
+}
+
+[[nodiscard]] ScopeKind SymbolTableStack::find_scope_kind(const str& name) {
+    if find_value(name, namespace_decls) return ScopeKind::Namespace;
+    if find_value(name, type_decls) return ScopeKind::TypeBody;
+    return ScopeKind::CompoundStatement;
+}
+void Analyzer::iterate_qualified_names(FunctionDecl& func) {
+    // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
+    auto& id = get_id(func);
+    if (id.qualifier == Identifier::qualified) { 
+        str temp = id.name;
+        str unqualified_name = "";
+        while (temp.back() != ':') unqualified_name = temp.back() + unqualified_name, temp.pop_back();
+        temp.pop_back(), temp.pop_back();
+
+        ScopeKind scope_kind;
+        if find_value (temp, symbol_tree.type_decls) {
+            func.kind = FunctionDecl::member_func_declaration;
+            scope_kind = ScopeKind::FunctionBody;
+        } else {
+            func.kind = FunctionDecl::function_declaration;
+            scope_kind = ScopeKind::MemberFuncBody;
+        }
+
+        str full_name = "";
+        full_name.push_back(*temp.begin());
+        str isolated_name = full_name;
+        temp.erase(0, 1);
+        while (1) {
+            while (*temp.begin() != ':') {
+                full_name += *temp.begin();
+                isolated_name += *temp.begin();
+                temp.erase(temp.begin());
+                if (temp.empty()) break;
+            }
+            ScopeKind kind = symbol_tree.find_scope_kind(full_name);
+            symbol_tree.push_scope(isolated_name, kind);
+            isolated_name = "";
+            if (temp.empty()) break;
+        }
+        symbol_tree.push_scope(unqualified_name, scope_kind);
+
+    } else {
+        switch (symbol_tree.curr_scope_kind) {
+            case ScopeKind::TypeBody:
+                func.kind = FunctionDecl::member_func_declaration;
+                symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
+                break;
+            default:
+                func.kind = FunctionDecl::function_declaration;
+                symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
+                break;
+        }
+    }
 }
 
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {

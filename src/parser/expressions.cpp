@@ -1,3 +1,4 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
@@ -50,8 +51,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto node = equality();
 
     if (token_is(=)) {
-        is_branch<Identifier, PostfixExpr>(node) or_error(node->source_token, "expression is not assignable.");
-
+        if (!is_branch<Identifier, PostfixExpr>(node)) {
+            report_error(node->source_token, "expression is not assignable.");
+        }
         return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
     }
     return node;
@@ -131,8 +133,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is_str("{")) {
         auto init_list = initializer_list();
         if (temp_node) {
-            is_branch<Identifier>(temp_node.value())
-                or_error(temp_node.value()->source_token, "expected identifier before initializer list.");
+            if (!is_branch<Identifier>(temp_node.value())) {
+                report_error(temp_node.value()->source_token, "expected identifier before initializer list.");
+            }
             init_list->type.identifier = temp_node.value();
         } else {
             init_list->type.identifier =
@@ -152,40 +155,55 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     // (can't use parentheses in a postfix expression)
     while (1) {
         if (token_is(->)) {
-            auto& id = get_if<Identifier>(node) or_error(node->source_token, "expected identifier before postfix operator");
-            nodes.push_back(node);
+            if(!is_branch<Identifier, BlockScope>(node)) {
+                report_error(node->source_token, "expected identifier before postfix operator");
+            }
+            node = push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, node}});
 
             expect_token(identifier);
-            node = push(ASTNode{*prev_tkn, 
-                                UnaryExpr {UnaryExpr::dereference, identifier(Identifier::member_var_name)}});
+            node = identifier(Identifier::member_var_name);
+            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
             continue;
         }
         if (token_is(.)) {
-            is_branch<Identifier>(node) or_error(node->source_token, "expected identifier before postfix operator");
+            if(!is_branch<Identifier, BlockScope>(node)) {
+                report_error(node->source_token, "expected identifier before postfix operator");
+            }
             nodes.push_back(node);
 
             expect_token(identifier);
             node = identifier(Identifier::member_var_name);
+            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
             continue;
         }
         if (token_is_str("(")) {
-            auto& id = get_if<Identifier>(node) or_error(tkn, "expected identifier before postfix operator");
-            id.kind = Identifier::member_func_call_name;
+            if (auto* id = get_if_<Identifier>(node)) {
+                id->kind = Identifier::member_func_call_name;
+            } else if (auto* un = get_if_<UnaryExpr>(node)) {
+                get<Identifier>(un->expr).kind = Identifier::member_func_call_name;
+            } else {
+                report_error(tkn, "expected identifier before postfix operator");
+            }
+
             nodes.push_back(node);
 
             node = argument_list();
+            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
             expect_token_str(")");
             continue;
         }
         if (!nodes.empty()) {
+            nodes.push_back(node);
 
-            auto& first_id = get<Identifier>(*nodes.begin());
+            auto* first_node = *nodes.begin();
+            auto& first_id = get<Identifier>(first_node);
             if (first_id.kind == Identifier::member_func_call_name) {
                 first_id.kind = Identifier::func_call_name;
             } else {
                 first_id.kind = Identifier::var_name;
             }
-            nodes.push_back(node);
+            first_node->type.identifier = push(ASTNode {*prev_tkn, 
+                                                              Identifier {Identifier::type_name, "Undetermined Type"}});
             return push(ASTNode {tkn, PostfixExpr {PostfixExpr::postfix_expr, nodes}});
         }
         return node;
@@ -269,6 +287,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         expect_token(identifier);
         id.name += "::" + std::get<str>(prev_tkn->literal.value());
         id.qualifier = Identifier::qualified;
+        id.scope_counts++;
     }
     id.mangled_name = id.name;
     return push(ASTNode {.source_token = token, .branch = id});

@@ -15,8 +15,8 @@ struct Identifier {
         type_name,              /*                                   */  \
         func_call_name,         /*                                   */  \
         var_name,               /*                                   */  \
-        member_var_name,       /*                                   */  \
-        member_func_call_name  /*                                   */  \
+        member_var_name,        /*                                   */  \
+        member_func_call_name   /*                                   */  \
 
         Identifier_kinds
     } kind;
@@ -24,6 +24,7 @@ struct Identifier {
     enum Qualifier { unqualified, qualified } qualifier = unqualified;
     Opt<ASTNode*> declaration {}; // identifiers are solved to this
     str mangled_name = name;
+    int scope_counts = 0;
 };
 struct PrimaryExpr {
     enum Kind {
@@ -158,6 +159,9 @@ struct ASTNode {
     [[nodiscard]] std::string name() const { return yellow(branch_name()) + gray("::") + enum_green(kind_name()); }
 };
 
+// constexpr ASTNode::NodeBranch operator/(ASTNode::NodeBranch branch, int dummy) {
+//     return branch;
+// }
 
 #define get_name(branch_) get_id(branch_).name
 #define get_id(branch_)                                                             \
@@ -174,19 +178,19 @@ constexpr Branch& get(ASTNode* node) {
     else [[unlikely]]
         INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->name());
 }
-#define is_branch ({ bool held; bool branch_ = held = is_impl_
 template<typename... Branches>
-constexpr bool is_impl_(const ASTNode* node) {
+constexpr bool is_branch(const ASTNode* node) {
     return (std::holds_alternative<Branches>(node->branch) || ...);
 }
 #define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
 
-#define get_if *({ auto [branch_, held] = get_if_impl_
+#define if_holds(params, var_name) if (auto* var_name = get_if_ params)
+
 template<typename Branch>
-constexpr std::pair<Branch*, bool> get_if_impl_(ASTNode* node) {
-    if (bool v = std::holds_alternative<Branch>(node->branch); v) return {&std::get<Branch>(node->branch), v};
-    else 
-        return {nullptr, false};
+constexpr Branch* get_if_(ASTNode* node) {
+    if (std::holds_alternative<Branch>(node->branch)) return {&std::get<Branch>(node->branch)};
+    else
+        return nullptr;
 }
 
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };

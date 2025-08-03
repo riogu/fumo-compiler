@@ -47,7 +47,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                report_error(node.source_token, "use of undeclared identifier '{}'", id.name);
+                report_error(node.source_token, "use of undeclared identifier '{}'", id.mangled_name);
             }
         }
 
@@ -73,12 +73,12 @@ void Analyzer::analyze(ASTNode& node) {
                     //                  get_name(un.expr->type));
                     // }
                     // break;
-                case UnaryExpr::return_statement: 
+                case UnaryExpr::return_statement:
                 // TODO: return should be moved to a new struct later
                 case UnaryExpr::dereference:
-                    // NOTE: unary expr doesnt have to do anything here other than 
+                    // NOTE: unary expr doesnt have to do anything here other than
                     // check that the held expr is a pointer.
-                
+
                     // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
             node.type = un.expr->type;
@@ -90,7 +90,8 @@ void Analyzer::analyze(ASTNode& node) {
             if (bin.kind == BinaryExpr::assignment) {
                 if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
                     report_error(node.source_token,
-                                 "cannot deduce type for'{}' from assignment.", bin.lhs->source_token.to_str());
+                                 "cannot deduce type for '{}' from assignment.",
+                                 bin.lhs->source_token.to_str());
                 }
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
@@ -109,21 +110,15 @@ void Analyzer::analyze(ASTNode& node) {
                 analyze(*node.type.identifier);
                 node.type = node.type.identifier->type;
             }
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
-                var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
 
         holds(FunctionDecl, &func) {
-            add_declaration(node); // also sets func.kind in this call
+            add_declaration(node);
+            Identifier& id = get_id(func);
 
-            ScopeKind scope_kind;
-            switch (func.kind) {
-                case FunctionDecl::function_declaration: scope_kind = ScopeKind::FunctionBody; break;
-                case FunctionDecl::member_func_declaration: scope_kind = ScopeKind::MemberFuncBody; break;
-            }
-
-            symbol_tree.push_scope(get_name(func), scope_kind);
+            iterate_qualified_names(func);
 
             if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
                 analyze(*node.type.identifier);
@@ -132,9 +127,8 @@ void Analyzer::analyze(ASTNode& node) {
 
             for (auto& param : func.parameters) {
                 analyze(*param);
-                if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
+                if (param->type.kind == Type::Undetermined) analyze(*param);
                 // TODO: analyzing a type should automatically set the node's type
-                // param->type = param->type.identifier->type;
             }
 
             if (func.body) {
@@ -142,7 +136,7 @@ void Analyzer::analyze(ASTNode& node) {
                 for (auto& node : get<BlockScope>(func.body.value()).nodes) analyze(*node);
             }
 
-            symbol_tree.pop_scope();
+            for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
         }
 
         holds(BlockScope, &scope) {
@@ -156,11 +150,14 @@ void Analyzer::analyze(ASTNode& node) {
                     break;
                 case BlockScope::initializer_list:
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
+                    node.type = node.type.identifier->type;
+                    break;
                     // INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
                 case BlockScope::argument_list:
                     for (auto& node : scope.nodes) {
                         analyze(*node);
                     }
+                    break;
             }
         }
 
@@ -187,23 +184,49 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(PostfixExpr, &postfix) { // nodes is never empty
-            str prev_name = "";
-            for (auto& node : postfix.nodes) {
-                match(*node) {
-                    holds(UnaryExpr, &un) {
-                        // NOTE: wont work if we add "(thing).stuff" to postfix expressions
-                        auto& id = get<Identifier>(un.expr);
-                        id.mangled_name = prev_name += id.name;
-                        analyze(*node);
-                    }
-                    holds(Identifier, &id) {
-                        id.mangled_name = prev_name += id.name;
-                        analyze(*node);
-                    }
-                    holds(BlockScope) analyze(*node);
 
-                    _default INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+            str prev_name = "";
+
+            for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
+                auto& node = *node_it;
+                if_holds(<UnaryExpr>(node), un) {
+                    if_holds(<Identifier>(un->expr), id) {
+                        switch (id->kind) {
+                            case (Identifier::func_call_name, Identifier::member_func_call_name)
+                                id->mangled_name = prev_name + id->name; 
+                                prev_name = ""; 
+                                break;
+                            case (Identifier::var_name, Identifier::member_var_name)
+                                std::cerr << prev_name << '\n';
+                                id->mangled_name = prev_name + id->name; break; 
+                            default:
+                                INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                        }
+                    }
                 }
+                else if_holds(<Identifier>(node), id) {
+                    switch (id->kind) {
+                        case (Identifier::func_call_name, Identifier::member_func_call_name)
+                            id->mangled_name = prev_name + id->name; 
+                            prev_name = ""; 
+                            break;
+                        case (Identifier::var_name, Identifier::member_var_name)
+                            std::cerr << prev_name << '\n';
+                            id->mangled_name = prev_name + id->name; break; 
+                        default:
+                            INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                    }
+                }
+                else if (is_branch<BlockScope>(node)) {
+                    node->type = (*(node_it - 1))->type;
+                    prev_name = ""; 
+                }
+                else INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+
+                analyze(*node);
+                prev_name += get_id(node->type).mangled_name + "::";
+                // std::cerr << prev_name << '\n';
+
             }
         }
 
@@ -226,13 +249,6 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: member function calls should be rewritten to take a pointer
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
-
-            if (id.qualifier == Identifier::qualified) { // check if its a member function
-                str temp = id.name;
-                while (temp.back() != ':') temp.pop_back();
-                temp.pop_back(), temp.pop_back();
-                if find_value(temp, symbol_tree.type_decls) func.kind = FunctionDecl::member_func_declaration;
-            }
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
 
@@ -257,7 +273,8 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             if (symbol_tree.type_decls.contains(id.mangled_name))
                 report_error(node.source_token,
-                             "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
+                             "Redefinition of '{}' as a different kind of symbol.",
+                             id.mangled_name);
         }
 
         holds(TypeDecl, &type_decl) {

@@ -42,13 +42,14 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> type_decls {};
     std::map<str, ASTNode*> function_decls {};
     std::map<str, ASTNode*> member_variable_decls {}; // member functions and variables
-    std::map<str, ASTNode*> member_func_decls {}; // member functions and variables
+    std::map<str, ASTNode*> member_function_decls {}; // member functions and variables
     vec<Scope> scope_stack {};
 
     str curr_scope_name = "";
     ScopeKind curr_scope_kind;
 
     void push_scope(str name, ScopeKind kind) {
+        // std::cerr << name << '\n';
         switch (kind) {
             case ScopeKind::Namespace:    name += "::";   break;
             case ScopeKind::TypeBody:     name += "::";   break;
@@ -99,7 +100,7 @@ struct SymbolTableStack {
         identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::TypeBody: 
-                return member_func_decls.insert({identifier.mangled_name, &node});
+                return member_function_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::Namespace:
             case ScopeKind::FunctionBody:
             case ScopeKind::MemberFuncBody: 
@@ -111,6 +112,7 @@ struct SymbolTableStack {
 
 
     [[nodiscard]] Opt<ASTNode*> find_declaration(Identifier& id);
+    [[nodiscard]] ScopeKind find_scope_kind(const str& name);
 };
 
 struct Analyzer {
@@ -126,6 +128,7 @@ struct Analyzer {
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
     void add_declaration(ASTNode& node);
+    void iterate_qualified_names(FunctionDecl& func);
 
     [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
     [[nodiscard]] bool is_arithmetic_t(const Type& a);

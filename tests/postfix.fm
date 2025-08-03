@@ -23,6 +23,16 @@
 t(
 "struct foo {\n"
 "    fn func(x: i32) -> i32;\n"
+"    fn bar(x: i32) -> i32;\n"
+"};\n"
+"fn foo::func(x: i32) -> i32 {\n"
+"    foo::bar();\n"
+"    return x;\n"
+"}\n"
+,fail),
+t(
+"struct foo {\n"
+"    fn func(x: i32) -> i32;\n"
 "};\n"
 "fn somefunc() -> void {\n"
 "    let x:i32 = foo::func();\n"
@@ -39,11 +49,14 @@ t(
 ,pass),
 t(
 "struct foo {\n"
-"    fn func(x: i32) -> i32;\n"
-"    fn bar(x: i32) -> i32;\n"
+"    struct gaming {fn some() -> i32;};\n"
+"    struct bar {\n"
+"       fn func(x: i32) -> gaming;\n"
+"    };\n"
+"    fn some_func() -> void;\n"
 "};\n"
-"fn foo::func(x: i32) -> i32 {\n"
-"    foo::bar();\n"
-"    return x;\n"
+"fn foo::some_func() -> void {\n"
+"    let var: bar = {};\n"
+"    let y: i32 = var.func().some();\n"
 "}\n"
-,fail),
+,pass),

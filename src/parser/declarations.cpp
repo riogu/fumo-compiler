@@ -167,7 +167,8 @@
     if (token_is_str("{")) {
         vec<ASTNode*> nodes {};
         while (!token_is_str("}")) {
-            if (token_is_keyword(let)) nodes.push_back(variable_declaration());
+            if (token_is_keyword(let)) 
+                nodes.push_back(variable_declaration());
             else if (token_is_keyword(fn))
                 nodes.push_back(function_declaration());
             else if (token_is_keyword(struct))
