@@ -45,14 +45,14 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     return assignment();
 }
 
-// <assignment> ::= <equality> {"=" <initializer>}?
+// <assignment> ::= <equality> {"=" <equality>}?
 [[nodiscard]] ASTNode* Parser::assignment() {
     auto node = equality();
     
     if (token_is(=)) {
         is_branch<Identifier, PostfixExpr>(node) or_error(node->source_token, "expression is not assignable.");
 
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, postfix()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
     }
     return node;
 }
@@ -118,7 +118,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 }
 
 // <unary> ::= ("-" | "!" | "~" | "+") <unary>
-//           | <primary>
+//           | <postfix>
 [[nodiscard]] ASTNode* Parser::unary() {
     if (token_is(-))
         return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate, unary()}});
@@ -155,33 +155,41 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
     auto node = temp_node.value();
 
-    if (token_is_str("(")) {
-        node = push(ASTNode {node->source_token, 
-                             PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
-        expect_token_str(")");
-    }
+    // if (token_is_str("(")) {
+    //     node = push(ASTNode {node->source_token, 
+    //                          PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
+    //     expect_token_str(")");
+    // }
+    vec<ASTNode*> nodes {};
+    Token& tkn = node->source_token;
 
-    // TODO: specify what kind of identifier each part of the postfix is in the call
     while(1) {
         if (token_is(->)) {
+            nodes.push_back(node);
+
             expect_token(identifier);
-            node = push(ASTNode {*(prev_tkn-1), 
-                                 PostfixExpr {PostfixExpr::deref_member_access, node, identifier()}});
+            node = identifier(Identifier::deref_member_var_name);
             continue;
         }
         if (token_is(.)) {
+            nodes.push_back(node);
+
             expect_token(identifier);
-            node = push(ASTNode {*(prev_tkn - 1), 
-                                 PostfixExpr {PostfixExpr::member_access, node, identifier()}});
+            node = identifier(Identifier::member_var_name);
             continue;
         }
         if (token_is_str("(")) {
-            node = push(ASTNode {node->source_token, 
-                                 PostfixExpr {PostfixExpr::function_call, node, argument_list()}});
+            get<Identifier>(node).kind = Identifier::func_call_name;
+            nodes.push_back(node);
+
+            node = argument_list();
             expect_token_str(")");
             continue;
         }
-        
+        if (!nodes.empty()) {
+            nodes.push_back(node);
+            return push(ASTNode {tkn, PostfixExpr {PostfixExpr::postfix_expr, nodes}});
+        }
         return node;
     }   
 

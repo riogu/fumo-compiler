@@ -28,15 +28,9 @@
         }
         holds(PostfixExpr, const& postfix) {
             // TODO: improve printing for postfix expressions here 
-            switch (postfix.kind) {
-                case PostfixExpr::member_access:
-                case PostfixExpr::deref_member_access:
-                case PostfixExpr::function_call: 
-                    result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
-                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.lhs->to_str(depth));
-                    result += std::format("\n{} {} {}", std::string(depth * 2, ' '), gray("↳"), postfix.rhs->to_str(depth));
-                    break;
-            }
+            result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
+            for (const auto& node : postfix.nodes)
+                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
         }
         holds(VariableDecl, const& var) {
             result += std::format("{} {}", gray("=>"), white_gray(get_id(var).mangled_name));

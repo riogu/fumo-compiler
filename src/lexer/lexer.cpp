@@ -15,7 +15,7 @@
     return {tokenize(), File{_file_name, file_stream.str()}};
 }
 [[nodiscard]] std::pair<vec<Token>, File> Lexer::tokenize_string(const std::string& testname, const std::string& test_string) {
-    __FUMO_FILE__ = std::string(testname);
+    __FUMO_FILE__ = testname;
     file_stream << test_string;
     return {tokenize(), File{testname, file_stream.str()}};
 }
@@ -114,3 +114,5 @@
     add_token(is_EOF);
     return tokens;
 }
+
+#undef cases

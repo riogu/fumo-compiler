@@ -152,3 +152,17 @@ t(
 //t(
 //"let x: i32 = {213} + {123};\n"
 //,fail),
+
+t(
+"struct foo {\n"
+"    fn func(x: i32) -> i32;\n"
+"};\n"
+"fn foo::func(x: i32) -> i32 {\n"
+"    x = ~123 + 69420;\n"
+"    return x;\n"
+"}\n"
+"fn smth() -> void{}\n"
+"fn func() -> void {\n"
+"    let x:i32 = smth();\n"
+"}\n"
+,fail),

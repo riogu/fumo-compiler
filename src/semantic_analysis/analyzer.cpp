@@ -1,6 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/tokens.hpp"
-#include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -9,14 +8,30 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     // NOTE: this is here so the global namespace is unnamed
     // in reality, everything global starts with "::"
     // removing this changes nothing in functionality, only in debug printing
-    symbol_tree.curr_scope_name = ""; 
+    symbol_tree.curr_scope_name = "";
     symbol_tree.scope_stack.begin()->isolated_name = "";
     symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
     for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
 
-    symbol_tree.curr_scope_name = "::"; 
+    symbol_tree.curr_scope_name = "::";
     symbol_tree.pop_scope();
+}
+
+void Analyzer::determine_type(ASTNode& node) {
+    match(node) {
+        holds(Identifier) {}
+        holds(PrimaryExpr) {}
+        holds(UnaryExpr) {}
+        holds(BinaryExpr) {}
+        holds(PostfixExpr) {}
+        holds(VariableDecl) {}
+        holds(FunctionDecl) {}
+        holds(BlockScope) {}
+        holds(NamespaceDecl) {}
+        holds(TypeDecl) {}
+        _default {}
+    }
 }
 
 void Analyzer::analyze(ASTNode& node) {
@@ -41,7 +56,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case PrimaryExpr::integer:
                 case PrimaryExpr::floating_point:
                 case PrimaryExpr::str: break;
-                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -56,10 +71,10 @@ void Analyzer::analyze(ASTNode& node) {
                     //                  "invalid type '{}' for unary expression.",
                     //                  get_name(un.expr->type));
                     // }
-                    // break; 
+                    // break;
                 case UnaryExpr::return_statement:
                 case UnaryExpr::logic_not:
-                // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                    // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
             node.type = un.expr->type;
         }
@@ -94,13 +109,22 @@ void Analyzer::analyze(ASTNode& node) {
 
         holds(VariableDecl, &var) {
             if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
+                var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
 
         holds(FunctionDecl, &func) {
-            add_declaration(node);
-            symbol_tree.push_scope(get_name(func), ScopeKind::FunctionBody);
+            add_declaration(node); // also sets func.kind in this call
+
+            ScopeKind scope_kind;
+            switch (func.kind) {
+                case FunctionDecl::function_declaration: scope_kind = ScopeKind::FunctionBody; break;
+                case FunctionDecl::member_func_declaration: scope_kind = ScopeKind::MemberFuncBody; break;
+            }
+
+            symbol_tree.push_scope(get_name(func), scope_kind);
+
             if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
 
             for (auto& param : func.parameters) {
@@ -121,17 +145,15 @@ void Analyzer::analyze(ASTNode& node) {
         holds(BlockScope, &scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch (scope.kind) {
-                case BlockScope::compound_statement: 
+                case BlockScope::compound_statement:
+                    // TODO: make sure that return statements match the function's return type
                     symbol_tree.push_scope("", ScopeKind::CompoundStatement);
                     for (auto& node : scope.nodes) analyze(*node);
                     symbol_tree.pop_scope();
                     break;
                 case BlockScope::initializer_list:
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
-
-                    // INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
-                    break;
-                case BlockScope::argument_list: break;
+                case BlockScope::argument_list: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -149,17 +171,21 @@ void Analyzer::analyze(ASTNode& node) {
                     add_declaration(node);
 
                     symbol_tree.push_scope(get_name(type_decl), ScopeKind::TypeBody);
-
                     if (type_decl.definition_body) {
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
                     }
                     symbol_tree.pop_scope();
                     break;
-                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
-        _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.kind_name());
+        holds(PostfixExpr, &postfix) {
+            INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+            for (auto& node : postfix.nodes) analyze(*node);
+        }
+
+        _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
     }
 }
 
@@ -173,11 +199,19 @@ void Analyzer::add_declaration(ASTNode& node) {
     match(node) {
 
         holds(FunctionDecl, &func) {
+            // FIXME: we should add each individual part of the identifier to the scope stack
+            Identifier& id = get_id(func);
             // TODO: member function calls should be rewritten to take a pointer
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
-
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
-            Identifier& id = get_id(func);
+
+            if (id.qualifier == Identifier::qualified) { // check if its a member function
+                str temp = id.name;
+                while (temp.back() != ':') temp.pop_back();
+                temp.pop_back(), temp.pop_back();
+                if find_value(temp, symbol_tree.type_decls) func.kind = FunctionDecl::member_func_declaration;
+            }
+
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
 
             if (!was_inserted && func.body) {
@@ -190,7 +224,8 @@ void Analyzer::add_declaration(ASTNode& node) {
             Identifier& id = get_id(var);
             auto [_, was_inserted] = symbol_tree.push_variable_decl(id, node);
 
-            if (!was_inserted) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+            if (!was_inserted && var.kind != VariableDecl::parameter)
+                report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
         }
 
         holds(NamespaceDecl, &nmspace_decl) {
@@ -198,8 +233,9 @@ void Analyzer::add_declaration(ASTNode& node) {
             symbol_tree.push_namespace_decl(id, node);
 
             if (symbol_tree.type_decls.contains(id.mangled_name))
-                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
-
+                report_error(node.source_token,
+                             "Redefinition of '{}' as a different kind of symbol.",
+                             id.mangled_name);
         }
 
         holds(TypeDecl, &type_decl) {
@@ -212,68 +248,19 @@ void Analyzer::add_declaration(ASTNode& node) {
             auto& t_decl = get<TypeDecl>(node_iterator->second);
 
             if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name))
-                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
+                report_error(node.source_token,
+                             "Redefinition of '{}' as a different kind of symbol.",
+                             id.mangled_name);
 
             if (!was_inserted && type_decl.definition_body && t_decl.definition_body) {
                 report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
             }
         }
+
         _default {
             INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name());
         }
     }
-}
-
-
-#define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
-
-[[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
-    // NOTE: change the implementation so we dont keep all locals to the end of the program
-    switch (id.kind) {
-        case Identifier::type_name:
-            for (const auto& scope : scope_stack | std::views::reverse) {
-                if find_value (scope.name + id.name, type_decls)
-                    return id.mangled_name = scope.name + id.name, iter->second;
-            }
-            break;
-        case Identifier::func_call_name:
-            for (const auto& scope : scope_stack | std::views::reverse) {
-                if find_value (scope.name + id.name, type_decls)
-                    return id.mangled_name = scope.name + id.name, iter->second;
-            }
-            break;
-        case Identifier::var_name:
-            switch (curr_scope_kind) {
-                case ScopeKind::FunctionBody:
-                case ScopeKind::CompoundStatement:
-                case ScopeKind::TypeBody:
-                    for (const auto& scope : scope_stack | std::views::reverse) {
-                        std::cerr <<  scope.name + id.name + " | ";
-                        if find_value (scope.name + id.name, local_variable_decls) {
-                            return id.mangled_name = scope.name + id.name, iter->second;
-                        }
-                        if find_value (scope.name + id.name, global_variable_decls) {
-                            return id.mangled_name = scope.name + id.name, iter->second;
-                        }
-                    }
-                    break;
-                case ScopeKind::Namespace: 
-                    for (const auto& scope : scope_stack | std::views::reverse) {
-                        if find_value (scope.name + id.name, global_variable_decls) {
-                            return id.mangled_name = scope.name + id.name, iter->second;
-                        }
-                    }
-                    break;
-            }
-            break;
-
-        case Identifier::declaration_name: 
-            INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
-        case Identifier::unknown_name:
-            INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
-    }
-
-    return std::nullopt;
 }
 
 // struct gaming {let ahhh: i32;};

@@ -14,6 +14,8 @@ struct Identifier {
         declaration_name,       /*                                   */  \
         type_name,              /*                                   */  \
         func_call_name,         /*                                   */  \
+        member_var_name,        /*                                   */  \
+        deref_member_var_name,  /*                                   */  \
         var_name                /*                                   */  \
 
         Identifier_kinds
@@ -70,14 +72,11 @@ struct BinaryExpr {
 struct PostfixExpr {
     enum Kind {
         #define PostfixExpr_kinds                                        \
-        member_access,           /*                                   */ \
-        deref_member_access,     /*                                   */ \
-        function_call            /*                                   */ \
+        postfix_expr             /*                                   */ \
     
         PostfixExpr_kinds
     } kind;
-    ASTNode* lhs;
-    ASTNode* rhs;
+    vec<ASTNode*> nodes {};
 };
 
 struct VariableDecl {
@@ -94,8 +93,9 @@ struct VariableDecl {
 struct FunctionDecl {
     enum Kind {
         #define FunctionDecl_kinds                                       \
-        function_declaration     /*                                   */ \
-    
+        function_declaration,    /*                                   */ \
+        member_func_declaration  /*                                   */ \
+
         FunctionDecl_kinds
     } kind;
     ASTNode* identifier;
@@ -154,6 +154,7 @@ struct ASTNode {
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
     [[nodiscard]] std::string branch_name() const;
+    [[nodiscard]] std::string name() const { return yellow(branch_name()) + gray("::") + enum_green(kind_name()); }
 };
 
 
@@ -170,7 +171,7 @@ constexpr Branch& get(ASTNode* node) {
     if(!node) [[unlikely]] INTERNAL_PANIC("node was uninitialized (FIX THIS).");
     if (std::holds_alternative<Branch>(node->branch)) return std::get<Branch>(node->branch);
     else [[unlikely]]
-        INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->kind_name());
+        INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->name());
 }
 
 #define is_branch (void)({ bool held; bool branch_ = held = is_impl_

@@ -19,7 +19,10 @@
 //   fn f() -> void { let bar: i32;      } => let    "foo()::bar": i32;
 //
 // they are "global" but renamed internally
-enum struct ScopeKind { Namespace, TypeBody, CompoundStatement, FunctionBody};
+
+#define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
+
+enum struct ScopeKind { Namespace, TypeBody, CompoundStatement, FunctionBody, MemberFuncBody, MemberCompoundStatement};
 struct Scope {
     str name;
     ScopeKind kind;
@@ -36,6 +39,8 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> global_variable_decls {};
     std::map<str, ASTNode*> type_decls {};
     std::map<str, ASTNode*> function_decls {};
+    std::map<str, ASTNode*> member_variable_decls {}; // member functions and variables
+    std::map<str, ASTNode*> member_func_decls {}; // member functions and variables
     vec<Scope> scope_stack {};
 
     str curr_scope_name = "";
@@ -44,7 +49,8 @@ struct SymbolTableStack {
     void push_scope(str name, ScopeKind kind) {
         switch (kind) {
             case ScopeKind::Namespace:    name += "::";   break;
-            case ScopeKind::TypeBody:     name += "{}::"; break;
+            case ScopeKind::TypeBody:     name += "::";   break;
+            case ScopeKind::MemberFuncBody:
             case ScopeKind::FunctionBody: name += "()::"; break;
             case ScopeKind::CompoundStatement: // += "0::"
                 if (!scope_stack.empty()) {
@@ -53,6 +59,7 @@ struct SymbolTableStack {
                     prev_scope_count++;
                 }
                 break;
+            case ScopeKind::MemberCompoundStatement: break;
         }
         curr_scope_kind = kind;
         curr_scope_name += name;
@@ -61,7 +68,7 @@ struct SymbolTableStack {
     void pop_scope() {
         curr_scope_name.resize(curr_scope_name.size() - scope_stack.back().isolated_name.size());
         scope_stack.pop_back();
-        if (!scope_stack.empty()) curr_scope_kind = scope_stack.back().kind;
+        if (!scope_stack.empty()) [[likely]] curr_scope_kind = scope_stack.back().kind;
     }
 
     auto push_variable_decl(Identifier& identifier, ASTNode& node) {
@@ -70,29 +77,16 @@ struct SymbolTableStack {
             case ScopeKind::Namespace:
                 return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
-            case ScopeKind::CompoundStatement: 
+                return member_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::FunctionBody: 
+            case ScopeKind::MemberFuncBody:
+            case ScopeKind::CompoundStatement: 
+            case ScopeKind::MemberCompoundStatement:
                 return local_variable_decls.insert({identifier.mangled_name, &node});
         }
     }
     auto push_type_decl(Identifier& identifier, ASTNode& node) {
-        switch (curr_scope_kind) {
-            case ScopeKind::TypeBody: { // this allows struct declarations to exist inside other structs
-                str temp = curr_scope_name; // doesnt add "{}" to the mangled name
-                try {
-                    temp.resize(curr_scope_name.size() - 4);
-                } catch(...) {
-                    PANIC("you fucked up the scope name again.");
-                }
-                identifier.mangled_name = temp + "::" + identifier.name;
-                break;
-            }
-            case ScopeKind::Namespace:
-            case ScopeKind::CompoundStatement:
-            case ScopeKind::FunctionBody: 
-                identifier.mangled_name = curr_scope_name + identifier.name; 
-                break;
-        }
+        identifier.mangled_name = curr_scope_name + identifier.name; 
         return type_decls.insert({identifier.mangled_name, &node});
     }
     auto push_namespace_decl(Identifier& identifier, ASTNode& node) {
@@ -101,8 +95,18 @@ struct SymbolTableStack {
     }
     auto push_function_decl(Identifier& identifier, ASTNode& node) {
         identifier.mangled_name = curr_scope_name + identifier.name;
-        return function_decls.insert({identifier.mangled_name, &node});
+        switch (curr_scope_kind) {
+            case ScopeKind::TypeBody: 
+                return member_func_decls.insert({identifier.mangled_name, &node});
+            case ScopeKind::Namespace:
+            case ScopeKind::FunctionBody:
+            case ScopeKind::MemberFuncBody: 
+            case ScopeKind::CompoundStatement:
+            case ScopeKind::MemberCompoundStatement: 
+                return function_decls.insert({identifier.mangled_name, &node});
+        }
     }
+
 
     [[nodiscard]] Opt<ASTNode*> find_declaration(Identifier& id);
 };
