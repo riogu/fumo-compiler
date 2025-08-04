@@ -53,6 +53,7 @@ t(
 "    let var: bar = {};\n"
 "    let eee: gaming = {212322};\n"
 "    let e_ptr: gaming* = eee;\n"
-"    let y = var.func(eee->xee).some();\n"
+"    let y = var.func(e_ptr->xee).some();\n"
 "}\n"
 ,pass),
+
