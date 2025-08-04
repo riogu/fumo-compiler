@@ -294,34 +294,3 @@ void Analyzer::add_declaration(ASTNode& node) {
         
     }
 }
-
-// struct gaming {let ahhh: i32;};
-// let x: gaming;
-// fn func() -> void {
-//      struct gaming {let bbbb: f32;};
-//      let x: gaming = 123123;
-//      {
-//          struct gaming {let vvvvv = 321;};
-//          let x: gaming;
-//          funcfunc();
-//      }
-// }
-//
-// somefunc();
-// namespace huh {
-//    let x = somefunc();
-//    struct foo {
-//         let member: i32;
-//         fn somefunc() -> void;
-//
-//         fn another() -> void {
-//             somefunc();
-//             struct bar {};
-//             {
-//             somefunc();
-//             }
-//         }
-//    };
-//   let var: foo = {213123};
-//   let x: foo = var;
-// }

@@ -10,4 +10,5 @@ cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCM
 
 BIN="${DIR}${project_name}"
 # cmake --build . && cd .. && ./$BIN
-ninja && cd .. && ./$BIN
+# ninja && cd .. && ./$BIN
+ninja
