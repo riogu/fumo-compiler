@@ -46,9 +46,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                report_error(node.source_token, "use of undeclared identifier '{}' in scope '{}'."
-                             , id.mangled_name
-                             , symbol_tree.curr_scope_name);
+                report_error(node.source_token, "use of undeclared identifier '{}'.", id.mangled_name);
             }
         }
 
@@ -68,12 +66,11 @@ void Analyzer::analyze(ASTNode& node) {
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
                 case UnaryExpr::logic_not:
-                    // if (!is_arithmetic_t(un.expr->type)) {
-                    //     report_error(node.source_token,
-                    //                  "invalid type '{}' for unary expression.",
-                    //                  get_name(un.expr->type));
-                    // }
-                    // break;
+                    if (!is_arithmetic_t(un.expr->type)) {
+                        report_error(node.source_token,
+                                     "invalid type '{}' for unary expression.", get_name(un.expr->type));
+                    }
+                    break;
                 case UnaryExpr::return_statement:
                 // TODO: return should be moved to a new struct later
                 case UnaryExpr::dereference:
@@ -97,12 +94,7 @@ void Analyzer::analyze(ASTNode& node) {
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
             }
-            if (bin.lhs->type.kind != bin.rhs->type.kind) {
-                // NOTE: this should be removed later (it is okay because all builtin types are numeric atm)
-                if (!(is_builtin_type(get_name(bin.lhs->type)) && is_builtin_type(get_name(bin.rhs->type))))
-                    report_binary_error(node, bin);
-            }
-            // if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+            if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
         }
 
@@ -298,9 +290,8 @@ void Analyzer::add_declaration(ASTNode& node) {
             }
         }
 
-        _default {
-            INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name());
-        }
+        _default INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name());
+        
     }
 }
 

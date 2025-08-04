@@ -14,9 +14,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
     switch (id.kind) {
-        case Identifier::type_name:
-            search_maps(type_decls);
-            break;
+        case Identifier::type_name: search_maps(type_decls); break;
         case Identifier::func_call_name:
             switch (curr_scope_kind) {
                 case(ScopeKind::Namespace, ScopeKind::FunctionBody, ScopeKind::CompoundStatement)
@@ -30,7 +28,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
             }
             break;
         case Identifier::var_name:
-            switch (curr_scope_kind) {
+                    switch (curr_scope_kind) {
                 case(ScopeKind::MemberFuncBody, ScopeKind::MemberCompoundStatement)
                     if (id.qualifier == Identifier::qualified) {
                         search_maps(local_variable_decls, global_variable_decls);
@@ -56,25 +54,23 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
                 return iter->second;
             }
             break;
-
-        case Identifier::declaration_name: 
+        case Identifier::declaration_name:
             INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
-            }
-
+    }
     return std::nullopt;
 }
 
 [[nodiscard]] ScopeKind SymbolTableStack::find_scope_kind(const str& name) {
-    if find_value(name, namespace_decls) return ScopeKind::Namespace;
-    if find_value(name, type_decls) return ScopeKind::TypeBody;
+    if find_value (name, namespace_decls) return ScopeKind::Namespace;
+    if find_value (name, type_decls) return ScopeKind::TypeBody;
     INTERNAL_PANIC("couldnt find scope kind for '{}'.", name);
 }
-void Analyzer::iterate_qualified_names(FunctionDecl& func) {
+void Analyzer::iterate_qualified_names(FunctionDecl & func) {
     // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
     auto& id = get_id(func);
-    if (id.qualifier == Identifier::qualified) { 
+    if (id.qualifier == Identifier::qualified) {
         str temp = id.name;
         str unqualified_name = "";
         while (temp.back() != ':') unqualified_name = temp.back() + unqualified_name, temp.pop_back();
@@ -126,23 +122,22 @@ void Analyzer::iterate_qualified_names(FunctionDecl& func) {
 
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
-        case BinaryExpr::add:       case BinaryExpr::sub:
-        case BinaryExpr::multiply:  case BinaryExpr::divide:
-        case BinaryExpr::equal:     case BinaryExpr::not_equal:
-        case BinaryExpr::less_than: case BinaryExpr::less_equals:
+        case(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
+             BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals) {
             report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
-                         get_name(bin.lhs->type), node.source_token.to_str(),get_name(bin.rhs->type));
+                         get_name(bin.lhs->type), node.source_token.to_str(), get_name(bin.rhs->type));
+        } 
         case BinaryExpr::assignment:
-            report_error(node.source_token,"assigning to '{}' from incompatible type '{}'.",
+            report_error(node.source_token, "assigning to '{}' from incompatible type '{}'.",
                          get_name(bin.lhs->type), get_name(bin.rhs->type));
-        default:
-            INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
+        default: INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
 }
 
 [[nodiscard]] bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
+    return ((is_arithmetic_t(a) && is_arithmetic_t(b)) || (a.kind == b.kind && get_name(a) == get_name(b)));
 }
-[[nodiscard]] bool Analyzer::is_arithmetic_t(const Type& a) {
-    INTERNAL_PANIC("{} not implemented.", __FUNCTION__); 
+[[nodiscard]] bool Analyzer::is_arithmetic_t(const Type& type) {
+    return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
+         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
 }

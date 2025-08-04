@@ -12,7 +12,6 @@ void Codegen::codegen(ASTNode* file_root_node) {
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node) { 
-
     match(node) {
         holds(PrimaryExpr,  const& v) return codegen(node, v);
         holds(UnaryExpr,    const& v) return codegen(node, v);
@@ -20,7 +19,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         holds(VariableDecl, const& v) return codegen(node, v);
         holds(FunctionDecl, const& v) return codegen(node, v);
         holds(BlockScope,   const& v) return codegen(node, v);
-        _default INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+        _default INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
     }
     std::unreachable();
 }
@@ -52,7 +51,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const UnaryExpr& unary) {
         case UnaryExpr::bitwise_not:
             return ir_builder->CreateNot(codegen(*unary.expr));
         default:
-            INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+            INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
     }
 }
 
@@ -80,7 +79,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const BinaryExpr& bin) {
             // should get the ptr from the current var environment instead
             return ir_builder->CreateStore(codegen(*bin.rhs), codegen(*bin.lhs));
         default:
-            INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+            INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
     }
 }
 
@@ -93,10 +92,8 @@ llvm::Value* Codegen::codegen(const ASTNode& node, const VariableDecl& var) {
 }
 
 llvm::Value* Codegen::codegen(const ASTNode& node, const FunctionDecl& branch) {
-    INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
 }
-llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) { 
-    INTERNAL_PANIC("codegen not implemented for '{}'", node.kind_name());
+llvm::Value* Codegen::codegen(const ASTNode& node, const BlockScope& branch) {
+    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
 }
-
-
