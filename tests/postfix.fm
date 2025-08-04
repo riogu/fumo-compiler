@@ -49,14 +49,19 @@ t(
 ,pass),
 t(
 "struct foo {\n"
-"    struct gaming {fn some() -> i32;};\n"
+"   fn foo::func(x: i32) -> gaming;\n"
+"};\n"
+,fail),
+t(
+"struct foo {\n"
+"    struct gaming {let x: i32 = 213; fn some() -> i32 {return 69420;} };\n"
 "    struct bar {\n"
-"       fn func(x: i32) -> gaming;\n"
+"       fn func(x: i32) -> gaming {return {213};}\n"
 "    };\n"
 "    fn some_func() -> void;\n"
 "};\n"
 "fn foo::some_func() -> void {\n"
 "    let var: bar = {};\n"
-"    let y: i32 = var.func().some();\n"
+"    let y = var.func().some();\n"
 "}\n"
 ,pass),

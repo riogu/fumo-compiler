@@ -226,8 +226,8 @@ void Analyzer::analyze(ASTNode& node) {
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";
                 // std::cerr << prev_name << '\n';
-
             }
+            node.type = postfix.nodes.back()->type;
         }
 
         _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());

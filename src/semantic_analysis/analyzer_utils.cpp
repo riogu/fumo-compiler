@@ -84,10 +84,10 @@ void Analyzer::iterate_qualified_names(FunctionDecl& func) {
         ScopeKind scope_kind;
         if find_value (temp, symbol_tree.type_decls) {
             func.kind = FunctionDecl::member_func_declaration;
-            scope_kind = ScopeKind::FunctionBody;
+            scope_kind = ScopeKind::MemberFuncBody;
         } else {
             func.kind = FunctionDecl::function_declaration;
-            scope_kind = ScopeKind::MemberFuncBody;
+            scope_kind = ScopeKind::FunctionBody;
         }
 
         str full_name = "";
@@ -112,7 +112,7 @@ void Analyzer::iterate_qualified_names(FunctionDecl& func) {
         switch (symbol_tree.curr_scope_kind) {
             case ScopeKind::TypeBody:
                 func.kind = FunctionDecl::member_func_declaration;
-                symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
+                symbol_tree.push_scope(id.name, ScopeKind::MemberFuncBody);
                 break;
             default:
                 func.kind = FunctionDecl::function_declaration;

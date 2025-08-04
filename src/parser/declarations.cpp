@@ -39,6 +39,7 @@
 [[nodiscard]] ASTNode* Parser::function_declaration() {
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
+
     FunctionDecl function {FunctionDecl::function_declaration, identifier(Identifier::declaration_name, node)};
 
     function.parameters = parameter_list(); // could be an empty vector
@@ -142,10 +143,10 @@
     while (!token_is_str("}")) {
         if (token_is_keyword(let)) 
             nmspace.nodes.push_back(variable_declaration());
-        else if (token_is_keyword(fn))
-            nmspace.nodes.push_back(function_declaration());
         else if (token_is_keyword(namespace))
             nmspace.nodes.push_back(namespace_declaration());
+        else if (token_is_keyword(fn))
+            nmspace.nodes.push_back(function_declaration());
         else if (token_is_keyword(struct))
             nmspace.nodes.push_back(struct_declaration());
         else if (token_is_keyword(enum))
@@ -169,8 +170,15 @@
         while (!token_is_str("}")) {
             if (token_is_keyword(let)) 
                 nodes.push_back(variable_declaration());
-            else if (token_is_keyword(fn))
+            else if (token_is_keyword(fn)) {
                 nodes.push_back(function_declaration());
+                auto& function = get<FunctionDecl>(nodes.back());
+                function.kind = FunctionDecl::member_func_declaration;
+                if (const auto& id = get_id(function); id.qualifier == Identifier::qualified) {
+                    report_error(function.identifier->source_token, 
+                                 "member function declaration '{}' can't be qualified.", id.mangled_name);
+                }
+            }
             else if (token_is_keyword(struct))
                 nodes.push_back(struct_declaration());
             else if (token_is_keyword(enum))
