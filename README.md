@@ -1,6 +1,6 @@
 # fumo-compiler
 fumo lang example:
-```rs
+```cpp
 let x = 69;
 namespace foo {
     let x: i32 = 69420;
