@@ -43,7 +43,6 @@ void Analyzer::analyze(ASTNode& node) {
             if (id.kind == Identifier::type_name && id.name == "Undetermined Type") return;
 
             id.declaration = symbol_tree.find_declaration(id);
-
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
@@ -144,9 +143,14 @@ void Analyzer::analyze(ASTNode& node) {
         holds(BlockScope, &scope) {
             // NOTE: consider taking the last node and passing that value to the scope (and returning it like rust)
             switch (scope.kind) {
+                // TODO: make sure that return statements match the function's return type
                 case BlockScope::compound_statement:
-                    // TODO: make sure that return statements match the function's return type
-                    symbol_tree.push_scope("", ScopeKind::CompoundStatement);
+                    if (symbol_tree.curr_scope_kind == ScopeKind::MemberFuncBody
+                     || symbol_tree.curr_scope_kind == ScopeKind::MemberCompoundStatement) {
+                        symbol_tree.push_scope("", ScopeKind::MemberCompoundStatement);
+                    } else {
+                        symbol_tree.push_scope("", ScopeKind::CompoundStatement);
+                    }
                     for (auto& node : scope.nodes) analyze(*node);
                     symbol_tree.pop_scope();
                     break;
@@ -185,9 +189,7 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(PostfixExpr, &postfix) { // nodes is never empty
-
             str prev_name = "";
-
             for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
                 auto& node = *node_it;
                 if_holds(<UnaryExpr>(node), un) {

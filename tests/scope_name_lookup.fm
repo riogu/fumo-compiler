@@ -61,27 +61,12 @@ t(
 "    x = 213;                                          \n"
 "}                                                     \n"
 , pass),
-t(                                      
-"somefunc();\n"
-"namespace huh {\n"
-"   struct foo {\n"
-"        fn somefunc() -> void;\n"
-"        fn another() -> void {\n"
-"            somefunc();\n"
-"            struct bar {};\n"
-"            {\n"
-"                somefunc();\n"
-"            }\n"
-"        }\n"
-"   };\n"
-"}\n"
-, pass),
 t(
 "struct gaming {let ahhh: i32;};\n"
 "let x: gaming;\n"
 "fn func() -> void {\n"
 "     struct gaming {let bbbb: f32;};\n"
-"     let x: gaming = 123123;\n"
+"     let x: gaming = {123123};\n"
 "     {\n"
 "         struct gaming {let vvvvv = 321;};\n"
 "         let x: gaming;\n"
@@ -153,3 +138,17 @@ t(
 //"let x: i32 = {213} + {123};\n"
 //,fail),
 
+t(                                      
+"namespace huh {\n"
+"   struct foo {\n"
+"        fn mefunc() -> void {}\n"
+"        fn somefunc() -> void {}\n"
+"        fn another() -> void {\n"
+"            struct bar {};\n"
+"            {{\n"
+"                somefunc();\n"
+"            }}\n"
+"        }\n"
+"   };\n"
+"}\n"
+, pass),

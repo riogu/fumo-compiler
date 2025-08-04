@@ -1,25 +1,3 @@
-//t(
-//"var.this;\n"
-//"var->this;\n"
-//"var();\n"
-//"var(this, this, this);\n"
-//"var::another;\n"
-//,pass),
-//t(
-//"var.this.that;\n"
-//"var->this->that;\n"
-//"var.this->that;\n"
-//"var->this.that;\n"
-//,pass),
-//t(
-//"var.this(thing, thing);\n"
-//"var.this();\n"
-//"var->this();\n"
-//"var->this()->another;\n"
-//,pass),
-//t(
-//"var::one::two.three->func(this, that->other.gaming(), lasthting);\n"
-//,pass),
 t(
 "struct foo {\n"
 "    fn func(x: i32) -> i32;\n"
@@ -53,19 +31,28 @@ t(
 "};\n"
 ,fail),
 t(
-"struct foo {\n"
-"    struct gaming {let xee: i32 = 213; fn some() -> i32 {return 69420;} };\n"
-"    struct bar {\n"
-"       fn func(x: i32) -> gaming; \n"
+"namespace foo {\n"
+"   struct foo {\n"
+"        struct gaming {\n"
+"           let xee: i32 = 213; \n"
+"           fn ahhh() -> i32 {return xee;} \n"
+"           fn some() -> i32 {return ahhh();} \n"
+"        };\n"
+"        struct bar {\n"
+"           fn func(x: i32) -> gaming; \n"
+"        };\n"
+"        fn another_func() -> void {let x: i32 = 213;}\n"
+"        fn some_func() -> void;\n"
 "    };\n"
-"    fn some_func() -> void;\n"
-"};\n"
-"fn foo::bar::func(x: i32) -> gaming {let var = gaming {x};}\n"
-"fn foo::some_func() -> void {\n"
+"}\n"
+"fn foo::foo::bar::func(x: i32) -> gaming {let var = gaming {x};}\n"
+"fn foo::foo::some_func() -> void {\n"
+"    {\n"
+"        another_func();\n"
+"    }\n"
 "    let var: bar = {};\n"
 "    let eee: gaming = {212322};\n"
 "    let e_ptr: gaming* = eee;\n"
-"    let somer = e_ptr->xee;    \n"
 "    let y = var.func(eee->xee).some();\n"
 "}\n"
 ,pass),

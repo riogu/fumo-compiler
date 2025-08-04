@@ -56,13 +56,13 @@ struct SymbolTableStack {
             case ScopeKind::MemberFuncBody:
             case ScopeKind::FunctionBody: name += "()::"; break;
             case ScopeKind::CompoundStatement: // += "0::"
+            case ScopeKind::MemberCompoundStatement:
                 if (!scope_stack.empty()) {
                     int& prev_scope_count = scope_stack.back().inner_scope_count;
                     name = std::to_string(prev_scope_count) + "::";
                     prev_scope_count++;
                 }
                 break;
-            case ScopeKind::MemberCompoundStatement: break;
         }
         curr_scope_kind = kind;
         curr_scope_name += name;
