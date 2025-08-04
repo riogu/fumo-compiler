@@ -14,50 +14,62 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
     switch (id.kind) {
-        case Identifier::type_name: search_maps(type_decls); break;
+        case Identifier::type_name:
+            search_maps(type_decls);
+            break;
         case Identifier::func_call_name:
             switch (curr_scope_kind) {
-                case(ScopeKind::Namespace, ScopeKind::FunctionBody, ScopeKind::CompoundStatement)
-                    search_maps(function_decls); break;
-                case(ScopeKind::TypeBody, ScopeKind::MemberFuncBody, ScopeKind::MemberCompoundStatement)
+                case ScopeKind::Namespace:
+                case ScopeKind::FunctionBody:
+                case ScopeKind::CompoundStatement:
+                    search_maps(function_decls);
+                    break;
+                case ScopeKind::TypeBody:
+                case ScopeKind::MemberFuncBody:
+                case ScopeKind::MemberCompoundStatement:
                     if (id.qualifier == Identifier::qualified) {
                         search_maps(function_decls);
                         break;
                     }
-                    search_maps(member_function_decls, function_decls); break;
+                    search_maps(member_function_decls, function_decls);
+                    break;
             }
             break;
         case Identifier::var_name:
-                    switch (curr_scope_kind) {
-                case(ScopeKind::MemberFuncBody, ScopeKind::MemberCompoundStatement)
+            switch (curr_scope_kind) {
+                case ScopeKind::MemberFuncBody:
+                case ScopeKind::MemberCompoundStatement:
                     if (id.qualifier == Identifier::qualified) {
                         search_maps(local_variable_decls, global_variable_decls);
                         break;
                     }
-                    search_maps(member_variable_decls, local_variable_decls, global_variable_decls); break;
-                case(ScopeKind::TypeBody)
-                    search_maps(member_variable_decls, global_variable_decls); break;
-                case(ScopeKind::FunctionBody, ScopeKind::CompoundStatement)
-                    search_maps(local_variable_decls, global_variable_decls);  break;
-                case(ScopeKind::Namespace) 
-                    search_maps(global_variable_decls); break;
+                    search_maps(member_variable_decls, local_variable_decls, global_variable_decls);
+                    break;
+                case ScopeKind::TypeBody:
+                    search_maps(member_variable_decls, global_variable_decls);
+                    break;
+                case ScopeKind::FunctionBody:
+                case ScopeKind::CompoundStatement:
+                    search_maps(local_variable_decls, global_variable_decls);
+                    break;
+                case ScopeKind::Namespace:
+                    search_maps(global_variable_decls);
+                    break;
             }
             break;
-
         case Identifier::member_var_name:
-            if find_value (id.mangled_name, member_variable_decls) {
-                return iter->second;
-            }
+            if find_value (id.mangled_name, member_variable_decls) return iter->second;
             break;
         case Identifier::member_func_call_name:
-            if find_value (id.mangled_name, member_function_decls) {
-                return iter->second;
-            }
+            if find_value (id.mangled_name, member_function_decls) return iter->second;
             break;
+
+
         case Identifier::declaration_name:
             INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
             INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
+
     }
     return std::nullopt;
 }
@@ -122,7 +134,7 @@ void Analyzer::iterate_qualified_names(FunctionDecl & func) {
 
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
-        case(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
+        cases(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
              BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals) {
             report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
                          get_name(bin.lhs->type), node.source_token.to_str(), get_name(bin.rhs->type));
