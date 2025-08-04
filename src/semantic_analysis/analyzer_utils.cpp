@@ -153,3 +153,19 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
          || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
 }
+// namespace foo {
+//    struct foo {
+//         struct gaming {
+//            let xee: i32 = 213; 
+//            fn fff() -> i32 {return xee;} 
+//            fn some() -> i32 {return fff();} 
+//         };
+//         fn some_func() -> void;
+//     };
+// }
+// fn foo::foo::some_func() -> void {
+//     let var: bar = {};
+//     let eee = gaming {212322};
+//     let e_ptr: gaming* = &eee;
+//     let y = var.func(e_ptr->xee).some();
+// }

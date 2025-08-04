@@ -9,6 +9,7 @@
    - match construct
    - enums (done as sum types)
    - pointers
+   - remove const keyword and add mut keyword, make const the default
 
 # Plan for continuing after vacation:
    - start by adding pointers to the semantic analysis
