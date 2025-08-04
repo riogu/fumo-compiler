@@ -133,13 +133,14 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is_str("{")) {
         auto init_list = initializer_list();
         if (temp_node) {
-            if (!is_branch<Identifier>(temp_node.value())) {
+            if_holds(<Identifier>(temp_node.value()), id) {
+                id->kind = Identifier::type_name;
+            } else {
                 report_error(temp_node.value()->source_token, "expected identifier before initializer list.");
             }
             init_list->type.identifier = temp_node.value();
         } else {
-            init_list->type.identifier =
-                push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
+            init_list->type.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
         }
         expect_token_str("}");
         return init_list;
@@ -159,10 +160,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 report_error(node->source_token, "expected identifier before postfix operator");
             }
             node = push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, node}});
+            nodes.push_back(node);
 
             expect_token(identifier);
             node = identifier(Identifier::member_var_name);
-            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
+
             continue;
         }
         if (token_is(.)) {
@@ -173,7 +175,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
             expect_token(identifier);
             node = identifier(Identifier::member_var_name);
-            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
             continue;
         }
         if (token_is_str("(")) {
@@ -188,7 +189,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             nodes.push_back(node);
 
             node = argument_list();
-            node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
+            
             expect_token_str(")");
             continue;
         }
@@ -196,14 +197,18 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             nodes.push_back(node);
 
             auto* first_node = *nodes.begin();
-            auto& first_id = get<Identifier>(first_node);
-            if (first_id.kind == Identifier::member_func_call_name) {
-                first_id.kind = Identifier::func_call_name;
-            } else {
-                first_id.kind = Identifier::var_name;
+            Identifier* first_id = nullptr;
+            if_holds(<Identifier>(first_node), id) first_id = id;
+            else if_holds(<UnaryExpr>(first_node), un) first_id = &get<Identifier>(un->expr);
+            else {
+                report_error(tkn, "expected identifier before postfix operator.");
             }
-            first_node->type.identifier = push(ASTNode {*prev_tkn, 
-                                                              Identifier {Identifier::type_name, "Undetermined Type"}});
+
+            if (first_id->kind == Identifier::member_func_call_name) {
+                first_id->kind = Identifier::func_call_name;
+            } else {
+                first_id->kind = Identifier::var_name;
+            }
             return push(ASTNode {tkn, PostfixExpr {PostfixExpr::postfix_expr, nodes}});
         }
         return node;
@@ -215,10 +220,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (peek_token_str(")")) return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, {}}});
 
     vec<ASTNode*> arguments {};
-    arguments.push_back(postfix());
+    arguments.push_back(equality());
     while (1) {
         if (token_is_str(",")) {
-            arguments.push_back(postfix());
+            arguments.push_back(equality());
             continue;
         }
         return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, arguments}});
@@ -290,5 +295,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         id.scope_counts++;
     }
     id.mangled_name = id.name;
-    return push(ASTNode {.source_token = token, .branch = id});
+    return push(ASTNode {token, id,
+                         Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}})}});
 }

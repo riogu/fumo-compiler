@@ -47,7 +47,9 @@ void Analyzer::analyze(ASTNode& node) {
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
             } else {
-                report_error(node.source_token, "use of undeclared identifier '{}'", id.mangled_name);
+                report_error(node.source_token, "use of undeclared identifier '{}' in scope '{}'."
+                             , id.mangled_name
+                             , symbol_tree.curr_scope_name);
             }
         }
 
@@ -127,7 +129,7 @@ void Analyzer::analyze(ASTNode& node) {
 
             for (auto& param : func.parameters) {
                 analyze(*param);
-                if (param->type.kind == Type::Undetermined) analyze(*param);
+                if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
                 // TODO: analyzing a type should automatically set the node's type
             }
 
@@ -149,14 +151,13 @@ void Analyzer::analyze(ASTNode& node) {
                     symbol_tree.pop_scope();
                     break;
                 case BlockScope::initializer_list:
+                    for (auto& node : scope.nodes) analyze(*node);
                     if (node.type.kind == Type::Undetermined) analyze(*node.type.identifier);
                     node.type = node.type.identifier->type;
                     break;
                     // INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
                 case BlockScope::argument_list:
-                    for (auto& node : scope.nodes) {
-                        analyze(*node);
-                    }
+                    for (auto& node : scope.nodes) analyze(*node);
                     break;
             }
         }
@@ -197,8 +198,9 @@ void Analyzer::analyze(ASTNode& node) {
                                 prev_name = ""; 
                                 break;
                             case (Identifier::var_name, Identifier::member_var_name)
-                                std::cerr << prev_name << '\n';
-                                id->mangled_name = prev_name + id->name; break; 
+                                
+                                id->mangled_name = prev_name + id->name; 
+                                break; 
                             default:
                                 INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
                         }
@@ -211,7 +213,6 @@ void Analyzer::analyze(ASTNode& node) {
                             prev_name = ""; 
                             break;
                         case (Identifier::var_name, Identifier::member_var_name)
-                            std::cerr << prev_name << '\n';
                             id->mangled_name = prev_name + id->name; break; 
                         default:
                             INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
@@ -225,7 +226,6 @@ void Analyzer::analyze(ASTNode& node) {
 
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";
-                // std::cerr << prev_name << '\n';
             }
             node.type = postfix.nodes.back()->type;
         }

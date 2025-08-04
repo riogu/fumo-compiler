@@ -12,7 +12,6 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
 
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
-
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
     switch (id.kind) {
         case Identifier::type_name:
@@ -70,7 +69,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {         \
 [[nodiscard]] ScopeKind SymbolTableStack::find_scope_kind(const str& name) {
     if find_value(name, namespace_decls) return ScopeKind::Namespace;
     if find_value(name, type_decls) return ScopeKind::TypeBody;
-    return ScopeKind::CompoundStatement;
+    INTERNAL_PANIC("couldnt find scope kind for '{}'.", name);
 }
 void Analyzer::iterate_qualified_names(FunctionDecl& func) {
     // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
@@ -95,13 +94,16 @@ void Analyzer::iterate_qualified_names(FunctionDecl& func) {
         str isolated_name = full_name;
         temp.erase(0, 1);
         while (1) {
-            while (*temp.begin() != ':') {
+            while (!temp.empty() && *temp.begin() != ':') {
                 full_name += *temp.begin();
                 isolated_name += *temp.begin();
                 temp.erase(temp.begin());
-                if (temp.empty()) break;
             }
+
             ScopeKind kind = symbol_tree.find_scope_kind(full_name);
+            full_name += *temp.begin(), temp.erase(0, 1);
+            full_name += *temp.begin(), temp.erase(0, 1);
+
             symbol_tree.push_scope(isolated_name, kind);
             isolated_name = "";
             if (temp.empty()) break;
