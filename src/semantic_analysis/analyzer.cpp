@@ -3,7 +3,6 @@
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
     symbol_tree.push_scope("", ScopeKind::Namespace);
-
     // NOTE: this is here so the global namespace is unnamed
     // in reality, everything global starts with "::"
     // removing this changes nothing in functionality, only in debug printing

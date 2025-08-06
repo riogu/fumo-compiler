@@ -26,6 +26,7 @@ struct Identifier {
     str mangled_name = name;
     int scope_counts = 0;
 };
+
 struct PrimaryExpr {
     enum Kind {
         #define PrimaryExpr_kinds                                        \

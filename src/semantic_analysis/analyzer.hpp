@@ -22,7 +22,8 @@
 
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 #define each_case_label(the_case) case the_case:
-#define cases(...) map_macro(each_case_label, __VA_ARGS__)
+#undef cases
+#define case(...) map_macro(each_case_label, __VA_ARGS__)
 
 enum struct ScopeKind { Namespace, TypeBody, CompoundStatement, FunctionBody, MemberFuncBody, MemberCompoundStatement};
 struct Scope {

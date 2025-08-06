@@ -1,13 +1,14 @@
 #include "semantic_analysis/analyzer.hpp"
 #include <ranges>
+
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
-#define find_in_each_map(map)                                         \
-    if find_value(scope.name + id.name, map) {                        \
-        return id.mangled_name = scope.name + id.name, iter->second;  \
+#define find_in_each_map(map)                                                       \
+    if find_value(scope.name + id.name, map) {                                      \
+        return id.mangled_name = scope.name + id.name, iter->second;                \
     }
-#define search_maps(...)                                              \
-for (const auto& scope : scope_stack | std::views::reverse) {         \
-    map_macro(find_in_each_map, __VA_ARGS__);                         \
+#define search_maps(...)                                                            \
+for (const auto& scope : scope_stack | std::views::reverse) {                       \
+    map_macro(find_in_each_map, __VA_ARGS__);                                       \
 }
 
 // NOTE: change the implementation so we dont keep all locals to the end of the program
@@ -118,23 +119,24 @@ void Analyzer::iterate_qualified_names(FunctionDecl & func) {
         }
         symbol_tree.push_scope(unqualified_name, scope_kind);
 
-    } else {
-        switch (symbol_tree.curr_scope_kind) {
-            case ScopeKind::TypeBody:
-                func.kind = FunctionDecl::member_func_declaration;
-                symbol_tree.push_scope(id.name, ScopeKind::MemberFuncBody);
-                break;
-            default:
-                func.kind = FunctionDecl::function_declaration;
-                symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
-                break;
-        }
+        return;
+    } 
+    switch (symbol_tree.curr_scope_kind) {
+        case ScopeKind::TypeBody:
+            func.kind = FunctionDecl::member_func_declaration;
+            symbol_tree.push_scope(id.name, ScopeKind::MemberFuncBody);
+            break;
+        default:
+            func.kind = FunctionDecl::function_declaration;
+            symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
+            break;
     }
+
 }
 
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
-        cases(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
+        case(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
              BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals) {
             report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
                          get_name(bin.lhs->type), node.source_token.to_str(), get_name(bin.rhs->type));

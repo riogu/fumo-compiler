@@ -152,3 +152,13 @@ t(
 "   };\n"
 "}\n"
 , pass),
+t(
+"let var = 123123213;\n"
+"fn foo() -> i32  {\n"
+"    let x: i32 = 3124124;\n"
+"    {\n"
+"    struct gaming {let x: i32;};\n"
+"    let var = gaming{2313};\n"
+"    }\n"
+"}\n"
+, pass)

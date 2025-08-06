@@ -3,6 +3,8 @@
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
     std::string result = std::format("{} ", yellow(branch_name()) + gray("::") +  enum_green(kind_name()));
+    Identifier gaming {};
+    gaming.scope_counts = 13213;
 
     match(*this) {
         holds(Identifier, const& id) {
