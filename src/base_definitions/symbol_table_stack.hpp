@@ -100,18 +100,15 @@ struct SymbolTableStack {
     }
     auto push_type_decl(Identifier& identifier, ASTNode& node) {
         all_declarations.insert({identifier.mangled_name, &node});
-        node.skip_codegen = true;
         identifier.mangled_name = curr_scope_name + identifier.name; 
         return type_decls.insert({identifier.mangled_name, &node});
     }
     auto push_namespace_decl(Identifier& identifier, ASTNode& node) {
-        node.skip_codegen = true;
         identifier.mangled_name = curr_scope_name + identifier.name;
         return namespace_decls.insert({identifier.mangled_name, &node});
     }
     auto push_function_decl(Identifier& identifier, ASTNode& node) {
         all_declarations.insert({identifier.mangled_name, &node});
-        node.skip_codegen = true;
         identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::TypeBody: 

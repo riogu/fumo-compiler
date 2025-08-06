@@ -8,13 +8,10 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    // NOTE: type decls also codegens its own member function decls
-    for (auto& [_, node] : symbol_tree.all_declarations) codegen(*node);
-
-    for (auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
+    for (const auto& [_, node] : symbol_tree.all_declarations) codegen(*node);
 }
 
-llvm::Value* Codegen::codegen(const ASTNode& node) { 
+llvm::Value* Codegen::codegen(const ASTNode& node) {
 
     match(node) {
 
@@ -114,6 +111,7 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         }
 
         holds(TypeDecl, const& type_decl) {
+            // NOTE: type decls also codegens its own member function decls
             INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
         }
 

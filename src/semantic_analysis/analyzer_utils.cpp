@@ -23,7 +23,13 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
                 case ScopeKind::Namespace:
                 case ScopeKind::FunctionBody:
                 case ScopeKind::CompoundStatement:
-                    search_maps(function_decls);
+
+                    for (const auto& scope : scope_stack | std::views ::reverse) {
+                        if (const auto& iter = function_decls.find(scope.name + id.name);
+                            iter != function_decls.end()) {
+                            return id.mangled_name = scope.name + id.name, iter->second;
+                        };
+                    };
                     break;
                 case ScopeKind::TypeBody:
                 case ScopeKind::MemberFuncBody:

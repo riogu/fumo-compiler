@@ -245,10 +245,15 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
+            auto& func_ = get<FunctionDecl>(node_iterator->second);
 
-            if (!was_inserted && func.body) {
-                auto& func_ = get<FunctionDecl>(node_iterator->second);
-                if (func_.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+            if (!was_inserted) {
+                if (func.body) {
+                    if (func_.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                    func_.body = func.body;
+                } else {
+                    func.body = func_.body;
+                }
             }
         }
 
@@ -280,13 +285,18 @@ void Analyzer::add_declaration(ASTNode& node) {
             // and also the conversion from normal function name -> mangled function name
             auto& t_decl = get<TypeDecl>(node_iterator->second);
 
-            if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name))
-                report_error(node.source_token,
-                             "Redefinition of '{}' as a different kind of symbol.",
-                             id.mangled_name);
+            if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name)) {
+                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
+            }
 
-            if (!was_inserted && type_decl.definition_body && t_decl.definition_body) {
-                report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+            if (!was_inserted) {
+                if (type_decl.definition_body) {
+                    if (t_decl.definition_body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                    t_decl.definition_body = type_decl.definition_body;
+
+                } else {
+                    type_decl.definition_body = t_decl.definition_body;
+                }
             }
         }
 

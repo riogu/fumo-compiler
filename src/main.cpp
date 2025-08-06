@@ -24,7 +24,7 @@ auto main(int argc, char** argv) -> int {
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) std::cerr << "node found:\n  " + node->to_str() + "\n";
     std::cerr << "\n";
 
-    Codegen codegen {file, analyzer.symbol_tree};
-    codegen.codegen_file(file_root_node);
-    std::cerr << "\ncodegen:\n" + codegen.llvm_ir_to_str() + "\n";
+    // Codegen codegen {file, analyzer.symbol_tree};
+    // codegen.codegen_file(file_root_node);
+    // std::cerr << "\ncodegen:\n" + codegen.llvm_ir_to_str() + "\n";
 }
