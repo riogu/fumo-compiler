@@ -23,3 +23,10 @@
    if we do all this, and focus mainly on the codegen, we should have a lot done already and working.
    mainly should be 'finish the missing sem analysis' -> 'do the codegen up till where the language is at'.
    - after that, add control flow (if, while, for, etc)
+
+# Codegen:
+   - generate code for all structs first
+   - generate code for all global variables
+   - generate each function declaration sequentially
+      (generates its own local variables and such but not local struct declarations)
+   - 

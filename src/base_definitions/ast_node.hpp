@@ -153,6 +153,7 @@ struct ASTNode {
     Token source_token; // token that originated this Node
     NodeBranch branch;
     Type type {};
+    bool skip_codegen = false;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;

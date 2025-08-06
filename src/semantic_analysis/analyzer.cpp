@@ -203,7 +203,7 @@ void Analyzer::analyze(ASTNode& node) {
                 }
                 else if_holds(<Identifier>(node), id) {
                     switch (id->kind) {
-                        case (Identifier::func_call_name, Identifier::member_func_call_name, Identifier::member_var_name)
+                        case(Identifier::func_call_name, Identifier::member_func_call_name, Identifier::member_var_name)
                             id->mangled_name = prev_name + id->name; 
                             prev_name = ""; 
                             break;
@@ -239,7 +239,6 @@ void Analyzer::add_declaration(ASTNode& node) {
     match(node) {
 
         holds(FunctionDecl, &func) {
-            // FIXME: we should add each individual part of the identifier to the scope stack
             Identifier& id = get_id(func);
             // TODO: member function calls should be rewritten to take a pointer
             // to an instance of the class they are defined in. the "this" implicit pointer in C++
