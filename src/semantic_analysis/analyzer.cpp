@@ -194,7 +194,6 @@ void Analyzer::analyze(ASTNode& node) {
                                 prev_name = ""; 
                                 break;
                             case (Identifier::var_name, Identifier::member_var_name)
-                                
                                 id->mangled_name = prev_name + id->name; 
                                 break; 
                             default:
@@ -204,11 +203,11 @@ void Analyzer::analyze(ASTNode& node) {
                 }
                 else if_holds(<Identifier>(node), id) {
                     switch (id->kind) {
-                        case (Identifier::func_call_name, Identifier::member_func_call_name)
+                        case (Identifier::func_call_name, Identifier::member_func_call_name, Identifier::member_var_name)
                             id->mangled_name = prev_name + id->name; 
                             prev_name = ""; 
                             break;
-                        case (Identifier::var_name, Identifier::member_var_name)
+                        case (Identifier::var_name)
                             id->mangled_name = prev_name + id->name; break; 
                         default:
                             INTERNAL_PANIC("wrong node branch pushed to postfix expression.");

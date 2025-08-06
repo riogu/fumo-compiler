@@ -163,4 +163,22 @@ t(
 "    var.x = 69420;\n"
 "    }\n"
 "}\n"
-, pass)
+, pass),
+
+t(
+"struct foo {\n"
+"    struct bar {let y = 23;};\n"
+"\n"
+"    let x: i32 = 21313;\n"
+"    let var = bar{1212};\n"
+"\n"
+"    fn func(param: i32) -> void {\n"
+"        x = 6969;\n"
+"        var.y = 343434;\n"
+"    }\n"
+"};\n"
+"fn some() -> void {\n"
+"    let local = foo{12, foo::bar{3}};\n"
+"    local.var.y = 10;\n"
+"}\n"
+,pass),
