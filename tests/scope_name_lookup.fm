@@ -67,6 +67,7 @@ t(
 "fn func() -> void {\n"
 "     struct gaming {let bbbb: f32;};\n"
 "     let x: gaming = {123123};\n"
+"        x.bbbb = 23.0f;\n"
 "     {\n"
 "         struct gaming {let vvvvv = 321;};\n"
 "         let x: gaming;\n"
@@ -159,6 +160,7 @@ t(
 "    {\n"
 "    struct gaming {let x: i32;};\n"
 "    let var = gaming{2313};\n"
+"    var.x = 69420;\n"
 "    }\n"
 "}\n"
 , pass)

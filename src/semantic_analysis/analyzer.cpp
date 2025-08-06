@@ -119,7 +119,10 @@ void Analyzer::analyze(ASTNode& node) {
 
             for (auto& param : func.parameters) {
                 analyze(*param);
-                if (param->type.kind == Type::Undetermined) analyze(*param->type.identifier);
+                if (param->type.kind == Type::Undetermined) {
+                    analyze(*param->type.identifier);
+                    param->type = param->type.identifier->type;
+                }
                 // TODO: analyzing a type should automatically set the node's type
             }
 

@@ -8,11 +8,8 @@
 
     match(*this) {
         holds(Identifier, const& id) {
-            if (id.declaration) 
-                result += green("✓ SOLVED");
-            else
-                result += red("❌NOT SOLVED");
-            result += std::format(" {}{}{}", gray("⟮"), white_gray(id.mangled_name), gray("⟯"));
+            result += std::format("{}{}{}", gray("⟮"), white_gray(id.mangled_name), gray("⟯"));
+            result += gray(" => ") + yellow(get_id(id.declaration.value()->type).mangled_name);
         }
         holds(PrimaryExpr, const& prim) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
@@ -35,9 +32,9 @@
                 result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
         }
         holds(VariableDecl, const& var) {
-            result += std::format("{} {}", gray("=>"), white_gray(get_id(var).mangled_name));
+            result += std::format("{}{}{} {} ", gray("⟮"), white_gray(get_id(var).mangled_name), gray("⟯"), gray("=>"));
             str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            result += gray(": ") + yellow(get_id(type).mangled_name) + purple_blue(ptr_str);
+            result += yellow(get_id(type).mangled_name) + purple_blue(ptr_str);
         }
         holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");

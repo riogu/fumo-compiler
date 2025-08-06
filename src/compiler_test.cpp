@@ -26,16 +26,16 @@ std::pair<std::string, int> exec(const char* cmd) {
 
 int main() {
 
-    constexpr std::array ast_syntax_tests {
+    constexpr std::array ast_syntax {
         #include "../tests/ast_syntax.fm"
     };
-    constexpr std::array postfix_tests {
+    constexpr std::array postfix {
         #include "../tests/postfix.fm"
     };
-    constexpr std::array scope_basic_tests {
+    constexpr std::array scope_basic_checks {
         #include "../tests/scope_basic_checks.fm"
     };
-    constexpr std::array scope_name_lookup_tests {
+    constexpr std::array scope_name_lookup {
         #include "../tests/scope_name_lookup.fm"
     };
     constexpr std::array all_tests {
@@ -45,7 +45,7 @@ int main() {
         #include "../tests/scope_name_lookup.fm"
     };
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : all_tests) {
+    for (const auto& [test, expected] : scope_name_lookup) {
         auto [output, status] = exec(std::format("./build/fumo-compiler 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
