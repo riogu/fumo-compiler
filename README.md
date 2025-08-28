@@ -33,7 +33,7 @@ Making a compiler based on a subset of the [ISO/IEC 9899:1999 specification](htt
 
 ## Doing:
 - LLVM backend
-- static analysis, expression evaluation, etc
+- semantic analysis
 ## Currently done:
 - Lexer (Tokenizer)
 - Parser/AST (API is done, new additions are slowly added)
