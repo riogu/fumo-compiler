@@ -189,7 +189,7 @@ constexpr bool is_branch(const ASTNode* node) {
 #define if_holds(params, var_name) if (auto* var_name = get_if_ params)
 
 template<typename Branch>
-constexpr Branch* get_if_(ASTNode* node) {
+constexpr Branch* get_if(ASTNode* node) {
     if (std::holds_alternative<Branch>(node->branch)) return {&std::get<Branch>(node->branch)};
     else
         return nullptr;

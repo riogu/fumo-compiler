@@ -56,10 +56,7 @@ struct Parser {
     #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
     #define token_is(tok) is_tkn(tkn(tok))
     constexpr bool is_tkn(const TokenType& type) {
-        return curr_tkn != tokens.end()
-               && ((curr_tkn)->type == type) ? ({ // std::print("consumed: '{}'\n", curr_tkn->to_str());
-                                                  prev_tkn = curr_tkn++; true; })
-                                             : false;
+        return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? prev_tkn = curr_tkn++, true : false;
     }
 
     #define peek_token_str(tok) peek_is_tkn(str_to_tkn_type(tok))

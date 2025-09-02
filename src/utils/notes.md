@@ -29,4 +29,14 @@
    - generate code for all global variables
    - generate each function declaration sequentially
       (generates its own local variables and such but not local struct declarations)
-   - 
+
+📌 Summary Roadmap
+   - Phase 1: Finish LLVM codegen for variables, arithmetic, and functions.
+
+   - Phase 2: Add struct layout + member access.
+
+   - Phase 3: Add pointers (load/store, address-of).
+
+   - Phase 4: Add if/else, while.
+
+   - Phase 5: Polish docs + example programs (don’t underestimate this part).

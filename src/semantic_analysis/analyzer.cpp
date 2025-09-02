@@ -186,8 +186,8 @@ void Analyzer::analyze(ASTNode& node) {
             str prev_name = "";
             for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
                 auto& node = *node_it;
-                if_holds(<UnaryExpr>(node), un) {
-                    if_holds(<Identifier>(un->expr), id) {
+                if (auto* un = get_if<UnaryExpr>(node)) {
+                    if (auto* id = get_if<Identifier>(un->expr)) {
                         switch (id->kind) {
                             case (Identifier::func_call_name, Identifier::member_func_call_name)
                                 id->mangled_name = prev_name + id->name; 
@@ -200,24 +200,20 @@ void Analyzer::analyze(ASTNode& node) {
                                 INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
                         }
                     }
-                }
-                else if_holds(<Identifier>(node), id) {
+                } else if (auto* id = get_if<Identifier>(node)) {
                     switch (id->kind) {
-                        case(Identifier::func_call_name, Identifier::member_func_call_name, Identifier::member_var_name)
-                            id->mangled_name = prev_name + id->name; 
-                            prev_name = ""; 
-                            break;
-                        case (Identifier::var_name)
-                            id->mangled_name = prev_name + id->name; break; 
-                        default:
+                        case (Identifier::func_call_name,
+                              Identifier::member_func_call_name,
+                              Identifier::member_var_name)id->mangled_name = prev_name + id->name;
+                            prev_name = ""; break;
+                            case (Identifier::var_name)id->mangled_name = prev_name + id->name; break; default:
                             INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
                     }
-                }
-                else if (is_branch<BlockScope>(node)) {
+                } else if (is_branch<BlockScope>(node)) {
                     node->type = (*(node_it - 1))->type;
-                    prev_name = ""; 
-                }
-                else INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                    prev_name = "";
+                } else
+                    INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
 
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";

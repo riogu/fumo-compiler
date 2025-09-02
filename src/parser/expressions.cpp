@@ -178,9 +178,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (token_is_str("(")) {
-            if (auto* id = get_if_<Identifier>(node)) {
+            if (auto* id = get_if<Identifier>(node)) {
                 id->kind = Identifier::member_func_call_name;
-            } else if (auto* un = get_if_<UnaryExpr>(node)) {
+            } else if (auto* un = get_if<UnaryExpr>(node)) {
                 get<Identifier>(un->expr).kind = Identifier::member_func_call_name;
             } else {
                 report_error(tkn, "expected identifier before postfix operator");
