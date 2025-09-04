@@ -8,15 +8,13 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
-    // for (const auto& [_, node] : symbol_tree.all_declarations) codegen(*node);
+    for (const auto& [name, node] : symbol_tree.all_declarations) register_declaration(name, *node);
+
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
 }
-/*
-fn func() -> i32 {
-    let x = 213;
-}
-*/
-llvm::Value* Codegen::codegen(const ASTNode& node) {
+
+
+Opt<llvm::Value*> Codegen::codegen(const ASTNode& node) {
     // NOTE: should always check for a possible nullptr on each codegen
 
     match(node) {
@@ -24,14 +22,17 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         holds(Identifier, const& id) {
             switch (id.kind) {
                 case Identifier::var_name:
+                // just needs to solve to a value in an llvm register
                 case Identifier::member_var_name:
+                    // these need an offset from the base of the original variable
+                    // epic_var.some_member = 213123;
                     break;
                 case Identifier::func_call_name:
                 case Identifier::type_name:
                 case Identifier::declaration_name:
                 case Identifier::member_func_call_name:
                 case Identifier::unknown_name:
-                    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
+                    INTERNAL_PANIC("shouldn't codegen this identifier: '{}'.", node.name());
             }
 
         }
@@ -51,25 +52,32 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         }
 
         holds(UnaryExpr, const& un) {
+
+            llvm::Value* val;
+            if (!(val = codegen(*un.expr).value_or(nullptr))) {
+                INTERNAL_PANIC("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+            }
+
             switch (un.kind) {
                 case UnaryExpr::negate:
-                    return ir_builder->CreateNeg(codegen(*un.expr));
+                    return ir_builder->CreateNeg(val);
                 case UnaryExpr::logic_not:
-                    return ir_builder->CreateICmpEQ(codegen(*un.expr),
-                                                    llvm::ConstantInt::getBool(*llvm_context, 0));
+                    return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::getBool(*llvm_context, 0));
                 case UnaryExpr::bitwise_not:
-                    return ir_builder->CreateNot(codegen(*un.expr));
+                    return ir_builder->CreateNot(val);
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
             }
         }
 
         holds(BinaryExpr, const& bin) {
-            llvm::Value* lhs_val = codegen(*bin.lhs);
-            llvm::Value* rhs_val = codegen(*bin.rhs);
-            if (lhs_val == nullptr || rhs_val == nullptr) {
-                INTERNAL_PANIC("[Codegen] found nullptr in binary operand for '{}'.", node.name());
+
+            llvm::Value* lhs_val = codegen(*bin.lhs).value_or(nullptr);
+            llvm::Value* rhs_val = codegen(*bin.rhs).value_or(nullptr);
+            if (!lhs_val || !rhs_val) {
+                INTERNAL_PANIC("[Codegen] found null value in binary operand for '{}'.", node.name());
             }
+
             switch(bin.kind) {
                 case BinaryExpr::add:
                     return ir_builder->CreateAdd(lhs_val, rhs_val);
@@ -109,24 +117,10 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         }
 
         holds(FunctionDecl, const& func) {
+        }
 
-            vec<llvm::Type*> param_types {};
-            for (const auto& param : func.parameters) {
-                param_types.push_back(fumo_to_llvm_type(param->type));
-                codegen(*param);
-            }
-            llvm::FunctionType* func_type = llvm::FunctionType::get(fumo_to_llvm_type(node.type), param_types, false);
-            llvm::Function* llvm_func = llvm::Function::Create(func_type,
-                                                               llvm::Function::ExternalLinkage,
-                                                               get_id(func).mangled_name,
-                                                               llvm_module.get());
-            llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", llvm_func);
-
-            ir_builder->SetInsertPoint(bblock);
-
-            if (func.body) codegen(*func.body.value());
-
-            return llvm_func;
+        holds(FunctionCall) {
+            INTERNAL_PANIC("namespaces shouldn't be codegen'd, found '{}'.", node.name());
         }
 
         holds(BlockScope, const& scope) {
@@ -134,6 +128,10 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
         }
 
         holds(TypeDecl, const& type_decl) {
+
+            if (type_decl.definition_body) {
+                for (auto* node : type_decl.definition_body.value()) codegen(*node);
+            }
             // NOTE: type decls also codegens its own member function decls
             INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
         }
@@ -142,7 +140,37 @@ llvm::Value* Codegen::codegen(const ASTNode& node) {
             INTERNAL_PANIC("namespaces shouldn't be codegen'd, found '{}'.", node.name());
         }
 
+
         _default INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
     }
-    std::unreachable();
+    // NOTE: if our branch has nothing to return, it returns nullptr;
+    return std::nullopt;
+}
+
+void Codegen::register_declaration(std::string_view name, const ASTNode& node) {
+    // adds function prototypes and forward declarations of types
+
+    match(node) {
+        holds(TypeDecl, const& type_decl) {
+            llvm::StructType::create(*llvm_context, name);
+        }
+        holds(FunctionDecl, const& func) {
+
+            vec<llvm::Type*> param_types {};
+
+            for (const auto& param : func.parameters) {
+                param_types.push_back(fumo_to_llvm_type(param->type));
+                codegen(*param);
+            }
+            llvm::FunctionType* func_type = llvm::FunctionType::get(fumo_to_llvm_type(node.type), param_types, false);
+
+            llvm::Function* llvm_func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
+                                                               get_id(func).mangled_name, llvm_module.get());
+        }
+        _default {}
+    }
+    // llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", llvm_func);
+    // ir_builder->SetInsertPoint(bblock);
+    // if (func.body) codegen(*func.body.value());
+    // return llvm_func;
 }

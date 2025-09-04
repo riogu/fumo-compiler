@@ -8,6 +8,8 @@ struct Analyzer {
     void semantic_analysis(ASTNode* file_scope);
 
     SymbolTableStack symbol_tree {};
+    
+    vec<unique_ptr<ASTNode>> extra_nodes {}; // used for member functions to allocate a parameter
 
   private:
     std::stringstream file_stream;
@@ -17,6 +19,11 @@ struct Analyzer {
 
     void add_declaration(ASTNode& node);
     void iterate_qualified_names(FunctionDecl& func);
+
+    ASTNode* push(const ASTNode& node) {
+        extra_nodes.push_back(std::make_unique<ASTNode>(node));
+        return extra_nodes.back().get();
+    }
 
     [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
     [[nodiscard]] bool is_arithmetic_t(const Type& a);

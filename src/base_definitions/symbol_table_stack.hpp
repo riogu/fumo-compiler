@@ -48,7 +48,8 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> member_variable_decls {};
     // --------------------------------------------
     // change this to only include the top level declarations so we can recursively codegen them.
-    std::map<str, ASTNode*> all_declarations {}; // NOTE: doesn't include namespaces or local variables
+    std::map<str, ASTNode*> all_declarations {}; 
+    // NOTE: doesn't include namespaces or local variables or member variables
     // --------------------------------------------
     vec<Scope> scope_stack {};
 
@@ -82,10 +83,10 @@ struct SymbolTableStack {
     }
 
     auto push_variable_decl(Identifier& identifier, ASTNode& node) {
-        all_declarations.insert({identifier.mangled_name, &node});
         identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::Namespace:
+                all_declarations.insert({identifier.mangled_name, &node});
                 return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
                 return member_variable_decls.insert({identifier.mangled_name, &node});

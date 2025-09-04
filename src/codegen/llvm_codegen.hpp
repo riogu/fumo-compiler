@@ -34,13 +34,8 @@ struct Codegen {
     }
 
   private:
-    llvm::Value* codegen(const ASTNode& node);
-    llvm::Value* codegen(const ASTNode& node, const PrimaryExpr& branch);
-    llvm::Value* codegen(const ASTNode& node, const UnaryExpr& branch);
-    llvm::Value* codegen(const ASTNode& node, const BinaryExpr& branch);
-    llvm::Value* codegen(const ASTNode& node, const VariableDecl& branch);
-    llvm::Value* codegen(const ASTNode& node, const FunctionDecl& branch);
-    llvm::Value* codegen(const ASTNode& node, const BlockScope& branch);
+    Opt<llvm::Value*> codegen(const ASTNode& node);
+    void register_declaration(std::string_view name, const ASTNode& node);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {
@@ -48,7 +43,7 @@ struct Codegen {
             // case TypeKind::_enum:
             case Type::struct_: {
                 auto type = llvm::StructType::getTypeByName(*llvm_context, get_name(fumo_type));
-                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_id(fumo_type).name);
+                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_id(fumo_type).mangled_name);
                 return type;
             }
             case Type::Nothing:  return llvm::Type::getVoidTy(*llvm_context);
@@ -61,7 +56,7 @@ struct Codegen {
             case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);
             case Type::str_:   // TODO: add string types
             default:
-                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_name(fumo_type));
+                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_id(fumo_type).mangled_name);
         }
         return {};
     }

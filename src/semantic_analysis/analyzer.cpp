@@ -18,22 +18,22 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.pop_scope();
 }
 
-void Analyzer::determine_type(ASTNode& node) {
-    // TODO: move type checks from analyze() to this function
-    match(node) {
-        holds(Identifier) {}
-        holds(PrimaryExpr) {}
-        holds(UnaryExpr) {}
-        holds(BinaryExpr) {}
-        holds(PostfixExpr) {}
-        holds(VariableDecl) {}
-        holds(FunctionDecl) {}
-        holds(BlockScope) {}
-        holds(NamespaceDecl) {}
-        holds(TypeDecl) {}
-        _default {}
-    }
-}
+// void Analyzer::determine_type(ASTNode& node) {
+//     // TODO: move type checks from analyze() to this function
+//     match(node) {
+//         holds(Identifier) {}
+//         holds(PrimaryExpr) {}
+//         holds(UnaryExpr) {}
+//         holds(BinaryExpr) {}
+//         holds(PostfixExpr) {}
+//         holds(VariableDecl) {}
+//         holds(FunctionDecl) {}
+//         holds(BlockScope) {}
+//         holds(NamespaceDecl) {}
+//         holds(TypeDecl) {}
+//         _default {}
+//     }
+// }
 
 void Analyzer::analyze(ASTNode& node) {
 
@@ -123,7 +123,23 @@ void Analyzer::analyze(ASTNode& node) {
                 analyze(*node.type.identifier);
                 if (auto decl = get<Identifier>(node.type.identifier).declaration) node.type = decl.value()->type;
             }
+            if (func.kind == FunctionDecl::member_func_declaration) {
+                ASTNode* node_ = push(ASTNode {node.source_token});
+                node_->branch = VariableDecl {VariableDecl::parameter,
+                                    push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
 
+                str temp = id.mangled_name;
+                // std::cerr << temp + "eeeeeeh\n";
+                while (temp.back() != ':') temp.pop_back();
+                temp.pop_back(), temp.pop_back();
+                Identifier temp_id = {.kind = Identifier::type_name, .name = temp};
+                // getting the type name of the struct that this function is a member of
+                // a bit hacky but its okay
+                node_->type = symbol_tree.find_declaration(temp_id).value()->type;
+                node_->type.ptr_count = 1;
+
+                func.parameters.push_back(node_);
+            }
             for (auto& param : func.parameters) {
                 analyze(*param);
                 // TODO: analyzing a type should automatically set the node's type
@@ -142,11 +158,14 @@ void Analyzer::analyze(ASTNode& node) {
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
 
-            const auto& params = get<FunctionDecl>(get_id(func_call).declaration.value()).parameters;
-
+            const auto& func_decl = get<FunctionDecl>(get_id(func_call).declaration.value());
+            if (func_decl.kind == FunctionDecl::member_func_declaration) {
+                func_call.kind = FunctionCall::member_function_call;
+            }
+            const auto& params = func_decl.parameters;
             if (func_call.argument_list.size() != params.size()) {
-                report_error(node.source_token,
-                             "provided {} arguments, expected {}.", func_call.argument_list.size(), params.size());
+                // report_error(node.source_token,
+                //              "provided {} arguments, expected {}.", func_call.argument_list.size(), params.size());
             }
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
                 analyze(*arg);
@@ -249,7 +268,21 @@ void Analyzer::analyze(ASTNode& node) {
 
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";
-                std::cerr << prev_name + "\n";
+                if (auto* func_call = get_if<FunctionCall>(node)) {
+                    // TODO: i need to somehow provide the address of the variable here
+                    // first, i need to figure out how you actually implement pointers properly
+                    // before making this work correctly
+                    if (func_call->kind == FunctionCall::member_function_call) {
+                        // NOTE: for now, i wont allow calling member functions without "this->" being used
+                        // we need to search the local environment for "this" to make this work atm
+                        if(node_it == postfix.nodes.begin()) {
+                            report_error(node->source_token, "must use 'this' to call member functions. [TODO]");
+                        }
+                        auto node_ = *(*node_it - 1);
+                        node_.type.ptr_count += 1;
+                        func_call->argument_list.push_back(push(node_));
+                    }
+                }
             }
             node.type = postfix.nodes.back()->type;
         }
