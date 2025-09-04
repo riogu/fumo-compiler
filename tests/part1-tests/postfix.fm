@@ -67,4 +67,4 @@ t(
 "    let var: foo = {};\n"
 "    huh();\n"
 "}\n"
-,fail),
+,pass),

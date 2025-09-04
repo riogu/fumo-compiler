@@ -53,8 +53,10 @@ void Analyzer::analyze(ASTNode& node) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:
                 case PrimaryExpr::floating_point:
-                case PrimaryExpr::str: break;
-                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                case PrimaryExpr::str:
+                    break;
+                default:
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -67,7 +69,8 @@ void Analyzer::analyze(ASTNode& node) {
                 case UnaryExpr::logic_not:
                     if (!is_arithmetic_t(un.expr->type)) {
                         report_error(node.source_token,
-                                     "invalid type '{}' for unary expression.", get_name(un.expr->type));
+                                     "invalid type '{}' for unary expression.",
+                                     get_name(un.expr->type));
                     }
                     break;
                 case UnaryExpr::return_statement:
@@ -103,7 +106,8 @@ void Analyzer::analyze(ASTNode& node) {
                 // this is pretty bad, consider refactoring type inference later
                 if (auto decl = get<Identifier>(node.type.identifier).declaration) node.type = decl.value()->type;
             }
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
+                var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
 
@@ -134,8 +138,7 @@ void Analyzer::analyze(ASTNode& node) {
         holds(FunctionCall, &func_call) {
             // NOTE: we need to check if the arguments to a function are compatible with the original function signature
             analyze(*func_call.identifier);
-            // if (auto decl = get<Identifier>(func_call.identifier).declaration)
-            //     func_call.identifier = get<FunctionDecl>(decl.value()).identifier;
+            node.type = func_call.identifier->type;
             for (auto& node : func_call.argument_list) analyze(*node);
         }
 
@@ -145,7 +148,7 @@ void Analyzer::analyze(ASTNode& node) {
                 // TODO: make sure that return statements match the function's return type
                 case BlockScope::compound_statement:
                     if (symbol_tree.curr_scope_kind == ScopeKind::MemberFuncBody
-                     || symbol_tree.curr_scope_kind == ScopeKind::MemberCompoundStatement) {
+                        || symbol_tree.curr_scope_kind == ScopeKind::MemberCompoundStatement) {
                         symbol_tree.push_scope("", ScopeKind::MemberCompoundStatement);
                     } else {
                         symbol_tree.push_scope("", ScopeKind::CompoundStatement);
@@ -184,7 +187,8 @@ void Analyzer::analyze(ASTNode& node) {
                     symbol_tree.pop_scope();
                     break;
 
-                default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                default:
+                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -196,21 +200,31 @@ void Analyzer::analyze(ASTNode& node) {
                 if (auto* un = get_if<UnaryExpr>(node)) {
                     if (auto* id = get_if<Identifier>(un->expr)) {
                         switch (id->kind) {
-                            case Identifier::member_var_name: id->mangled_name = prev_name + id->name; prev_name = ""; break;
-                            case Identifier::var_name:        id->mangled_name = prev_name + id->name; break; 
-                            default: INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                            case Identifier::member_var_name:
+                                id->mangled_name = prev_name + id->name;
+                                prev_name = "";
+                                break;
+                            case Identifier::var_name:
+                                id->mangled_name = prev_name + id->name;
+                                break;
+                            default:
+                                INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
                         }
                     }
-                } 
-                else if (auto* id = get_if<Identifier>(node)) {
+                } else if (auto* id = get_if<Identifier>(node)) {
                     switch (id->kind) {
-                        case Identifier::member_var_name: id->mangled_name = prev_name + id->name; prev_name = ""; break;
-                        case Identifier::var_name:        id->mangled_name = prev_name + id->name; break; 
-                        default: INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                        case Identifier::member_var_name:
+                            id->mangled_name = prev_name + id->name;
+                            prev_name = "";
+                            break;
+                        case Identifier::var_name:
+                            id->mangled_name = prev_name + id->name;
+                            break;
+                        default:
+                            INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
                     }
 
-                }
-                else if (auto* func_call = get_if<FunctionCall>(node)) {
+                } else if (auto* func_call = get_if<FunctionCall>(node)) {
                     auto& id = get<Identifier>(func_call->identifier);
                     id.mangled_name = prev_name + id.name;
                     prev_name = "";
@@ -219,7 +233,7 @@ void Analyzer::analyze(ASTNode& node) {
 
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";
-                std::cerr << prev_name  + "\n";
+                std::cerr << prev_name + "\n";
             }
             node.type = postfix.nodes.back()->type;
         }
@@ -285,12 +299,15 @@ void Analyzer::add_declaration(ASTNode& node) {
             auto& t_decl = get<TypeDecl>(node_iterator->second);
 
             if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name)) {
-                report_error(node.source_token, "Redefinition of '{}' as a different kind of symbol.", id.mangled_name);
+                report_error(node.source_token,
+                             "Redefinition of '{}' as a different kind of symbol.",
+                             id.mangled_name);
             }
 
             if (!was_inserted) {
                 if (type_decl.definition_body) {
-                    if (t_decl.definition_body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                    if (t_decl.definition_body)
+                        report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
                     t_decl.definition_body = type_decl.definition_body;
 
                 } else {
@@ -300,6 +317,5 @@ void Analyzer::add_declaration(ASTNode& node) {
         }
 
         _default INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name());
-        
     }
 }
