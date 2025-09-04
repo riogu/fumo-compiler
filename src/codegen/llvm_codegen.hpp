@@ -1,6 +1,7 @@
 #pragma once
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Passes/OptimizationLevel.h>
 #include <map>
 #include "base_definitions/ast_node.hpp"
 #include "base_definitions/symbol_table_stack.hpp"
@@ -34,8 +35,9 @@ struct Codegen {
     }
 
   private:
-    Opt<llvm::Value*> codegen(const ASTNode& node);
+    Opt<llvm::Value*> codegen( ASTNode& node);
     void register_declaration(std::string_view name, const ASTNode& node);
+    void compile_module(llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O0);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

@@ -108,8 +108,7 @@ void Analyzer::analyze(ASTNode& node) {
                 // this is pretty bad, consider refactoring type inference later
                 if (auto decl = get<Identifier>(node.type.identifier).declaration) node.type = decl.value()->type;
             }
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
-                var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             add_declaration(node);
         }
 

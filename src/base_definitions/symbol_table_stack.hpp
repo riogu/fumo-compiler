@@ -86,7 +86,7 @@ struct SymbolTableStack {
         identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::Namespace:
-                all_declarations.insert({identifier.mangled_name, &node});
+                // all_declarations.insert({identifier.mangled_name, &node});
                 return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
                 return member_variable_decls.insert({identifier.mangled_name, &node});

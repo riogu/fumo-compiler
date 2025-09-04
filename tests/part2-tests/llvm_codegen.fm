@@ -1,14 +1,8 @@
-t(
-"let x = 2;\n"
-"let y = x + 123123;\n"
-"fn func() -> void;\n"
-"func();\n"
-,pass),
 //t(
 //"let x: i32;\n"
 //"let y = 123123;\n"
 //"fn func() -> void {\n"
-//"    let x = 3 + 69420;\n"
+//"    let x = 69420;\n"
 //"}\n"
 //,pass),
 //t(
@@ -16,7 +10,25 @@ t(
 //"let y = 123123;\n"
 //"fn main() -> i32 {\n"
 //"    let x = 32;\n"
-//"    y = y + 3;\n"
-//"    return 0;\n"
+//"    y = x + 3;\n"
 //"}\n"
 //,pass),
+//
+//t(
+//"let x = 23;\n"
+//"let y: i32* = x;\n"
+//,pass),
+//t(
+//"let x = 2;\n"
+//"let y = x + 123123;\n"
+//"fn func() -> void;\n"
+//"func();\n"
+//,pass),
+
+t(
+"let x = 23;\n"
+"fn main() -> i32 {\n"
+"    x = x * 69;\n"
+"    let y = (x + 43) / 23 * x;\n"
+"}\n"
+,pass),

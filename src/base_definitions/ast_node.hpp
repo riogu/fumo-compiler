@@ -2,6 +2,7 @@
 #include "base_definitions/tokens.hpp"
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
+#include <llvm/IR/Value.h>
 
 struct ASTNode; 
 // NOTE: identifiers always hold declarations, but we distinguish the codegen for them
@@ -165,15 +166,13 @@ struct ASTNode {
     NodeBranch branch;
     Type type {};
 
+    llvm::Value* llvm_value {};
+
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
     [[nodiscard]] std::string branch_name() const;
     [[nodiscard]] std::string name() const { return yellow(branch_name()) + gray("::") + enum_green(kind_name()); }
 };
-
-// constexpr ASTNode::NodeBranch operator/(ASTNode::NodeBranch branch, int dummy) {
-//     return branch;
-// }
 
 #define get_name(branch_) get_id(branch_).name
 #define get_id(branch_)                                                             \
@@ -195,8 +194,6 @@ constexpr bool is_branch(const ASTNode* node) {
     return (std::holds_alternative<Branches>(node->branch) || ...);
 }
 #define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
-
-#define if_holds(params, var_name) if (auto* var_name = get_if params)
 
 template<typename Branch>
 constexpr Branch* get_if(ASTNode* node) {
