@@ -133,7 +133,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is_str("{")) {
         auto init_list = initializer_list();
         if (temp_node) {
-            if_holds(<Identifier>(temp_node.value()), id) {
+            if (auto* id = get_if<Identifier>(temp_node.value())) {
                 id->kind = Identifier::type_name;
             } else {
                 report_error(temp_node.value()->source_token, "expected identifier before initializer list.");
@@ -156,8 +156,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     // (can't use parentheses in a postfix expression)
     while (1) {
         if (token_is(->)) {
-            if(!is_branch<Identifier, BlockScope>(node)) {
-                report_error(node->source_token, "expected identifier before postfix operator");
+            if(!is_branch<Identifier, FunctionCall>(node)) {
+                report_error(node->source_token, "expected identifier before postfix operator.");
             }
             node = push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, node}});
             nodes.push_back(node);
@@ -168,8 +168,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (token_is(.)) {
-            if(!is_branch<Identifier, BlockScope>(node)) {
-                report_error(node->source_token, "expected identifier before postfix operator");
+            // NOTE: this could have bugs due to the refactoring that was done
+            if(!is_branch<Identifier, FunctionCall>(node)) {
+                report_error(node->source_token, "expected identifier before postfix operator.");
             }
             nodes.push_back(node);
 
@@ -178,32 +179,39 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (token_is_str("(")) {
+            FunctionCall func_call {};
             if (auto* id = get_if<Identifier>(node)) {
                 id->kind = Identifier::member_func_call_name;
-            } else if (auto* un = get_if<UnaryExpr>(node)) {
-                get<Identifier>(un->expr).kind = Identifier::member_func_call_name;
+                func_call.kind = FunctionCall::member_function_call;
+                func_call.identifier = node;
+            } 
+            else if (auto* un = get_if<UnaryExpr>(node)) {
+                auto id = get<Identifier>(un->expr);
+                id.kind = Identifier::member_func_call_name;
+                func_call.kind = FunctionCall::member_function_call;
+                func_call.identifier = un->expr;
             } else {
-                report_error(tkn, "expected identifier before postfix operator");
+                report_error(tkn, "expected identifier before postfix operator.");
             }
-
-            nodes.push_back(node);
-
-            node = argument_list();
-            
+            func_call.argument_list = argument_list();
             expect_token_str(")");
+
+            node = push(ASTNode {*prev_tkn, func_call, node->type});
+            nodes.push_back(node);
             continue;
         }
+
         if (!nodes.empty()) {
             nodes.push_back(node);
 
             auto* first_node = *nodes.begin();
             Identifier* first_id = nullptr;
-            if_holds(<Identifier>(first_node), id) first_id = id;
-            else if_holds(<UnaryExpr>(first_node), un) first_id = &get<Identifier>(un->expr);
-            else {
-                report_error(tkn, "expected identifier before postfix operator.");
+            match(*first_node) {
+                holds(Identifier, &id)          first_id = &id;
+                holds(UnaryExpr, &un)           first_id = &get<Identifier>(un.expr);
+                holds(FunctionCall, &func_call) first_id = &get<Identifier>(func_call.identifier);
+                _default report_error(tkn, "expected identifier before postfix operator.");
             }
-
             if (first_id->kind == Identifier::member_func_call_name) {
                 first_id->kind = Identifier::func_call_name;
             } else {
@@ -215,9 +223,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     }
 }
 
-[[nodiscard]] ASTNode* Parser::argument_list() {
+[[nodiscard]] vec<ASTNode*> Parser::argument_list() {
 
-    if (peek_token_str(")")) return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, {}}});
+    if (peek_token_str(")")) return {};
 
     vec<ASTNode*> arguments {};
     arguments.push_back(equality());
@@ -226,7 +234,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             arguments.push_back(equality());
             continue;
         }
-        return push(ASTNode {*prev_tkn, BlockScope {BlockScope::argument_list, arguments}});
+        return arguments;
     }
 }
 

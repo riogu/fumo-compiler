@@ -39,4 +39,10 @@
 
    - Phase 4: Add if/else, while.
 
-   - Phase 5: Polish docs + example programs (don’t underestimate this part).
+   - Phase 5: Polish docs + example programs.
+
+
+
+
+right now i need to make the LLVM codegen work for all the new code that was added, so that includes making struct work.
+

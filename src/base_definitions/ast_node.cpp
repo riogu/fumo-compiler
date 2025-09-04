@@ -67,15 +67,15 @@
                     depth--;
                     result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
                     break;
-                case BlockScope::argument_list: 
-                    result += gray("(");
-                    depth++;
-                    for(auto& node: scope.nodes) 
-                        result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
-                    depth--;
-                    result += std::format("\n{}{}", std::string(depth * 2, ' '), gray(")"));
-                    break;
             }
+        }
+        holds(FunctionCall, const& func_call) {
+            result += gray("(");
+            depth++;
+            for(auto& node: func_call.argument_list) 
+                result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
+            depth--;
+            result += std::format("\n{}{}", std::string(depth * 2, ' '), gray(")"));
         }
         holds(NamespaceDecl, const& namespace_decl) {
             result += gray("=> ") + purple_blue("namespace ") + yellow(get_id(namespace_decl).mangled_name);
@@ -118,6 +118,7 @@
         branch_kind_name(PostfixExpr);
         branch_kind_name(VariableDecl);
         branch_kind_name(FunctionDecl);
+        branch_kind_name(FunctionCall);
         branch_kind_name(BlockScope);
         branch_kind_name(NamespaceDecl);
         branch_kind_name(TypeDecl);
@@ -140,6 +141,7 @@
         branch_kind_name(PostfixExpr);
         branch_kind_name(VariableDecl);
         branch_kind_name(FunctionDecl);
+        branch_kind_name(FunctionCall);
         branch_kind_name(BlockScope);
         branch_kind_name(NamespaceDecl);
         branch_kind_name(TypeDecl);

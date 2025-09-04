@@ -32,7 +32,7 @@ struct Parser {
     [[nodiscard]] ASTNode* multiply();
     [[nodiscard]] ASTNode* unary();
     [[nodiscard]] ASTNode* postfix();     // NOTE: new addition
-    [[nodiscard]] ASTNode* argument_list();
+    [[nodiscard]] vec<ASTNode*> argument_list() ;
     [[nodiscard]] Opt<ASTNode*> primary();
     [[nodiscard]] ASTNode* identifier(Identifier::Kind id_kind = Identifier::unknown_name,
                                       Opt<ASTNode*> declaration = std::nullopt);

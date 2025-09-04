@@ -18,10 +18,12 @@ t(
 ,fail),
 t(
 "struct foo {\n"
-"    fn func(x: i32) -> i32;\n"
+"    fn func(x: i32) -> i32{return 213;}\n"
+"    let some: i32 = 124;\n"
 "};\n"
 "fn somefunc() -> void {\n"
 "    let var: foo = {};\n"
+"    var.some = 3;\n"
 "    let x: i32 = var.func();\n"
 "}\n"
 ,pass),
@@ -56,4 +58,13 @@ t(
 "    let y = var.func(e_ptr->xee).some();\n"
 "}\n"
 ,pass),
-
+t(
+"namespace gaming {\n"
+"struct foo {};\n"
+"}\n"
+"fn huh() -> void {}\n"
+"fn gaming::fff() -> void {\n"
+"    let var: foo = {};\n"
+"    huh();\n"
+"}\n"
+,fail),

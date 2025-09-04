@@ -107,12 +107,23 @@ struct FunctionDecl {
     Opt<ASTNode*> body {}; // compound statement {...}
 };
 
+struct FunctionCall {
+    enum Kind {
+        #define FunctionCall_kinds                                       \
+        function_call,           /*                                   */ \
+        member_function_call     /*                                   */ \
+        
+        FunctionCall_kinds
+    } kind;
+    ASTNode* identifier; // is replaced by the FunctionDecl identifier
+    vec<ASTNode*> argument_list {}; // if its empty we have no args
+};
+
 struct BlockScope {
     enum Kind {
         #define BlockScope_kinds                                         \
         compound_statement,      /* {...}                             */ \
-        initializer_list,        /*                                   */ \
-        argument_list            /*                                   */ \
+        initializer_list         /*                                   */ \
 
         BlockScope_kinds
     } kind;
@@ -145,15 +156,14 @@ struct TypeDecl {
 
 struct ASTNode {
 
-    using NodeBranch = std::variant<PrimaryExpr, UnaryExpr, BinaryExpr, PostfixExpr,
+    using NodeBranch = std::variant<Identifier, FunctionCall,
+                                    PrimaryExpr,  UnaryExpr,    BinaryExpr, PostfixExpr,
                                     VariableDecl, FunctionDecl, TypeDecl,
-                                    BlockScope, NamespaceDecl,
-                                    Identifier>;
+                                    BlockScope,   NamespaceDecl>;
 
     Token source_token; // token that originated this Node
     NodeBranch branch;
     Type type {};
-    bool skip_codegen = false;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
@@ -186,7 +196,7 @@ constexpr bool is_branch(const ASTNode* node) {
 }
 #define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
 
-#define if_holds(params, var_name) if (auto* var_name = get_if_ params)
+#define if_holds(params, var_name) if (auto* var_name = get_if params)
 
 template<typename Branch>
 constexpr Branch* get_if(ASTNode* node) {

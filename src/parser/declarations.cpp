@@ -3,7 +3,7 @@
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
 [[nodiscard]] ASTNode* Parser::variable_declaration() {
-    // TODO: should be identifier list (add later)
+    // TODO: should allow declarating multiple identifiers with separating commas (add later)
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
 

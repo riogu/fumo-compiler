@@ -47,8 +47,7 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> member_function_decls {};
     std::map<str, ASTNode*> member_variable_decls {};
     // --------------------------------------------
-    // only this map is codegen'd (each node takes care of its definition body later)
-    // done this way so we have the correct sequential codegen for each file (in correct order)
+    // change this to only include the top level declarations so we can recursively codegen them.
     std::map<str, ASTNode*> all_declarations {}; // NOTE: doesn't include namespaces or local variables
     // --------------------------------------------
     vec<Scope> scope_stack {};
@@ -89,7 +88,6 @@ struct SymbolTableStack {
             case ScopeKind::Namespace:
                 return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
-                node.skip_codegen = true;
                 return member_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::MemberFuncBody:
             case ScopeKind::FunctionBody: 
