@@ -26,7 +26,7 @@ t(
 "    var.some = 3;\n"
 "    let x: i32 = var.func();\n"
 "}\n"
-,pass),
+,fail),
 t(
 "struct foo {\n"
 "   fn foo::func(x: i32) -> gaming;\n"
@@ -62,9 +62,9 @@ t(
 "namespace gaming {\n"
 "struct foo {};\n"
 "}\n"
-"fn huh() -> void {}\n"
+"fn huh(e: i32) -> void {}\n"
 "fn gaming::fff() -> void {\n"
 "    let var: foo = {};\n"
-"    huh();\n"
+"    huh(var);\n"
 "}\n"
-,pass),
+,fail),

@@ -1,4 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "utils/common_utils.hpp"
+#include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -139,7 +141,21 @@ void Analyzer::analyze(ASTNode& node) {
             // NOTE: we need to check if the arguments to a function are compatible with the original function signature
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
-            for (auto& node : func_call.argument_list) analyze(*node);
+
+            const auto& params = get<FunctionDecl>(get_id(func_call).declaration.value()).parameters;
+
+            if (func_call.argument_list.size() != params.size()) {
+                report_error(node.source_token,
+                             "provided {} arguments, expected {}.", func_call.argument_list.size(), params.size());
+            }
+            for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
+                analyze(*arg);
+                if (!is_compatible_t(arg->type, param->type)) {
+                    report_error(arg->source_token,
+                                 "argument of type '{}' is not compatible with function declaration signature.",
+                                 get<Identifier>(arg->type.identifier).mangled_name);
+                }
+            }
         }
 
         holds(BlockScope, &scope) {
