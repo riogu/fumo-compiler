@@ -14,18 +14,19 @@ struct Codegen {
     unique_ptr<llvm::Module> llvm_module;
     std::stringstream file_stream;
     SymbolTableStack symbol_tree {};
+    ASTNode* file_root_node;
 
   public:
     Codegen(const File& file, SymbolTableStack& symbol_tree) : symbol_tree(std::move(symbol_tree)) {
         llvm_context = std::make_unique<llvm::LLVMContext>();
         ir_builder   = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
-        llvm_module  = std::make_unique<llvm::Module>(file.path_name.string(), *llvm_context);
+        llvm_module  = std::make_unique<llvm::Module>(file.output_name.string(), *llvm_context);
+        llvm_module->setSourceFileName(file.path_name.string());
         file_stream << file.contents;
     }
 
     void codegen_file(ASTNode* file_scope);
-
-    void print_llvm_ir() { llvm_module->print(llvm::outs(), nullptr); }
+    void compile_module(llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O0);
 
     [[nodiscard]] str llvm_ir_to_str() {
         std::string outstr;
@@ -37,7 +38,6 @@ struct Codegen {
   private:
     Opt<llvm::Value*> codegen( ASTNode& node);
     void register_declaration(std::string_view name, const ASTNode& node);
-    void compile_module(llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O0);
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

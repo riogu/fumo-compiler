@@ -1,6 +1,7 @@
 #include "codegen/llvm_codegen.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
+    this->file_root_node = file_root_node;
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
@@ -18,7 +19,6 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
         ir_builder->SetInsertPoint(main->getEntryBlock().begin());
         ir_builder->CreateCall(func);
     }
-    compile_module();
 }
 
 

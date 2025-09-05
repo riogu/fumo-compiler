@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.6...4.0)
 
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR FILENAME PROJECT_NAME)   
 string(REPLACE " " "_" ProjectId ${PROJECT_NAME})
+set(PROJECT_NAME "fumo")
 project(${PROJECT_NAME} LANGUAGES CXX)
+
 
 # set(CMAKE_C_COMPILER "/usr/bin/clang")
 # set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
@@ -77,7 +79,6 @@ else()
   target_link_libraries(${PROJECT_NAME} PRIVATE LLVM)
 endif()
 
-# NOTE: removing asan because llvm breaks with it, hope that doesnt cause issues later
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CMAKE_CXX_FLAGS "-O0 -g -Werror -Wall -Wno-unused-variable")
+  set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address -Werror -Wall -Wno-unused-variable")
 endif()
