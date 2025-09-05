@@ -2,6 +2,7 @@
 #include "parser/parser.hpp"
 #include "semantic_analysis/analyzer.hpp"
 #include "codegen/llvm_codegen.hpp"
+#include <llvm/Support/ManagedStatic.h>
 
 auto main(int argc, char** argv) -> int {
     str file_name = "fumo_module.fm";
@@ -30,9 +31,10 @@ auto main(int argc, char** argv) -> int {
     Codegen codegen {file, analyzer.symbol_tree};
     codegen.codegen_file(file_root_node);
     std::cerr << "codegen:\n" + codegen.llvm_ir_to_str() + "\n";
-
-
-    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes)
-    std::cerr << "node found:\n  " + node->to_str() + "\n";
-    std::cerr << "\n";
+    llvm::llvm_shutdown();
+//
+//
+//     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes)
+//     std::cerr << "node found:\n  " + node->to_str() + "\n";
+//     std::cerr << "\n";
 }
