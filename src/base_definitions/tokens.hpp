@@ -57,8 +57,17 @@ struct Token {
                 return purple_blue(std::get<std::string>(literal.value()));
             case TokenType::builtin_type: 
                 return id_gold(std::get<std::string>(literal.value()));
-            case TokenType::string:
-                return enum_green(std::get<std::string>(literal.value()));
+            case TokenType::string: {
+                std::string raw{std::get<std::string>(literal.value())};
+                std::string escaped{};
+                escaped.reserve(raw.length());
+                for (char &c : raw) {
+                    escaped += (c == '\n') ? "\\n" :
+                               (c == '\t') ? "\\t" :
+                               std::string(1, c);
+                }
+                return enum_green(escaped);
+            }
             case TokenType::is_EOF:
                 return "EOF";
             default: 

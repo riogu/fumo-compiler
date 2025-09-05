@@ -44,6 +44,42 @@ int Lexer::get_curr() {
                   .file_name = __FUMO_FILE__.string()};
 }
 
+[[nodiscard]] Token Lexer::parse_string_literal() {
+    std::string str_inner{};
+    get_curr();
+    while (file_stream.peek() != EOF) {
+        if (curr == '"') break;
+
+        if (curr != '\\') {
+            str_inner += curr;
+        } else {
+            if (file_stream.peek() != EOF) {
+            get_curr();
+            } else {
+                lexer_error("Dangling backslash escape character.");
+            }
+            switch (curr) {
+                case 'n': str_inner += '\n'; break;
+                case 't': str_inner += '\t'; break;
+                case '"': str_inner += '"'; break;
+                case '\\': str_inner += '\\'; break;
+                default: lexer_error("Invalid escape code.");
+            }
+        }
+
+        get_curr();
+    }
+    if (curr != '"') {
+        lexer_error("Unmatched quote in string literal.");
+    }
+    return Token { .type = TokenType::string,
+                   .literal = std::move(str_inner),
+                   .line_number = __FUMO_LINE_NUM__,
+                   .line_offset = __FUMO_LINE_OFFSET__,
+                   .file_offset = file_stream.tellg(),
+                   .file_name = __FUMO_FILE__.string()};
+}
+
 [[nodiscard]] Token Lexer::parse_numeric_literal() {
     str value = std::format("{}", char(curr));
     Token token {.type = TokenType::integer};

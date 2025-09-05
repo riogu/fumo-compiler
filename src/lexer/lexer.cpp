@@ -34,7 +34,10 @@
             tokens.push_back(parse_identifier());
             continue;
         }
-        // TODO: - add string literal parsing
+        if (curr == '"') {
+            tokens.push_back(parse_string_literal());
+            continue;
+        }
         switch (curr) {
             //
             // -----------------------------------------------------------
