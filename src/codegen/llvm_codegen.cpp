@@ -13,14 +13,30 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     for (const auto& [name, node] : symbol_tree.all_declarations) register_declaration(name, *node);
 
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
-    auto* main = llvm_module->getFunction("main");
 
-    if (main) {
+    auto* main = llvm_module->getFunction("main");
+    if (main && !main->isDeclaration()) {
+        ir_builder->SetInsertPoint(&main->back(), main->back().end());
+
+        auto* term = main->back().getTerminator();
+        if (!(term && llvm::isa<llvm::ReturnInst>(term))) {
+            ir_builder->CreateRet(ir_builder->getInt32(0));
+        }
+
+        ir_builder->SetInsertPoint(&func->back(), func->back().end());
+        ir_builder->CreateRetVoid();
+
         ir_builder->SetInsertPoint(main->getEntryBlock().begin());
         ir_builder->CreateCall(func);
-    }
-}
 
+    }
+    else {
+        std::cerr << "forgot to create a main function for this module."
+                     " [currently only supports single file compilation]" << std::endl;
+        std::exit(1);
+    }
+    
+}
 
 Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
     // NOTE: should always check for a possible nullptr on each codegen
@@ -29,13 +45,21 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
 
         holds(Identifier, const& id) {
             switch (id.kind) {
-                case Identifier::var_name:
+                case Identifier::var_name: 
+                    // NOTE: always return a pointer, have BinaryExpr::assignment deal with loading from the pointer
+                    // i will need to keep some sort of state between the loads and all that for the codegen to work
+                    // the current codegen is NOT working
                     if (!id.declaration.value()->llvm_value) {
                         INTERNAL_PANIC("[Codegen Error] forgot to assign llvm::Value to declaration for '{}'.",
                                        get_id(get<VariableDecl>(id.declaration.value())).mangled_name);
                     }
+                    if (get<VariableDecl>(id.declaration.value()).kind == VariableDecl::global_var_declaration
+                        || id.is_assigned_to) {
+                        return id.declaration.value()->llvm_value;
+                    }
                     return ir_builder->CreateLoad(fumo_to_llvm_type(id.declaration.value()->type),
                                                   id.declaration.value()->llvm_value);
+                
                 case Identifier::member_var_name:
                     // TODO: this needs GEP from the base address of the struct
                     break;
@@ -77,6 +101,8 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::getBool(*llvm_context, 0));
                 case UnaryExpr::bitwise_not:
                     return ir_builder->CreateNot(val);
+                case UnaryExpr::return_statement:
+                    return ir_builder->CreateRet(val);
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
             }
@@ -111,20 +137,14 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     // NOTE: making global variables is very complicated and has a lot of implications,
                     // so for now we will make a simple _start function and use that,
                     // but it should be redone
+                    //
+                    // let var = 123 + 3213;
                     if (auto var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
                             ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo._start"));
                         }
-                        //     auto* global = llvm_module->getNamedGlobal(get<Identifier>(var->identifier).mangled_name);
-                        //     if (auto* const_val = llvm::dyn_cast<llvm::Constant>(rhs_val)) {
-                        //         global->setInitializer(const_val);
-                        //     } else {
-                        //         INTERNAL_PANIC("forgot to make global initializer a llvm::Constant for '{}'.",
-                        //                        node.name());
-                        //     }
                     }
-                    // FIXME: we shouldnt codegen a new alloca on assignment
-                    // should get the ptr from the current var environment instead
+
                     return ir_builder->CreateStore(rhs_val, lhs_val);
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
@@ -132,17 +152,21 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
         }
 
         holds(PostfixExpr, const& postfix) {
+            for (auto* node : postfix.nodes) codegen(*node);
             INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
         }
-
         holds(VariableDecl, const& var) {
             // NOTE: type checker shouldn't allow "let x: void;" to exist
             switch (var.kind) {
                 case VariableDecl::global_var_declaration: {
+                    // NOTE: we need to make a system that provides a Const "default zero'd value"
+                    // to satisfy the llvm API and the constraint that globals need to have default values.
+                    // so, we need a function that does that for user structs and for primitive types, and etc
+                    // (in place of a call to llvm::ConstantInt
                     auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type),
                                                                 false,
                                                                 llvm::GlobalValue::ExternalLinkage,
-                                                                nullptr,
+                                                                llvm::Constant::getNullValue(fumo_to_llvm_type(node.type)),
                                                                 get_id(var).mangled_name);
                     llvm_module->insertGlobalVariable(global_var);
                     node.llvm_value = llvm::cast<llvm::Value>(global_var);
@@ -164,6 +188,7 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                 llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", llvm_func);
                 ir_builder->SetInsertPoint(bblock);
                 codegen(*func.body.value());
+                if (node.type.kind == Type::void_) ir_builder->CreateRetVoid();
             }
             return llvm_func;
         }

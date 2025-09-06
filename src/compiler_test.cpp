@@ -39,8 +39,11 @@ int main() {
     };
     // ------------------------------------------------------
     // tests for codegen
-    constexpr std::array llvm_codegen {
-        #include "../tests/part2-tests/llvm_codegen.fm"
+    constexpr std::array simple_llvm_codegen {
+        #include "../tests/part2-tests/simple_llvm_codegen.fm"
+    };
+    constexpr std::array codegen_func_calls {
+        #include "../tests/part2-tests/codegen_func_calls.fm"
     };
     // ------------------------------------------------------
     
@@ -51,9 +54,11 @@ int main() {
         #include "../tests/part1-tests/scope_name_lookup.fm"
     };
 
+    // NOTE: remember to remove fsanitize=address later from the cmakelists.txt, 
+    // else llvm will make false positive leaks
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : llvm_codegen) {
-        auto [output, status] = exec(std::format("./build/fumo 2>&1 \"{}\"", test).c_str());
+    for (const auto& [test, expected] : simple_llvm_codegen) {
+        auto [output, status] = exec(std::format("ASAN_OPTIONS=detect_leaks=0 ./build/fumo 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m:\n"

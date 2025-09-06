@@ -59,9 +59,14 @@ auto main(int argc, char** argv) -> int {
         received_cmdline_str = !(cmdline_str == "-h" || cmdline_str == "-help" || cmdline_str == "--help");
     }
     if (received_cmdline_str) {
+        print_file = true;
+        print_IR = true;
+        output_IR = true;
+        // print_AST = true;
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;
+        file.output_name = "tests/command-line-string.fm";
     } else {
         llvm::cl::HideUnrelatedOptions(compiler_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, std::string(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));

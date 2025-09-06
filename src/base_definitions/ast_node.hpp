@@ -14,9 +14,9 @@ struct Identifier {
         unknown_name,           /*                                   */  \
         declaration_name,       /*                                   */  \
         type_name,              /*                                   */  \
-        func_call_name,         /*                                   */  \
         var_name,               /*                                   */  \
         member_var_name,        /*                                   */  \
+        func_call_name,         /*                                   */  \
         member_func_call_name   /*                                   */  \
 
         Identifier_kinds
@@ -25,7 +25,9 @@ struct Identifier {
     enum Qualifier { unqualified, qualified } qualifier = unqualified;
     Opt<ASTNode*> declaration {}; // identifiers are solved to this
     str mangled_name = name;
+    
     int scope_counts = 0;
+    bool is_assigned_to = false;
 };
 
 struct PrimaryExpr {
@@ -81,6 +83,7 @@ struct PostfixExpr {
         PostfixExpr_kinds
     } kind;
     vec<ASTNode*> nodes {};
+    // bool is_assigned_to = false;
 };
 
 struct VariableDecl {

@@ -1,7 +1,11 @@
 #pragma once
+#include <llvm/Analysis/CGSCCPassManager.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/Passes/OptimizationLevel.h>
+#include <llvm/Target/TargetMachine.h>
 #include <map>
 #include "base_definitions/ast_node.hpp"
 #include "base_definitions/symbol_table_stack.hpp"
@@ -11,7 +15,7 @@ struct Codegen {
     std::map<str, llvm::AllocaInst*> variable_env;
     unique_ptr<llvm::LLVMContext> llvm_context;
     unique_ptr<llvm::IRBuilder<>> ir_builder;
-    unique_ptr<llvm::Module> llvm_module;
+    unique_ptr<llvm::Module> llvm_module; // if the module isnt destroyed before the context we get segv
     std::stringstream file_stream;
     SymbolTableStack symbol_tree {};
     ASTNode* file_root_node;
