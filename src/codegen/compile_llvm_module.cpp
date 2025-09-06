@@ -13,6 +13,8 @@ extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ,
 
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
+    //--------------------------------------------------------------
+    // initialization, checking module
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
 
@@ -44,6 +46,8 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     llvm_module->setDataLayout(target_machine->createDataLayout());
 
     
+    //--------------------------------------------------------------
+    // optimization passes
     llvm::PassBuilder pass_builder(target_machine);
 
     llvm::FunctionAnalysisManager fam;
@@ -67,7 +71,8 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         default: mpm = pass_builder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O2); break;
     }
     mpm.run(*llvm_module, mam);
-    
+    //--------------------------------------------------------------
+    // outputting, printing (result of the recieved compiler flags)
 
     bool emit_flag_was_set = false;
     if (output_AST) {
@@ -84,17 +89,27 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         llvm::raw_fd_ostream dest(dest_file_name.string(), EC);
         dest << llvm_ir_to_str();
     }
-    if (output_ASM) {
+    if (output_ASM || print_ASM) {
         emit_flag_was_set = true;
-        dest_file_name.replace_extension(".asm");
-        llvm::raw_fd_ostream dest(dest_file_name.string(), EC, llvm::sys::fs::OF_None);
+        dest_file_name.replace_extension(".s");
+
+        llvm::SmallVector<char, 0> asm_buffer; llvm::raw_svector_ostream asm_stream(asm_buffer);
 
         llvm::legacy::PassManager pass;
         target_machine->Options.MCOptions.AsmVerbose = true;
-        if (target_machine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
+        if (output_ASM &&
+            target_machine->addPassesToEmitFile(pass, asm_stream, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
             INTERNAL_PANIC("Target does not support emission of assembly files.");
         }
         pass.run(*llvm_module);
+
+        llvm::raw_fd_ostream dest(dest_file_name.string(), EC, llvm::sys::fs::OF_None);
+        dest.write(asm_buffer.data(), asm_buffer.size());
+
+        if (print_ASM) {
+            std::cerr << "\nASM for '" << dest_file_name.string()  << "':\n"
+                      << str(asm_buffer.data(), asm_buffer.size()) << std::endl;
+        }
     }
     if (output_OBJ || !emit_flag_was_set) {
         dest_file_name.replace_extension(".o");
@@ -106,21 +121,18 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         }
         pass.run(*llvm_module);
     }
-
-    if (print_ASM) INTERNAL_PANIC("[TODO] printing ASM isn't implemented yet.");
-
+    if (print_AST) {
+        std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
+        for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+            std::cerr << "node found:\n  " + node->to_str() + "\n";
+        }
+    }
     if (print_file) {
         std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
                   << file_stream.str() << std::endl;
     }
     if (print_IR) {
-        fs::path output_name = llvm_module->getModuleIdentifier();
-        output_name.replace_extension(".ll");
-        std::cerr << "\nllvm IR for '" << output_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
-    }
-    if (print_AST) {
-        std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
-        for (const auto& node : get<NamespaceDecl>(file_root_node).nodes)
-            std::cerr << "node found:\n  " + node->to_str() + "\n";
+        dest_file_name.replace_extension(".ll");
+        std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
     }
 }
