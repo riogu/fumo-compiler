@@ -3,45 +3,37 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "codegen/llvm_codegen.hpp"
 #include "utils/common_utils.hpp"
+
 #include <llvm/Passes/OptimizationLevel.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/InitLLVM.h>
 
-llvm::cl::OptionCategory compiler_category("Fumo Compiler Options",
-                                           "  Options for controlling the compilation process, such as opt levels");
-
-llvm::cl::opt<bool> O0("O0", llvm::cl::desc("No optimizations"),         llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> O1("O1", llvm::cl::desc("Few optimizations"),        llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> O2("O2", llvm::cl::desc("Default optimizations"),    llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> O3("O3", llvm::cl::desc("Aggressive optimizations"), llvm::cl::cat(compiler_category));
-
-llvm::cl::opt<bool> output_IR ("emit=llvm-ir",llvm::cl::desc("Outputs a .ll file with the generated llvm IR"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> output_AST("emit=ast",    llvm::cl::desc("Outputs a .ast file with the generated debug AST"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> output_ASM("emit=asm",    llvm::cl::desc("Outputs a .asm file with the generated assembly"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> output_OBJ("emit=obj",    llvm::cl::desc("Outputs a .o object file"),
-                               llvm::cl::cat(compiler_category));
-
-llvm::cl::opt<bool> print_file("print-file",  llvm::cl::desc("Print the inputed file contents to the terminal"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> print_IR  ("print-ir",    llvm::cl::desc("Print llvm-IR to the terminal"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> print_AST ("print-ast",   llvm::cl::desc("Prints the debug AST representation to the terminal"),
-                               llvm::cl::cat(compiler_category));
-llvm::cl::opt<bool> print_ASM ("print-asm",   llvm::cl::desc("Prints the output ASM to the terminal"),
-                               llvm::cl::cat(compiler_category));
-
-llvm::cl::opt<std::string> output_filename("o", llvm::cl::desc("Output filename"), llvm::cl::value_desc("filename"), 
-                                           llvm::cl::cat(compiler_category));
-llvm::cl::list<std::string> input_filenames("i", llvm::cl::desc("Input files"), llvm::cl::value_desc("filenames"),
-                                           llvm::cl::OneOrMore, llvm::cl::cat(compiler_category));
-
-
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
 #define was_opt_level(level) if (O##level.getNumOccurrences()) opt_level = llvm::OptimizationLevel::O##level; else 
+
+using namespace llvm::cl;
+OptionCategory compiler_category("Fumo Compiler Options",
+                                 "  Options for controlling the compilation process, such as opt levels");
+
+opt<bool> O0         {"O0",          desc("No optimizations"),                                    cat(compiler_category)};
+opt<bool> O1         {"O1",          desc("Few optimizations"),                                   cat(compiler_category)};
+opt<bool> O2         {"O2",          desc("Default optimizations"),                               cat(compiler_category)};
+opt<bool> O3         {"O3",          desc("Aggressive optimizations"),                            cat(compiler_category)};
+
+opt<bool> output_IR  {"emit=llvm-ir",desc("Outputs a .ll file with the generated llvm IR"),       cat(compiler_category)};
+opt<bool> output_AST {"emit=ast",    desc("Outputs a .ast file with the generated debug AST"),    cat(compiler_category)};
+opt<bool> output_ASM {"emit=asm",    desc("Outputs a .asm file with the generated assembly"),     cat(compiler_category)};
+opt<bool> output_OBJ {"emit=obj",    desc("Outputs a .o object file"),                            cat(compiler_category)};
+
+opt<bool> print_file {"print-file",  desc("Print the inputed file contents to the terminal"),     cat(compiler_category)};
+opt<bool> print_IR   {"print-ir",    desc("Print llvm-IR to the terminal"),                       cat(compiler_category)};
+opt<bool> print_AST  {"print-ast",   desc("Prints the debug AST representation to the terminal"), cat(compiler_category)};
+opt<bool> print_ASM  {"print-asm",   desc("Prints the output ASM to the terminal"),               cat(compiler_category)};
+
+opt<str>  out_file   {"o",           desc("Output filename"), value_desc("filename"),             cat(compiler_category)};
+list<str> input_files{"i",           desc("Input files"),     value_desc("filenames"), OneOrMore, cat(compiler_category)};
+
 
 auto main(int argc, char** argv) -> int {
     llvm::InitLLVM init(argc, argv);
@@ -61,13 +53,10 @@ auto main(int argc, char** argv) -> int {
     if (received_cmdline_str) {
         // NOTE: this is for testing the compiler. you can pass in a program like:
         //       "fn main() -> i32 {let x = 231;}" 
-        //       as one string to the compiler (with no flags) and it will compile it.
-        //       it uses the flags below
+        //       as one string to the compiler (with no flags) and it will compile it. it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
-        print_file = true; 
-        // print_AST = true;
-        // print_IR = true;
-        
+        print_file = true; /* print_AST = true; print_IR = true; */
+
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;
@@ -76,7 +65,7 @@ auto main(int argc, char** argv) -> int {
         llvm::cl::HideUnrelatedOptions(compiler_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, std::string(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
-        file_name = input_filenames[0];
+        file_name = input_files[0];
 
         { map_macro(was_opt_level, 0, 1, 2, 3); }
 
@@ -93,7 +82,7 @@ auto main(int argc, char** argv) -> int {
     analyzer.semantic_analysis(file_root_node);
     //--------------------------------------------------------------------------
     // Codegen
-    if (output_filename.getNumOccurrences()) file.output_name = output_filename.getValue();
+    if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
 
     Codegen codegen {file, analyzer.symbol_tree};
     codegen.codegen_file(file_root_node);
