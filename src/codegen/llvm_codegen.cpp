@@ -4,40 +4,47 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
-    llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
-                                                  "fumo._start", llvm_module.get());
-    func->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    func->setDSOLocal(false);
-    func->addFnAttr(llvm::Attribute::NoInline); // Prevent inlining   
-    func->addFnAttr("used");
+    llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
+                                                       "fumo.init", llvm_module.get());
+    fumo_init->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    fumo_init->setDSOLocal(false);
+    fumo_init->addFnAttr(llvm::Attribute::NoInline);
+    fumo_init->addFnAttr("used");
 
-    llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
+    llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", fumo_init);
     ir_builder->SetInsertPoint(bblock);
 
+    // ---------------------------------------------------------------------------
+    // codegen
     for (const auto& [name, node] : symbol_tree.all_declarations) register_declaration(name, *node);
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
+    // ---------------------------------------------------------------------------
+
+    ir_builder->SetInsertPoint(&fumo_init->back(), fumo_init->back().end());
+    ir_builder->CreateRetVoid();
 
     auto* main = llvm_module->getFunction("main");
-    if (main && !main->isDeclaration()) {
-        // main = create_main();
-        ir_builder->SetInsertPoint(&main->back(), main->back().end());
 
-        auto* term = main->back().getTerminator();
-        if (!(term && llvm::isa<llvm::ReturnInst>(term))) {
-            ir_builder->CreateRet(ir_builder->getInt32(0));
+    if (main->empty()) {
+
+        for (auto& func : llvm_module->getFunctionList()) {
+            std::cerr << func.getName().str() << "\n";
         }
-
-        ir_builder->SetInsertPoint(&func->back(), func->back().end());
-        ir_builder->CreateRetVoid();
-
-        ir_builder->SetInsertPoint(main->getEntryBlock().begin());
-        ir_builder->CreateCall(func);
-
-    }
-    else {
         std::cerr << "forgot to create a main function for this module."
-                     " [currently only supports single file compilation]" << std::endl;
+                     " [currently only supporting single file compilation]" << std::endl;
         std::exit(1);
+    }
+
+    main->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    main->setDSOLocal(false);
+    main->addFnAttr("used");
+
+    ir_builder->SetInsertPoint(main->getEntryBlock().begin());
+    ir_builder->CreateCall(fumo_init);
+
+    if (auto* term = main->back().getTerminator(); !(term && llvm::isa<llvm::ReturnInst>(term))) {
+        ir_builder->SetInsertPoint(&main->back(), main->back().end());
+        ir_builder->CreateRet(ir_builder->getInt32(0));
     }
     
 }
@@ -49,21 +56,19 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
 
         holds(Identifier, const& id) {
             switch (id.kind) {
-                case Identifier::var_name: 
-                    // NOTE: always return a pointer, have BinaryExpr::assignment deal with loading from the pointer
-                    // i will need to keep some sort of state between the loads and all that for the codegen to work
-                    // the current codegen is NOT working
-                    if (!id.declaration.value()->llvm_value) {
+                case Identifier::var_name: {
+                    ASTNode* declaration = id.declaration.value();
+                    if (!declaration->llvm_value) {
                         INTERNAL_PANIC("[Codegen Error] forgot to assign llvm::Value to declaration for '{}'.",
-                                       get_id(get<VariableDecl>(id.declaration.value())).mangled_name);
+                                       get_id(get<VariableDecl>(declaration)).mangled_name);
                     }
-                    if (get<VariableDecl>(id.declaration.value()).kind == VariableDecl::global_var_declaration
+                    if (get<VariableDecl>(declaration).kind == VariableDecl::global_var_declaration
                         || id.is_assigned_to) {
-                        return id.declaration.value()->llvm_value;
+                        return declaration->llvm_value;
                     }
-                    return ir_builder->CreateLoad(fumo_to_llvm_type(id.declaration.value()->type),
-                                                  id.declaration.value()->llvm_value);
-                
+                    return ir_builder->CreateLoad(fumo_to_llvm_type(declaration->type), declaration->llvm_value);
+                }
+
                 case Identifier::member_var_name:
                     // TODO: this needs GEP from the base address of the struct
                     break;
@@ -145,7 +150,7 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     // let var = 123 + 3213;
                     if (auto var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
-                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo._start"));
+                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
                         }
                     }
 
@@ -163,10 +168,6 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
             // NOTE: type checker shouldn't allow "let x: void;" to exist
             switch (var.kind) {
                 case VariableDecl::global_var_declaration: {
-                    // NOTE: we need to make a system that provides a Const "default zero'd value"
-                    // to satisfy the llvm API and the constraint that globals need to have default values.
-                    // so, we need a function that does that for user structs and for primitive types, and etc
-                    // (in place of a call to llvm::ConstantInt
                     auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type),
                                                                 false,
                                                                 llvm::GlobalValue::ExternalLinkage,
@@ -182,6 +183,7 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     return node.llvm_value;
                 }
                 case VariableDecl::parameter:
+                    // TODO: how should we deal with parameter code gen?
                     break;
             }
         }
@@ -252,22 +254,23 @@ void Codegen::register_declaration(std::string_view name, const ASTNode& node) {
     }
 }
 
-llvm::Function* Codegen::create_main() {
-    std::vector<llvm::Type*> main_args {};
+// llvm::Function* Codegen::create_main() {
+    // NOTE: this function isnt used right now
+    // std::vector<llvm::Type*> main_args {};
     // main_args.push_back(llvm::Type::getInt32Ty(*llvm_context));    // int argc
     // main_args.push_back(llvm::PointerType::get(*llvm_context, 0)); // char** argv
 
-    llvm::FunctionType* main_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
-    llvm::Function* main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, 
-                                                  "main", llvm_module.get());
+    // llvm::FunctionType* main_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
+    // llvm::Function* main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, 
+    //                                               "main", llvm_module.get());
 
     // auto args = main->arg_begin();
     // args->setName("argc");
     // (++args)->setName("argv");
     //
-    main->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    main->addFnAttr("used");
-    main->setDSOLocal(false);
+    // main->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    // main->addFnAttr("used");
+    // main->setDSOLocal(false);
 
-    return main;
-}
+    // return main;
+// }

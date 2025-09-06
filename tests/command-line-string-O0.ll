@@ -5,7 +5,7 @@ source_filename = "command-line-string.fm"
 @y = global i32 0
 
 ; Function Attrs: noinline
-define void @fumo._start() #0 {
+define void @fumo.init() #0 {
   store i32 123123, ptr @y, align 4
   ret void
 }
@@ -16,9 +16,10 @@ define void @func() {
   ret void
 }
 
-define i32 @main() {
-  call void @fumo._start()
-  ret i32 123
+define i32 @main() #1 {
+  call void @fumo.init()
+  ret i32 231233
 }
 
 attributes #0 = { noinline "used" }
+attributes #1 = { "used" }

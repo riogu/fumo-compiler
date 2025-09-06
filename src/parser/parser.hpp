@@ -1,6 +1,8 @@
 #pragma once
 #include "base_definitions/ast_node.hpp"
 
+
+
 struct Parser {
     Parser(const File & file) { file_stream << file.contents; }
     [[nodiscard]] ASTNode* parse_tokens(vec<Token>& tokens);

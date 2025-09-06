@@ -11,7 +11,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.scope_stack.begin()->isolated_name = "";
     symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
-    auto nodes = get<NamespaceDecl>(file_root_node).nodes;
+    vec<ASTNode*>& nodes = get<NamespaceDecl>(file_root_node).nodes;
 
     // NOTE: technically, this is the wrong token
     nodes.insert(nodes.begin(), create_main_node(file_root_node->source_token));
@@ -151,6 +151,7 @@ void Analyzer::analyze(ASTNode& node) {
             if (func.body) {
                 func.body.value()->type = node.type; // passing the function's type to the body
                 for (auto& node : get<BlockScope>(func.body.value()).nodes) analyze(*node);
+                if (func.body_should_move) func.body = std::nullopt;
             }
 
             for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
@@ -311,15 +312,16 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
-            auto& func2 = get<FunctionDecl>(node_iterator->second);
+            auto& first_occurence = get<FunctionDecl>(node_iterator->second);
 
             if (!was_inserted) {
                 str def_or_decl;
                 if (func.body) {
-                    if (func2.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                    if (first_occurence.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
                     def_or_decl = "Redefinition";
-                    func2.body = func.body; 
-                    func.body = std::nullopt; // avoid repeated function bodies
+
+                    first_occurence.body = func.body;
+                    func.body_should_move = true; // avoid repeated function bodies
                     // we move the function body to the first forward declaration in the file
                     // and remove it from where it was defined
                 } else {
@@ -330,12 +332,12 @@ void Analyzer::add_declaration(ASTNode& node) {
                     report_error(node.source_token, "{} of '{}' with a different return type.", 
                                  def_or_decl, id.mangled_name);
                 }
-                if (func.parameters.size() != func2.parameters.size()) {
+                if (func.parameters.size() != first_occurence.parameters.size()) {
                     report_error(node.source_token, "{} of '{}' with a different parameter count.", 
                                  def_or_decl, id.mangled_name);
                 }
-                for (auto [arg1, arg2] : std::views::zip(func.parameters, func2.parameters)) {
-                    if (arg1->type.kind != arg2->type.kind) {
+                for (auto [arg1, arg2] : std::views::zip(func.parameters, first_occurence.parameters)) {
+                    if (!is_same_t(arg1->type, arg2->type)) {
                         report_error(node.source_token, "{} of '{}' with different parameter types.",
                                      def_or_decl, id.mangled_name);
                     }

@@ -1,15 +1,15 @@
 	.file	"command-line-string.fm"
 	.text
-	.globl	fumo._start                     # -- Begin function fumo._start
+	.globl	fumo.init                       # -- Begin function fumo.init
 	.p2align	4
-	.type	fumo._start,@function
-fumo._start:                            # @fumo._start
+	.type	fumo.init,@function
+fumo.init:                              # @fumo.init
 # %bb.0:
 	movq	y@GOTPCREL(%rip), %rax
 	movl	$123123, (%rax)                 # imm = 0x1E0F3
 	retq
 .Lfunc_end0:
-	.size	fumo._start, .Lfunc_end0-fumo._start
+	.size	fumo.init, .Lfunc_end0-fumo.init
                                         # -- End function
 	.globl	func                            # -- Begin function func
 	.p2align	4
@@ -26,8 +26,8 @@ func:                                   # @func
 main:                                   # @main
 # %bb.0:
 	pushq	%rax
-	callq	fumo._start@PLT
-	movl	$123, %eax
+	callq	fumo.init@PLT
+	movl	$231233, %eax                   # imm = 0x38741
 	popq	%rcx
 	retq
 .Lfunc_end2:

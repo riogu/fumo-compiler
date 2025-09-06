@@ -35,9 +35,16 @@ struct Analyzer {
         extra_nodes.push_back(std::make_unique<ASTNode>(node));
         return extra_nodes.back().get();
     }
-
-    [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b);
-    [[nodiscard]] bool is_arithmetic_t(const Type& a);
+    [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b) {
+        return ((is_arithmetic_t(a) && is_arithmetic_t(b)) || (a.kind == b.kind && get_name(a) == get_name(b)));
+    }
+    [[nodiscard]] bool is_same_t(const Type& a, const Type& b) {
+        return (a.kind == b.kind && get_name(a) == get_name(b));
+    }
+    [[nodiscard]] bool is_arithmetic_t(const Type& type) {
+        return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
+             || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
+    }
     void determine_type(ASTNode& node);
 
 };

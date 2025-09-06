@@ -109,6 +109,7 @@ struct FunctionDecl {
     ASTNode* identifier;
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
+    bool body_should_move = false;
 };
 
 struct FunctionCall {

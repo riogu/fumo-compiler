@@ -148,13 +148,6 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     }
 }
 
-[[nodiscard]] bool Analyzer::is_compatible_t(const Type& a, const Type& b) {
-    return ((is_arithmetic_t(a) && is_arithmetic_t(b)) || (a.kind == b.kind && get_name(a) == get_name(b)));
-}
-[[nodiscard]] bool Analyzer::is_arithmetic_t(const Type& type) {
-    return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
-         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
-}
 // namespace foo {
 //    struct foo {
 //         struct gaming {
