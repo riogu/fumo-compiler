@@ -14,9 +14,17 @@ extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ,
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
     //--------------------------------------------------------------
-    // initialization, checking module
+    // initialization, checking moule
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
+
+    // should remove this later 
+    if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
+        fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
+        llvm::raw_fd_ostream dest(name_copy.string(), EC);
+        dest << llvm_ir_to_str();
+        std::cerr << "\nllvm IR for '" << name_copy << "':\n" << llvm_ir_to_str() << std::endl;
+    }
 
     std::string error_buffer;
     llvm::raw_string_ostream error_stream(error_buffer);

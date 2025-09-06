@@ -59,12 +59,15 @@ auto main(int argc, char** argv) -> int {
         received_cmdline_str = !(cmdline_str == "-h" || cmdline_str == "-help" || cmdline_str == "--help");
     }
     if (received_cmdline_str) {
-        print_file = true;
-        print_IR = true;
-        output_IR = true;
-        output_ASM = true;
-        print_ASM = true;
+        // NOTE: this is for testing the compiler. you can pass in a program like:
+        //       "fn main() -> i32 {let x = 231;}" 
+        //       as one string to the compiler (with no flags) and it will compile it.
+        //       it uses the flags below
+        output_IR = true; output_ASM = true; output_OBJ = true;
+        print_file = true; 
+        // print_IR = true;
         // print_AST = true;
+        
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;
@@ -96,4 +99,5 @@ auto main(int argc, char** argv) -> int {
     codegen.codegen_file(file_root_node);
 
     codegen.compile_module(opt_level);
+    // TODO: missing the final linking of the executable
 }
