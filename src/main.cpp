@@ -65,8 +65,8 @@ auto main(int argc, char** argv) -> int {
         //       it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
         print_file = true; 
-        // print_IR = true;
         // print_AST = true;
+        // print_IR = true;
         
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;

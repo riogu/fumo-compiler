@@ -1,5 +1,4 @@
 #include "semantic_analysis/analyzer.hpp"
-#include "utils/common_utils.hpp"
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -12,7 +11,12 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.scope_stack.begin()->isolated_name = "";
     symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
-    for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
+    auto nodes = get<NamespaceDecl>(file_root_node).nodes;
+
+    // NOTE: technically, this is the wrong token
+    nodes.insert(nodes.begin(), create_main_node(file_root_node->source_token));
+
+    for (auto& node : nodes) analyze(*node);
 
     symbol_tree.curr_scope_name = "::";
     symbol_tree.pop_scope();
@@ -163,8 +167,9 @@ void Analyzer::analyze(ASTNode& node) {
             }
             const auto& params = func_decl.parameters;
             if (func_call.argument_list.size() != params.size()) {
-                // report_error(node.source_token,
-                //              "provided {} arguments, expected {}.", func_call.argument_list.size(), params.size());
+                report_error(node.source_token,
+                             "provided {} arguments, expected {}.", 
+                             func_call.argument_list.size(), params.size());
             }
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
                 analyze(*arg);
@@ -306,16 +311,40 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
-            auto& func_ = get<FunctionDecl>(node_iterator->second);
+            auto& func2 = get<FunctionDecl>(node_iterator->second);
 
             if (!was_inserted) {
+                str def_or_decl;
                 if (func.body) {
-                    if (func_.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
-                    func_.body = func.body;
+                    if (func2.body) report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                    def_or_decl = "Redefinition";
+                    func2.body = func.body; 
+                    func.body = std::nullopt; // avoid repeated function bodies
+                    // we move the function body to the first forward declaration in the file
+                    // and remove it from where it was defined
                 } else {
-                    func.body = func_.body;
+                    def_or_decl = "Redeclaration";
                 }
-            }
+
+                if (node.type.kind != node_iterator->second->type.kind) {
+                    report_error(node.source_token, "{} of '{}' with a different return type.", 
+                                 def_or_decl, id.mangled_name);
+                }
+                if (func.parameters.size() != func2.parameters.size()) {
+                    report_error(node.source_token, "{} of '{}' with a different parameter count.", 
+                                 def_or_decl, id.mangled_name);
+                }
+                for (auto [arg1, arg2] : std::views::zip(func.parameters, func2.parameters)) {
+                    if (arg1->type.kind != arg2->type.kind) {
+                        report_error(node.source_token, "{} of '{}' with different parameter types.",
+                                     def_or_decl, id.mangled_name);
+                    }
+                    if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
+                        report_error(node.source_token, "{} of '{}' with different parameter names.", 
+                                     def_or_decl, id.mangled_name);
+                    }
+                }
+            } 
         }
 
         holds(VariableDecl, &var) {

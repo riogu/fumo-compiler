@@ -6,10 +6,23 @@ target triple = "x86_64-pc-linux-gnu"
 @x = local_unnamed_addr global i32 0
 @y = local_unnamed_addr global i32 0
 
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
-define noundef i32 @main() local_unnamed_addr #0 {
-  store i32 35, ptr @y, align 4
-  ret i32 0
+; Function Attrs: mustprogress nofree noinline norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
+define void @fumo._start() local_unnamed_addr #0 {
+  store i32 123123, ptr @y, align 4
+  ret void
 }
 
-attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) }
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
+define void @func() local_unnamed_addr #1 {
+  ret void
+}
+
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, inaccessiblemem: none)
+define noundef i32 @main() local_unnamed_addr #2 {
+  tail call void @fumo._start()
+  ret i32 123
+}
+
+attributes #0 = { mustprogress nofree noinline norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) "used" }
+attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }
+attributes #2 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, inaccessiblemem: none) }

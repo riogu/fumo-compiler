@@ -6,16 +6,20 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* func = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
                                                   "fumo._start", llvm_module.get());
+    func->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    func->setDSOLocal(false);
+    func->addFnAttr(llvm::Attribute::NoInline); // Prevent inlining   
+    func->addFnAttr("used");
 
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", func);
     ir_builder->SetInsertPoint(bblock);
 
     for (const auto& [name, node] : symbol_tree.all_declarations) register_declaration(name, *node);
-
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
 
     auto* main = llvm_module->getFunction("main");
     if (main && !main->isDeclaration()) {
+        // main = create_main();
         ir_builder->SetInsertPoint(&main->back(), main->back().end());
 
         auto* term = main->back().getTerminator();
@@ -183,17 +187,19 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
         }
 
         holds(FunctionDecl, const& func) {
+            // NOTE: we delete forward declarations and only keep the first occurence
             auto* llvm_func = llvm_module->getFunction(get_id(func).mangled_name);
             if (func.body) {
                 llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", llvm_func);
                 ir_builder->SetInsertPoint(bblock);
                 codegen(*func.body.value());
                 if (node.type.kind == Type::void_) ir_builder->CreateRetVoid();
-            }
+            } 
             return llvm_func;
         }
 
         holds(FunctionCall) {
+            // report_error(node.source_token, "function '{}' was never defined.", get_id(func).mangled_name);
             INTERNAL_PANIC("namespaces shouldn't be codegen'd, found '{}'.", node.name());
         }
 
@@ -244,4 +250,24 @@ void Codegen::register_declaration(std::string_view name, const ASTNode& node) {
         }
         _default INTERNAL_PANIC("added wrong declaration '{}' to 'symbol_table.all_declarations', ", node.name());
     }
+}
+
+llvm::Function* Codegen::create_main() {
+    std::vector<llvm::Type*> main_args {};
+    // main_args.push_back(llvm::Type::getInt32Ty(*llvm_context));    // int argc
+    // main_args.push_back(llvm::PointerType::get(*llvm_context, 0)); // char** argv
+
+    llvm::FunctionType* main_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
+    llvm::Function* main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, 
+                                                  "main", llvm_module.get());
+
+    // auto args = main->arg_begin();
+    // args->setName("argc");
+    // (++args)->setName("argv");
+    //
+    main->setLinkage(llvm::GlobalValue::ExternalLinkage);
+    main->addFnAttr("used");
+    main->setDSOLocal(false);
+
+    return main;
 }

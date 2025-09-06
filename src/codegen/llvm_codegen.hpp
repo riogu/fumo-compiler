@@ -42,6 +42,7 @@ struct Codegen {
   private:
     Opt<llvm::Value*> codegen( ASTNode& node);
     void register_declaration(std::string_view name, const ASTNode& node);
+    llvm::Function* create_main();
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

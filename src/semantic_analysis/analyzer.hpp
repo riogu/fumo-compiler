@@ -17,6 +17,17 @@ struct Analyzer {
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
+    ASTNode* create_main_node(Token& token) {
+        // adding the 'main' node at the start of the module
+        // TODO: this should be expanded later to include argc and argv
+        auto id = push(ASTNode {token, Identifier {Identifier::declaration_name, "main"}});
+        FunctionDecl function {FunctionDecl::function_declaration, id};
+
+        auto* main_node = push(ASTNode {token, function});
+        main_node->type = Type {push(ASTNode {token, Identifier {Identifier::type_name, "i32"}}), Type::i32_};
+
+        return main_node;
+    }
     void add_declaration(ASTNode& node);
     void iterate_qualified_names(FunctionDecl& func);
 
