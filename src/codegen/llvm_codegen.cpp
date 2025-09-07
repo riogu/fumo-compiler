@@ -1,4 +1,5 @@
 #include "codegen/llvm_codegen.hpp"
+#include <ranges>
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -12,7 +13,8 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     fumo_init->addFnAttr("used");
 
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", fumo_init);
-    ir_builder->SetInsertPoint(bblock);
+    fumo_init_builder->SetInsertPoint(bblock);
+    fumo_init_builder->SetCurrentDebugLocation(llvm::DebugLoc());
 
     // ---------------------------------------------------------------------------
     // codegen
@@ -20,33 +22,34 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen(*node);
     // ---------------------------------------------------------------------------
 
-    ir_builder->SetInsertPoint(&fumo_init->back(), fumo_init->back().end());
-    ir_builder->CreateRetVoid();
+    fumo_init_builder->SetInsertPoint(&fumo_init->back());
+    fumo_init_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+    fumo_init_builder->CreateRetVoid();
 
     auto* main = llvm_module->getFunction("main");
-
-    if (main->empty()) {
-
-        for (auto& func : llvm_module->getFunctionList()) {
-            std::cerr << func.getName().str() << "\n";
-        }
-        std::cerr << "forgot to create a main function for this module."
-                     " [currently only supporting single file compilation]" << std::endl;
-        std::exit(1);
-    }
-
     main->setLinkage(llvm::GlobalValue::ExternalLinkage);
     main->setDSOLocal(false);
     main->addFnAttr("used");
 
-    ir_builder->SetInsertPoint(main->getEntryBlock().begin());
+    if (main->isDeclaration() || main->empty()) {
+        std::cerr << "forgot to create a main function for this module."
+                     " [currently only supporting single file compilation]" << std::endl;
+        INTERNAL_PANIC("");
+    }
+    llvm::BasicBlock* entry = &main->getEntryBlock();
+
+    ir_builder->SetInsertPoint(entry->begin());
+    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
     ir_builder->CreateCall(fumo_init);
 
-    if (auto* term = main->back().getTerminator(); !(term && llvm::isa<llvm::ReturnInst>(term))) {
-        ir_builder->SetInsertPoint(&main->back(), main->back().end());
+    llvm::BasicBlock* back = &main->back();
+    if (auto* term = main->back().getTerminator(); !term) {
+        ir_builder->SetInsertPoint(back);
+        ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
         ir_builder->CreateRet(ir_builder->getInt32(0));
+    } else if (!llvm::isa<llvm::ReturnInst>(term)) {
+        INTERNAL_PANIC("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
     }
-    
 }
 
 Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
@@ -150,10 +153,9 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     // let var = 123 + 3213;
                     if (auto var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
-                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
+                            return fumo_init_builder->CreateStore(rhs_val, lhs_val);
                         }
                     }
-
                     return ir_builder->CreateStore(rhs_val, lhs_val);
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
@@ -167,16 +169,8 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
         holds(VariableDecl, const& var) {
             // NOTE: type checker shouldn't allow "let x: void;" to exist
             switch (var.kind) {
-                case VariableDecl::global_var_declaration: {
-                    auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type),
-                                                                false,
-                                                                llvm::GlobalValue::ExternalLinkage,
-                                                                llvm::Constant::getNullValue(fumo_to_llvm_type(node.type)),
-                                                                get_id(var).mangled_name);
-                    llvm_module->insertGlobalVariable(global_var);
-                    node.llvm_value = llvm::cast<llvm::Value>(global_var);
+                case VariableDecl::global_var_declaration:
                     return node.llvm_value;
-                }
                 case VariableDecl::variable_declaration: {
                     auto* type = fumo_to_llvm_type(node.type);
                     node.llvm_value = ir_builder->CreateAlloca(type, nullptr, get_id(var).mangled_name);
@@ -192,9 +186,13 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
             // NOTE: we delete forward declarations and only keep the first occurence
             auto* llvm_func = llvm_module->getFunction(get_id(func).mangled_name);
             if (func.body) {
+
                 llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", llvm_func);
                 ir_builder->SetInsertPoint(bblock);
+                ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+
                 codegen(*func.body.value());
+
                 if (node.type.kind == Type::void_) ir_builder->CreateRetVoid();
             } 
             return llvm_func;
@@ -229,7 +227,7 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
     return std::nullopt;
 }
 
-void Codegen::register_declaration(std::string_view name, const ASTNode& node) {
+void Codegen::register_declaration(std::string_view name, ASTNode& node) {
     // adds function prototypes and forward declarations of types
 
     match(node) {
@@ -249,6 +247,14 @@ void Codegen::register_declaration(std::string_view name, const ASTNode& node) {
 
             llvm::Function* llvm_func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
                                                                get_id(func).mangled_name, llvm_module.get());
+        }
+        holds(VariableDecl, const& var) {
+            auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type), false,
+                                                        llvm::GlobalValue::ExternalLinkage,
+                                                        llvm::Constant::getNullValue(fumo_to_llvm_type(node.type)),
+                                                        get_id(var).mangled_name);
+            llvm_module->insertGlobalVariable(global_var);
+            node.llvm_value = llvm::cast<llvm::Value>(global_var);
         }
         _default INTERNAL_PANIC("added wrong declaration '{}' to 'symbol_table.all_declarations', ", node.name());
     }

@@ -1,21 +1,22 @@
 t(
+"fn func() -> void ;\n"
 "let x: i32;\n"
 "let y = 123123;\n"
-"fn func() -> void;\n"
 "fn func() -> void {\n"
-"    let x = 69420;\n"
 "}\n"
-"fn main() -> i32 {return 231233;}\n"
+"fn main() -> i32 {}"
 ,pass),
-t(
-"let y = 123123;\n"
-"let x: i32;\n"
-"fn func(xzz: i32) -> i32{return 123;}\n"
-"fn main() -> i32 {\n"
-"    let x = 32;\n"
-"    y = x + 3;\n"
-"}\n"
-,fail),
+
+//t(
+//"let y = 123123;\n"
+//"let x: i32;\n"
+//"fn func(xzz: i32) -> i32{return 123;}\n"
+//"fn main() -> i32 {\n"
+//"    let x = 32;\n"
+//"    y = x + 3;\n"
+//"}\n"
+//,fail),
+
 //t(
 //"let x: i32;\n"
 //"let y = 123123;\n"

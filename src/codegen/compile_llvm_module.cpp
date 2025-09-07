@@ -8,10 +8,26 @@
 #include <llvm/Support/WithColor.h>
 #include "codegen/llvm_codegen.hpp"
 
+#include <llvm/Transforms/Utils/StripNonLineTableDebugInfo.h>
+
+void Codegen::clear_metadata() {
+    for (auto& func : *llvm_module) {
+        func.setSubprogram(nullptr);
+        for (auto& BB : func) {
+            for (auto& inst : BB) {
+                inst.setDebugLoc(llvm::DebugLoc());
+                inst.dropUnknownNonDebugMetadata();
+            }
+        }
+    }
+}
+
 extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, 
                            print_file, print_IR, print_AST, print_ASM;
 
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
+
+    // clear_metadata(); // NOTE: add this if you are having issues with corrupted debug metadata
 
     //--------------------------------------------------------------
     // initialization, checking moule

@@ -11,9 +11,8 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.scope_stack.begin()->isolated_name = "";
     symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
-    vec<ASTNode*>& nodes = get<NamespaceDecl>(file_root_node).nodes;
-
     // NOTE: technically, this is the wrong token
+    vec<ASTNode*>& nodes = get<NamespaceDecl>(file_root_node).nodes;
     nodes.insert(nodes.begin(), create_main_node(file_root_node->source_token));
 
     for (auto& node : nodes) analyze(*node);

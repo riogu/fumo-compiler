@@ -18,7 +18,6 @@
 #pragma once
 
 #include "base_definitions/ast_node.hpp"
-#include <map>
 
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 #define each_case_label(the_case) case the_case:
@@ -32,6 +31,8 @@ struct Scope {
     str isolated_name;
     int inner_scope_count = 0;
 };
+#include <map>
+#include "utils/tsl/ordered_map.h"
 
 struct SymbolTableStack {
     // --------------------------------------------
@@ -48,7 +49,7 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> member_variable_decls {};
     // --------------------------------------------
     // change this to only include the top level declarations so we can recursively codegen them.
-    std::map<str, ASTNode*> all_declarations {}; 
+    tsl::ordered_map<str, ASTNode*> all_declarations {}; 
     // NOTE: doesn't include namespaces or local variables or member variables
     // --------------------------------------------
     vec<Scope> scope_stack {};
@@ -86,7 +87,7 @@ struct SymbolTableStack {
         identifier.mangled_name = curr_scope_name + identifier.name;
         switch (curr_scope_kind) {
             case ScopeKind::Namespace:
-                // all_declarations.insert({identifier.mangled_name, &node});
+                all_declarations.insert({identifier.mangled_name, &node});
                 return global_variable_decls.insert({identifier.mangled_name, &node});
             case ScopeKind::TypeBody:
                 return member_variable_decls.insert({identifier.mangled_name, &node});
