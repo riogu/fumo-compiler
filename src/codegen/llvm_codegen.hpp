@@ -26,6 +26,7 @@ extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ,
                            print_file, print_IR, print_AST, print_ASM,
                            verbose, no_link, static_link, strip_syms;
 extern llvm::cl::opt<str>  linker_name;
+extern llvm::cl::list<str> libraries, lib_paths;
 
 struct Codegen {
   private:

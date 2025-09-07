@@ -37,12 +37,16 @@ opt<str>  out_file    {"o",            desc("Output filename"), value_desc("file
 list<str> input_files {"i",            desc("Input files"),     value_desc("filenames"), OneOrMore,   cat(fumo_category)};
 
 // Linking control
-opt<bool> no_link     {"c",             desc("Compile only, do not link (produces .o files)"),        cat(fumo_category)};
-opt<bool> static_link {"static",        desc("Create a statically linked executable"),                cat(fumo_category)};
-opt<bool> strip_syms  {"s",             desc("Strip symbol table from executable"),                   cat(fumo_category)};
+opt<bool> no_link     {"c",            desc("Compile only, do not link (produces .o files)"),         cat(fumo_category)};
+opt<bool> static_link {"static",       desc("Create a statically linked executable"),                 cat(fumo_category)};
+opt<bool> strip_syms  {"s",            desc("Strip symbol table from executable"),                    cat(fumo_category)};
 // Linker selection
-opt<str>  linker_name  {"linker",        desc("Specify which linker to use (auto/gcc/clang)"), 
+opt<str>  linker_name  {"linker",      desc("Specify which linker to use (auto/gcc/clang)"), 
                        value_desc("linker"), init("auto"),                                            cat(fumo_category)};
+list<str> libraries   {"l",            desc("Link with library"), 
+                       value_desc("library"), ZeroOrMore,                                             cat(fumo_category)};
+list<str> lib_paths   {"L",            desc("Add directory to library search path"), 
+                       value_desc("directory"), ZeroOrMore,                                           cat(fumo_category)};
 
 
 auto main(int argc, char** argv) -> int {
@@ -111,5 +115,4 @@ auto main(int argc, char** argv) -> int {
     codegen.codegen_file(file_root_node);
 
     codegen.compile_and_link_module(opt_level);
-    // TODO: missing the final linking of the executable
 }

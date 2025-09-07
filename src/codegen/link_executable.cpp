@@ -16,13 +16,8 @@ Result<void, str> Codegen::link_executable(const LinkOptions& opts) {
 
     switch (linker) {
         case LinkerType::AUTO:
-        case LinkerType::GCC:
-            cmd.push_back("gcc");
-            break;
-        case LinkerType::CLANG:
-            cmd.push_back("clang");
-            break;
-
+        case LinkerType::GCC:   cmd.push_back("gcc");   break;
+        case LinkerType::CLANG: cmd.push_back("clang"); break;
     }
 
     cmd.push_back("-o");
@@ -70,8 +65,14 @@ LinkOptions Codegen::build_link_options(const str& output_name, const vec<str>& 
     else
         std::cerr << "Unknown linker: " << linker_name.getValue() << ", using auto-detection\n";
 
+
+    for (const auto& lib : libraries) opts.libraries.push_back(lib);
+    for (const auto& path : lib_paths) opts.library_paths.push_back(path);
+
     // Always link with libc
-    opts.libraries.push_back("c");
+    if (std::find(opts.libraries.begin(), opts.libraries.end(), "c") == opts.libraries.end()) {
+        opts.libraries.push_back("c");
+    }
 
     return opts;
 }

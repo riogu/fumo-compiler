@@ -16,6 +16,7 @@ fumo.init:                              # @fumo.init
 	.type	func,@function
 func:                                   # @func
 # %bb.0:
+	movl	$123, %eax
 	retq
 .Lfunc_end1:
 	.size	func, .Lfunc_end1-func
@@ -27,25 +28,27 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rax
 	callq	fumo.init@PLT
+	movq	y@GOTPCREL(%rip), %rax
+	movl	$35, (%rax)
 	xorl	%eax, %eax
 	popq	%rcx
 	retq
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main
                                         # -- End function
-	.type	x,@object                       # @x
-	.bss
-	.globl	x
-	.p2align	2, 0x0
-x:
-	.long	0                               # 0x0
-	.size	x, 4
-
 	.type	y,@object                       # @y
+	.bss
 	.globl	y
 	.p2align	2, 0x0
 y:
 	.long	0                               # 0x0
 	.size	y, 4
+
+	.type	x,@object                       # @x
+	.globl	x
+	.p2align	2, 0x0
+x:
+	.long	0                               # 0x0
+	.size	x, 4
 
 	.section	".note.GNU-stack","",@progbits
