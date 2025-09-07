@@ -212,3 +212,16 @@ constexpr std::size_t index_of(ASTNode& node) { return node.branch.index(); }
 constexpr std::size_t index_of(const ASTNode& node) { return node.branch.index(); }
 template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T>(node.branch); }
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
+
+
+// Type checking functions
+[[nodiscard]] constexpr bool is_arithmetic_t(const Type& type) {
+    return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
+         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
+}
+[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+    return ((is_arithmetic_t(a) && is_arithmetic_t(b)) || (a.kind == b.kind && get_name(a) == get_name(b)));
+}
+[[nodiscard]] constexpr bool is_same_t(const Type& a, const Type& b) {
+    return (a.kind == b.kind && get_name(a) == get_name(b));
+}

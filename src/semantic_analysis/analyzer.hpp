@@ -18,8 +18,7 @@ struct Analyzer {
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
 
     ASTNode* create_main_node(Token& token) {
-        // adding the 'main' node at the start of the module
-        // TODO: this should be expanded later to include argc and argv
+        // NOTE: not being used anymore
         auto id = push(ASTNode {token, Identifier {Identifier::declaration_name, "main"}});
         FunctionDecl function {FunctionDecl::function_declaration, id};
 
@@ -35,16 +34,7 @@ struct Analyzer {
         extra_nodes.push_back(std::make_unique<ASTNode>(node));
         return extra_nodes.back().get();
     }
-    [[nodiscard]] bool is_compatible_t(const Type& a, const Type& b) {
-        return ((is_arithmetic_t(a) && is_arithmetic_t(b)) || (a.kind == b.kind && get_name(a) == get_name(b)));
-    }
-    [[nodiscard]] bool is_same_t(const Type& a, const Type& b) {
-        return (a.kind == b.kind && get_name(a) == get_name(b));
-    }
-    [[nodiscard]] bool is_arithmetic_t(const Type& type) {
-        return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
-             || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
-    }
     void determine_type(ASTNode& node);
 
 };
+

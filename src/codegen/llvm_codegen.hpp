@@ -44,8 +44,9 @@ struct Codegen {
   private:
     Opt<llvm::Value*> codegen(ASTNode& node);
     void register_declaration(std::string_view name, ASTNode& node);
-    llvm::Function* create_main();
+
     void clear_metadata();
+    void create_libc_main();
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
         switch (fumo_type.kind) {

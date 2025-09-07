@@ -11,27 +11,27 @@ fumo.init:                              # @fumo.init
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
                                         # -- End function
-	.globl	main                            # -- Begin function main
-	.p2align	4
-	.type	main,@function
-main:                                   # @main
-# %bb.0:
-	pushq	%rax
-	callq	fumo.init@PLT
-	xorl	%eax, %eax
-	popq	%rcx
-	retq
-.Lfunc_end1:
-	.size	main, .Lfunc_end1-main
-                                        # -- End function
 	.globl	func                            # -- Begin function func
 	.p2align	4
 	.type	func,@function
 func:                                   # @func
 # %bb.0:
 	retq
+.Lfunc_end1:
+	.size	func, .Lfunc_end1-func
+                                        # -- End function
+	.globl	main                            # -- Begin function main
+	.p2align	4
+	.type	main,@function
+main:                                   # @main
+# %bb.0:                                # %entry
+	pushq	%rax
+	callq	fumo.init@PLT
+	xorl	%eax, %eax
+	popq	%rcx
+	retq
 .Lfunc_end2:
-	.size	func, .Lfunc_end2-func
+	.size	main, .Lfunc_end2-main
                                         # -- End function
 	.type	x,@object                       # @x
 	.bss

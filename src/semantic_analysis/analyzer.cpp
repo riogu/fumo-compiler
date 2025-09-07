@@ -11,32 +11,20 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.scope_stack.begin()->isolated_name = "";
     symbol_tree.scope_stack.begin()->name = symbol_tree.curr_scope_name;
 
-    // NOTE: technically, this is the wrong token
-    vec<ASTNode*>& nodes = get<NamespaceDecl>(file_root_node).nodes;
-    nodes.insert(nodes.begin(), create_main_node(file_root_node->source_token));
-
-    for (auto& node : nodes) analyze(*node);
+    for (auto& node : get<NamespaceDecl>(file_root_node).nodes) analyze(*node);
 
     symbol_tree.curr_scope_name = "::";
     symbol_tree.pop_scope();
-}
 
-// void Analyzer::determine_type(ASTNode& node) {
-//     // TODO: move type checks from analyze() to this function
-//     match(node) {
-//         holds(Identifier) {}
-//         holds(PrimaryExpr) {}
-//         holds(UnaryExpr) {}
-//         holds(BinaryExpr) {}
-//         holds(PostfixExpr) {}
-//         holds(VariableDecl) {}
-//         holds(FunctionDecl) {}
-//         holds(BlockScope) {}
-//         holds(NamespaceDecl) {}
-//         holds(TypeDecl) {}
-//         _default {}
-//     }
-// }
+    if (auto map_node = symbol_tree.function_decls.extract("main"); !map_node.empty()) {
+        // rename 'main' to link with libc later
+        auto& id = get_id(get<FunctionDecl>(map_node.mapped()));
+        map_node.key()  = "fumo.user_main";
+        id.mangled_name = "fumo.user_main";
+        id.name         = "fumo.user_main";
+        symbol_tree.function_decls.insert(std::move(map_node));
+    }
+}
 
 void Analyzer::analyze(ASTNode& node) {
 

@@ -12,17 +12,18 @@ define void @fumo.init() local_unnamed_addr #0 {
   ret void
 }
 
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
+define void @func() local_unnamed_addr #1 {
+  ret void
+}
+
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, inaccessiblemem: none)
-define noundef i32 @main() local_unnamed_addr #1 {
+define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #2 {
+entry:
   tail call void @fumo.init()
   ret i32 0
 }
 
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
-define void @func() local_unnamed_addr #2 {
-  ret void
-}
-
 attributes #0 = { mustprogress nofree noinline norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) "used" }
-attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, inaccessiblemem: none) "used" }
-attributes #2 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }
+attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }
+attributes #2 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, inaccessiblemem: none) "used" }

@@ -41,19 +41,25 @@ auto main(int argc, char** argv) -> int {
     str cmdline_str = "";
 
     //--------------------------------------------------------------------------
-    // Lexer
+    // Lexer and Command-line arguments parsing
     Lexer lexer {};
     vec<Token> tokens; File file;
     bool received_cmdline_str = false;
 
     if (argc == 2) {
         cmdline_str = argv[1];
-        received_cmdline_str = !(cmdline_str == "-h" || cmdline_str == "-help" || cmdline_str == "--help");
+        // cant delete llvm 'Generic Options' from their cl parser
+        // so we will allow the user to pass them in
+        received_cmdline_str = !(cmdline_str == "-h"                 || cmdline_str == "-help" 
+                              || cmdline_str == "--help-list"        || cmdline_str == "--help-list"
+                              || cmdline_str == "-help-list-hidden"  || cmdline_str == "-help-hidden"
+                              || cmdline_str == "--help-list-hidden" || cmdline_str == "--help-hidden"
+                              || cmdline_str == "-version");
     }
     if (received_cmdline_str) {
-        // NOTE: this is for testing the compiler. you can pass in a program like:
-        //       "fn main() -> i32 {let x = 231;}" 
-        //       as one string to the compiler (with no flags) and it will compile it. it uses the flags below
+        // this is for testing the compiler. you can pass in a program like:
+        // "fn main() -> i32 {let x = 231;}" 
+        // as one string to the compiler (with no flags) and it will compile it. it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
         print_file = true; /* print_AST = true; print_IR = true; */
 
@@ -74,14 +80,19 @@ auto main(int argc, char** argv) -> int {
     }
     //--------------------------------------------------------------------------
     // Parser
+
     Parser parser {file};
     auto file_root_node = parser.parse_tokens(tokens);
+
     //--------------------------------------------------------------------------
     // Semantic Analysis
+
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
+
     //--------------------------------------------------------------------------
     // Codegen
+
     if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
 
     Codegen codegen {file, analyzer.symbol_tree};

@@ -10,13 +10,21 @@ define void @fumo.init() #0 {
   ret void
 }
 
-define i32 @main() #1 {
-  call void @fumo.init()
+define void @func() {
+  ret void
+}
+
+define internal i32 @fumo.user_main() {
+  %"main()::x" = alloca i32, align 4
+  store i32 213, ptr %"main()::x", align 4
   ret i32 0
 }
 
-define void @func() {
-  ret void
+define i32 @main(i32 %argc, ptr %argv) #1 {
+entry:
+  call void @fumo.init()
+  %0 = call i32 @fumo.user_main()
+  ret i32 %0
 }
 
 attributes #0 = { noinline "used" }

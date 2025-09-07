@@ -77,7 +77,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 
 [[nodiscard]] ScopeKind SymbolTableStack::find_scope_kind(const str& name) {
     if find_value (name, namespace_decls) return ScopeKind::Namespace;
-    if find_value (name, type_decls) return ScopeKind::TypeBody;
+    if find_value (name, type_decls)      return ScopeKind::TypeBody;
     INTERNAL_PANIC("couldnt find scope kind for '{}'.", name);
 }
 void Analyzer::iterate_qualified_names(FunctionDecl & func) {
@@ -147,20 +147,3 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
         default: INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
     }
 }
-
-// namespace foo {
-//    struct foo {
-//         struct gaming {
-//            let xee: i32 = 213; 
-//            fn fff() -> i32 {return xee;} 
-//            fn some() -> i32 {return fff();} 
-//         };
-//         fn some_func() -> void;
-//     };
-// }
-// fn foo::foo::some_func() -> void {
-//     let var: bar = {};
-//     let eee = gaming {212322};
-//     let e_ptr: gaming* = &eee;
-//     let y = var.func(e_ptr->xee).some();
-// }
