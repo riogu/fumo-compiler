@@ -5,11 +5,11 @@
 #include <iostream>
 #include <vector>
 
-// #include <expected>
-// template<typename Ok, typename Err>
-// using Result = std::expected<Ok, Err>;
-// template<typename T>
-// using Err = std::unexpected<T>;
+#include <expected>
+template<typename Ok, typename Err>
+using Result = std::expected<Ok, Err>;
+template<typename T>
+using Err = std::unexpected<T>;
 //
 namespace fs = std::filesystem; 
 using str = std::string;

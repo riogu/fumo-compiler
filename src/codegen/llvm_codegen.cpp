@@ -263,23 +263,6 @@ void Codegen::register_declaration(std::string_view name, ASTNode& node) {
     }
 }
 
-// llvm::Function* Codegen::create_main() {
-    // NOTE: this function isnt used right now
-
-    // llvm::FunctionType* main_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(*llvm_context), {}, false);
-    // llvm::Function* main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, 
-    //                                               "main", llvm_module.get());
-
-    // auto args = main->arg_begin();
-    // args->setName("argc");
-    // (++args)->setName("argv");
-    //
-    // main->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    // main->addFnAttr("used");
-    // main->setDSOLocal(false);
-
-    // return main;
-// }
 void Codegen::create_libc_main() {
 
     std::vector<llvm::Type*> main_args {};
@@ -338,5 +321,17 @@ void Codegen::create_libc_main() {
 
     } else {
         ir_builder->CreateRet(ir_builder->getInt32(0));
+    }
+}
+
+void Codegen::clear_metadata() {
+    for (auto& func : *llvm_module) {
+        func.setSubprogram(nullptr);
+        for (auto& BB : func) {
+            for (auto& inst : BB) {
+                inst.setDebugLoc(llvm::DebugLoc());
+                inst.dropUnknownNonDebugMetadata();
+            }
+        }
     }
 }

@@ -5,10 +5,27 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Passes/OptimizationLevel.h>
+#include <llvm/Support/CommandLine.h>
 #include <llvm/Target/TargetMachine.h>
-#include <map>
 #include "base_definitions/ast_node.hpp"
 #include "base_definitions/symbol_table_stack.hpp"
+
+enum struct LinkerType { AUTO, GCC, CLANG};
+
+struct LinkOptions {
+    LinkerType linker = LinkerType::AUTO;
+    str output_name = "fumo.out";
+    vec<str> object_files;
+    bool static_link = false;
+    bool strip_symbols = false;
+    bool verbose = false;
+    vec<str> libraries;     // -l flags
+    vec<str> library_paths; // -L flags
+};
+extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, 
+                           print_file, print_IR, print_AST, print_ASM,
+                           verbose, no_link, static_link, strip_syms;
+extern llvm::cl::opt<str>  linker_name;
 
 struct Codegen {
   private:
@@ -20,9 +37,10 @@ struct Codegen {
     std::stringstream file_stream;
     SymbolTableStack symbol_tree {};
     ASTNode* file_root_node;
+    File file;
 
   public:
-    Codegen(const File& file, SymbolTableStack& symbol_tree) : symbol_tree(std::move(symbol_tree)) {
+    Codegen(const File& file, SymbolTableStack& symbol_tree) : symbol_tree(std::move(symbol_tree)), file(file) {
         llvm_context = std::make_unique<llvm::LLVMContext>();
         ir_builder   = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
         fumo_init_builder = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
@@ -32,7 +50,13 @@ struct Codegen {
     }
 
     void codegen_file(ASTNode* file_scope);
-    void compile_module(llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O0);
+
+    void compile_module(llvm::OptimizationLevel opt_level);
+    void compile_and_link_module(llvm::OptimizationLevel opt_level);
+
+    Result<void, str> link_executable(const LinkOptions& opts);
+    Result<void, str> link_simple(const str& object_file, LinkerType linker_type = LinkerType::AUTO);
+    LinkOptions build_link_options(const str& output_name, const vec<str>& object_files);
 
     [[nodiscard]] str llvm_ir_to_str() {
         std::string outstr;
@@ -72,3 +96,4 @@ struct Codegen {
         return {};
     }
 };
+

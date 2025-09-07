@@ -1,4 +1,4 @@
-; ModuleID = 'tests/command-line-string.fm'
+; ModuleID = 'tests/command-line-string.out'
 source_filename = "command-line-string.fm"
 
 @x = global i32 0

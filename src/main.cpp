@@ -13,26 +13,36 @@ llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
 #define was_opt_level(level) if (O##level.getNumOccurrences()) opt_level = llvm::OptimizationLevel::O##level; else 
 
 using namespace llvm::cl;
-OptionCategory compiler_category("Fumo Compiler Options",
-                                 "  Options for controlling the compilation process, such as opt levels");
+OptionCategory fumo_category("Fumo Compiler Options",
+                             "  Options for controlling the compilation process, such as opt levels");
 
-opt<bool> O0         {"O0",          desc("No optimizations"),                                    cat(compiler_category)};
-opt<bool> O1         {"O1",          desc("Few optimizations"),                                   cat(compiler_category)};
-opt<bool> O2         {"O2",          desc("Default optimizations"),                               cat(compiler_category)};
-opt<bool> O3         {"O3",          desc("Aggressive optimizations"),                            cat(compiler_category)};
+opt<bool> O0          {"O0",           desc("No optimizations"),                                      cat(fumo_category)};
+opt<bool> O1          {"O1",           desc("Few optimizations"),                                     cat(fumo_category)};
+opt<bool> O2          {"O2",           desc("Default optimizations"),                                 cat(fumo_category)};
+opt<bool> O3          {"O3",           desc("Aggressive optimizations"),                              cat(fumo_category)};
 
-opt<bool> output_IR  {"emit=llvm-ir",desc("Outputs a .ll file with the generated llvm IR"),       cat(compiler_category)};
-opt<bool> output_AST {"emit=ast",    desc("Outputs a .ast file with the generated debug AST"),    cat(compiler_category)};
-opt<bool> output_ASM {"emit=asm",    desc("Outputs a .asm file with the generated assembly"),     cat(compiler_category)};
-opt<bool> output_OBJ {"emit=obj",    desc("Outputs a .o object file"),                            cat(compiler_category)};
+opt<bool> output_IR   {"emit=llvm-ir", desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
+opt<bool> output_AST  {"emit=ast",     desc("Outputs a .ast file with the generated debug AST"),      cat(fumo_category)};
+opt<bool> output_ASM  {"emit=asm",     desc("Outputs a .asm file with the generated assembly"),       cat(fumo_category)};
+opt<bool> output_OBJ  {"emit=obj",     desc("Outputs a .o object file"),                              cat(fumo_category)};
 
-opt<bool> print_file {"print-file",  desc("Print the inputed file contents to the terminal"),     cat(compiler_category)};
-opt<bool> print_IR   {"print-ir",    desc("Print llvm-IR to the terminal"),                       cat(compiler_category)};
-opt<bool> print_AST  {"print-ast",   desc("Prints the debug AST representation to the terminal"), cat(compiler_category)};
-opt<bool> print_ASM  {"print-asm",   desc("Prints the output ASM to the terminal"),               cat(compiler_category)};
+opt<bool> print_file  {"print-file",   desc("Print the inputed file contents to the terminal"),       cat(fumo_category)};
+opt<bool> print_IR    {"print-ir",     desc("Print llvm-IR to the terminal"),                         cat(fumo_category)};
+opt<bool> print_AST   {"print-ast",    desc("Prints the debug AST representation to the terminal"),   cat(fumo_category)};
+opt<bool> print_ASM   {"print-asm",    desc("Prints the output ASM to the terminal"),                 cat(fumo_category)};
 
-opt<str>  out_file   {"o",           desc("Output filename"), value_desc("filename"),             cat(compiler_category)};
-list<str> input_files{"i",           desc("Input files"),     value_desc("filenames"), OneOrMore, cat(compiler_category)};
+opt<bool> verbose     {"v",            desc("Show commands executed during compilation and linking"), cat(fumo_category)};
+
+opt<str>  out_file    {"o",            desc("Output filename"), value_desc("filename"),               cat(fumo_category)};
+list<str> input_files {"i",            desc("Input files"),     value_desc("filenames"), OneOrMore,   cat(fumo_category)};
+
+// Linking control
+opt<bool> no_link     {"c",             desc("Compile only, do not link (produces .o files)"),        cat(fumo_category)};
+opt<bool> static_link {"static",        desc("Create a statically linked executable"),                cat(fumo_category)};
+opt<bool> strip_syms  {"s",             desc("Strip symbol table from executable"),                   cat(fumo_category)};
+// Linker selection
+opt<str>  linker_name  {"linker",        desc("Specify which linker to use (auto/gcc/clang)"), 
+                       value_desc("linker"), init("auto"),                                            cat(fumo_category)};
 
 
 auto main(int argc, char** argv) -> int {
@@ -62,13 +72,15 @@ auto main(int argc, char** argv) -> int {
         // as one string to the compiler (with no flags) and it will compile it. it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
         print_file = true; /* print_AST = true; print_IR = true; */
+        verbose = true;
+        linker_name = "gcc";
 
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;
-        file.output_name = "tests/command-line-string.fm";
+        file.output_name = "tests/command-line-string.out";
     } else {
-        llvm::cl::HideUnrelatedOptions(compiler_category);
+        llvm::cl::HideUnrelatedOptions(fumo_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, std::string(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
         file_name = input_files[0];
@@ -98,6 +110,6 @@ auto main(int argc, char** argv) -> int {
     Codegen codegen {file, analyzer.symbol_tree};
     codegen.codegen_file(file_root_node);
 
-    codegen.compile_module(opt_level);
+    codegen.compile_and_link_module(opt_level);
     // TODO: missing the final linking of the executable
 }

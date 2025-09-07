@@ -8,28 +8,41 @@
 #include <llvm/Support/WithColor.h>
 #include "codegen/llvm_codegen.hpp"
 
-#include <llvm/Transforms/Utils/StripNonLineTableDebugInfo.h>
 
-void Codegen::clear_metadata() {
-    for (auto& func : *llvm_module) {
-        func.setSubprogram(nullptr);
-        for (auto& BB : func) {
-            for (auto& inst : BB) {
-                inst.setDebugLoc(llvm::DebugLoc());
-                inst.dropUnknownNonDebugMetadata();
-            }
-        }
+void Codegen::compile_and_link_module(llvm::OptimizationLevel opt_level) {
+
+    compile_module(opt_level);
+    
+    fs::path obj_file = llvm_module->getModuleIdentifier();
+    obj_file.replace_extension(".o");
+    
+    if (!fs::exists(obj_file)) {
+        std::cerr << "Object file not found: " << obj_file << std::endl;
+        return;
+    }
+
+    // only compiling a single object file for now
+    vec<str> obj_files = {obj_file.string()};
+
+    fs::path exec_name = obj_file.string();
+    exec_name.replace_extension(".out");
+
+    LinkOptions link_opts = build_link_options(file.output_name, obj_files);
+    auto result = link_executable(link_opts);
+
+    if (result) {
+        if (verbose) std::cout << "Successfully created executable: " << exec_name << std::endl;
+        if (!output_OBJ) fs::remove(obj_file);
+    } else {
+        std::cerr << "Linking failed: " << result.error() << std::endl;
     }
 }
-
-extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, 
-                           print_file, print_IR, print_AST, print_ASM;
 
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
     // clear_metadata(); // NOTE: add this if you are having issues with corrupted debug metadata
 
-    //--------------------------------------------------------------
+    //------------------------------------------------------------------------------------------
     // initialization, checking moule
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
@@ -70,7 +83,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     llvm_module->setDataLayout(target_machine->createDataLayout());
 
     
-    //--------------------------------------------------------------
+    //------------------------------------------------------------------------------------------
     // optimization passes
     llvm::PassBuilder pass_builder(target_machine);
 
@@ -95,10 +108,11 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         default: mpm = pass_builder.buildPerModuleDefaultPipeline(llvm::OptimizationLevel::O2); break;
     }
     mpm.run(*llvm_module, mam);
-    //--------------------------------------------------------------
-    // outputting, printing (result of the recieved compiler flags)
 
+    //------------------------------------------------------------------------------------------
+    // outputting, printing (result of the recieved compiler flags)
     bool emit_flag_was_set = false;
+
     if (output_AST) {
         emit_flag_was_set = true;
         dest_file_name.replace_extension(".ast");
@@ -160,3 +174,4 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
     }
 }
+
