@@ -2,4 +2,5 @@ let x = 23;
 fn main() -> i32 {
     x = x * 69;
     let y = (x + 43) / 23 * x;
+    return y;
 }

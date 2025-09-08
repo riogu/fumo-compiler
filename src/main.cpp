@@ -9,6 +9,8 @@
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/InitLLVM.h>
 
+extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
+    
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
 #define was_opt_level(level) if (O##level.getNumOccurrences()) opt_level = llvm::OptimizationLevel::O##level; else 
 
@@ -89,7 +91,7 @@ auto main(int argc, char** argv) -> int {
         llvm::cl::HideUnrelatedOptions(fumo_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, std::string(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
-        file_name = input_files[0];
+        file_name = input_files[0]; // only one file name
 
         { map_macro(was_opt_level, 0, 1, 2, 3); }
 

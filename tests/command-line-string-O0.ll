@@ -5,22 +5,20 @@ source_filename = "command-line-string.fm"
 
 ; Function Attrs: noinline
 define void @fumo.init() #0 {
-  store i32 69, ptr @x, align 4
+  store i32 32, ptr @x, align 4
   ret void
 }
 
 define internal i32 @fumo.user_main() {
-  %"main()::ptr" = alloca ptr, align 8
-  store ptr @x, ptr %"main()::ptr", align 8
-  %"main()::ptr2" = alloca ptr, align 8
-  store ptr %"main()::ptr", ptr %"main()::ptr2", align 8
-  %"main()::x" = alloca i32, align 4
-  %1 = load ptr, ptr %"main()::ptr2", align 8
-  %2 = load ptr, ptr %1, align 8
-  %3 = load i32, ptr %2, align 4
-  store i32 %3, ptr %"main()::x", align 4
-  %4 = load i32, ptr %"main()::x", align 4
-  ret i32 %4
+  %"main()::y" = alloca i32, align 4
+  %1 = load ptr, ptr @x, align 8
+  %2 = add ptr %1, i32 1
+  %3 = load ptr, ptr %2, align 8
+  %4 = load ptr, ptr %3, align 8
+  %5 = load i32, ptr %4, align 4
+  store i32 %5, ptr %"main()::y", align 4
+  %6 = load i32, ptr %"main()::y", align 4
+  ret i32 %6
 }
 
 define i32 @main(i32 %argc, ptr %argv) #1 {

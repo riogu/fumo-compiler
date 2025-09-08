@@ -108,7 +108,9 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
             switch (un.kind) {
                 case UnaryExpr::address_of: 
                     if (!val->getType()->isPointerTy()) {
-                        INTERNAL_PANIC("[Codegen] Taking address of non-lvalue (expected pointer from alloca)");
+                        str temp = ""; while(un.expr->type.ptr_count--) temp += "*";
+                        report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
+                                     get_id(un.expr->type).mangled_name + temp);
                     }
                     return val;
 

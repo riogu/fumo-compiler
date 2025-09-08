@@ -27,8 +27,8 @@ Result<void, str> Codegen::link_executable(const LinkOptions& opts) {
     for (const auto& path : opts.library_paths) cmd.push_back("-L" + path);
     for (const auto& lib  : opts.libraries)     cmd.push_back("-l" + lib);
 
-    if (opts.static_link)   cmd.push_back("-static");
-    if (opts.strip_symbols) cmd.push_back("-s");
+    if (static_link) cmd.push_back("-static");
+    if (strip_syms)  cmd.push_back("-s");
 
     str command;
     for (std::size_t i = 0; i < cmd.size(); ++i) {

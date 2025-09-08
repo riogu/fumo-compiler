@@ -81,7 +81,7 @@ void Analyzer::analyze(ASTNode& node) {
                         if (!node.type.ptr_count) INTERNAL_PANIC("you passed a non ptr and got address of issues somehow.");
                         str temp = ""; while(node.type.ptr_count--) temp += "*";
                         report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
-                                     get_name(un.expr->type) + temp);
+                                     get_id(un.expr->type).mangled_name + temp);
                     }
                     node.type.ptr_count++;
                     break;

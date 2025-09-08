@@ -1,11 +1,27 @@
-DIR="build/"
+#!/bin/bash
+set -e
+
 PROJECT_NAME="${PWD##*/}"
-BIN="${DIR}${PROJECT_NAME}"
+BUILD_DIR="build"
+BINARY="$BUILD_DIR/$PROJECT_NAME"
+#!/bin/bash
+set -e
 
-cd $DIR
-# cmake --build . 
-# cmake --build . && cd .. && ./$BIN
-# ninja && cd .. && ./$BIN
+PROJECT_NAME="${PWD##*/}"
+BUILD_DIR="build"
+
+export ASAN_OPTIONS="detect_leaks=0"
+
+echo "Building $PROJECT_NAME..."
+
+if [ ! -d "$BUILD_DIR" ]; then
+    echo "Error: $BUILD_DIR directory not found"
+    echo "Run: cmake -B build -S . -GNinja"
+    exit 1
+fi
+
+cd "$BUILD_DIR"
 ninja
+cd ..
 
-mv $PROJECT_NAME fumo
+echo "Build complete!"

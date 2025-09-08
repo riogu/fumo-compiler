@@ -14,7 +14,7 @@ enum struct LinkerType { AUTO, GCC, CLANG};
 
 struct LinkOptions {
     LinkerType linker = LinkerType::AUTO;
-    str output_name = "fumo.out";
+    str output_name = "tests/command-line-string.out";
     vec<str> object_files;
     bool static_link = false;
     bool strip_symbols = false;

@@ -24,7 +24,7 @@ using i64 = int64_t;
 struct File {
     fs::path path_name;
     std::string contents;
-    fs::path output_name = "fumo.out";
+    fs::path output_name = "tests/command-line-string.out";
 };
 
 #define INTERNAL_PANIC(fmt, ...) PANIC(std::format("internal fumo error: " fmt __VA_OPT__(, __VA_ARGS__)))
