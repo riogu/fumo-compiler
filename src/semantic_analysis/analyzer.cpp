@@ -62,7 +62,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case UnaryExpr::logic_not:
                     if (!is_arithmetic_t(un.expr->type)) {
                         report_error(node.source_token, "invalid type '{}' for unary expression.",
-                                     get_name(un.expr->type));
+                                     type_name(un.expr->type));
                     }
                     node.type = un.expr->type;
                     break;
@@ -70,7 +70,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case UnaryExpr::dereference:
                     if (!un.expr->type.ptr_count) {
                         report_error(node.source_token, "Indirection requires pointer operand, '{}' is invalid.",
-                                     get_name(un.expr->type));
+                                     type_name(un.expr->type));
                     }
                     node.type = un.expr->type;
                     node.type.ptr_count--;
@@ -79,9 +79,8 @@ void Analyzer::analyze(ASTNode& node) {
                     node.type = un.expr->type;
                     if (auto* un_expr = get_if<UnaryExpr>(un.expr); un_expr && un_expr->kind == UnaryExpr::address_of) {
                         if (!node.type.ptr_count) INTERNAL_PANIC("you passed a non ptr and got address of issues somehow.");
-                        str temp = ""; while(node.type.ptr_count--) temp += "*";
                         report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
-                                     get_id(un.expr->type).mangled_name + temp);
+                                     type_name(un.expr->type));
                     }
                     node.type.ptr_count++;
                     break;
@@ -133,7 +132,6 @@ void Analyzer::analyze(ASTNode& node) {
                                     push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
 
                 str temp = id.mangled_name;
-                // std::cerr << temp + "eeeeeeh\n";
                 while (temp.back() != ':') temp.pop_back();
                 temp.pop_back(), temp.pop_back();
                 Identifier temp_id = {.kind = Identifier::type_name, .name = temp};
@@ -178,7 +176,7 @@ void Analyzer::analyze(ASTNode& node) {
                 if (!is_compatible_t(arg->type, param->type)) {
                     report_error(arg->source_token,
                                  "argument of type '{}' is not compatible with function declaration signature.",
-                                 get<Identifier>(arg->type.identifier).mangled_name);
+                                 type_name(arg->type));
                 }
             }
         }

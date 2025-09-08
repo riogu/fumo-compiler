@@ -53,6 +53,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
                   << file_stream.str() << std::endl;
     }
+
     if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
         fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
         llvm::raw_fd_ostream dest(name_copy.string(), EC);
@@ -169,10 +170,6 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
             std::cerr << "node found:\n  " + node->to_str() + "\n";
         }
-    }
-    if (print_file) {
-        std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
-                  << file_stream.str() << std::endl;
     }
     if (print_IR) {
         dest_file_name.replace_extension(".ll");

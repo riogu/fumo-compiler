@@ -1,33 +1,26 @@
-//t(
-//"fn func() -> void ;\n"
-//"let x: i32;\n"
-//"let y = 123123;\n"
-//"fn func() -> void {\n"
-//"}\n"
-//"fn main() -> i32 { let x = 213;}"
-//,pass),
+t(
+"fn func() -> void ;\n"
+"let x: i32;\n"
+"let y = 123123;\n"
+"fn func() -> void {\n"
+"}\n"
+"fn main() -> i32 { let x = 213;}"
+,pass),
 
-//t(
-//"let x: i32;\n"
-//"let y = 123123;\n"
-//"fn func() -> void;\n"
-//"fn func() -> void;\n"
-//"fn func() -> void;\n"
-//"fn func() -> void {\n"
-//"    let x = 69420;\n"
-//"}\n"
-//"fn func() -> void;\n"
-//"fn func() -> void;\n"
-//"fn main() -> i32 {return 123;}"
-//,pass),
+t(
+"let x: i32;\n"
+"let y = 123123;\n"
+"fn func() -> void;\n"
+"fn func() -> void;\n"
+"fn func() -> void;\n"
+"fn func() -> void {\n"
+"    let x = 69420;\n"
+"}\n"
+"fn func() -> void;\n"
+"fn func() -> void;\n"
+"fn main() -> i32 {return 123;}"
+,pass),
 
-
-
-//t(
-//"let x = 23;\n"
-//"let y: i32* = x;\n"
-//"fn main() -> i32 {return 123;}"
-//,pass),
 
 
 t(
@@ -40,7 +33,6 @@ t(
 "    return 69;\n"
 "}\n"
 ,pass),
-
 
 t(
 "let x = 23;\n"
@@ -69,7 +61,7 @@ t(
 "    let y = **(&(&x + 1));\n"
 "    return y;\n"
 "}\n"
-,fail),
+,pass),
 
 t(
 "let x = 32;\n"
@@ -78,3 +70,10 @@ t(
 "    return z;\n"
 "}\n"
 ,fail),
+
+t(
+"let x = 23;\n"
+"let y: i32* = &x;\n"
+"fn main() -> i32 {return 123;}"
+,pass),
+

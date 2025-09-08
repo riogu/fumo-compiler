@@ -31,18 +31,15 @@
       (generates its own local variables and such but not local struct declarations)
 
 📌 Summary Roadmap
-   - Phase 1: Finish LLVM codegen for variables, arithmetic, and functions.
+   - Finish LLVM codegen for variables, arithmetic, and functions.
 
-   - Phase 2: Add struct layout + member access.
+   - Add pointers (load/store, address-of).
 
-   - Phase 3: Add pointers (load/store, address-of).
+   - Make function calls work.
 
-   - Phase 4: Add if/else, while.
+   - Add struct layout + member access.
 
-   - Phase 5: Polish docs + example programs.
+   - Add if/else, while.
 
-
-
-
-right now i need to make the LLVM codegen work for all the new code that was added, so that includes making struct work.
+   - Polish docs + example programs.
 

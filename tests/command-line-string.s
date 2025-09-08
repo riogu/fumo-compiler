@@ -6,7 +6,9 @@
 fumo.init:                              # @fumo.init
 # %bb.0:
 	movq	x@GOTPCREL(%rip), %rax
-	movl	$69, (%rax)
+	movl	$23, (%rax)
+	movq	y@GOTPCREL(%rip), %rcx
+	movq	%rax, (%rcx)
 	retq
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
@@ -18,8 +20,7 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rax
 	callq	fumo.init@PLT
-	movq	x@GOTPCREL(%rip), %rax
-	movl	(%rax), %eax
+	movl	$123, %eax
 	popq	%rcx
 	retq
 .Lfunc_end1:
@@ -32,5 +33,12 @@ main:                                   # @main
 x:
 	.long	0                               # 0x0
 	.size	x, 4
+
+	.type	y,@object                       # @y
+	.globl	y
+	.p2align	3, 0x0
+y:
+	.quad	0
+	.size	y, 8
 
 	.section	".note.GNU-stack","",@progbits
