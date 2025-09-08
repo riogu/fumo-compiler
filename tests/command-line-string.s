@@ -6,7 +6,7 @@
 fumo.init:                              # @fumo.init
 # %bb.0:
 	movq	x@GOTPCREL(%rip), %rax
-	movl	$5002, (%rax)                   # imm = 0x138A
+	movl	$69, (%rax)
 	retq
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
@@ -18,7 +18,8 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	pushq	%rax
 	callq	fumo.init@PLT
-	movl	x@GOTPCREL(%rip), %eax
+	movq	x@GOTPCREL(%rip), %rax
+	movl	(%rax), %eax
 	popq	%rcx
 	retq
 .Lfunc_end1:

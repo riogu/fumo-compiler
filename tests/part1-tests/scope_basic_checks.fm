@@ -74,3 +74,12 @@ t(
 "fn func(x: foo) -> void;\n"
 "\n"
 ,pass),
+
+
+t(
+
+"let var = 213123;\n"
+"fn main() -> i32 {}\n"
+
+
+,pass),

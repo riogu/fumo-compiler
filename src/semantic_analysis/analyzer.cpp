@@ -61,8 +61,7 @@ void Analyzer::analyze(ASTNode& node) {
                 case UnaryExpr::bitwise_not:
                 case UnaryExpr::logic_not:
                     if (!is_arithmetic_t(un.expr->type)) {
-                        report_error(node.source_token,
-                                     "invalid type '{}' for unary expression.",
+                        report_error(node.source_token, "invalid type '{}' for unary expression.",
                                      get_name(un.expr->type));
                     }
                     node.type = un.expr->type;
@@ -78,6 +77,12 @@ void Analyzer::analyze(ASTNode& node) {
                     break;
                 case UnaryExpr::address_of:
                     node.type = un.expr->type;
+                    if (auto* un_expr = get_if<UnaryExpr>(un.expr); un_expr && un_expr->kind == UnaryExpr::address_of) {
+                        if (!node.type.ptr_count) INTERNAL_PANIC("you passed a non ptr and got address of issues somehow.");
+                        str temp = ""; while(node.type.ptr_count--) temp += "*";
+                        report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
+                                     get_name(un.expr->type) + temp);
+                    }
                     node.type.ptr_count++;
                     break;
                 case UnaryExpr::return_statement:

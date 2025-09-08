@@ -53,11 +53,20 @@ t(
 ,pass),
 
 t(
-"let x = 5002;\n"
+"let x = 69;\n"
 "fn main() -> i32 {\n"
 "    let ptr: i32* = &x;\n"
 "    let ptr2: i32** = &ptr;\n"
-"    return **ptr2;\n"
+"    let x = **ptr2;\n"
+"    return x;\n"
 "}\n"
 ,pass),
 
+
+t(
+"let x = 32;\n"
+"fn main() -> i32 {\n"
+"    let y = (&(&x));\n"
+"    return y;\n"
+"}\n"
+,pass),

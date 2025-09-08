@@ -1,0 +1,8 @@
+
+let x = 69;
+fn main() -> i32 {
+    let ptr: i32* = &x;
+    let ptr2: i32** = &ptr;
+    let x = **ptr2;
+    return x;
+}

@@ -75,7 +75,9 @@ auto main(int argc, char** argv) -> int {
         // "fn main() -> i32 {let x = 231;}" 
         // as one string to the compiler (with no flags) and it will compile it. it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
-        print_file = true; /* print_AST = true; print_IR = true; */
+        print_file = true; 
+        // print_AST = true;
+        // print_IR = true;
         verbose = true;
 
         { map_macro(was_opt_level, 0, 1, 2, 3); }

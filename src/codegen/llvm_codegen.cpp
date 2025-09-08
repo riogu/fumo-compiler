@@ -113,17 +113,10 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                     return val;
 
                 case UnaryExpr::dereference: {
-                    // Load if it's a pointer variable 
-                    // if (val->getType()->isPointerTy()) {
-                    //     val = ir_builder->CreateLoad(fumo_to_llvm_type(un.expr->type), val);
-                    // }
-                    // FIXME: missing correct number of dereferences
-                    Type deref_type = un.expr->type;
-                    if (!deref_type.ptr_count) {
+                    if (!un.expr->type.ptr_count) {
                         INTERNAL_PANIC("[Codegen] passed non dereferenceable type to '{}'", node.name());
                     }
-                    deref_type.ptr_count--;
-                    return ir_builder->CreateLoad(fumo_to_llvm_type(deref_type), val);
+                    return ir_builder->CreateLoad(fumo_to_llvm_type(un.expr->type), val);
                 }
                 default: 
                     if (val->getType()->isPointerTy()) {
