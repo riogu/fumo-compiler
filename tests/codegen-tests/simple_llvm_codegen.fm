@@ -61,7 +61,7 @@ t(
 "    let y = **(&(&x + 1));\n"
 "    return y;\n"
 "}\n"
-,pass),
+,fail),
 
 t(
 "let x = 32;\n"

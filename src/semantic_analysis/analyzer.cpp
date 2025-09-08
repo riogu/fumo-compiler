@@ -26,7 +26,7 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     }
 }
 
-void Analyzer::analyze(ASTNode& node) {
+void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
     match(node) {
 
@@ -157,7 +157,6 @@ void Analyzer::analyze(ASTNode& node) {
         }
 
         holds(FunctionCall, &func_call) {
-            // NOTE: we need to check if the arguments to a function are compatible with the original function signature
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
 

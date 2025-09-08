@@ -8,36 +8,6 @@
 #include <llvm/Support/WithColor.h>
 #include "codegen/llvm_codegen.hpp"
 
-
-void Codegen::compile_and_link_module(llvm::OptimizationLevel opt_level) {
-
-    compile_module(opt_level);
-    
-    fs::path obj_file = llvm_module->getModuleIdentifier();
-    obj_file.replace_extension(".o");
-    
-    if (!fs::exists(obj_file)) {
-        std::cerr << "Object file not found: " << obj_file << std::endl;
-        return;
-    }
-
-    // only compiling a single object file for now
-    vec<str> obj_files = {obj_file.string()};
-
-    fs::path exec_name = obj_file.string();
-    exec_name.replace_extension(".out");
-
-    LinkOptions link_opts = build_link_options(file.output_name, obj_files);
-    auto result = link_executable(link_opts);
-
-    if (result) {
-        if (verbose) std::cout << "Successfully created executable: " << exec_name << std::endl;
-        if (!output_OBJ) fs::remove(obj_file);
-    } else {
-        std::cerr << "Linking failed: " << result.error() << std::endl;
-    }
-}
-
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
     // clear_metadata(); // NOTE: add this if you are having issues with corrupted debug metadata
@@ -49,12 +19,10 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
     // should remove this later 
 
-    if (print_file) {
-        std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
-                  << file_stream.str() << std::endl;
-    }
 
     if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
+        std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
+            << file_stream.str() << std::endl;
         fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
         llvm::raw_fd_ostream dest(name_copy.string(), EC);
         dest << llvm_ir_to_str();
@@ -66,7 +34,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
         error_stream.flush();
         std::cerr << error_buffer << '\n';
-        return;
+        std::exit(1);
     }
 
     llvm::InitializeAllTargets();
@@ -177,3 +145,32 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     }
 }
 
+
+void Codegen::compile_and_link_module(llvm::OptimizationLevel opt_level) {
+
+    compile_module(opt_level);
+    
+    fs::path obj_file = llvm_module->getModuleIdentifier();
+    obj_file.replace_extension(".o");
+    
+    if (!fs::exists(obj_file)) {
+        std::cerr << "Object file not found: " << obj_file << std::endl;
+        return;
+    }
+
+    // only compiling a single object file for now
+    vec<str> obj_files = {obj_file.string()};
+
+    fs::path exec_name = obj_file.string();
+    exec_name.replace_extension(".out");
+
+    LinkOptions link_opts = build_link_options(file.output_name, obj_files);
+    auto result = link_executable(link_opts);
+
+    if (result) {
+        if (verbose) std::cout << "Successfully created executable: " << exec_name << std::endl;
+        if (!output_OBJ) fs::remove(obj_file);
+    } else {
+        std::cerr << "Linking failed: " << result.error() << std::endl;
+    }
+}

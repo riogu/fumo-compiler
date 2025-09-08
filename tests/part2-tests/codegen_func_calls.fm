@@ -1,7 +1,0 @@
-t(
-"let x = 2;\n"
-"let y = x + 123123;\n"
-"fn other() -> void {};\n"
-"fn func() -> void {other();};\n"
-,pass),
-

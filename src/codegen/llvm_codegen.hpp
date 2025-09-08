@@ -67,8 +67,9 @@ struct Codegen {
     }
 
   private:
-    Opt<llvm::Value*> codegen(ASTNode& node);
     void register_declaration(std::string_view name, ASTNode& node);
+    Opt<llvm::Value*> codegen_lvalue(ASTNode& node);
+    Opt<llvm::Value*> codegen_rvalue(ASTNode& node);
 
     void clear_metadata();
     void create_libc_main();

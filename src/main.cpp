@@ -115,6 +115,9 @@ auto main(int argc, char** argv) -> int {
 
     if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
 
+        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+        // }
     Codegen codegen {file, analyzer.symbol_tree};
     codegen.codegen_file(file_root_node);
 

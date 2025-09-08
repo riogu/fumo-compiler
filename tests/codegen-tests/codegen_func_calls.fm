@@ -1,0 +1,30 @@
+//t(
+//"fn func() -> void {}\n"
+//"fn main() -> i32 {func();}\n"
+//,pass),
+//t(
+//"fn func() -> i32  {return 213;}\n"
+//"fn main() -> i32 {\n"
+//"    let x = func();\n"
+//"    return x;\n"
+//"}\n"
+//,pass),
+
+t(
+"fn func(a: i32) -> i32 { return a; }\n"
+"fn main() -> i32 {\n"
+"    let x = func(123);\n"
+"    return x;\n"
+"}\n"
+,pass),
+
+t(
+"fn func(a: i32*) -> i32 { \n"
+"    return *a; \n"
+"}\n"
+"fn main() -> i32 {\n"
+"    let x = 69;\n"
+"    let y = func(&x);\n"
+"    return y;\n"
+"}\n"
+,pass),

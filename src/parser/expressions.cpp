@@ -201,7 +201,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             expect_token_str(")");
 
             node = push(ASTNode {*prev_tkn, func_call, node->type});
-            // NOTE: we dont push, only in the next iteration or at the end in the below if statement
+            // NOTE: we dont push_back(), only in the next iteration or at the end in the below if statement
             continue;
         }
 

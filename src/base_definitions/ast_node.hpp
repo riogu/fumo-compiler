@@ -121,7 +121,7 @@ struct FunctionCall {
         
         FunctionCall_kinds
     } kind;
-    ASTNode* identifier; // is replaced by the FunctionDecl identifier
+    ASTNode* identifier;
     vec<ASTNode*> argument_list {}; // if its empty we have no args
 };
 
