@@ -49,7 +49,8 @@ struct UnaryExpr {
         logic_not,               /* !                                 */ \
         bitwise_not,             /* ~                                 */ \
         return_statement,        /* return                            */ \
-        dereference              /* return                            */ \
+        dereference,             /* return                            */ \
+        address_of               /* return                            */ \
 
         UnaryExpr_kinds
     } kind;
@@ -171,6 +172,8 @@ struct ASTNode {
     Type type {};
 
     llvm::Value* llvm_value {};
+    bool is_llvm_ptr = false; // used to know if we are an address to be assigned to
+                              // (aka, we are the target of a 'store' instruction)
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;

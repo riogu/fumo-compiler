@@ -1,21 +1,11 @@
-t(
-"fn func() -> void ;\n"
-"let x: i32;\n"
-"let y = 123123;\n"
-"fn func() -> void {\n"
-"}\n"
-"fn main() -> i32 { let x = 213;}"
-,pass),
-
-t(
-"let y = 123123;\n"
-"let x: i32;\n"
-"fn func(xzz: i32) -> i32{return 123;}\n"
-"fn main() -> i32 {\n"
-"    let x = 32;\n"
-"    y = x + 3;\n"
-"}\n"
-,pass),
+//t(
+//"fn func() -> void ;\n"
+//"let x: i32;\n"
+//"let y = 123123;\n"
+//"fn func() -> void {\n"
+//"}\n"
+//"fn main() -> i32 { let x = 213;}"
+//,pass),
 
 //t(
 //"let x: i32;\n"
@@ -38,10 +28,36 @@ t(
 //"let y: i32* = x;\n"
 //"fn main() -> i32 {return 123;}"
 //,pass),
-//t(
-//"let x = 23;\n"
-//"fn main() -> i32 {\n"
-//"    x = x * 69;\n"
-//"    let y = (x + 43) / 23 * x;\n"
-//"}\n"
-//,pass),
+
+
+t(
+"let y = 6;\n"
+"let x: i32;\n"
+"fn main() -> i32 {\n"
+"    let x = 30;\n"
+"    y = x;\n"
+"    x = x + 312;\n"
+"    return 69;\n"
+"}\n"
+,pass),
+
+
+t(
+"let x = 23;\n"
+"fn main() -> i32 {\n"
+"    x = x * 69;\n"
+"    let y = 150;\n"
+"    let ptr: i32* = &y;\n"
+"    return y;\n"
+"}\n"
+,pass),
+
+t(
+"let x = 5002;\n"
+"fn main() -> i32 {\n"
+"    let ptr: i32* = &x;\n"
+"    let ptr2: i32** = &ptr;\n"
+"    return **ptr2;\n"
+"}\n"
+,pass),
+

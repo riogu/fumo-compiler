@@ -51,11 +51,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto node = equality();
 
     if (token_is(=)) {
-        if (!is_branch<Identifier, PostfixExpr>(node)) {
+        if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
             report_error(node->source_token, "expression is not assignable.");
         }
         if (auto* id = get_if<Identifier>(node))            id->is_assigned_to = true;
         // else if (auto* postfix = get_if<PostfixExpr>(node)) postfix->is_assigned_to = true;
+        // TODO: might need to add this on postfix expr too
 
         return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
     }
@@ -121,6 +122,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(!)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not,   unary()}});
     if (token_is(~)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, unary()}});
     if (token_is(*)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, unary()}});
+    if (token_is(&)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::address_of,  unary()}});
     return postfix();
 }
 

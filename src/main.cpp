@@ -77,8 +77,8 @@ auto main(int argc, char** argv) -> int {
         output_IR = true; output_ASM = true; output_OBJ = true;
         print_file = true; /* print_AST = true; print_IR = true; */
         verbose = true;
-        linker_name = "gcc";
 
+        { map_macro(was_opt_level, 0, 1, 2, 3); }
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;

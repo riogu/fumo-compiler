@@ -65,16 +65,25 @@ void Analyzer::analyze(ASTNode& node) {
                                      "invalid type '{}' for unary expression.",
                                      get_name(un.expr->type));
                     }
+                    node.type = un.expr->type;
                     break;
-                case UnaryExpr::return_statement:
                 // TODO: return should be moved to a new struct later
                 case UnaryExpr::dereference:
-                    // NOTE: unary expr doesnt have to do anything here other than
-                    // check that the held expr is a pointer.
-
-                    // default: INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                    if (!un.expr->type.ptr_count) {
+                        report_error(node.source_token, "Indirection requires pointer operand, '{}' is invalid.",
+                                     get_name(un.expr->type));
+                    }
+                    node.type = un.expr->type;
+                    node.type.ptr_count--;
+                    break;
+                case UnaryExpr::address_of:
+                    node.type = un.expr->type;
+                    node.type.ptr_count++;
+                    break;
+                case UnaryExpr::return_statement:
+                    node.type = un.expr->type;
+                    break;
             }
-            node.type = un.expr->type;
         }
         holds(BinaryExpr, &bin) {
             analyze(*bin.lhs);

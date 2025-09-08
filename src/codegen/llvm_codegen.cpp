@@ -1,5 +1,4 @@
 #include "codegen/llvm_codegen.hpp"
-#include "base_definitions/ast_node.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -68,15 +67,13 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                         INTERNAL_PANIC("[Codegen Error] forgot to assign llvm::Value to declaration for '{}'.",
                                        get_id(get<VariableDecl>(declaration)).mangled_name);
                     }
-                    if (get<VariableDecl>(declaration).kind == VariableDecl::global_var_declaration
-                        || id.is_assigned_to) {
-                        return declaration->llvm_value;
-                    }
-                    return ir_builder->CreateLoad(fumo_to_llvm_type(declaration->type), declaration->llvm_value);
+                    // NOTE: always return the pointer to the original memory no matter what
+                    return declaration->llvm_value;
                 }
 
                 case Identifier::member_var_name:
                     // TODO: this needs GEP from the base address of the struct
+                    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
                     break;
                 case Identifier::func_call_name:
                 case Identifier::type_name:
@@ -108,7 +105,32 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
             if (!(val = codegen(*un.expr).value_or(nullptr))) {
                 INTERNAL_PANIC("[Codegen] found null value in UnaryExpr '{}'.", node.name());
             }
+            switch (un.kind) {
+                case UnaryExpr::address_of: 
+                    if (!val->getType()->isPointerTy()) {
+                        INTERNAL_PANIC("[Codegen] Taking address of non-lvalue (expected pointer from alloca)");
+                    }
+                    return val;
 
+                case UnaryExpr::dereference: {
+                    // Load if it's a pointer variable 
+                    // if (val->getType()->isPointerTy()) {
+                    //     val = ir_builder->CreateLoad(fumo_to_llvm_type(un.expr->type), val);
+                    // }
+                    // FIXME: missing correct number of dereferences
+                    Type deref_type = un.expr->type;
+                    if (!deref_type.ptr_count) {
+                        INTERNAL_PANIC("[Codegen] passed non dereferenceable type to '{}'", node.name());
+                    }
+                    deref_type.ptr_count--;
+                    return ir_builder->CreateLoad(fumo_to_llvm_type(deref_type), val);
+                }
+                default: 
+                    if (val->getType()->isPointerTy()) {
+                        val = ir_builder->CreateLoad(fumo_to_llvm_type(un.expr->type), val);
+                    }
+                    break;
+            }
             switch (un.kind) {
                 case UnaryExpr::negate:
                     return ir_builder->CreateNeg(val);
@@ -130,6 +152,24 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
             if (!lhs_val || !rhs_val) {
                 INTERNAL_PANIC("[Codegen] found null value in binary operand for '{}'.", node.name());
             }
+            if (bin.kind == BinaryExpr::assignment) {
+                if (!lhs_val->getType()->isPointerTy()) {
+                    INTERNAL_PANIC("[Codegen] assigning to a non pointer llvm::value, found '{}'.", node.name());
+                }
+                if (rhs_val->getType()->isPointerTy()) {
+                    // dont load if it was an address_of, we want the pointer in that case
+                    if (auto* un = get_if<UnaryExpr>(bin.rhs); !un || un->kind != UnaryExpr::address_of) {
+                        rhs_val = ir_builder->CreateLoad(fumo_to_llvm_type(bin.rhs->type), rhs_val);
+                    }
+                }
+            } else {
+                if (lhs_val->getType()->isPointerTy()) {
+                    lhs_val = ir_builder->CreateLoad(fumo_to_llvm_type(bin.lhs->type), lhs_val);
+                }
+                if (rhs_val->getType()->isPointerTy()) {
+                    rhs_val = ir_builder->CreateLoad(fumo_to_llvm_type(bin.rhs->type), rhs_val);
+                }
+            }
 
             switch(bin.kind) {
                 case BinaryExpr::add:
@@ -149,17 +189,14 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
                 case BinaryExpr::less_equals:
                     return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
                 case BinaryExpr::assignment:
-                    // NOTE: making global variables is very complicated and has a lot of implications,
-                    // so for now we will make a simple _start function and use that,
-                    // but it should be redone
-                    //
-                    // let var = 123 + 3213;
                     if (auto var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
+                            // this is only specifically for global initializers like: let x: i32 = 123123 + 3 * 3;
                             return fumo_init_builder->CreateStore(rhs_val, lhs_val);
-                        }
+                        } 
                     }
                     return ir_builder->CreateStore(rhs_val, lhs_val);
+
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
             }
@@ -172,6 +209,7 @@ Opt<llvm::Value*> Codegen::codegen(ASTNode& node) {
         holds(VariableDecl, const& var) {
             // NOTE: type checker shouldn't allow "let x: void;" to exist
             switch (var.kind) {
+                // both return pointers
                 case VariableDecl::global_var_declaration:
                     return node.llvm_value;
                 case VariableDecl::variable_declaration: {
@@ -252,6 +290,11 @@ void Codegen::register_declaration(std::string_view name, ASTNode& node) {
                                                                get_id(func).mangled_name, llvm_module.get());
         }
         holds(VariableDecl, const& var) {
+            // we only recieve globals here
+            if (var.kind != VariableDecl::global_var_declaration) {
+                INTERNAL_PANIC("should only register globals, found local variable '{}'.",
+                               get_id(var).mangled_name);
+            }
             auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type), false,
                                                         llvm::GlobalValue::ExternalLinkage,
                                                         llvm::Constant::getNullValue(fumo_to_llvm_type(node.type)),

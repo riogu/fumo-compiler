@@ -4,3 +4,4 @@ t(
 "fn other() -> void {};\n"
 "fn func() -> void {other();};\n"
 ,pass),
+
