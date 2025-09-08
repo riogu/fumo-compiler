@@ -56,7 +56,7 @@ fn some_func() -> i32* {
 - Memory management for stack allocations
 - Function calls and return value handling
 
-### Development Tools
+### User Features
 - Command-line interface with file input
 - Multiple output formats (`--emit=asm`, `--emit=obj`, `--emit=llvm-ir`, `--emit=ast`)
 - Debug output options (`--print-ir`, `--print-asm`, `--print-ast`)
@@ -64,10 +64,8 @@ fn some_func() -> i32* {
 
 ## Currently Working On
 
-### Core LLVM Codegen
-- Variable handling and storage optimization
+### LLVM Codegen
 - Arithmetic expression codegen refinement
-- Function call mechanics and parameter passing
 - Return value handling for all function types
 
 ### Struct Implementation
@@ -77,10 +75,7 @@ fn some_func() -> i32* {
 - Struct initialization and constructor calls
 
 ### Pointer System
-- Pointer load/store operations
-- Address-of operator (`&`) implementation
-- Pointer arithmetic and dereferencing
-- Memory safety and bounds considerations
+- Pointer arithmetic 
 
 ### Control Flow & String Literals
 - `if/else` statement implementation

@@ -1,14 +1,20 @@
-DIR="build/"
-if [ ! -d "$DIR" ]; then
-    mkdir ${DIR}
+#!/bin/bash
+set -e
+
+PROJECT_NAME="${PWD##*/}"
+BUILD_DIR="build"
+
+echo "Initializing build for $PROJECT_NAME..."
+
+if [ -d "$BUILD_DIR" ]; then
+    echo "Build directory '$BUILD_DIR' already exists. Removing it..."
+    rm -rf "$BUILD_DIR"
 fi
-cd $DIR
-# cmake -S .. -B . -DCMAKE_BUILD_TYPE=Debug
+
+mkdir "$BUILD_DIR"
+cd "$BUILD_DIR"
 cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
-
-# BIN="${DIR}${project_name}"
-# cmake --build . && cd .. && ./$BIN
-# ninja && cd .. && ./$BIN
 ninja
+cd ..
 
-
+echo "Build initialization complete!"

@@ -16,8 +16,8 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     fumo_init_builder->SetInsertPoint(bblock);
     fumo_init_builder->SetCurrentDebugLocation(llvm::DebugLoc());
 
-    // ---------------------------------------------------------------------------
     // codegen
+    // ---------------------------------------------------------------------------
     for (const auto& [name, node] : symbol_tree.all_declarations) register_declaration(name, *node);
     for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen_rvalue(*node);
     // ---------------------------------------------------------------------------
@@ -26,37 +26,12 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     fumo_init_builder->SetCurrentDebugLocation(llvm::DebugLoc());
     fumo_init_builder->CreateRetVoid();
 
-
-    // Handle user-defined main function
-    auto* user_main = llvm_module->getFunction("fumo.user_main");
-
-    if (user_main && !user_main->isDeclaration() && !user_main->empty()) {
-        user_main->setLinkage(llvm::GlobalValue::InternalLinkage);
-        
-        llvm::BasicBlock* back = &user_main->back();
-        if (auto* term = user_main->back().getTerminator(); !term) {
-            ir_builder->SetInsertPoint(back);
-            ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
-
-            if (user_main->getReturnType()->isVoidTy()) 
-                ir_builder->CreateRetVoid();
-            else if (user_main->getReturnType()->isIntegerTy(32))
-                ir_builder->CreateRet(ir_builder->getInt32(0));
-            else {
-                report_error(symbol_tree.function_decls["fumo.user_main"]->source_token,
-                             "main has invalid return type. (NOTE: use void or i32).");
-            }
-
-        } else if (!llvm::isa<llvm::ReturnInst>(term)) {
-            INTERNAL_PANIC("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
-        }
-    }
-
+    verify_user_main();
     create_libc_main();
 }
 
+// returns the ACTUAL VALUE (for expressions, function args, etc)
 Opt<llvm::Value*> Codegen::codegen_rvalue(ASTNode& node) {
-    // Returns the ACTUAL VALUE (for expressions, function args, etc)
     
     match(node) {
         holds(Identifier, const& id) {
@@ -106,7 +81,7 @@ Opt<llvm::Value*> Codegen::codegen_rvalue(ASTNode& node) {
 
             switch (un.kind) {
                 case UnaryExpr::dereference: // *ptr - load the value from the pointer
-                    if (!un.expr->type.ptr_count) INTERNAL_PANIC("somehow passed non dereferenceable type to '{}'", node.name());
+                    if (!un.expr->type.ptr_count) INTERNAL_PANIC("somehow passed non ptr type to '{}'", node.name());
                     return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), val);
                 case UnaryExpr::negate:
                     return ir_builder->CreateNeg(val);
@@ -252,10 +227,10 @@ Opt<llvm::Value*> Codegen::codegen_rvalue(ASTNode& node) {
     return std::nullopt;
 }
 
+// returns the ADDRESS where a value is stored (for assignment, address-of)
 Opt<llvm::Value*> Codegen::codegen_lvalue(ASTNode& node) {
-    // Returns the ADDRESS where a value is stored (for assignment, address-of)
-    
     match(node) {
+
         holds(Identifier, const& id) {
             switch (id.kind) {
                 case Identifier::var_name: {
@@ -310,8 +285,8 @@ Opt<llvm::Value*> Codegen::codegen_lvalue(ASTNode& node) {
     return std::nullopt;
 }
 
+// adds function prototypes and forward declarations of types
 void Codegen::register_declaration(std::string_view name, ASTNode& node) {
-    // adds function prototypes and forward declarations of types
 
     match(node) {
         holds(TypeDecl, const& type_decl) {
@@ -349,6 +324,31 @@ void Codegen::register_declaration(std::string_view name, ASTNode& node) {
     }
 }
 
+void Codegen::verify_user_main() {
+    auto* user_main = llvm_module->getFunction("fumo.user_main");
+
+    if (user_main && !user_main->isDeclaration() && !user_main->empty()) {
+        user_main->setLinkage(llvm::GlobalValue::InternalLinkage);
+        
+        llvm::BasicBlock* back = &user_main->back();
+        if (auto* term = user_main->back().getTerminator(); !term) {
+            ir_builder->SetInsertPoint(back);
+            ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+
+            if (user_main->getReturnType()->isVoidTy()) 
+                ir_builder->CreateRetVoid();
+            else if (user_main->getReturnType()->isIntegerTy(32))
+                ir_builder->CreateRet(ir_builder->getInt32(0));
+            else {
+                report_error(symbol_tree.function_decls["fumo.user_main"]->source_token,
+                             "main has invalid return type. (NOTE: use void or i32).");
+            }
+
+        } else if (!llvm::isa<llvm::ReturnInst>(term)) {
+            INTERNAL_PANIC("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
+        }
+    }
+}
 void Codegen::create_libc_main() {
 
     std::vector<llvm::Type*> main_args {};
@@ -372,54 +372,40 @@ void Codegen::create_libc_main() {
     llvm::Function* fumo_init = llvm_module->getFunction("fumo.init");
     ir_builder->CreateCall(fumo_init);
     
-    // Check for user main that accepts arguments
     llvm::Function* user_main = llvm_module->getFunction("fumo.user_main");
-    if (user_main) {
-        llvm::Value* result;
+    if (!user_main) {
+        ir_builder->CreateRet(ir_builder->getInt32(0));
+        return;
+    }
 
-        if (user_main->arg_size() == 0) {
-            result = ir_builder->CreateCall(user_main);
-        } else if (user_main->arg_size() == 2) {
+    llvm::Value* result;
 
-            const auto& user_main_node_func = get<FunctionDecl>(symbol_tree.function_decls["fumo.user_main"]);
-            const auto& argc_node = user_main_node_func.parameters[0];
-            const auto& argv_node = user_main_node_func.parameters[1];
+    if (user_main->arg_size() == 0) {
+        result = ir_builder->CreateCall(user_main);
+    } else if (user_main->arg_size() == 2) {
 
-            // NOTE: maybe using other names shouldn't be an error. theres no particular harm in allowing it
-            if (!(get_id(get<VariableDecl>(argc_node)).mangled_name != "argc"
-               && get_id(get<VariableDecl>(argv_node)).mangled_name != "argv"
-               && argc_node->type.kind == Type::i32_ && argv_node->type.kind == Type::str_)) {
-                report_error(symbol_tree.function_decls["main"]->source_token,
-                             "main has wrong types for arguments. NOTE: use main(i32 argc, str* argv) or main()");
-            }
+        const auto& user_main_node_func = get<FunctionDecl>(symbol_tree.function_decls["fumo.user_main"]);
+        const auto& argc_node = user_main_node_func.parameters[0];
+        const auto& argv_node = user_main_node_func.parameters[1];
 
-            result = ir_builder->CreateCall(user_main, {argc, argv});
-
-        } else {
-            report_error(symbol_tree.function_decls["fumo.user_main"]->source_token,
-                         "main has wrong arguments. NOTE: use main(i32 argc, *str) or main()");
+        // NOTE: maybe using other names shouldn't be an error. theres no particular harm in allowing it
+        if (!(get_id(get<VariableDecl>(argc_node)).mangled_name != "argc"
+           && get_id(get<VariableDecl>(argv_node)).mangled_name != "argv"
+           && argc_node->type.kind == Type::i32_ && argv_node->type.kind == Type::str_)) {
+            report_error(symbol_tree.function_decls["main"]->source_token,
+                         "main has wrong types for arguments. NOTE: use main(i32 argc, str* argv) or main()");
         }
 
-
-        if (user_main->getReturnType()->isVoidTy()) 
-            ir_builder->CreateRet(ir_builder->getInt32(0));
-        else
-            ir_builder->CreateRet(result);
-
+        result = ir_builder->CreateCall(user_main, {argc, argv});
 
     } else {
-        ir_builder->CreateRet(ir_builder->getInt32(0));
+        report_error(symbol_tree.function_decls["fumo.user_main"]->source_token,
+                     "main has wrong arguments. NOTE: use main(i32 argc, *str) or main()");
     }
+
+    if (user_main->getReturnType()->isVoidTy())
+        ir_builder->CreateRet(ir_builder->getInt32(0));
+    else
+        ir_builder->CreateRet(result);
 }
 
-void Codegen::clear_metadata() {
-    for (auto& func : *llvm_module) {
-        func.setSubprogram(nullptr);
-        for (auto& BB : func) {
-            for (auto& inst : BB) {
-                inst.setDebugLoc(llvm::DebugLoc());
-                inst.dropUnknownNonDebugMetadata();
-            }
-        }
-    }
-}

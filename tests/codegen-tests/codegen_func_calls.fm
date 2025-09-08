@@ -19,6 +19,15 @@ t(
 ,pass),
 
 t(
+"fn main() -> i32 {\n"
+"    let x = 69;\n"
+"    let y = &x;\n"
+"    &x = y;\n"
+"    return y;\n"
+"}\n"
+,fail),
+
+t(
 "fn func(a: i32*) -> i32 { \n"
 "    return *a; \n"
 "}\n"

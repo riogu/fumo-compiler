@@ -5,21 +5,18 @@ define void @fumo.init() #0 {
   ret void
 }
 
-define i32 @func(ptr %0) {
-  %"func()::a" = alloca ptr, align 8
-  store ptr %0, ptr %"func()::a", align 8
-  %2 = load ptr, ptr %"func()::a", align 8
-  %3 = load i32, ptr %2, align 4
-  ret i32 %3
+define i32 @func(i32 %0) {
+  %"func()::a" = alloca i32, align 4
+  store i32 %0, ptr %"func()::a", align 4
+  %2 = load i32, ptr %"func()::a", align 4
+  ret i32 %2
 }
 
 define internal i32 @fumo.user_main() {
   %"main()::x" = alloca i32, align 4
-  store i32 69, ptr %"main()::x", align 4
-  %"main()::y" = alloca i32, align 4
-  %1 = call i32 @func(ptr %"main()::x")
-  store i32 %1, ptr %"main()::y", align 4
-  %2 = load i32, ptr %"main()::y", align 4
+  %1 = call i32 @func(i32 123)
+  store i32 %1, ptr %"main()::x", align 4
+  %2 = load i32, ptr %"main()::x", align 4
   ret i32 %2
 }
 

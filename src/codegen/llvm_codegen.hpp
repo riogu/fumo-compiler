@@ -73,6 +73,7 @@ struct Codegen {
 
     void clear_metadata();
     void create_libc_main();
+    void verify_user_main();
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 

@@ -14,7 +14,7 @@ fumo.init:                              # @fumo.init
 	.type	func,@function
 func:                                   # @func
 # %bb.0:
-	movl	(%rdi), %eax
+	movl	%edi, %eax
 	retq
 .Lfunc_end1:
 	.size	func, .Lfunc_end1-func
@@ -24,7 +24,7 @@ func:                                   # @func
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	movl	$69, %eax
+	movl	$123, %eax
 	retq
 .Lfunc_end2:
 	.size	main, .Lfunc_end2-main

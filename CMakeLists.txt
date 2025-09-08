@@ -8,8 +8,6 @@ include(FetchContent)
 # set(CMAKE_CXX_FLAGS_DEBUG "" CACHE STRING "" FORCE)
 # set(CMAKE_CXX_FLAGS_RELEASE "" CACHE STRING "" FORCE)
 option(USE_LIBASSERT "Use libassert" ON)
-option(STATIC_BUILD "Build statically linked binary" ON)
-
 
 function(add_git_dependency libName gitURL gitTag)
  FetchContent_Declare(
@@ -49,9 +47,6 @@ target_sources(${TARGET_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${TARGET_NAME} PRIVATE ${PROJECT_INCLUDE})
 target_compile_features(${TARGET_NAME} PUBLIC cxx_std_23)
 
-if(STATIC_BUILD)
-    target_link_options(${TARGET_NAME} PRIVATE -static)
-endif()
 
 if(USE_LIBASSERT)
  FetchContent_GetProperties(libassert)
