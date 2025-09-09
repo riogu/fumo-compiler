@@ -67,9 +67,9 @@ struct Codegen {
     }
 
   private:
-    void register_declaration(std::string_view name, ASTNode& node);
-    Opt<llvm::Value*> codegen_lvalue(ASTNode& node);
-    Opt<llvm::Value*> codegen_rvalue(ASTNode& node);
+    void register_declaration(ASTNode& node);
+    Opt<llvm::Value*> codegen_address(ASTNode& node);
+    Opt<llvm::Value*> codegen_value(ASTNode& node);
 
     void clear_metadata();
     void create_libc_main();
@@ -81,23 +81,29 @@ struct Codegen {
 
         switch (fumo_type.kind) {
             case Type::struct_: {
-                auto type = llvm::StructType::getTypeByName(*llvm_context, get_name(fumo_type));
-                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_id(fumo_type).mangled_name);
+                auto type = llvm::StructType::getTypeByName(*llvm_context, type_name(fumo_type));
+                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", type_name(fumo_type));
                 return type;
             }
-            case Type::Nothing:  return llvm::Type::getVoidTy(*llvm_context);   
             case Type::i8_:      return llvm::Type::getInt8Ty(*llvm_context);   
             case Type::i32_:     return llvm::Type::getInt32Ty(*llvm_context);  
             case Type::i64_:     return llvm::Type::getInt64Ty(*llvm_context);  
             case Type::f32_:     return llvm::Type::getFloatTy(*llvm_context);  
             case Type::f64_:     return llvm::Type::getDoubleTy(*llvm_context); 
             case Type::bool_:    return llvm::Type::getInt1Ty(*llvm_context);   
-            case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);   
-            case Type::str_:   // TODO: add string types
+            case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);
+            case Type::str_:     return llvm::PointerType::getUnqual(*llvm_context);
             default:
-                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", get_id(fumo_type).mangled_name);
+                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", type_name(fumo_type));
         }
+    }
 
+    llvm::Value* create_string_literal(const std::string& str) {
+        llvm::Constant* c_str = llvm::ConstantDataArray::getString(*llvm_context, str, true /* is null terminated */);
+        llvm::GlobalVariable* global_str = new llvm::GlobalVariable(*llvm_module, c_str->getType(), true, // isConstant
+                                                                    llvm::GlobalValue::PrivateLinkage, c_str, ".str");
+        std::vector<llvm::Value*> indices = {llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0)),
+                                             llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0))};
+        return ir_builder->CreateInBoundsGEP(c_str->getType(), global_str, indices);
     }
 };
-

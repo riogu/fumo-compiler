@@ -10,8 +10,6 @@ set -e
 PROJECT_NAME="${PWD##*/}"
 BUILD_DIR="build"
 
-export ASAN_OPTIONS="detect_leaks=0"
-
 echo "Building $PROJECT_NAME..."
 
 if [ ! -d "$BUILD_DIR" ]; then

@@ -168,9 +168,9 @@
     if (token_is_str("{")) {
         vec<ASTNode*> nodes {};
         while (!token_is_str("}")) {
-            if (token_is_keyword(let)) 
+            if (token_is_keyword(let)) {
                 nodes.push_back(variable_declaration());
-            else if (token_is_keyword(fn)) {
+            } else if (token_is_keyword(fn)) {
                 nodes.push_back(function_declaration());
                 auto& function = get<FunctionDecl>(nodes.back());
                 function.kind = FunctionDecl::member_func_declaration;
@@ -178,8 +178,8 @@
                     report_error(function.identifier->source_token, 
                                  "member function declaration '{}' can't be qualified.", id.mangled_name);
                 }
-            }
-            else if (token_is_keyword(struct))
+
+            } else if (token_is_keyword(struct))
                 nodes.push_back(struct_declaration());
             else if (token_is_keyword(enum))
                 nodes.push_back(enum_declaration());

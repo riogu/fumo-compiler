@@ -39,6 +39,8 @@
 
    - Add struct layout + member access.
 
+   - Add string literals.
+
    - Add if/else, while.
 
    - Polish docs + example programs.

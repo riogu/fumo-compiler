@@ -175,14 +175,3 @@ void Codegen::compile_and_link_module(llvm::OptimizationLevel opt_level) {
     }
 }
 
-void Codegen::clear_metadata() {
-    for (auto& func : *llvm_module) {
-        func.setSubprogram(nullptr);
-        for (auto& BB : func) {
-            for (auto& inst : BB) {
-                inst.setDebugLoc(llvm::DebugLoc());
-                inst.dropUnknownNonDebugMetadata();
-            }
-        }
-    }
-}

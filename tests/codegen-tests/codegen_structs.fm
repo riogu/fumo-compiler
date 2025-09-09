@@ -1,0 +1,9 @@
+t(
+"struct foo {\n"
+"    let x: i32 = 123;\n"
+"};\n"
+"fn main() -> i32 {\n"
+"    let var = foo{69};\n"
+"    return var.x;\n"
+"}\n"
+,pass),

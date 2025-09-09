@@ -55,10 +55,13 @@ int main() {
     constexpr std::array codegen_func_calls {
         #include "../tests/codegen-tests/codegen_func_calls.fm"
     };
+    constexpr std::array codegen_structs {
+        #include "../tests/codegen-tests/codegen_structs.fm"
+    };
     // ------------------------------------------------------
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : codegen_func_calls) {
+    for (const auto& [test, expected] : codegen_structs) {
         auto [output, status] = exec(std::format("ASAN_OPTIONS=detect_leaks=0 ./build/fumo 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {

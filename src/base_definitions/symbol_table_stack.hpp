@@ -99,8 +99,8 @@ struct SymbolTableStack {
         }
     }
     auto push_type_decl(Identifier& identifier, ASTNode& node) {
+        identifier.mangled_name = curr_scope_name + identifier.name;
         all_declarations.insert({identifier.mangled_name, &node});
-        identifier.mangled_name = curr_scope_name + identifier.name; 
         return type_decls.insert({identifier.mangled_name, &node});
     }
     auto push_namespace_decl(Identifier& identifier, ASTNode& node) {
@@ -108,8 +108,8 @@ struct SymbolTableStack {
         return namespace_decls.insert({identifier.mangled_name, &node});
     }
     auto push_function_decl(Identifier& identifier, ASTNode& node) {
-        all_declarations.insert({identifier.mangled_name, &node});
         identifier.mangled_name = curr_scope_name + identifier.name;
+        all_declarations.insert({identifier.mangled_name, &node});
         switch (curr_scope_kind) {
             case ScopeKind::TypeBody: 
                 return member_function_decls.insert({identifier.mangled_name, &node});

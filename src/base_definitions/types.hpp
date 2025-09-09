@@ -12,7 +12,6 @@ struct Type {
     ASTNode* identifier;
     enum Kind {
         Undetermined, // should be converted in the type checker or give error
-        Nothing,      // bottom type, used for if statements and other typeless constructs
         // Any,       // generic Any type (unused atm)
         // Function,  // add this later if you want function objects/pointers
         struct_,

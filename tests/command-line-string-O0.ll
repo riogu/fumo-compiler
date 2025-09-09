@@ -1,30 +1,28 @@
 ; ModuleID = 'tests/command-line-string.out'
 source_filename = "command-line-string.fm"
 
+%foo = type { i32 }
+
 define void @fumo.init() #0 {
   ret void
 }
 
-define i32 @func(i32 %0) {
-  %"func()::a" = alloca i32, align 4
-  store i32 %0, ptr %"func()::a", align 4
-  %2 = load i32, ptr %"func()::a", align 4
-  ret i32 %2
-}
-
-define internal i32 @fumo.user_main() {
-  %"main()::x" = alloca i32, align 4
-  %1 = call i32 @func(i32 123)
-  store i32 %1, ptr %"main()::x", align 4
-  %2 = load i32, ptr %"main()::x", align 4
-  ret i32 %2
+define internal void @fumo.user_main() {
+  %"main()::var" = alloca %foo, align 8
+  %1 = alloca %foo, align 8
+  store %foo zeroinitializer, ptr %1, align 4
+  %2 = getelementptr inbounds nuw %foo, ptr %1, i32 0, i32 0
+  store i32 69, ptr %2, align 4
+  %3 = load %foo, ptr %1, align 4
+  store %foo %3, ptr %"main()::var", align 4
+  ret void
 }
 
 define i32 @main(i32 %argc, ptr %argv) #0 {
 entry:
   call void @fumo.init()
-  %0 = call i32 @fumo.user_main()
-  ret i32 %0
+  call void @fumo.user_main()
+  ret i32 0
 }
 
 attributes #0 = { "used" }

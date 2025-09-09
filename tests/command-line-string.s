@@ -9,24 +9,14 @@ fumo.init:                              # @fumo.init
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
                                         # -- End function
-	.globl	func                            # -- Begin function func
-	.p2align	4
-	.type	func,@function
-func:                                   # @func
-# %bb.0:
-	movl	%edi, %eax
-	retq
-.Lfunc_end1:
-	.size	func, .Lfunc_end1-func
-                                        # -- End function
 	.globl	main                            # -- Begin function main
 	.p2align	4
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	movl	$123, %eax
+	xorl	%eax, %eax
 	retq
-.Lfunc_end2:
-	.size	main, .Lfunc_end2-main
+.Lfunc_end1:
+	.size	main, .Lfunc_end1-main
                                         # -- End function
 	.section	".note.GNU-stack","",@progbits

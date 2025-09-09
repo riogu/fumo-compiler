@@ -110,9 +110,12 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
-                if (auto decl = get<Identifier>(node.type.identifier).declaration) node.type = decl.value()->type;
+                if (auto decl = get_id(node.type).declaration) node.type = decl.value()->type;
             }
+
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
+
             add_declaration(node);
         }
 
@@ -186,7 +189,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 // TODO: make sure that return statements match the function's return type
                 case BlockScope::compound_statement:
                     if (symbol_tree.curr_scope_kind == ScopeKind::MemberFuncBody
-                        || symbol_tree.curr_scope_kind == ScopeKind::MemberCompoundStatement) {
+                     || symbol_tree.curr_scope_kind == ScopeKind::MemberCompoundStatement) {
                         symbol_tree.push_scope("", ScopeKind::MemberCompoundStatement);
                     } else {
                         symbol_tree.push_scope("", ScopeKind::CompoundStatement);
@@ -198,7 +201,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     for (auto& node : scope.nodes) analyze(*node);
                     if (node.type.kind == Type::Undetermined) {
                         analyze(*node.type.identifier);
-                        if (auto decl = get<Identifier>(node.type.identifier).declaration) {
+                        if (auto decl = get_id(node.type).declaration) {
                             node.type = decl.value()->type;
                         }
                     }
@@ -271,6 +274,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
                 analyze(*node);
                 prev_name += get_id(node->type).mangled_name + "::";
+
                 if (auto* func_call = get_if<FunctionCall>(node)) {
                     // TODO: i need to somehow provide the address of the variable here
                     // first, i need to figure out how you actually implement pointers properly
@@ -279,7 +283,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                         // NOTE: for now, i wont allow calling member functions without "this->" being used
                         // we need to search the local environment for "this" to make this work atm
                         if(node_it == postfix.nodes.begin()) {
-                            report_error(node->source_token, "must use 'this' to call member functions. [TODO]");
+                            report_error(node->source_token, "must use 'this' to call other member functions. [TODO]");
                         }
                         auto node_ = *(*node_it - 1);
                         node_.type.ptr_count += 1;

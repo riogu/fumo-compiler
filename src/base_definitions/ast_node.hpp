@@ -92,6 +92,7 @@ struct VariableDecl {
         #define VariableDecl_kinds                                       \
         global_var_declaration,  /*                                   */ \
         variable_declaration,    /*                                   */ \
+        member_var_declaration,  /*                                   */ \
         parameter                /*                                   */ \
 
         VariableDecl_kinds
@@ -200,7 +201,6 @@ template<typename... Branches>
 constexpr bool is_branch(const ASTNode* node) {
     return (std::holds_alternative<Branches>(node->branch) || ...);
 }
-#define or_error(...) ; if(!held) report_error(__VA_ARGS__); branch_;});
 
 template<typename Branch>
 constexpr Branch* get_if(ASTNode* node) {
@@ -208,6 +208,18 @@ constexpr Branch* get_if(ASTNode* node) {
     else
         return nullptr;
 }
+
+#define if_value(...)                           \
+({                                              \
+    auto* temp = __VA_ARGS__.value_or(nullptr);
+#define else_error(...)                         \
+    if (!temp) report_error(__VA_ARGS__);       \
+    temp;                                       \
+});
+#define else_panic(...)                         \
+    if (!temp) INTERNAL_PANIC(__VA_ARGS__);     \
+    temp;                                       \
+});
 
 constexpr auto wrapped_type_seq(ASTNode& node) { return type_sequence(node.branch); };
 constexpr auto wrapped_type_seq(const ASTNode& node) { return type_sequence(node.branch); };
@@ -217,9 +229,10 @@ template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
 
 
-[[nodiscard]] constexpr str type_name(Type type) {
+[[nodiscard]] constexpr str type_name(const Type& type) {
     str temp = get_id(type).mangled_name;
-    while (type.ptr_count--) temp += "*";
+    int ptr_count = type.ptr_count;
+    while (ptr_count--) temp += "*";
     return temp;
 }
 // Type checking functions

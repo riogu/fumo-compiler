@@ -9,15 +9,9 @@ define void @fumo.init() local_unnamed_addr #0 {
 }
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
-define i32 @func(i32 returned %0) local_unnamed_addr #1 {
-  ret i32 %0
-}
-
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
 entry:
-  ret i32 123
+  ret i32 0
 }
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) "used" }
-attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }

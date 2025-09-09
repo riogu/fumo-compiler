@@ -211,8 +211,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             auto* first_node = *nodes.begin();
             Identifier* first_id = nullptr;
             match(*first_node) {
-                holds(Identifier, &id)          first_id = &id;
-                holds(UnaryExpr, &un)           first_id = &get<Identifier>(un.expr);
+                holds(Identifier, &id) first_id = &id;
+                holds(UnaryExpr, &un)  first_id = &get<Identifier>(un.expr);
                 holds(FunctionCall, &func_call) {
                     first_id = &get<Identifier>(func_call.identifier);
                     func_call.kind = FunctionCall::function_call;
