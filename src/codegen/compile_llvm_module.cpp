@@ -165,9 +165,8 @@ void Codegen::compile_and_link_module(llvm::OptimizationLevel opt_level) {
     exec_name.replace_extension(".out");
 
     LinkOptions link_opts = build_link_options(file.output_name, obj_files);
-    auto result = link_executable(link_opts);
 
-    if (result) {
+    if (auto result = link_executable(link_opts)) {
         if (verbose) std::cout << "Successfully created executable: " << exec_name << std::endl;
         if (!output_OBJ) fs::remove(obj_file);
     } else {

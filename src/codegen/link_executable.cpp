@@ -6,10 +6,8 @@ Result<void, str> Codegen::link_executable(const LinkOptions& opts) {
     LinkerType linker = opts.linker;
 
     if (linker == LinkerType::AUTO) {
-        if (system("which gcc >/dev/null 2>&1") == 0) 
-            linker = LinkerType::GCC;
-        else if (system("which clang >/dev/null 2>&1") == 0)
-            linker = LinkerType::CLANG;
+        if (system("which gcc >/dev/null 2>&1") == 0)        linker = LinkerType::GCC;
+        else if (system("which clang >/dev/null 2>&1") == 0) linker = LinkerType::CLANG;
         else
             Err("No suitable linker found (install gcc or clang)");
     }

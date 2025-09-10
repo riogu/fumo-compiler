@@ -20,6 +20,7 @@ template<typename T>
 using unique_ptr = std::unique_ptr<T>;
 
 using i64 = int64_t;
+inline constexpr std::nullopt_t None = std::nullopt;
 
 struct File {
     fs::path path_name;

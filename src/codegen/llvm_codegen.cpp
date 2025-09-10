@@ -1,7 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 #include "base_definitions/ast_node.hpp"
 #include "utils/common_utils.hpp"
-
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
 
@@ -34,26 +33,122 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     verify_user_main();
     create_libc_main();
 }
+// returns the ADDRESS where a value is stored (for assignment, address-of)
+Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
 
-// returns the ACTUAL VALUE (for expressions, function args, etc)
-Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
-    
     match(node) {
+
         holds(Identifier, const& id) {
             switch (id.kind) {
                 case Identifier::var_name: {
                     ASTNode* declaration = id.declaration.value();
                     if (!declaration->llvm_value) {
-                        INTERNAL_PANIC("[Codegen Error] forgot to assign llvm::Value to declaration for '{}'.",
+                        INTERNAL_PANIC("[Codegen] forgot to assign llvm::Value to declaration for '{}'.",
                                        get_id(get<VariableDecl>(declaration)).mangled_name);
                     }
-                    // Load the value from the alloca
-                    return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), declaration->llvm_value);
+                    // Return the alloca address directly (this IS the lvalue)
+                    return declaration->llvm_value;
                 }
-                case Identifier::member_var_name:
-                    // TODO: this needs GEP from the base address of the struct + load
-                    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
-                    break;
+                case Identifier::member_var_name: {
+                    int member_index = get<VariableDecl>(id.declaration.value()).member_index.value();
+                    auto* type = llvm::StructType::getTypeByName(*llvm_context, id.base_struct_name);
+                    if (!node.llvm_value) {
+                        INTERNAL_PANIC("[Codegen] forgot to assign llvm::Value to '{}'.", node.name());
+                    }
+                    return ir_builder->CreateStructGEP(type, node.llvm_value, member_index);
+                }
+
+                default:
+                    report_error(node.source_token, "identifier '{}' is not assignable.", id.mangled_name);
+            }
+        }
+
+        holds(UnaryExpr, const& un) {
+            if (un.kind != UnaryExpr::dereference) report_error(node.source_token, "expression is not assignable.");
+            if (!un.expr->type.ptr_count) INTERNAL_PANIC("somehow passed non ptr type to '{}'", node.name());
+            // NOTE: might be able to use this to report errors on using function return values
+
+            // *ptr as lvalue - the pointer value itself is the address we want
+            auto* addr = if_value(codegen_value(*un.expr))
+                         else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+            return addr;
+            
+        }
+
+        holds(VariableDecl, const& var) {
+            // variable declarations create storage and return the address
+            switch (var.kind) {
+                case VariableDecl::member_var_declaration: INTERNAL_PANIC("member variables don't need codegen.");
+                case VariableDecl::global_var_declaration:
+                    return node.llvm_value;  // global var address
+                case VariableDecl::parameter:
+                case VariableDecl::variable_declaration: {
+                    auto* type = fumo_to_llvm_type(node.type);
+                    node.llvm_value = ir_builder->CreateAlloca(type, nullptr, get_id(var).mangled_name);
+                    return node.llvm_value;  // alloca address
+                }
+            }
+        }
+
+        holds(PostfixExpr, const& postfix) { // this is the lvalue postfix (wants address)
+            // NOTE: check if the last value is an address
+            auto* curr_node = postfix.nodes[0];
+            llvm::Value* curr_ptr;
+
+            // the first element is Identifier::var_name, so it has different codegen
+            // the first node is either unary::deref or a var_name (not a member var name)
+            curr_ptr = if_value(codegen_address(*curr_node))
+                                else_error(curr_node->source_token,
+                                           "found no value in postfix expression (fix this).");
+
+            for (std::size_t i = 1; i < postfix.nodes.size(); i++) {
+                curr_node = postfix.nodes[i];
+                curr_node->llvm_value = curr_ptr;
+
+                if (is_branch<FunctionCall>(curr_node)) {
+                    // var.func().x = 123; // invalid
+                    // y = var.func()->x;  // valid
+                    // TODO: missing 'this' pointer being passed to function call
+                    curr_ptr = if_value(codegen_value(*curr_node))
+                               else_error(curr_node->source_token, "found no value in postfix expression (FIX THIS).");
+                    if (i + 1 < postfix.nodes.size() // not the last element
+                        && !is_branch<UnaryExpr>(postfix.nodes[i - 1])) { // and wasn't dereferenced
+                        report_error(curr_node->source_token,
+                                     "cannot access member of temporary value returned by function call.");
+                    }
+                    continue;
+                }
+
+                curr_ptr = if_value(codegen_address(*curr_node))
+                           else_error(curr_node->source_token, "found no value in postfix expression (FIX THIS).");
+                // %curr_ptr = getelementptr inbounds nuw %struct.foo, ptr %struct_ptr, i32 0, i32 index
+                // which is a pointer to the address of the struct member 
+            }
+
+            return curr_ptr;
+
+        }
+        _default { report_error(node.source_token, "expression is not assignable."); }
+    }
+    return std::nullopt;
+}
+
+// returns the ACTUAL VALUE (for expressions, function args, etc)
+Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
+    prev_value_kind = ValueKind::value;
+    
+    match(node) {
+        holds(Identifier, const& id) {
+            switch (id.kind) {
+                // Load the value from the alloca
+                case Identifier::var_name: {
+                    auto* addr = codegen_address(node).value();
+                    return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), addr);
+                }
+                case Identifier::member_var_name: {
+                    auto* addr = codegen_address(node).value();
+                    return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), addr);
+                }
                 case Identifier::func_call_name:
                 case Identifier::type_name:
                 case Identifier::declaration_name:
@@ -81,13 +176,15 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             // &expr - get the lvalue (address) of the expression
             if (un.kind == UnaryExpr::address_of) return codegen_address(*un.expr);
 
+            if (un.kind == UnaryExpr::dereference) {
+                auto* addr = codegen_address(node).value();
+                return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), addr);
+            }
+
             auto* val = if_value(codegen_value(*un.expr))
                         else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
 
             switch (un.kind) {
-                case UnaryExpr::dereference: // *ptr - load the value from the pointer
-                    if (!un.expr->type.ptr_count) INTERNAL_PANIC("somehow passed non ptr type to '{}'", node.name());
-                    return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), val);
                 case UnaryExpr::negate:
                     return ir_builder->CreateNeg(val);
                 case UnaryExpr::logic_not:
@@ -104,13 +201,12 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
         holds(BinaryExpr, const& bin) {
 
             if (bin.kind == BinaryExpr::assignment) {
-                auto* lhs_addr = codegen_address(*bin.lhs).value_or(nullptr);
-                auto* rhs_val  = codegen_value(*bin.rhs).value_or(nullptr);
-                
-                if (!lhs_addr || !rhs_val) {
-                    INTERNAL_PANIC("[Codegen] found null value in assignment for '{}'.", node.name());
-                }
-                
+                auto* lhs_addr = if_value(codegen_address(*bin.lhs))
+                                 else_error(node.source_token, "cannot assign to expression.");
+                                         
+                auto* rhs_val  = if_value(codegen_value(*bin.rhs))
+                                 else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
+
                 // global initialization goes in fumo init
                 if (auto var = get_if<VariableDecl>(bin.lhs)) {
                     if (var->kind == VariableDecl::global_var_declaration) {
@@ -151,46 +247,23 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
         }
 
         // this code will be pretty bad since its not recursive
-        holds(PostfixExpr, const& postfix) { 
+        // let x = myvar.member.other->foo().e;
+        // myvar.member.other->foo()->e = 123;
+        holds(PostfixExpr, const& postfix) {
+            auto* val = if_value(codegen_address(node))
+                        else_error(node.source_token, "expression is not assignable.");
 
-            auto* prev_node = postfix.nodes[0];
-            llvm::Value* curr_val;
-
-            if (is_branch<FunctionCall>(prev_node)) return codegen_value(*prev_node);
-
-            curr_val = if_value(codegen_address(*prev_node))
-                       else_error(prev_node->source_token, "found no value in postfix expression (fix this).");
-
-            if (node.type.kind != Type::struct_) INTERNAL_PANIC("passed non struct somehow (FIX THIS).");
-            auto* struct_type = llvm::cast<llvm::StructType>(fumo_to_llvm_type(node.type));
-
-            for (std::size_t i = 1; i < postfix.nodes.size(); i++) {
-                auto* curr_node = postfix.nodes[i];
-
-                if (is_branch<FunctionCall>(curr_node)) {
-                    curr_val = if_value(codegen_value(*curr_node))
-                               else_error(curr_node->source_token, "found no value in postfix expression (FIX THIS).");
-                    continue;
-                }
-
-                curr_val = if_value(codegen_address(*curr_node))
-                           else_error(curr_node->source_token, "found no value in postfix expression (fix this).");
-
-                // getelementptr inbounds nuw %struct.foo, ptr %struct_ptr, i32 0, i32 i
-                // let x = myvar.member.other.foo().e;
-                // myvar.member.other.foo()->e = 123;
-                auto* struct_type = fumo_to_llvm_type(prev_node->type);
-                auto* field_ptr = ir_builder->CreateStructGEP(struct_type, curr_val, i);
-            }
-
-            return curr_val;
-
+            // size is 1 only if its a normal function call
+            // that means you can't assign to the rvalue it creates (it doesn't have an address)
+            // if it is returning a pointer, the caller decides if it is valid.
+            // *func() = 123; // this is a valid assignment
+            return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), val);
         }
 
         holds(VariableDecl, const& var) {
             // done this way just so we can call the same function in codegen_file()
             if (var.kind != VariableDecl::global_var_declaration) {
-                INTERNAL_PANIC("[Codegen] can't call codegen_rvalue() other than global variables.");
+                INTERNAL_PANIC("[Codegen] can't call codegen_rvalue() on '{}' other than global variables.", node.name());
             }
             return codegen_address(node);
         }
@@ -222,6 +295,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
         holds(FunctionCall, const& func_call) {
             // Function calls: all arguments are rvalues
+            // TODO: add 'this' pointer if its a member function
             if (auto* llvm_func = llvm_module->getFunction(get_id(func_call).mangled_name)) {
                 vec<llvm::Value*> arg_values {};
                 for (auto* arg : func_call.argument_list) {
@@ -249,6 +323,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         // fill with 0s before initialization
                         auto* struct_ptr = ir_builder->CreateAlloca(struct_type);
                         ir_builder->CreateStore(llvm::Constant::getNullValue(struct_type), struct_ptr);
+                        // TODO: first fill with default values before assigning new ones
 
                         for (std::size_t i = 0; i < scope.nodes.size(); ++i) {
 
@@ -298,70 +373,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
     return std::nullopt;
 }
 
-// returns the ADDRESS where a value is stored (for assignment, address-of)
-Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
-    match(node) {
-
-        holds(Identifier, const& id) {
-            switch (id.kind) {
-                case Identifier::var_name: {
-                    ASTNode* declaration = id.declaration.value();
-                    if (!declaration->llvm_value) {
-                        INTERNAL_PANIC("[Codegen Error] forgot to assign llvm::Value to declaration for '{}'.",
-                                       get_id(get<VariableDecl>(declaration)).mangled_name);
-                    }
-                    // Return the alloca address directly (this IS the lvalue)
-                    return declaration->llvm_value;
-                }
-                case Identifier::member_var_name:
-                    // TODO: this needs GEP from the base address of the struct
-                    // auto* struct_type = fumo_to_llvm_type(node.type);
-                    // auto* field_ptr = ir_builder->CreateStructGEP(struct_type, struct_ptr, i);
-                    INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
-                    break;
-                default:
-                    report_error(node.source_token, "Cannot assign to identifier '{}'", id.mangled_name);
-            }
-        }
-
-        holds(UnaryExpr, const& un) {
-            // *ptr as lvalue - the pointer value itself is the address we want
-            if (un.kind == UnaryExpr::dereference) {
-                return codegen_value(*un.expr);
-            } else {
-                report_error(node.source_token, "expression is not assignable.");
-            }
-        }
-
-        holds(VariableDecl, const& var) {
-            // variable declarations create storage and return the address
-            switch (var.kind) {
-                case VariableDecl::member_var_declaration:
-                    INTERNAL_PANIC("member variables don't need codegen.");
-                case VariableDecl::global_var_declaration:
-                    return node.llvm_value;  // global var address
-                case VariableDecl::parameter:
-                case VariableDecl::variable_declaration: {
-                    auto* type = fumo_to_llvm_type(node.type);
-                    node.llvm_value = ir_builder->CreateAlloca(type, nullptr, get_id(var).mangled_name);
-                    return node.llvm_value;  // alloca address
-                }
-            }
-        }
-
-        // TODO: Add array indexing, member access, etc.
-        // holds(PostfixExpr with array_index): return GEP address
-        // holds(PostfixExpr with member_access): return GEP address
-        holds(PostfixExpr, const& postfix) { // this is the lvalue postfix (wants address)
-            // NOTE: check if the last value is an address
-            auto* val = codegen_address(node).value();
-        }
-        _default {
-            report_error(node.source_token, "expression is not assignable.");
-        }
-    }
-    return std::nullopt;
-}
 
 // adds function prototypes and forward declarations of types
 void Codegen::register_declaration(ASTNode& node) {

@@ -28,6 +28,8 @@ extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ,
 extern llvm::cl::opt<str>  linker_name;
 extern llvm::cl::list<str> libraries, lib_paths;
 
+enum struct ValueKind { no_value, address, value };
+
 struct Codegen {
   private:
     std::map<str, llvm::AllocaInst*> variable_env;
@@ -39,6 +41,11 @@ struct Codegen {
     SymbolTableStack symbol_tree {};
     ASTNode* file_root_node;
     File file;
+
+    // used to be able to assign to a function call if deferenced:
+    // *func() = 123; 
+    // valid as long as func() returns a pointer, and that pointer is dereferenced
+    ValueKind prev_value_kind = ValueKind::no_value;
 
   public:
     Codegen(const File& file, SymbolTableStack& symbol_tree) : symbol_tree(std::move(symbol_tree)), file(file) {

@@ -54,7 +54,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
             report_error(node->source_token, "expression is not assignable.");
         }
-        if (auto* id = get_if<Identifier>(node))            id->is_assigned_to = true;
+        // if (auto* id = get_if<Identifier>(node))            id->is_assigned_to = true;
         // else if (auto* postfix = get_if<PostfixExpr>(node)) postfix->is_assigned_to = true;
         // TODO: might need to add this on postfix expr too
 
@@ -159,8 +159,13 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     vec<ASTNode*> nodes {};
     // NOTE: the current impl means you can't do "(this->that.this).this"
     // (can't use parentheses in a postfix expression)
+    // the way i decided to make postfix expressions (flat vector) ended up being pretty inconvenient
+    // later, i will have to consider refactoring this into a binary structure 
+    // otherwise it will be quite hard to properly add nested postfixes and other things
     while (1) {
         if (token_is(->)) {
+            // NOTE: this if should be removed later. we should allow anything to have a postfix
+            // it will later be checked in other ways
             if(!is_branch<Identifier, FunctionCall>(node)) {
                 report_error(node->source_token, "expected identifier before postfix operator.");
             }
@@ -195,7 +200,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 func_call.kind = FunctionCall::member_function_call;
                 func_call.identifier = un->expr;
             } else {
-                report_error(tkn, "expected identifier before postfix operator.");
+                report_error(tkn, "expected function name before '()' operator.");
             }
             func_call.argument_list = argument_list();
             expect_token_str(")");
@@ -205,27 +210,17 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
 
-        if (!nodes.empty() || is_branch<FunctionCall>(node)) {
+        if (!nodes.empty()) {
             nodes.push_back(node);
-
-            auto* first_node = *nodes.begin();
-            Identifier* first_id = nullptr;
-            match(*first_node) {
-                holds(Identifier, &id) first_id = &id;
-                holds(UnaryExpr, &un)  first_id = &get<Identifier>(un.expr);
-                holds(FunctionCall, &func_call) {
-                    first_id = &get<Identifier>(func_call.identifier);
-                    func_call.kind = FunctionCall::function_call;
-                }
-                _default report_error(tkn, "expected identifier before postfix operator.");
-            }
-            if (first_id->kind == Identifier::member_func_call_name) {
-                first_id->kind = Identifier::func_call_name;
-            } else {
-                first_id->kind = Identifier::var_name;
-            }
             return push(ASTNode {tkn, PostfixExpr {PostfixExpr::postfix_expr, nodes}});
         }
+        // NOTE: we dont know for sure if its not a member variable (implicit this pointer)
+        // so we reset it to search later
+        if (auto* func_call = get_if<FunctionCall>(node)) {
+            get<Identifier>(func_call->identifier).kind = Identifier::func_call_name;
+            func_call->kind = FunctionCall::function_call;
+        }
+        // normal function call by itself is also returned here if found
         return node;
     }
 }

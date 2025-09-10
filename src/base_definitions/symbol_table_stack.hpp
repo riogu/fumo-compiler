@@ -6,7 +6,7 @@
 // for example:
 //
 //   struct    foo  { struct bar {};     } => struct "foo::bar"    {};
-//   struct    foo  { fn func() -> void; } => fn     "foo{}::func"(this: foo*) -> void;
+//   struct    foo  { fn func() -> void; } => fn     "foo::func"(this: foo*) -> void;
 //
 //   namespace foo  { struct bar {};     } => struct "foo::bar"    {};
 //   namespace foo  { fn func() -> void; } => fn     "foo::func"() -> void;

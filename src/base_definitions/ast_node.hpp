@@ -22,12 +22,14 @@ struct Identifier {
         Identifier_kinds
     } kind;
     str name = "";
+
     enum Qualifier { unqualified, qualified } qualifier = unqualified;
     Opt<ASTNode*> declaration {}; // identifiers are solved to this
     str mangled_name = name;
-    
     int scope_counts = 0;
-    bool is_assigned_to = false;
+
+    str base_struct_name = ""; // only used by member_var_name
+
 };
 
 struct PrimaryExpr {
@@ -84,7 +86,7 @@ struct PostfixExpr {
         PostfixExpr_kinds
     } kind;
     vec<ASTNode*> nodes {};
-    // bool is_assigned_to = false;
+    vec<int> member_indexes {};
 };
 
 struct VariableDecl {
@@ -98,6 +100,8 @@ struct VariableDecl {
         VariableDecl_kinds
     } kind;
     ASTNode* identifier;
+
+    Opt<int> member_index {};
 };
 
 struct FunctionDecl {
@@ -173,8 +177,6 @@ struct ASTNode {
     Type type {};
 
     llvm::Value* llvm_value {};
-    bool is_llvm_ptr = false; // used to know if we are an address to be assigned to
-                              // (aka, we are the target of a 'store' instruction)
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;

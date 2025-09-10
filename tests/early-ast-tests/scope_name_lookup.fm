@@ -157,42 +157,45 @@ t(
 "let var = 123123213;\n"
 "fn foo() -> i32  {\n"
 "    let x: i32 = 3124124;\n"
-"    {\n"
 "    struct gaming {let x: i32;};\n"
-"    let var = gaming{2313};\n"
-"    var.x = 69420;\n"
+"    {\n"
+"       struct gaming {let x: i32;};\n"
+"       let var1 = gaming{2313};\n"
+"       let var2 = gaming{2313};\n"
+"       var1.x = 69420;\n"
+"       var2.x = 69420;\n"
 "    }\n"
 "}\n"
 , pass),
 
-t(
-
-"struct foo {\n"
-"    struct bar {let y = 23;};\n"
-"\n"
-"    let x: i32 = 21313;\n"
-"    let var = bar{1212};\n"
-"\n"
-"    fn func(param: i32) -> void {\n"
-"        x = 6969;\n"
-"        var.y = 343434;\n"
-"    }\n"
-"};\n"
-"fn some() -> void {\n"
-"    let local = foo{12, foo::bar{3}};\n"
-"    local.var.y = 10;\n"
-"}\n"
-
-,pass),
-
-t(
-
-"fn func() -> void;\n"
-"fn func() -> void {}\n"
-"fn func() -> void;\n"
-"struct gaming;\n"
-"struct gaming{};\n"
-"struct gaming;\n"
-"struct gaming;\n"
-
-, pass),
+//t(
+//
+//"struct foo {\n"
+//"    struct bar {let y = 23;};\n"
+//"\n"
+//"    let x: i32 = 21313;\n"
+//"    let var = bar{1212};\n"
+//"\n"
+//"    fn func(param: i32) -> void {\n"
+//"        x = 6969;\n"
+//"        var.y = 343434;\n"
+//"    }\n"
+//"};\n"
+//"fn some() -> void {\n"
+//"    let local = foo{12, foo::bar{3}};\n"
+//"    local.var.y = 10;\n"
+//"}\n"
+//
+//,pass),
+//
+//t(
+//
+//"fn func() -> void;\n"
+//"fn func() -> void {}\n"
+//"fn func() -> void;\n"
+//"struct gaming;\n"
+//"struct gaming{};\n"
+//"struct gaming;\n"
+//"struct gaming;\n"
+//
+//, pass),

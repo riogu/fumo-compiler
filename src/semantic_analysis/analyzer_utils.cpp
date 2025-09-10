@@ -58,7 +58,10 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
                     break;
             }
             break;
-        case Identifier::member_var_name:
+        // identifiers only are "promoted" to these 2 kinds once they have 
+        // actually already been found after iterating,
+        // so we can directly get them from here
+        case Identifier::member_var_name: // TODO: add here
             if find_value (id.mangled_name, member_variable_decls) return iter->second;
             break;
         case Identifier::member_func_call_name:

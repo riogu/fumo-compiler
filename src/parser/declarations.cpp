@@ -48,7 +48,7 @@
     Type type = declaration_specifier();
     node->type = type;
 
-    if (is_tkn(str_to_tkn_type("{"))) function.body = compound_statement();
+    if (token_is_str("{")) function.body = compound_statement();
     else
         expect_token(;);
 
@@ -166,10 +166,17 @@
 
     TypeDecl type_decl {TypeDecl::struct_declaration};
     if (token_is_str("{")) {
+        int member_index = 0;
         vec<ASTNode*> nodes {};
         while (!token_is_str("}")) {
             if (token_is_keyword(let)) {
                 nodes.push_back(variable_declaration());
+                if (auto* var_decl = get_if<VariableDecl>(nodes.back())) {
+                    var_decl->member_index = member_index++;
+                } else if (auto* assign = get_if<BinaryExpr>(nodes.back())) {
+                    get<VariableDecl>(assign->lhs).member_index = member_index++;
+                }
+
             } else if (token_is_keyword(fn)) {
                 nodes.push_back(function_declaration());
                 auto& function = get<FunctionDecl>(nodes.back());

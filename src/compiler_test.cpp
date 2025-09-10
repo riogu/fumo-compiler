@@ -61,7 +61,7 @@ int main() {
     // ------------------------------------------------------
 
     std::print("{}",   "------------------------------------------------\n");
-    for (const auto& [test, expected] : codegen_structs) {
+    for (const auto& [test, expected] : codegen_func_calls) {
         auto [output, status] = exec(std::format("ASAN_OPTIONS=detect_leaks=0 ./build/fumo 2>&1 \"{}\"", test).c_str());
         if ((expected == fail && WEXITSTATUS(status)) 
          || (expected == pass && !WEXITSTATUS(status))) {
