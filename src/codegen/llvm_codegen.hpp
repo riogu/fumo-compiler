@@ -87,7 +87,7 @@ struct Codegen {
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 
-        if (fumo_type.ptr_count) return llvm::PointerType::getUnqual(*llvm_context);
+        if (fumo_type.ptr_count) return ir_builder->getPtrTy();
 
         switch (fumo_type.kind) {
             case Type::struct_: {

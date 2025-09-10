@@ -163,6 +163,7 @@ struct TypeDecl {
         TypeDecl_kinds
     } kind;
     Opt<vec<ASTNode*>> definition_body {};
+    bool body_should_move = false;
 };
 
 struct ASTNode {

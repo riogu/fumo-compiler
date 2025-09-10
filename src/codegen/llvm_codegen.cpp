@@ -52,12 +52,13 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
                 case Identifier::member_var_name: {
                     int member_index = get<VariableDecl>(id.declaration.value()).member_index.value();
                     auto* type = llvm::StructType::getTypeByName(*llvm_context, id.base_struct_name);
-                    if(!type) INTERNAL_PANIC("wrong type name '{}'", id.base_struct_name);
+                    if(!type) report_error(node.source_token, "wrong type name '{}'", id.base_struct_name);
                     if (node.llvm_value) {
                         return ir_builder->CreateStructGEP(type, node.llvm_value, member_index);
                     }
                     if (current_this_ptr) { // implicit 'this' usage
-                        return ir_builder->CreateStructGEP(type, current_this_ptr.value(), member_index);
+                        auto* this_ptr = ir_builder->CreateLoad(ir_builder->getPtrTy(), current_this_ptr.value());
+                        return ir_builder->CreateStructGEP(type, this_ptr, member_index);
                     } else {
                         INTERNAL_PANIC("[Codegen] forgot to assign llvm::Value to '{}'.", node.name());
                     }
@@ -109,8 +110,12 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
                 // if present, it wasnt wrapped by a dereference earlier, so its either the last element,
                 // or it had a member access which we don't allow (no temporaries in fumo lang).
                 if (is_branch<FunctionCall>(curr_node)) {
-                    curr_ptr = if_value(codegen_value(*curr_node))
-                               else_error(curr_node->source_token, "found no value in postfix expression (FIX THIS).");
+                    auto* ret_val = if_value(codegen_value(*curr_node))
+                                    else_error(curr_node->source_token, "found no value in postfix expr (FIX).");
+
+                    llvm::Value* temp_alloca = ir_builder->CreateAlloca(ret_val->getType());
+                    ir_builder->CreateStore(ret_val, temp_alloca);
+                    curr_ptr = temp_alloca; // need to guarantee we always have an address
 
                     if (i + 1 < postfix.nodes.size()) { // not the last element and wasn't dereferenced
                         report_error(curr_node->source_token, // foo = var.func().x; // '.x' not allowed 
@@ -134,7 +139,6 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
 
 // returns the ACTUAL VALUE (for expressions, function args, etc)
 Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
-    prev_value_kind = ValueKind::value;
     
     match(node) {
         holds(Identifier, const& id) {
@@ -306,6 +310,11 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             if (auto* llvm_func = llvm_module->getFunction(get_id(func_call).mangled_name)) {
                 vec<llvm::Value*> arg_values {};
                 if (func_call.kind == FunctionCall::member_function_call) {
+                    if (!node.llvm_value) {
+                        // this means we are callin a member function from another member function
+                        // so we must pass forward the "this" argument
+                        node.llvm_value = ir_builder->CreateLoad(ir_builder->getPtrTy(), current_this_ptr.value());
+                    }
                     arg_values.push_back(node.llvm_value);
                 }
                 for (auto* arg : func_call.argument_list) {
@@ -393,11 +402,18 @@ void Codegen::register_declaration(ASTNode& node) {
             auto* struct_type = llvm::cast<llvm::StructType>(fumo_to_llvm_type(node.type));
 
             if (type_decl.definition_body) {
+                // if (!struct_type->isOpaque()) report_error(node.source_token, "Failed to set struct body");
                 vec<llvm::Type*> member_types {};
                 for (auto* node : type_decl.definition_body.value()) {
                     if (!is_branch<FunctionDecl>(node)) member_types.push_back(fumo_to_llvm_type(node->type));
                 }
-                struct_type->setBody(member_types);
+                if (auto error = struct_type->setBodyOrError(member_types)) {
+                    // Handle the error
+                    std::string error_msg;
+                    llvm::raw_string_ostream stream(error_msg);
+                    stream << error;
+                    report_error(node.source_token, "Failed to set struct body: {}", error_msg);
+                }
             }
         }
 

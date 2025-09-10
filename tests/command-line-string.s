@@ -9,14 +9,35 @@ fumo.init:                              # @fumo.init
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
                                         # -- End function
+	.globl	"calculator::get_value"         # -- Begin function calculator::get_value
+	.p2align	4
+	.type	"calculator::get_value",@function
+"calculator::get_value":                # @"calculator::get_value"
+# %bb.0:
+	movl	(%rdi), %eax
+	retq
+.Lfunc_end1:
+	.size	"calculator::get_value", .Lfunc_end1-"calculator::get_value"
+                                        # -- End function
+	.globl	"calculator::double"            # -- Begin function calculator::double
+	.p2align	4
+	.type	"calculator::double",@function
+"calculator::double":                   # @"calculator::double"
+# %bb.0:
+	movl	(%rdi), %eax
+	addl	%eax, %eax
+	retq
+.Lfunc_end2:
+	.size	"calculator::double", .Lfunc_end2-"calculator::double"
+                                        # -- End function
 	.globl	main                            # -- Begin function main
 	.p2align	4
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	movl	$69, %eax
+	xorl	%eax, %eax
 	retq
-.Lfunc_end1:
-	.size	main, .Lfunc_end1-main
+.Lfunc_end3:
+	.size	main, .Lfunc_end3-main
                                         # -- End function
 	.section	".note.GNU-stack","",@progbits

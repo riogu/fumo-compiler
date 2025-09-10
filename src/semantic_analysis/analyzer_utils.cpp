@@ -62,6 +62,9 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
         // actually already been found after iterating,
         // so we can directly get them from here
         case Identifier::member_var_name: // TODO: add here
+            if (id.declaration) {
+                return id.declaration.value();
+            }
             if find_value (id.mangled_name, member_variable_decls) return iter->second;
             break;
         case Identifier::member_func_call_name:

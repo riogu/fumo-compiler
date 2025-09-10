@@ -8,10 +8,24 @@ define void @fumo.init() local_unnamed_addr #0 {
   ret void
 }
 
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
+define i32 @"calculator::get_value"(ptr nocapture readonly %0) local_unnamed_addr #1 {
+  %2 = load i32, ptr %0, align 4
+  ret i32 %2
+}
+
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
+define range(i32 0, -1) i32 @"calculator::double"(ptr nocapture readonly %0) local_unnamed_addr #1 {
+  %2 = load i32, ptr %0, align 4
+  %3 = shl i32 %2, 1
+  ret i32 %3
+}
+
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
 entry:
-  ret i32 69
+  ret i32 0
 }
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) "used" }
+attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read) }

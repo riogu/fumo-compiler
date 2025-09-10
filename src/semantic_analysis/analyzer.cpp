@@ -39,6 +39,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 node.type = id.declaration.value()->type;
                 if find_value (id.mangled_name, symbol_tree.member_variable_decls) {
                     id.kind = Identifier::member_var_name;
+                    str temp = iter->first;
+                    std::size_t pos = temp.find("::");
+                    if (pos != std::string::npos) {
+                        id.base_struct_name = temp.substr(0, pos);
+                    }
                     // "promote" identifier to member variable name after finding it
                 }
 
@@ -132,6 +137,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(FunctionDecl, &func) {
+            // TODO: check if all returns in the body have the correct type of the function
             add_declaration(node);
             Identifier& id = get_id(func);
 
@@ -143,20 +149,20 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             }
             if (func.kind == FunctionDecl::member_func_declaration) {
                 ASTNode* node_ = push(ASTNode {node.source_token});
-                node_->branch =
-                    VariableDecl {VariableDecl::parameter,
-                                  push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
-
-                str temp = id.mangled_name;
-                while (temp.back() != ':') temp.pop_back();
-                temp.pop_back(), temp.pop_back();
-                Identifier temp_id = {.kind = Identifier::type_name, .name = temp};
-                // getting the type name of the struct that this function is a member of
-                // a bit hacky but its okay
-                node_->type = symbol_tree.find_declaration(temp_id).value()->type;
-                node_->type.ptr_count = 1;
-
-                func.parameters.push_back(node_);
+                // node_->branch =
+                //     VariableDecl {VariableDecl::parameter,
+                //                   push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
+                //
+                // str temp = id.mangled_name;
+                // while (temp.back() != ':') temp.pop_back();
+                // temp.pop_back(), temp.pop_back();
+                // Identifier temp_id = {.kind = Identifier::type_name, .name = temp};
+                // // getting the type name of the struct that this function is a member of
+                // // a bit hacky but its okay
+                // node_->type = symbol_tree.find_declaration(temp_id).value()->type;
+                // node_->type.ptr_count = 1;
+                //
+                // func.parameters.push_back(node_);
             }
             for (auto& param : func.parameters) {
                 analyze(*param);
@@ -232,7 +238,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             symbol_tree.pop_scope();
         }
 
-        holds(TypeDecl, const& type_decl) {
+        holds(TypeDecl, &type_decl) {
             switch (type_decl.kind) {
                 case TypeDecl::struct_declaration: {
                     add_declaration(node);
@@ -240,6 +246,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     symbol_tree.push_scope(get_name(node.type), ScopeKind::TypeBody);
                     if (type_decl.definition_body) {
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
+
+                        if (type_decl.body_should_move) type_decl.definition_body = std::nullopt;
                     }
                     symbol_tree.pop_scope();
                     break;
@@ -252,6 +260,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         // NOTE: id like to refactor this later
         holds(PostfixExpr, &postfix) { // nodes is never empty
             str prev_name = "";
+            str curr_base_name = "";
             Identifier* curr_id = nullptr;
             for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
                 auto& curr_node = *node_it;
@@ -265,10 +274,9 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     curr_id = &id;
                 } else
                     INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+
                 curr_id->mangled_name = prev_name + curr_id->name;
-                if (prev_name.size()) {
-                    curr_id->base_struct_name = prev_name.substr(0, prev_name.size() - 2);
-                }
+                curr_id->base_struct_name = curr_base_name;
                 prev_name = ""; // reset the previous name 
 
                 analyze(*curr_node);
@@ -279,6 +287,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 
                 auto& id = get_id(curr_node->type);
                 prev_name += id.mangled_name;
+                curr_base_name = prev_name;
                 // report_error(curr_node->source_token, "found '{}'", prev_name);
                 prev_name += "::";
             }
@@ -373,14 +382,11 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         holds(TypeDecl, &type_decl) {
             Identifier& id = get_id(node.type);
+
             const auto& [node_iterator, was_inserted] = symbol_tree.push_type_decl(id, node);
+            auto& first_occurence = get<TypeDecl>(node_iterator->second);
 
-            // TODO: add each member of the struct to the type decl info.
-            // we need to store offsets and the names of the members (for solving lookups later)
-            // and also the conversion from normal function name -> mangled function name
-            auto& t_decl = get<TypeDecl>(node_iterator->second);
-
-            if (t_decl.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name)) {
+            if (first_occurence.kind != type_decl.kind || symbol_tree.namespace_decls.contains(id.mangled_name)) {
                 report_error(node.source_token,
                              "Redefinition of '{}' as a different kind of symbol.",
                              id.mangled_name);
@@ -388,12 +394,14 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             if (!was_inserted) {
                 if (type_decl.definition_body) {
-                    if (t_decl.definition_body)
+                    if (first_occurence.definition_body) {
                         report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
-                    t_decl.definition_body = type_decl.definition_body;
+                    }
+                    first_occurence.definition_body = type_decl.definition_body;
+                    type_decl.body_should_move = true;
 
                 } else {
-                    type_decl.definition_body = t_decl.definition_body;
+                    // type_decl.definition_body = first_occurence.definition_body;
                 }
             }
         }
