@@ -28,7 +28,7 @@ struct Identifier {
     str mangled_name = name;
     int scope_counts = 0;
 
-    str base_struct_name = ""; // only used by member_var_name
+    str base_struct_name = ""; // only used by member_var_name and member_func_call_name
 
 };
 

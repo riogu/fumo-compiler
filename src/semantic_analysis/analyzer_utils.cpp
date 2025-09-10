@@ -96,6 +96,7 @@ void Analyzer::iterate_qualified_names(FunctionDecl & func) {
         if find_value (temp, symbol_tree.type_decls) {
             func.kind = FunctionDecl::member_func_declaration;
             scope_kind = ScopeKind::MemberFuncBody;
+            id.base_struct_name = temp;
         } else {
             func.kind = FunctionDecl::function_declaration;
             scope_kind = ScopeKind::FunctionBody;

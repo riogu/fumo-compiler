@@ -7,3 +7,128 @@ t(
 "    return var.x;\n"
 "}\n"
 ,pass),
+// Basic member function with implicit 'this' access
+//t(
+//"struct Point {\n"
+//"    let x: i32 = 0;\n"
+//"    let y: i32 = 0;\n"
+//"    fn getX() -> i32;  // will access x implicitly\n"
+//"};\n"
+//"fn Point::getX() -> i32 {\n"
+//"    return x;\n"
+//"}\n"
+//"fn main() -> void {\n"
+//"    let p: Point = {10, 20};\n"
+//"    let result: i32 = p.getX();\n"
+//"}\n"
+//,pass),
+//
+//// Member function calling another member function
+//t(
+//"struct Calculator {\n"
+//"    let value: i32 = 0;\n"
+//"    fn getValue() -> i32;\n"
+//"    fn double() -> i32;  // will call getValue() implicitly\n"
+//"};\n"
+//"fn Calculator::getValue() -> i32 { return value; }\n"
+//"fn Calculator::double() -> i32 {\n"
+//"    return getValue() * 2;\n"
+//"}\n"
+//"fn main() -> void {\n"
+//"    let calc: Calculator = {5};\n"
+//"    let result: i32 = calc.double();\n"
+//"}\n"
+//,pass),
+//
+//// Member function modifying member variable
+//t(
+//"struct Counter {\n"
+//"    let count: i32 = 0;\n"
+//"    fn increment() -> void;  // will modify count implicitly\n"
+//"    fn getCount() -> i32;\n"
+//"};\n"
+//"fn Counter::increment() -> void {\n"
+//"    count = count + 1;\n"
+//"}\n"
+//"fn Counter::getCount() -> i32 { return count; }\n"
+//"fn main() -> void {\n"
+//"    let c: Counter = {0};\n"
+//"    c.increment();\n"
+//"    let result: i32 = c.getCount();\n"
+//"}\n"
+//,pass),
+//
+//// Member function with no return value used
+//t(
+//"struct Logger {\n"
+//"    let message: i32 = 0;\n"
+//"    fn setMessage(msg: i32) -> void;  // modifies message implicitly\n"
+//"    fn log() -> void;  // side effects only\n"
+//"};\n"
+//"fn Logger::setMessage(msg: i32) -> void { message = msg; }\n"
+//"fn Logger::log() -> void {}\n"
+//"fn main() -> void {\n"
+//"    let logger: Logger = {};\n"
+//"    logger.setMessage(42);\n"
+//"    logger.log();\n"
+//"}\n"
+//,pass),
+//
+//// Invalid: accessing member without instance
+//t(
+//"struct Test {\n"
+//"    let value: i32 = 0;\n"
+//"    fn getValue() -> i32;  // needs instance to access value\n"
+//"};\n"
+//"fn Test::getValue() -> i32 { return value; }\n"
+//"fn main() -> void {\n"
+//"    let x: i32 = Test::getValue();\n"
+//"}\n"
+//,fail),
+//
+//// Nested struct member access
+//t(
+//"struct Inner {\n"
+//"    let data: i32 = 0;\n"
+//"    fn getData() -> i32;  // returns data implicitly\n"
+//"};\n"
+//"struct Outer {\n"
+//"    let inner: Inner = {};\n"
+//"    fn getInnerData() -> i32;  // accesses inner.getData()\n"
+//"};\n"
+//"fn Inner::getData() -> i32 { return data; }\n"
+//"fn Outer::getInnerData() -> i32 {\n"
+//"    return inner.getData();\n"
+//"}\n"
+//"fn main() -> void {\n"
+//"    let outer: Outer = {{5}};\n"
+//"    let result: i32 = outer.getInnerData();\n"
+//"}\n"
+//,pass),
+//
+//// Member function returning pointer
+//t(
+//"struct Node {\n"
+//"    let value: i32 = 0;\n"
+//"    let next: Node* = null;\n"
+//"    fn getNext() -> Node*;  // returns next pointer\n"
+//"};\n"
+//"fn Node::getNext() -> Node* { return next; }\n"
+//"fn main() -> void {\n"
+//"    let node: Node = {42, null};\n"
+//"    let next_ptr: Node* = node.getNext();\n"
+//"}\n"
+//,pass),
+//
+//// Invalid: member function on temporary
+//t(
+//"struct Factory {\n"
+//"    fn create() -> Factory;  // returns by value\n"
+//"    fn process() -> i32;  // can't call on temporary\n"
+//"};\n"
+//"fn Factory::create() -> Factory { return {}; }\n"
+//"fn Factory::process() -> i32 { return 42; }\n"
+//"fn main() -> void {\n"
+//"    let result: i32 = Factory::create().process();\n"
+//"}\n"
+//,fail)

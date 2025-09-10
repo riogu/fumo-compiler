@@ -42,6 +42,9 @@ struct Codegen {
     ASTNode* file_root_node;
     File file;
 
+    // used during the FunctionDecl context. is *NOT* used by the function call at all
+    Opt<llvm::Value*> current_this_ptr {};
+
     // used to be able to assign to a function call if deferenced:
     // *func() = 123; 
     // valid as long as func() returns a pointer, and that pointer is dereferenced

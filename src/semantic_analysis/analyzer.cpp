@@ -252,36 +252,23 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         // NOTE: id like to refactor this later
         holds(PostfixExpr, &postfix) { // nodes is never empty
             str prev_name = "";
+            Identifier* curr_id = nullptr;
             for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
                 auto& curr_node = *node_it;
 
                 if (auto* un = get_if<UnaryExpr>(curr_node)) {
-                    if (auto* id = get_if<Identifier>(un->expr)) {
-                        switch (id->kind) {
-                            case Identifier::member_var_name:
-                            case Identifier::var_name: // only exists as the first element
-                                id->mangled_name = prev_name + id->name;
-                                break;
-                            default:
-                                INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
-                        }
-                    }
+                    if (auto* id = get_if<Identifier>(un->expr)) curr_id = id;
                 } else if (auto* id = get_if<Identifier>(curr_node)) {
-                    switch (id->kind) {
-                        case Identifier::member_var_name:
-                        case Identifier::var_name: // only exists as the first element
-                            id->mangled_name = prev_name + id->name;
-                            break;
-                        default:
-                            INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
-                    }
-
+                    curr_id = id;
                 } else if (auto* func_call = get_if<FunctionCall>(curr_node)) {
                     auto& id = get<Identifier>(func_call->identifier);
-                    id.mangled_name = prev_name + id.name;
+                    curr_id = &id;
                 } else
                     INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
-
+                curr_id->mangled_name = prev_name + curr_id->name;
+                if (prev_name.size()) {
+                    curr_id->base_struct_name = prev_name.substr(0, prev_name.size() - 2);
+                }
                 prev_name = ""; // reset the previous name 
 
                 analyze(*curr_node);
@@ -292,23 +279,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 
                 auto& id = get_id(curr_node->type);
                 prev_name += id.mangled_name;
-                id.base_struct_name = prev_name; // for codegen (very hacky solution)
+                // report_error(curr_node->source_token, "found '{}'", prev_name);
                 prev_name += "::";
-
-                if (auto* func_call = get_if<FunctionCall>(curr_node)) {
-                    if (func_call->kind == FunctionCall::member_function_call) {
-                        // dont add anything during semantic analysis (done in codegen)
-                        // NOTE: for now, i wont allow calling member functions without "this->" being used
-                        // we need to search the local environment for "this" for it to work
-                        // if (node_it == postfix.nodes.begin()) {
-                        //     report_error(curr_node->source_token, "must use 'this' to call other member functions. [TODO]");
-                        // }
-                        // auto node_this = *(*node_it - 1);
-                        // node_this.type.ptr_count += 1;
-                        // func_call->argument_list.insert(func_call->argument_list.begin(), push(node_this));
-                        // TODO: allow calling member functions without 'this'
-                    }
-                }
             }
             node.type = postfix.nodes.back()->type;
         }
