@@ -43,25 +43,28 @@
 //"    return result + 1;\n"
 //"}\n"
 //,pass),
-
-// Member function modifying member variable - with pointer access and external definition
-t(
-"struct counter {\n"
-"    let count: i32 = 0;\n"
-"    fn increment() -> i32;\n"
-"    fn get_count() -> i32 { return count; }\n"
-"    fn get_count_ptr() -> i32*;\n"
-"};\n"
-"fn counter::get_count_ptr() -> i32* { return &count; }\n"
-"fn main() -> i32 {\n"
-"    let c: counter = {0};\n"
-"    let c_ptr: counter* = &c;\n"
-"    c_ptr->increment();\n"
-"    let count_ptr: i32* = c_ptr->get_count_ptr();\n"
-"    return *count_ptr;\n"
-"}\n"
-,pass),
-
+//
+//// Member function modifying member variable - with pointer access and external definition
+//t(
+//"struct counter {\n"
+//"    let count: i32 = 0;\n"
+//"    fn increment() -> void;\n"
+//"    fn get_count() -> i32 { return count; }\n"
+//"    fn get_count_ptr() -> i32*;\n"
+//"};\n"
+//"fn counter::increment() -> void {\n"
+//"    count = count + 1;\n"
+//"}\n"
+//"fn counter::get_count_ptr() -> i32* { return &count; }\n"
+//"fn main() -> i32 {\n"
+//"    let c: counter = {68};\n"
+//"    let c_ptr: counter* = &c;\n"
+//"    c_ptr->increment();\n"
+//"    let count_ptr: i32* = c_ptr->get_count_ptr();\n"
+//"    return *count_ptr;\n"
+//"}\n"
+//,pass),
+//
 //// Namespaced structs with mixed inline/external definitions
 //t(
 //"namespace math {\n"
@@ -108,29 +111,23 @@ t(
 //"}\n"
 //,pass),
 //
-//// Struct with pointer members and complex postfix expressions
-//t(
-//"struct node {\n"
-//"    let value: i32 = 0;\n"
-//"    let next: node* = {};\n"
-//"    fn get_next() -> node* { return next; }\n"
-//"    fn set_next(n: node*) -> void { next = n; }\n"
-//"    fn get_chain_value(depth: i32) -> i32;\n"
-//"};\n"
-//"fn node::get_chain_value(depth: i32) -> i32 {\n"
-//"    if (depth == 0) { return value; }\n"
-//"    if (next == {}) { return -1; }\n"
-//"    return next->get_chain_value(depth - 1);\n"
-//"}\n"
-//"fn main() -> i32 {\n"
-//"    let node1: node = {10};\n"
-//"    let node2: node = {20};\n"
-//"    let node3: node = {30};\n"
-//"    node1.set_next(&node2);\n"
-//"    node2.set_next(&node3);\n"
-//"    return node1.get_next()->get_next()->value;\n"
-//"}\n"
-//,pass),
+// Struct with pointer members and complex postfix expressions
+t(
+"struct node {\n"
+"    let value: i32 = 0;\n"
+"    let next: node* = {};\n"
+"    fn get_next() -> node* { return next; }\n"
+"    fn set_next(n: node*) -> void { next = n; }\n"
+"};\n"
+"fn main() -> i32 {\n"
+"    let node1: node = {10};\n"
+"    let node2: node = {20};\n"
+"    let node3: node = {30};\n"
+"    node1.set_next(&node2);\n"
+"    node2.set_next(&node3);\n"
+"    return node1.get_next()->get_next()->value;\n"
+"}\n"
+,pass),
 //
 //// Testing member function on temporary (should fail)
 //t(

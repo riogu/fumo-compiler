@@ -108,6 +108,7 @@ struct SymbolTableStack {
         return namespace_decls.insert({identifier.mangled_name, &node});
     }
     auto push_function_decl(Identifier& identifier, ASTNode& node) {
+        // NOTE: this function might need some changes if you get issues with identifiers
         identifier.mangled_name = curr_scope_name + identifier.name;
         all_declarations.insert({identifier.mangled_name, &node});
         switch (curr_scope_kind) {

@@ -1,6 +1,4 @@
 #include "codegen/llvm_codegen.hpp"
-#include "base_definitions/ast_node.hpp"
-#include "utils/common_utils.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -100,11 +98,10 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
         holds(PostfixExpr, const& postfix) { // this is the lvalue postfix (wants address)
             auto* curr_node = postfix.nodes[0];
             llvm::Value* curr_ptr;
-            // the first node is either unary::deref or a var_name (not a member var name)
-            // if its an id, its a Identifier::var_name, so it has different codegen (no checks required)
+            // NOTE: should work even with first member being function call
+            // this requires more work | var->func().x = 123; // still not solved atm
             curr_ptr = if_value(codegen_address(*curr_node))
-                                else_error(curr_node->source_token, "found no value in postfix expression (fix this).");
-            // TODO: check differently for member variables (first one might be a member)
+                       else_error(curr_node->source_token, "found no value in postfix expression (fix this).");
             for (std::size_t i = 1; i < postfix.nodes.size(); i++) {
                 curr_node = postfix.nodes[i];
                 curr_node->llvm_value = curr_ptr; // used later by the elements for codegen
@@ -114,15 +111,16 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
                     auto* ret_val = if_value(codegen_value(*curr_node))
                                     else_error(curr_node->source_token, "found no value in postfix expr (FIX).");
 
-                    llvm::Value* temp_alloca = ir_builder->CreateAlloca(ret_val->getType());
-                    ir_builder->CreateStore(ret_val, temp_alloca);
-                    curr_ptr = temp_alloca; // need to guarantee we always have an address
-
                     if (i + 1 < postfix.nodes.size()) { // not the last element and wasn't dereferenced
                         report_error(curr_node->source_token, // foo = var.func().x; // '.x' not allowed 
                                      "cannot access member of temporary value returned by function call.");
                         // it adds too much complexity so it wont be in the language for now
                     }
+                    if (node.type.kind == Type::void_) return std::nullopt; 
+                    llvm::Value* temp_alloca = ir_builder->CreateAlloca(ret_val->getType());
+                    ir_builder->CreateStore(ret_val, temp_alloca);
+                    curr_ptr = temp_alloca; // need to guarantee we always have an address
+
                 } else {
                     // %curr_ptr is a pointer to the address of the struct member 
                     // %curr_ptr = getelementptr inbounds nuw %struct.foo, ptr %struct_ptr, i32 0, i32 index
@@ -342,7 +340,13 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             // NOTE: might need more codegen
             switch (scope.kind) {
                 case BlockScope::compound_statement:
-                    for (auto* node : scope.nodes) codegen_value(*node);
+                    for (auto* node : scope.nodes) {
+                        if (is_branch<PostfixExpr>(node)) { // var->member(); // this is valid (ignoring return value)
+                            codegen_address(*node); // only happens if we have a postfix by itself (not an assignment)
+                        } else {
+                            codegen_value(*node);
+                        }
+                    }
                     break;
                 case BlockScope::initializer_list: 
                     if (node.type.kind == Type::struct_) {
@@ -389,8 +393,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             }
         }
 
-        holds(NamespaceDecl) {
-            INTERNAL_PANIC("namespaces shouldn't be codegen'd, found '{}'.", node.name());
+        holds(NamespaceDecl, &nmspace) {
+            for (auto* node : nmspace.nodes) codegen_value(*node);
         }
 
         _default {

@@ -1,6 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "base_definitions/ast_node.hpp"
 #include <ranges>
-#include <print>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -25,13 +25,6 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         id.name = "fumo.user_main";
         symbol_tree.function_decls.insert(std::move(map_node));
     }
-    for(auto [name, node] : symbol_tree.function_decls) {
-        std::println("found function '{}' '{}'", name, node->name());
-    }
-    std::println("member functions:");
-    for(auto [name, node] : symbol_tree.member_function_decls) {
-        std::println("found member function '{}' '{}'", name, node->name());
-    }
 }
 
 void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
@@ -50,14 +43,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     str temp = iter->first;
                     while (temp.back() != ':') temp.pop_back();
                     temp.pop_back(), temp.pop_back();
+                    id.base_struct_name = temp;
                 }
-
             } else {
                 report_error(node.source_token, "use of undeclared identifier '{}'.", id.mangled_name);
             }
         }
 
-        holds(PrimaryExpr, prim) {
+        holds(PrimaryExpr, &prim) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:
                 case PrimaryExpr::floating_point:
@@ -148,14 +141,12 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
         holds(FunctionDecl, &func) {
             // TODO: check if all returns in the body have the correct type of the function
+            Identifier& id = get_id(func);
 
             vec<Scope> scopes = iterate_qualified_names(func);
-            add_declaration(node);
-
-            for (auto& scope : scopes) {
-                symbol_tree.push_scope(scope.name, scope.kind);
-            }
-            Identifier& id = get_id(func);
+            // -------------------------------------------------------------------
+            // hack to get the type checked correctly
+            for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
 
             if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
                 analyze(*node.type.identifier);
@@ -164,6 +155,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type.kind = decl.value()->type.kind;
                 }
             }
+            for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
+            // -------------------------------------------------------------------
+
+            add_declaration(node);
+
+            for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
+
+
             if (func.kind == FunctionDecl::member_func_declaration) {
                 // ASTNode* node_ = push(ASTNode {node.source_token});
                 // node_->branch =
@@ -332,9 +331,8 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
-            std::println("function '{}' had type {}", id.mangled_name, type_name(node.type));
-            std::println("found function '{}' '{}'", id.mangled_name, node.name());
-            // TODO: continue debug here
+            // std::println("function '{}' had type {}", id.mangled_name, type_name(node.type));
+            // std::println("found function '{}' '{}'", id.mangled_name, node.name());
 
             if (was_inserted && id.qualifier == Identifier::qualified
                 && func.kind == FunctionDecl::member_func_declaration) {
@@ -345,7 +343,6 @@ void Analyzer::add_declaration(ASTNode& node) {
                              id.mangled_name, temp);
             }
             if (!was_inserted) {
-                std::println("couldn't insert.");
                 str def_or_decl;
                 if (func.body) {
                     if (first_occurence.body)
@@ -362,9 +359,11 @@ void Analyzer::add_declaration(ASTNode& node) {
 
                 if (!is_same_t(node.type, node_iterator->second->type)) {
                     report_error(node.source_token,
-                                 "{} of '{}' with a different return type.",
+                                 "{} of '{}' with a different return type '{}' (expected '{}').",
                                  def_or_decl,
-                                 id.mangled_name);
+                                 id.mangled_name,
+                                 type_name(node.type),
+                                 type_name(node_iterator->second->type));
                 }
                 if (func.parameters.size() != first_occurence.parameters.size()) {
                     report_error(node.source_token,
@@ -379,12 +378,12 @@ void Analyzer::add_declaration(ASTNode& node) {
                                      def_or_decl,
                                      id.mangled_name);
                     }
-                    if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
-                        report_error(node.source_token,
-                                     "{} of '{}' with different parameter names.",
-                                     def_or_decl,
-                                     id.mangled_name);
-                    }
+                    // if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
+                    //     report_error(node.source_token,
+                    //                  "{} of '{}' with different parameter names.",
+                    //                  def_or_decl,
+                    //                  id.mangled_name);
+                    // }
                 }
             }
         }

@@ -77,8 +77,8 @@ auto main(int argc, char** argv) -> int {
         // "fn main() -> i32 {let x = 231;}" 
         // as one string to the compiler (with no flags) and it will compile it. it uses the flags below
         output_IR = true; output_ASM = true; output_OBJ = true;
-        print_file = true; 
-        print_AST = true;
+        // print_file = true; 
+        // print_AST = true;
         // print_IR = true;
         verbose = true;
 
@@ -89,7 +89,7 @@ auto main(int argc, char** argv) -> int {
         file.output_name = "tests/command-line-string.out";
     } else {
         llvm::cl::HideUnrelatedOptions(fumo_category);
-        llvm::cl::ParseCommandLineOptions(argc, argv, std::string(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
+        llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
         file_name = input_files[0]; // only one file name
 
@@ -100,29 +100,19 @@ auto main(int argc, char** argv) -> int {
     }
     //--------------------------------------------------------------------------
     // Parser
-
     Parser parser {file};
     auto file_root_node = parser.parse_tokens(tokens);
-
     //--------------------------------------------------------------------------
     // Semantic Analysis
-
-        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-        // }
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
-
     //--------------------------------------------------------------------------
     // Codegen
-
     if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
-
-        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-        // }
-    // Codegen codegen {file, analyzer.symbol_tree};
-    // codegen.codegen_file(file_root_node);
-    //
-    // codegen.compile_and_link_module(opt_level);
+    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+    // }
+    Codegen codegen {file, analyzer.symbol_tree};
+    codegen.codegen_file(file_root_node);
+    codegen.compile_and_link_module(opt_level);
 }

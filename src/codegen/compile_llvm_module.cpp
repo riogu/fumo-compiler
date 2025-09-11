@@ -25,8 +25,6 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     // }
 
     if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
-        std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"
-            << file_stream.str() << std::endl;
         fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
         llvm::raw_fd_ostream dest(name_copy.string(), EC);
         dest << llvm_ir_to_str();
@@ -55,7 +53,8 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     auto Features = "";
     auto CPU = "generic";
     llvm::TargetOptions opt;    
-    auto target_machine = target->createTargetMachine(llvm_module->getTargetTriple(), CPU, Features, opt, llvm::Reloc::PIC_);
+    auto target_machine = target->createTargetMachine(llvm_module->getTargetTriple(), 
+                                                      CPU, Features, opt, llvm::Reloc::PIC_);
     if (!target_machine) INTERNAL_PANIC("Failed to create target machine");
 
     llvm_module->setDataLayout(target_machine->createDataLayout());

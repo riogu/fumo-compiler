@@ -1,5 +1,4 @@
 #include "parser/parser.hpp"
-#include <print>
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -95,6 +94,7 @@
             nodes.push_back(struct_declaration());
         else if (token_is_keyword(enum))
             nodes.push_back(enum_declaration());
+        else if (token_is(;)) {}
         else
             nodes.push_back(statement());
     }
@@ -153,6 +153,7 @@
             nmspace.nodes.push_back(struct_declaration());
         else if (token_is_keyword(enum))
             nmspace.nodes.push_back(enum_declaration());
+        else if (token_is(;)) {}
         else
             report_error((*curr_tkn), "expected namespace member declaration.");
     }
@@ -192,6 +193,7 @@
                 nodes.push_back(struct_declaration());
             else if (token_is_keyword(enum))
                 nodes.push_back(enum_declaration());
+            else if (token_is(;)) {}
             else
                 report_error((*curr_tkn), "expected struct member declaration.");
         }
