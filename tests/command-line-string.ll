@@ -24,7 +24,7 @@ define range(i32 0, -1) i32 @"calculator::double"(ptr nocapture readonly %0) loc
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
 entry:
-  ret i32 0
+  ret i32 69
 }
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) "used" }

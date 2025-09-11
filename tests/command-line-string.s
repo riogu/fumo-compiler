@@ -35,7 +35,7 @@ fumo.init:                              # @fumo.init
 	.type	main,@function
 main:                                   # @main
 # %bb.0:                                # %entry
-	xorl	%eax, %eax
+	movl	$69, %eax
 	retq
 .Lfunc_end3:
 	.size	main, .Lfunc_end3-main

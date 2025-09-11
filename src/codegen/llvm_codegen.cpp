@@ -412,7 +412,7 @@ void Codegen::register_declaration(ASTNode& node) {
                     std::string error_msg;
                     llvm::raw_string_ostream stream(error_msg);
                     stream << error;
-                    report_error(node.source_token, "Failed to set struct body: {}", error_msg);
+                    report_error(node.source_token, "failed to set struct body: {}", error_msg);
                 }
             }
         }

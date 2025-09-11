@@ -25,12 +25,12 @@ define i32 @"calculator::double"(ptr %0) {
   ret i32 %4
 }
 
-define internal void @fumo.user_main() {
+define internal i32 @fumo.user_main() {
   %"main()::calc" = alloca %calculator, align 8
   %1 = alloca %calculator, align 8
   store %calculator zeroinitializer, ptr %1, align 4
   %2 = getelementptr inbounds nuw %calculator, ptr %1, i32 0, i32 0
-  store i32 5, ptr %2, align 4
+  store i32 34, ptr %2, align 4
   %3 = load %calculator, ptr %1, align 4
   store %calculator %3, ptr %"main()::calc", align 4
   %"main()::result" = alloca i32, align 4
@@ -39,14 +39,16 @@ define internal void @fumo.user_main() {
   store i32 %4, ptr %5, align 4
   %6 = load i32, ptr %5, align 4
   store i32 %6, ptr %"main()::result", align 4
-  ret void
+  %7 = load i32, ptr %"main()::result", align 4
+  %8 = add i32 %7, 1
+  ret i32 %8
 }
 
 define i32 @main(i32 %argc, ptr %argv) #0 {
 entry:
   call void @fumo.init()
-  call void @fumo.user_main()
-  ret i32 0
+  %0 = call i32 @fumo.user_main()
+  ret i32 %0
 }
 
 attributes #0 = { "used" }

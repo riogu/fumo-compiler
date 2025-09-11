@@ -17,8 +17,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else if (token_is_keyword(enum))
             AST.push_back(enum_declaration());
         else
-            AST.push_back(statement()); /* NOTE: no longer valid in global */
-        // report_error((*curr_tkn), "expected declaration.");
+            // AST.push_back(statement()); /* NOTE: no longer valid in global */
+        report_error((*curr_tkn), "expected declaration.");
     }
     auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::declaration_name, "fumo_module"}});
     return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
