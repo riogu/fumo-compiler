@@ -35,7 +35,6 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
 }
 // returns the ADDRESS where a value is stored (for assignment, address-of)
 Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
-
     match(node) {
 
         holds(Identifier, const& id) {
@@ -56,7 +55,7 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
                     if (node.llvm_value) {
                         return ir_builder->CreateStructGEP(type, node.llvm_value, member_index);
                     }
-                    if (current_this_ptr) { // implicit 'this' usage
+                    else if (current_this_ptr) { // implicit 'this' usage
                         auto* this_ptr = ir_builder->CreateLoad(ir_builder->getPtrTy(), current_this_ptr.value());
                         return ir_builder->CreateStructGEP(type, this_ptr, member_index);
                     } else {
@@ -104,6 +103,7 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             // if its an id, its a Identifier::var_name, so it has different codegen (no checks required)
             curr_ptr = if_value(codegen_address(*curr_node))
                                 else_error(curr_node->source_token, "found no value in postfix expression (fix this).");
+            // TODO: check differently for member variables (first one might be a member)
             for (std::size_t i = 1; i < postfix.nodes.size(); i++) {
                 curr_node = postfix.nodes[i];
                 curr_node->llvm_value = curr_ptr; // used later by the elements for codegen

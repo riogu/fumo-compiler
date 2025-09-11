@@ -30,14 +30,25 @@ fumo.init:                              # @fumo.init
 .Lfunc_end2:
 	.size	"calculator::double", .Lfunc_end2-"calculator::double"
                                         # -- End function
+	.globl	"calculator::triple"            # -- Begin function calculator::triple
+	.p2align	4
+	.type	"calculator::triple",@function
+"calculator::triple":                   # @"calculator::triple"
+# %bb.0:
+	movl	(%rdi), %eax
+	leal	(%rax,%rax,2), %eax
+	retq
+.Lfunc_end3:
+	.size	"calculator::triple", .Lfunc_end3-"calculator::triple"
+                                        # -- End function
 	.globl	main                            # -- Begin function main
 	.p2align	4
 	.type	main,@function
 main:                                   # @main
-# %bb.0:                                # %entry
+# %bb.0:
 	movl	$69, %eax
 	retq
-.Lfunc_end3:
-	.size	main, .Lfunc_end3-main
+.Lfunc_end4:
+	.size	main, .Lfunc_end4-main
                                         # -- End function
 	.section	".note.GNU-stack","",@progbits

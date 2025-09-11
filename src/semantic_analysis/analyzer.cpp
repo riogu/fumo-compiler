@@ -1,4 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "utils/common_utils.hpp"
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -125,7 +126,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
-                if (auto decl = get_id(node.type).declaration) node.type = decl.value()->type;
+                if (auto decl = get_id(node.type).declaration) {
+                    node.type.identifier = decl.value()->type.identifier;
+                    node.type.kind = decl.value()->type.kind;
+                }
             }
 
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
@@ -145,7 +149,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
             if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
                 analyze(*node.type.identifier);
-                if (auto decl = get_id(node.type).declaration) node.type = decl.value()->type;
+                if (auto decl = get_id(node.type).declaration) {
+                    node.type.identifier = decl.value()->type.identifier;
+                    node.type.kind = decl.value()->type.kind;
+                }
             }
             if (func.kind == FunctionDecl::member_func_declaration) {
                 ASTNode* node_ = push(ASTNode {node.source_token});

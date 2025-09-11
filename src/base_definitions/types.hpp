@@ -21,9 +21,9 @@ struct Type {
     } kind = Undetermined;
     enum TypeQualifier { const_, volatile_, extern_, static_ };
     std::unordered_set<TypeQualifier> qualifiers;
-    // Opt<ASTNode*> declaration {}; NOTE: is present in identifier node
     int ptr_count = 0;
     bool is_const = false;
+    // Opt<ASTNode*> declaration {}; NOTE: is present in identifier node
 };
 
 #define each_builtin_type(builtin_name) if (type_name == #builtin_name) return Type::builtin_name##_;

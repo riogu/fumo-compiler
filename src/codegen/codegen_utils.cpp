@@ -42,7 +42,7 @@ void Codegen::create_libc_main() {
     llvm::Value* argc = &(*arg_iter);     argc->setName("argc");
     llvm::Value* argv = &(*(++arg_iter)); argv->setName("argv");
     
-    llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(*llvm_context, "entry", main_func);
+    llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(*llvm_context, "", main_func);
     ir_builder->SetInsertPoint(entry_block);
     
     llvm::Function* fumo_init = llvm_module->getFunction("fumo.init");

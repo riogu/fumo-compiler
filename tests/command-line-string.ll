@@ -21,9 +21,15 @@ define range(i32 0, -1) i32 @"calculator::double"(ptr nocapture readonly %0) loc
   ret i32 %3
 }
 
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read)
+define i32 @"calculator::triple"(ptr nocapture readonly %0) local_unnamed_addr #1 {
+  %2 = load i32, ptr %0, align 4
+  %3 = mul i32 %2, 3
+  ret i32 %3
+}
+
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(none)
 define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
-entry:
   ret i32 69
 }
 

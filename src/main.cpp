@@ -107,6 +107,9 @@ auto main(int argc, char** argv) -> int {
     //--------------------------------------------------------------------------
     // Semantic Analysis
 
+        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+        // }
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
 

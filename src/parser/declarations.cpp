@@ -1,4 +1,5 @@
 #include "parser/parser.hpp"
+#include <print>
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -124,9 +125,10 @@
     if (token_is(identifier)) {
         type.identifier = identifier(Identifier::type_name);
         type.kind = Type::Undetermined;
-
-        while (token_is(*)) type.ptr_count++;
-        
+        while (token_is(*)) {
+            type.ptr_count++;
+            // std::println("found pointer for '{}'", get_id(type).name);
+        }
         return type;
     }
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
