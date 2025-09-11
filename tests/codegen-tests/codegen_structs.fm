@@ -26,46 +26,42 @@
 //"    return result;\n"
 //"}\n"
 //,pass),
+//
+//// Member function calling another member function - with postfix chaining and mixed definitions
+//t(
+//"struct calculator {\n"
+//"    let value: i32 = 0;\n"
+//"    fn get_value() -> i32 { return value; }\n"
+//"    fn double() -> i32;\n"
+//"    fn triple() -> i32 { return get_value() * 3; }\n"
+//"};\n"
+//"fn calculator::double() -> i32 { return get_value() * 2; }\n"
+//"fn main() -> i32 {\n"
+//"    let calc: calculator = {34};\n"
+//"    let calc_ptr: calculator* = &calc;\n"
+//"    let result: i32 = calc_ptr->double();\n"
+//"    return result + 1;\n"
+//"}\n"
+//,pass),
 
-// Member function calling another member function - with postfix chaining and mixed definitions
+// Member function modifying member variable - with pointer access and external definition
 t(
-"struct calculator {\n"
-"    let value: i32 = 0;\n"
-"    fn get_value() -> i32 { return value; }\n"
-"    fn double() -> i32;\n"
-"    fn triple() -> i32 { return get_value() * 3; }\n"
+"struct counter {\n"
+"    let count: i32 = 0;\n"
+"    fn increment() -> i32;\n"
+"    fn get_count() -> i32 { return count; }\n"
+"    fn get_count_ptr() -> i32*;\n"
 "};\n"
-"fn calculator::double() -> i32 { return get_value() * 2; }\n"
+"fn counter::get_count_ptr() -> i32* { return &count; }\n"
 "fn main() -> i32 {\n"
-"    let calc: calculator = {34};\n"
-"    let calc_ptr: calculator* = &calc;\n"
-"    let result: i32 = calc_ptr->double();\n"
-"    return result + 1;\n"
+"    let c: counter = {0};\n"
+"    let c_ptr: counter* = &c;\n"
+"    c_ptr->increment();\n"
+"    let count_ptr: i32* = c_ptr->get_count_ptr();\n"
+"    return *count_ptr;\n"
 "}\n"
 ,pass),
 
-//// Member function modifying member variable - with pointer access and external definition
-//t(
-//"struct counter {\n"
-//"    let count: i32 = 0;\n"
-//"    fn increment() -> i32;\n"
-//"    fn get_count() -> i32 { return count; }\n"
-//"    fn get_count_ptr() -> i32*;\n"
-//"};\n"
-//"fn counter::increment() -> i32 {\n"
-//"    count = count + 1;\n"
-//"    return count;\n // if i return void it breaks"
-//"}\n"
-//"fn counter::get_count_ptr() -> i32* { return &count; }\n"
-//"fn main() -> i32 {\n"
-//"    let c: counter = {0};\n"
-//"    let c_ptr: counter* = &c;\n"
-//"    c_ptr->increment();\n"
-//"    let count_ptr: i32* = c_ptr->get_count_ptr();\n"
-//"    return *count_ptr;\n"
-//"}\n"
-//,pass),
-//
 //// Namespaced structs with mixed inline/external definitions
 //t(
 //"namespace math {\n"

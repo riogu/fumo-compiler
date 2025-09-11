@@ -16,9 +16,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             AST.push_back(struct_declaration());
         else if (token_is_keyword(enum))
             AST.push_back(enum_declaration());
+        else if (token_is(;)) {}
         else
-            // AST.push_back(statement()); /* NOTE: no longer valid in global */
-        report_error((*curr_tkn), "expected declaration.");
+            report_error((*curr_tkn), "expected declaration.");
+        // AST.push_back(statement()); /* NOTE: no longer valid in global */
     }
     auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::declaration_name, "fumo_module"}});
     return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
@@ -27,7 +28,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <statement> ::= <expression-statement>
 [[nodiscard]] ASTNode* Parser::statement() {
     if (token_is_keyword(return)) {
-        return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
+        if (token_is(;)) 
+            return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, std::nullopt}});
+        else
+            return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
     }
     return expression_statement();
 }
@@ -196,9 +200,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 func_call.identifier = node;
             } 
             else if (auto* un = get_if<UnaryExpr>(node)) {
-                get<Identifier>(un->expr).kind = Identifier::member_func_call_name;
+                get<Identifier>(un->expr.value()).kind = Identifier::member_func_call_name;
                 func_call.kind = FunctionCall::member_function_call;
-                func_call.identifier = un->expr;
+                func_call.identifier = un->expr.value();
             } else {
                 report_error(tkn, "expected function name before '()' operator.");
             }

@@ -56,7 +56,8 @@ struct UnaryExpr {
 
         UnaryExpr_kinds
     } kind;
-    ASTNode* expr;
+    // made it optional to allow empty returns (otherwise it always has a value)
+    Opt<ASTNode*> expr {};
 };
 
 struct BinaryExpr {

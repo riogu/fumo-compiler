@@ -17,8 +17,12 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
 
-    // should remove this later 
+    // should remove this later
 
+    // std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
+    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+    // }
 
     if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
         std::cerr << "\nfile contents for '" << llvm_module->getSourceFileName() << "':\n"

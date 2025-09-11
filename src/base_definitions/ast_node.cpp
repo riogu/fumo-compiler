@@ -16,7 +16,7 @@
         holds(UnaryExpr, const& unary) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
             depth--;
-            result += std::format(" {} {}", gray("::="), unary.expr->to_str(depth));
+            if (unary.expr) result += std::format(" {} {}", gray("::="), unary.expr.value()->to_str(depth));
         }
         holds(BinaryExpr, const& bin) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));

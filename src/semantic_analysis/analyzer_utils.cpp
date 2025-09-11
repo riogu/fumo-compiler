@@ -86,8 +86,9 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
     if find_value (name, type_decls)      return ScopeKind::TypeBody;
     INTERNAL_PANIC("couldnt find scope kind for '{}'.", name);
 }
-void Analyzer::iterate_qualified_names(FunctionDecl & func) {
+vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
     // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
+    vec<Scope> scopes {};
     auto& id = get_id(func);
     if (id.qualifier == Identifier::qualified) {
         str temp = id.name;
@@ -120,24 +121,25 @@ void Analyzer::iterate_qualified_names(FunctionDecl & func) {
             full_name += *temp.begin(), temp.erase(0, 1);
             full_name += *temp.begin(), temp.erase(0, 1);
 
-            symbol_tree.push_scope(isolated_name, kind);
+            scopes.push_back(Scope {isolated_name, kind});
             isolated_name = "";
             if (temp.empty()) break;
         }
-        symbol_tree.push_scope(unqualified_name, scope_kind);
+        scopes.push_back(Scope {unqualified_name, scope_kind});
 
-        return;
+        return scopes;
     } 
     switch (symbol_tree.curr_scope_kind) {
         case ScopeKind::TypeBody:
             func.kind = FunctionDecl::member_func_declaration;
-            symbol_tree.push_scope(id.name, ScopeKind::MemberFuncBody);
+            scopes.push_back(Scope{id.name, ScopeKind::MemberFuncBody});
             break;
         default:
             func.kind = FunctionDecl::function_declaration;
-            symbol_tree.push_scope(id.name, ScopeKind::FunctionBody);
+            scopes.push_back(Scope{id.name, ScopeKind::FunctionBody});
             break;
     }
+    return scopes;
 
 }
 

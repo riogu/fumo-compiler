@@ -117,7 +117,10 @@ struct SymbolTableStack {
             case ScopeKind::FunctionBody:
             case ScopeKind::MemberFuncBody: 
             case ScopeKind::CompoundStatement:
-            case ScopeKind::MemberCompoundStatement: 
+            case ScopeKind::MemberCompoundStatement:
+                if (get<FunctionDecl>(&node).kind == FunctionDecl::member_func_declaration) {
+                    return member_function_decls.insert({identifier.mangled_name, &node});
+                }
                 return function_decls.insert({identifier.mangled_name, &node});
         }
     }

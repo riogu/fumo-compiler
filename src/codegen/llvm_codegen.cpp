@@ -1,6 +1,7 @@
 #include "codegen/llvm_codegen.hpp"
 #include "base_definitions/ast_node.hpp"
 #include "utils/common_utils.hpp"
+
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
 
@@ -70,11 +71,11 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
 
         holds(UnaryExpr, const& un) {
             if (un.kind != UnaryExpr::dereference) report_error(node.source_token, "expression is not assignable.");
-            if (!un.expr->type.ptr_count) INTERNAL_PANIC("somehow passed non ptr type to '{}'", node.name());
+            if (!un.expr.value()->type.ptr_count) INTERNAL_PANIC("somehow passed non ptr type to '{}'", node.name());
             // NOTE: might be able to use this to report errors on using function return values
 
             // *ptr as lvalue - the pointer value itself is the address we want
-            auto* address = if_value(codegen_value(*un.expr))
+            auto* address = if_value(codegen_value(*un.expr.value()))
                             else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
             return address;
             
@@ -177,16 +178,27 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
         holds(UnaryExpr, const& un) {
             // &expr - get the lvalue (address) of the expression
-            if (un.kind == UnaryExpr::address_of) return codegen_address(*un.expr);
+            if (un.kind == UnaryExpr::address_of) return codegen_address(*un.expr.value());
 
             if (un.kind == UnaryExpr::dereference) {
                 auto* addr = codegen_address(node).value();
                 return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), addr);
             }
+            if (un.kind == UnaryExpr::return_statement) {
+                auto* ret_val_type = fumo_to_llvm_type(node.type); // type is passed onto the ret from the value
+                if (ir_builder->getCurrentFunctionReturnType() == llvm::Type::getVoidTy(*llvm_context) && un.expr) {
+                    report_error(node.source_token, "void function shouldn't return a value.");
+                }
+                if (ir_builder->getCurrentFunctionReturnType() != ret_val_type) {
+                    report_error(node.source_token, "function return type does not match return value's type '{}'.",
+                                 type_name(node.type));
+                }
+                if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
 
-            auto* val = if_value(codegen_value(*un.expr))
+            }
+
+            auto* val = if_value(codegen_value(*un.expr.value()))
                         else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
-
             switch (un.kind) {
                 case UnaryExpr::negate:
                     return ir_builder->CreateNeg(val);
@@ -194,7 +206,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::getBool(*llvm_context, 0));
                 case UnaryExpr::bitwise_not: 
                     return ir_builder->CreateNot(val);
-                case UnaryExpr::return_statement: 
+                case UnaryExpr::return_statement:
                     return ir_builder->CreateRet(val);
                 default:
                     INTERNAL_PANIC("codegen not implemented for '{}'", node.name());
@@ -277,13 +289,10 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 int this_arg_offset = 0;
                 if (func.kind == FunctionDecl::member_func_declaration) { // adding 'this' pointer
                     this_arg_offset = 1;
-                    auto* alloca = ir_builder->CreateAlloca(llvm::PointerType::getUnqual(*llvm_context),
-                                                            nullptr, "this");
-                    // Copy the parameter VALUE into the local ADDRESS
-                    ir_builder->CreateStore(llvm_func->getArg(0), alloca);
-                    current_this_ptr = alloca;
-                    //                      ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^
-                    //                      source value         destination address
+                    current_this_ptr = ir_builder->CreateAlloca(ir_builder->getPtrTy(), nullptr, "this");
+                    // copy the parameter VALUE into the local ADDRESS
+                    ir_builder->CreateStore(llvm_func->getArg(0), current_this_ptr.value());
+                    //                      source value          destination address
                 }
                 for (int i = 0; i < func.parameters.size(); i++) {
                     auto* param = func.parameters[i];

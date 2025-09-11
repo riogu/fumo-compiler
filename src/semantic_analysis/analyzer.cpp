@@ -1,6 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
-#include "utils/common_utils.hpp"
 #include <ranges>
+#include <print>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
 
@@ -25,6 +25,13 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         id.name = "fumo.user_main";
         symbol_tree.function_decls.insert(std::move(map_node));
     }
+    for(auto [name, node] : symbol_tree.function_decls) {
+        std::println("found function '{}' '{}'", name, node->name());
+    }
+    std::println("member functions:");
+    for(auto [name, node] : symbol_tree.member_function_decls) {
+        std::println("found member function '{}' '{}'", name, node->name());
+    }
 }
 
 void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
@@ -41,11 +48,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 if find_value (id.mangled_name, symbol_tree.member_variable_decls) {
                     id.kind = Identifier::member_var_name;
                     str temp = iter->first;
-                    std::size_t pos = temp.find("::");
-                    if (pos != std::string::npos) {
-                        id.base_struct_name = temp.substr(0, pos);
-                    }
-                    // "promote" identifier to member variable name after finding it
+                    while (temp.back() != ':') temp.pop_back();
+                    temp.pop_back(), temp.pop_back();
                 }
 
             } else {
@@ -66,39 +70,41 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
         holds(UnaryExpr, &un) {
             // TODO: add checks for '!' and such to only work on arithmetic types
-            analyze(*un.expr);
+            analyze(*un.expr.value());
             switch (un.kind) {
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
                 case UnaryExpr::logic_not:
-                    if (!is_arithmetic_t(un.expr->type)) {
+                    if (!is_arithmetic_t(un.expr.value()->type)) {
                         report_error(node.source_token,
                                      "invalid type '{}' for unary expression.",
-                                     type_name(un.expr->type));
+                                     type_name(un.expr.value()->type));
                     }
-                    node.type = un.expr->type;
+                    node.type = un.expr.value()->type;
                     break;
                 // TODO: return should be moved to a new struct later
                 case UnaryExpr::dereference:
-                    if (!un.expr->type.ptr_count) {
+                    if (!un.expr.value()->type.ptr_count) {
                         report_error(node.source_token, "Indirection requires pointer operand, '{}' is invalid.",
-                                     type_name(un.expr->type));
+                                     type_name(un.expr.value()->type));
                     }
-                    node.type = un.expr->type;
+                    node.type = un.expr.value()->type;
                     node.type.ptr_count--;
                     break;
                 case UnaryExpr::address_of:
-                    node.type = un.expr->type;
-                    if (auto* un_expr = get_if<UnaryExpr>(un.expr);
+                    node.type = un.expr.value()->type;
+                    if (auto* un_expr = get_if<UnaryExpr>(un.expr.value()); // cant use '&' on results of unaryExpr
                         un_expr && un_expr->kind == UnaryExpr::address_of) {
                         if (!node.type.ptr_count) INTERNAL_PANIC("you passed a non ptr and got '&' issues somehow.");
                         report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
-                                     type_name(un.expr->type));
+                                     type_name(un.expr.value()->type));
                     }
                     node.type.ptr_count++;
                     break;
                 case UnaryExpr::return_statement:
-                    node.type = un.expr->type;
+                    if (un.expr) node.type = un.expr.value()->type;
+                    else // allow returning nothing for void functions (control flow)
+                        node.type = {push({node.source_token, Identifier {Identifier::type_name, "void"}}), Type::void_};
                     break;
             }
         }
@@ -142,10 +148,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
         holds(FunctionDecl, &func) {
             // TODO: check if all returns in the body have the correct type of the function
-            add_declaration(node);
-            Identifier& id = get_id(func);
 
-            iterate_qualified_names(func);
+            vec<Scope> scopes = iterate_qualified_names(func);
+            add_declaration(node);
+
+            for (auto& scope : scopes) {
+                symbol_tree.push_scope(scope.name, scope.kind);
+            }
+            Identifier& id = get_id(func);
 
             if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
                 analyze(*node.type.identifier);
@@ -155,7 +165,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 }
             }
             if (func.kind == FunctionDecl::member_func_declaration) {
-                ASTNode* node_ = push(ASTNode {node.source_token});
+                // ASTNode* node_ = push(ASTNode {node.source_token});
                 // node_->branch =
                 //     VariableDecl {VariableDecl::parameter,
                 //                   push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
@@ -273,7 +283,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 auto& curr_node = *node_it;
 
                 if (auto* un = get_if<UnaryExpr>(curr_node)) {
-                    if (auto* id = get_if<Identifier>(un->expr)) curr_id = id;
+                    if (auto* id = get_if<Identifier>(un->expr.value())) curr_id = id;
                 } else if (auto* id = get_if<Identifier>(curr_node)) {
                     curr_id = id;
                 } else if (auto* func_call = get_if<FunctionCall>(curr_node)) {
@@ -322,8 +332,20 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
+            std::println("function '{}' had type {}", id.mangled_name, type_name(node.type));
+            std::println("found function '{}' '{}'", id.mangled_name, node.name());
+            // TODO: continue debug here
 
+            if (was_inserted && id.qualifier == Identifier::qualified
+                && func.kind == FunctionDecl::member_func_declaration) {
+                str temp = id.mangled_name; while (temp.back() != ':') temp.pop_back(); 
+                temp.pop_back(), temp.pop_back(); // get parent name
+                report_error(node.source_token, 
+                             "out-of-line definition of '{}' does not match any declaration in '{}'",
+                             id.mangled_name, temp);
+            }
             if (!was_inserted) {
+                std::println("couldn't insert.");
                 str def_or_decl;
                 if (func.body) {
                     if (first_occurence.body)
@@ -338,7 +360,7 @@ void Analyzer::add_declaration(ASTNode& node) {
                     def_or_decl = "Redeclaration";
                 }
 
-                if (node.type.kind != node_iterator->second->type.kind) {
+                if (!is_same_t(node.type, node_iterator->second->type)) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different return type.",
                                  def_or_decl,
@@ -357,8 +379,7 @@ void Analyzer::add_declaration(ASTNode& node) {
                                      def_or_decl,
                                      id.mangled_name);
                     }
-                    if (get_id(get<VariableDecl>(arg1)).mangled_name
-                        != get_id(get<VariableDecl>(arg2)).mangled_name) {
+                    if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
                         report_error(node.source_token,
                                      "{} of '{}' with different parameter names.",
                                      def_or_decl,

@@ -9,46 +9,53 @@ fumo.init:                              # @fumo.init
 .Lfunc_end0:
 	.size	fumo.init, .Lfunc_end0-fumo.init
                                         # -- End function
-	.globl	"calculator::get_value"         # -- Begin function calculator::get_value
+	.globl	"counter::get_count"            # -- Begin function counter::get_count
 	.p2align	4
-	.type	"calculator::get_value",@function
-"calculator::get_value":                # @"calculator::get_value"
+	.type	"counter::get_count",@function
+"counter::get_count":                   # @"counter::get_count"
 # %bb.0:
 	movl	(%rdi), %eax
 	retq
 .Lfunc_end1:
-	.size	"calculator::get_value", .Lfunc_end1-"calculator::get_value"
+	.size	"counter::get_count", .Lfunc_end1-"counter::get_count"
                                         # -- End function
-	.globl	"calculator::double"            # -- Begin function calculator::double
+	.globl	"counter::get_count_ptr"        # -- Begin function counter::get_count_ptr
 	.p2align	4
-	.type	"calculator::double",@function
-"calculator::double":                   # @"calculator::double"
+	.type	"counter::get_count_ptr",@function
+"counter::get_count_ptr":               # @"counter::get_count_ptr"
 # %bb.0:
-	movl	(%rdi), %eax
-	addl	%eax, %eax
+	movq	%rdi, %rax
 	retq
 .Lfunc_end2:
-	.size	"calculator::double", .Lfunc_end2-"calculator::double"
+	.size	"counter::get_count_ptr", .Lfunc_end2-"counter::get_count_ptr"
                                         # -- End function
-	.globl	"calculator::triple"            # -- Begin function calculator::triple
+	.globl	"counter::gaming"               # -- Begin function counter::gaming
 	.p2align	4
-	.type	"calculator::triple",@function
-"calculator::triple":                   # @"calculator::triple"
+	.type	"counter::gaming",@function
+"counter::gaming":                      # @"counter::gaming"
 # %bb.0:
-	movl	(%rdi), %eax
-	leal	(%rax,%rax,2), %eax
+	incl	(%rdi)
 	retq
 .Lfunc_end3:
-	.size	"calculator::triple", .Lfunc_end3-"calculator::triple"
+	.size	"counter::gaming", .Lfunc_end3-"counter::gaming"
                                         # -- End function
 	.globl	main                            # -- Begin function main
 	.p2align	4
 	.type	main,@function
 main:                                   # @main
+	.cfi_startproc
 # %bb.0:
-	movl	$69, %eax
+	pushq	%rax
+	.cfi_def_cfa_offset 16
+	movl	$0, (%rsp)
+	movq	%rsp, %rdi
+	callq	"counter::increment"@PLT
+	movl	(%rsp), %eax
+	popq	%rcx
+	.cfi_def_cfa_offset 8
 	retq
 .Lfunc_end4:
 	.size	main, .Lfunc_end4-main
+	.cfi_endproc
                                         # -- End function
 	.section	".note.GNU-stack","",@progbits

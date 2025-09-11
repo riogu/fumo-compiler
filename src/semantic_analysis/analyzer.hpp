@@ -28,7 +28,7 @@ struct Analyzer {
         return main_node;
     }
     void add_declaration(ASTNode& node);
-    void iterate_qualified_names(FunctionDecl& func);
+    vec<Scope> iterate_qualified_names(FunctionDecl& func);
 
     ASTNode* push(const ASTNode& node) {
         extra_nodes.push_back(std::make_unique<ASTNode>(node));
