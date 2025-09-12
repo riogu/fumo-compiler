@@ -48,14 +48,14 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     llvm_module->setTargetTriple(llvm::sys::getDefaultTargetTriple());
     std::string Error;
     auto target = llvm::TargetRegistry::lookupTarget(llvm_module->getTargetTriple(), Error);
-    if (!target) INTERNAL_PANIC("{}", Error);
+    if (!target) internal_panic("{}", Error);
 
     auto Features = "";
     auto CPU = "generic";
     llvm::TargetOptions opt;    
     auto target_machine = target->createTargetMachine(llvm_module->getTargetTriple(), 
                                                       CPU, Features, opt, llvm::Reloc::PIC_);
-    if (!target_machine) INTERNAL_PANIC("Failed to create target machine");
+    if (!target_machine) internal_panic("Failed to create target machine");
 
     llvm_module->setDataLayout(target_machine->createDataLayout());
 
@@ -114,7 +114,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         target_machine->Options.MCOptions.AsmVerbose = true;
         if (output_ASM &&
             target_machine->addPassesToEmitFile(pass, asm_stream, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
-            INTERNAL_PANIC("Target does not support emission of assembly files.");
+            internal_panic("Target does not support emission of assembly files.");
         }
         pass.run(*llvm_module);
 
@@ -132,7 +132,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
         llvm::legacy::PassManager pass;
         if (target_machine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::ObjectFile)) {
-            INTERNAL_PANIC("Target does not support emission of object files.");
+            internal_panic("Target does not support emission of object files.");
         }
         pass.run(*llvm_module);
     }

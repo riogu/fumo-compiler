@@ -29,7 +29,7 @@ struct Type {
 #define each_builtin_type(builtin_name) if (type_name == #builtin_name) return Type::builtin_name##_;
 [[nodiscard]] constexpr Type::Kind builtin_type_kind(std::string_view type_name) {
     map_macro(each_builtin_type, builtin_types);
-    INTERNAL_PANIC("internal compiler error: provided unknown type name: {}", type_name);
+    internal_panic("internal compiler error: provided unknown type name: {}", type_name);
 }
 
 #undef make_enum_member

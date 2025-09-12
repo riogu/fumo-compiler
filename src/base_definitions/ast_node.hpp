@@ -102,7 +102,7 @@ struct VariableDecl {
     } kind;
     ASTNode* identifier;
 
-    Opt<int> member_index {};
+    Opt<int> member_index {}; // used only by member_var_declaration
 };
 
 struct FunctionDecl {
@@ -178,7 +178,7 @@ struct ASTNode {
     NodeBranch branch;
     Type type {};
 
-    llvm::Value* llvm_value {};
+    llvm::Value* llvm_value = nullptr;
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
@@ -189,17 +189,17 @@ struct ASTNode {
 #define get_name(branch_) get_id(branch_).name
 #define get_id(branch_)                                                             \
 (*({ if (!branch_.identifier) [[unlikely]] {                                        \
-        INTERNAL_PANIC("forgot to initialize an Identifier for '{}'.", #branch_);   \
+        internal_panic("forgot to initialize an Identifier for '{}'.", #branch_);   \
      }                                                                              \
     &get<Identifier>(branch_.identifier);                                           \
    }))
 
 template<typename Branch>
 constexpr Branch& get(ASTNode* node) {
-    if(!node) [[unlikely]] INTERNAL_PANIC("node was uninitialized (FIX THIS).");
+    if(!node) [[unlikely]] internal_panic("node was uninitialized (FIX THIS).");
     if (std::holds_alternative<Branch>(node->branch)) return std::get<Branch>(node->branch);
     else [[unlikely]]
-        INTERNAL_PANIC("node didn't hold this branch, held '{}'", node->name());
+        internal_panic("node didn't hold this branch, held '{}'", node->name());
 }
 template<typename... Branches>
 constexpr bool is_branch(const ASTNode* node) {
@@ -221,7 +221,7 @@ constexpr Branch* get_if(ASTNode* node) {
     temp;                                       \
 });
 #define else_panic(...)                         \
-    if (!temp) INTERNAL_PANIC(__VA_ARGS__);     \
+    if (!temp) internal_panic(__VA_ARGS__);     \
     temp;                                       \
 });
 
@@ -242,7 +242,8 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
 // Type checking functions
 [[nodiscard]] constexpr bool is_arithmetic_t(const Type& type) {
     return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
-         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_);
+         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_)
+            && !type.ptr_count;
 }
 [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
     return ((is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count)

@@ -201,10 +201,9 @@
     }
 
     node->branch = type_decl;
-    expect_token(;);
     return node;
 }
 
 [[nodiscard]] ASTNode* Parser::enum_declaration() {
-    INTERNAL_PANIC("enums are not implemented.");
+    internal_panic("enums are not implemented.");
 }

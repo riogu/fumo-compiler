@@ -8,8 +8,8 @@ struct Analyzer {
     void semantic_analysis(ASTNode* file_scope);
 
     SymbolTableStack symbol_tree {};
-    
     vec<unique_ptr<ASTNode>> extra_nodes {}; // used for member functions to allocate a parameter
+    Opt<Identifier*> curr_postfix_id {};
 
   private:
     std::stringstream file_stream;

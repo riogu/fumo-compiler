@@ -39,6 +39,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             if (id.declaration) {
                 node.type = id.declaration.value()->type;
                 if find_value (id.mangled_name, symbol_tree.member_variable_decls) {
+                    // this allows variables to implicitly be used as member variables in member functions
                     id.kind = Identifier::member_var_name;
                     str temp = iter->first;
                     while (temp.back() != ':') temp.pop_back();
@@ -47,6 +48,17 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 }
             } else {
                 report_error(node.source_token, "use of undeclared identifier '{}'.", id.mangled_name);
+            }
+            switch (id.kind) {
+                case Identifier::var_name:
+                case Identifier::member_var_name:
+                case Identifier::func_call_name:
+                case Identifier::member_func_call_name:
+                    curr_postfix_id = &id;
+                case Identifier::unknown_name:
+                case Identifier::declaration_name:
+                case Identifier::type_name:
+                    break;
             }
         }
 
@@ -57,7 +69,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case PrimaryExpr::str:
                     break;
                 default:
-                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                    internal_panic("semantic analysis missing for '{}'.", node.name());
             }
         }
 
@@ -88,7 +100,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type = un.expr.value()->type;
                     if (auto* un_expr = get_if<UnaryExpr>(un.expr.value()); // cant use '&' on results of unaryExpr
                         un_expr && un_expr->kind == UnaryExpr::address_of) {
-                        if (!node.type.ptr_count) INTERNAL_PANIC("you passed a non ptr and got '&' issues somehow.");
+                        if (!node.type.ptr_count) internal_panic("you passed a non ptr and got '&' issues somehow.");
                         report_error(node.source_token, "Cannot take the address of an rvalue of type '{}'.",
                                      type_name(un.expr.value()->type));
                     }
@@ -110,12 +122,48 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     report_error(node.source_token, "cannot assign to temporary function return value.");
                 }
                 if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
-                    report_error(node.source_token,
-                                 "cannot deduce type for '{}' from assignment.",
-                                 bin.lhs->source_token.to_str());
+                    if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
+                        // allow this case: let var = {123};
+                        if (init_list->nodes.size() == 1) bin.rhs->type = init_list->nodes[0]->type;
+                    } else {
+                        report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
+                                     bin.lhs->source_token.to_str());
+                    }
                 }
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
+                // this extra check avoids the case where you use another type with the same layout on the rhs
+                if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                // ----------------------------------------------------------------------------
+                // checks for initializer lists (make sure they match the original type)
+                // also allow those edge cases with pointers and initializer lists
+                if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
+                    if (bin.lhs->type.ptr_count && init_list->nodes.size() > 1) {
+                        report_error(node.source_token, "non-struct initializer lists can only have one argument.");
+                    }
+                    if (bin.lhs->type.ptr_count && init_list->nodes.size() == 1) {
+                        auto* first_elem = init_list->nodes[0];
+                        if (!is_compatible_t(bin.lhs->type, first_elem->type)) {
+                            report_error(first_elem->source_token,
+                                         "cannot assign to variable of type '{}' with expression of type '{}'.",
+                                         type_name(bin.lhs->type), type_name(first_elem->type));
+                        }
+                    }
+                    if (bin.lhs->type.kind == Type::struct_ && bin.lhs->type.ptr_count == 0) {
+                        vec<ASTNode*> type_decl_body;
+                        if find_value (get_id(bin.lhs->type).mangled_name, symbol_tree.type_decls) {
+                            type_decl_body = get<TypeDecl>(iter->second).definition_body.value();
+                        } else internal_error(node.source_token, "somehow didnt find type declaration.");
+                        for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
+                            if (!is_compatible_t(arg->type, member->type)) {
+                                report_error(arg->source_token,
+                                             "cannot initialize member variable of type '{}' with argument of type '{}'.",
+                                             type_name(member->type), type_name(arg->type));
+                            }
+                        }
+                    }
+                }
+                // ----------------------------------------------------------------------------
             }
             if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
             node.type = bin.lhs->type;
@@ -269,28 +317,39 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     break;
                 }
                 default:
-                    INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+                    internal_panic("semantic analysis missing for '{}'.", node.name());
             }
         }
-
-        // NOTE: id like to refactor this later
+        // TODO: replace this with the code below it (after debugging that version)
         holds(PostfixExpr, &postfix) { // nodes is never empty
             str prev_name = "";
             str curr_base_name = "";
             Identifier* curr_id = nullptr;
-            for (auto node_it = postfix.nodes.begin(); node_it != postfix.nodes.end(); ++node_it) {
-                auto& curr_node = *node_it;
-
+            for (auto* curr_node: postfix.nodes) {
+                // TODO:
                 if (auto* un = get_if<UnaryExpr>(curr_node)) {
                     if (auto* id = get_if<Identifier>(un->expr.value())) curr_id = id;
+                    else if (auto* func_call = get_if<FunctionCall>(un->expr.value())) {
+                        curr_id = &get<Identifier>(func_call->identifier);
+                    }
                 } else if (auto* id = get_if<Identifier>(curr_node)) {
                     curr_id = id;
                 } else if (auto* func_call = get_if<FunctionCall>(curr_node)) {
                     auto& id = get<Identifier>(func_call->identifier);
                     curr_id = &id;
                 } else
-                    INTERNAL_PANIC("wrong node branch pushed to postfix expression.");
+                    internal_panic("wrong node branch pushed to postfix expression.");
+                {
 
+                    struct foo {
+                        int* x;
+                        foo* func() { return this; }
+                        foo* var = {};
+                    };
+                    int num = 123;
+                    foo bar {};
+                    bar.func()->x = &num;
+                }
                 curr_id->mangled_name = prev_name + curr_id->name;
                 curr_id->base_struct_name = curr_base_name;
                 prev_name = ""; // reset the previous name 
@@ -310,7 +369,31 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             node.type = postfix.nodes.back()->type;
         }
 
-        _default INTERNAL_PANIC("semantic analysis missing for '{}'.", node.name());
+        //
+        // holds(PostfixExpr, &postfix) { // nodes is never empty
+        //     // we add the type name to the string, for lookup in the symbol table
+        //     // struct gaming { let foo: i32; }; // x.foo => "gaming::foo" (how its stored)
+        //     str prev_name = "";
+        //     str curr_base_name = "";
+        //     for (auto* curr_node: postfix.nodes) {
+        //         // i need the current id here
+        //         if (curr_postfix_id) {
+        //             curr_postfix_id.value()->mangled_name = prev_name + curr_postfix_id.value()->name;
+        //             curr_postfix_id.value()->base_struct_name = curr_base_name;
+        //         } else {
+        //             internal_error(curr_node->source_token, "this node branch didnt provide an identifier.");
+        //         }
+        //         prev_name = ""; // reset the previous name
+        //         analyze(*curr_node); // NOTE: we expect this call to set curr_postfix_id
+        //
+        //         prev_name += get_id(curr_node->type).mangled_name;
+        //         curr_base_name = prev_name;
+        //         prev_name += "::";
+        //     }
+        //     node.type = postfix.nodes.back()->type;
+        // }
+
+        _default internal_panic("semantic analysis missing for '{}'.", node.name());
     }
 }
 
@@ -433,6 +516,6 @@ void Analyzer::add_declaration(ASTNode& node) {
             }
         }
 
-        _default INTERNAL_PANIC("expected variable, got '{}'.", node.kind_name());
+        _default internal_panic("expected variable, got '{}'.", node.kind_name());
     }
 }

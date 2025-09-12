@@ -21,7 +21,7 @@ void Codegen::verify_user_main() {
             }
 
         } else if (!llvm::isa<llvm::ReturnInst>(term)) {
-            INTERNAL_PANIC("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
+            internal_panic("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
         }
     }
 }

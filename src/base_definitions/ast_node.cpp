@@ -88,7 +88,7 @@
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
         holds(TypeDecl, const& type_decl) {
-            result += gray("=> ") + purple_blue("struct ") + yellow(get_id(this->type).mangled_name);
+            result += gray("=> ") + purple_blue("struct ") + yellow(get_id(type).mangled_name);
             if (type_decl.definition_body) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
                 result += purple_blue("definition ") + gray("{");

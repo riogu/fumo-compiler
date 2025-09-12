@@ -299,7 +299,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
 [[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind, Opt<ASTNode*> declaration) {
     if (id_kind == Identifier::declaration_name && !declaration) [[unlikely]]
-        INTERNAL_PANIC("forgot to provide declaration to identifier.");
+        internal_panic("forgot to provide declaration to identifier.");
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     while (token_is(::)) {

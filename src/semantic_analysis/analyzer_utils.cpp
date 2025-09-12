@@ -73,9 +73,9 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 
 
         case Identifier::declaration_name:
-            INTERNAL_PANIC("declaration '{}' shouldn't search for itself", id.mangled_name);
+            internal_panic("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
-            INTERNAL_PANIC("forgot to set identifier name kind for {}.", id.mangled_name);
+            internal_panic("forgot to set identifier name kind for {}.", id.mangled_name);
 
     }
     return std::nullopt;
@@ -84,7 +84,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 [[nodiscard]] ScopeKind SymbolTableStack::find_scope_kind(const str& name) {
     if find_value (name, namespace_decls) return ScopeKind::Namespace;
     if find_value (name, type_decls)      return ScopeKind::TypeBody;
-    INTERNAL_PANIC("couldnt find scope kind for '{}'.", name);
+    internal_panic("couldnt find scope kind for '{}'.", name);
 }
 vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
     // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
@@ -151,8 +151,8 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
                          type_name(bin.lhs->type), node.source_token.to_str(), type_name(bin.rhs->type));
         } 
         case BinaryExpr::assignment:
-            report_error(node.source_token, "assigning to '{}' from incompatible type '{}'.",
+            report_error(node.source_token, "assigning to variable of type '{}' from expression of incompatible type '{}'.",
                          type_name(bin.lhs->type), type_name(bin.rhs->type));
-        default: INTERNAL_PANIC("expected binary node for error, got '{}'.", node.kind_name());
+        default: internal_panic("expected binary node for error, got '{}'.", node.kind_name());
     }
 }

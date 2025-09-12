@@ -92,7 +92,7 @@ struct Codegen {
         switch (fumo_type.kind) {
             case Type::struct_: {
                 auto type = llvm::StructType::getTypeByName(*llvm_context, type_name(fumo_type));
-                if (type == nullptr) INTERNAL_PANIC("couldn't get llvm::Type for '{}'", type_name(fumo_type));
+                if (type == nullptr) internal_panic("couldn't get llvm::Type for '{}'", type_name(fumo_type));
                 return type;
             }
             case Type::i8_:      return llvm::Type::getInt8Ty(*llvm_context);   
@@ -104,7 +104,7 @@ struct Codegen {
             case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);
             case Type::str_:     return llvm::PointerType::getUnqual(*llvm_context);
             default:
-                INTERNAL_PANIC("couldn't get llvm::Type for '{}'", type_name(fumo_type));
+                internal_panic("couldn't get llvm::Type for '{}'", type_name(fumo_type));
         }
     }
 

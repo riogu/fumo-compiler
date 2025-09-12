@@ -104,6 +104,7 @@ auto main(int argc, char** argv) -> int {
     auto file_root_node = parser.parse_tokens(tokens);
     //--------------------------------------------------------------------------
     // Semantic Analysis
+    // NOTE: recursive structs will crash the AST printing until after semantic analysis
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
     //--------------------------------------------------------------------------
