@@ -120,16 +120,30 @@ t(
 "    fn set_next(n: node*) -> void { next = n; }\n"
 "};\n"
 "fn main() -> i32 {\n"
-"    let var = {123};\n"
-"    let node: node;\n"
-"    let node1 = node {5};\n"
+"    let node1 = node {10};\n"
 "    let node2 = node {20};\n"
 "    let node3 = node {30};\n"
+"    let node4 = node {40};\n"
 "    node1.set_next(&node2);\n"
 "    node2.set_next(&node3);\n"
+"    node3.set_next(&node4);\n"
+"    node3.set_next(&node4);\n"
 "    return node1.get_next()->get_next()->get_next()->value;\n"
 "}\n"
 ,pass),
+//t(
+//"struct node {\n"
+//"    let value: i32 = 0;\n"
+//"    let next: node* = {};\n"
+//"    fn get_next() -> node* { return next; }\n"
+//"};\n"
+//"fn main() -> i32 {\n"
+//"    let node1 = node {5};\n"
+//"    let node2 = node {69};\n"
+//"    node1.next->value = node2.value;\n"
+//"    return node1.get_next()->value;// will cause runtime error\n"
+//"}\n"
+//,pass),
 //
 //// Testing member function on temporary (should fail)
 //t(

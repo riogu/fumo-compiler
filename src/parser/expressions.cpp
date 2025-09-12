@@ -163,9 +163,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     vec<ASTNode*> nodes {};
     // NOTE: the current impl means you can't do "(this->that.this).this"
     // (can't use parentheses in a postfix expression)
-    // the way i decided to make postfix expressions (flat vector) ended up being pretty inconvenient
-    // later, i will have to consider refactoring this into a binary structure 
-    // otherwise it will be quite hard to properly add nested postfixes and other things
+    // just change this to not check for specific is_branch, and do some testing to see if it works
+    // it should just work, but there might be a few edgecases (assuming you refactored semantic analysis)
     while (1) {
         if (token_is(->)) {
             // NOTE: this if should be removed later. we should allow anything to have a postfix
