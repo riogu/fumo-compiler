@@ -84,6 +84,9 @@ struct Codegen {
     void clear_metadata();
     void create_libc_main();
     void verify_user_main();
+    llvm::Function* get_or_create_exit();
+    llvm::Function* get_or_create_printf();
+    llvm::Function* get_or_create_runtime_error_function();
 
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 

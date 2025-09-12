@@ -97,3 +97,50 @@ void Codegen::clear_metadata() {
         }
     }
 }
+
+llvm::Function* Codegen::get_or_create_runtime_error_function() {
+    static llvm::Function* null_error_fn = nullptr;
+    
+    if (!null_error_fn) {
+        // void fumo.runtime_error(const char* message)
+        llvm::Type* void_type = llvm::Type::getVoidTy(*llvm_context);
+        llvm::FunctionType* fn_type = llvm::FunctionType::get(void_type, {ir_builder->getPtrTy()}, false);
+        
+        null_error_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, 
+                                              "fumo.runtime_error", llvm_module.get());
+        
+        llvm::BasicBlock* entry_bb = llvm::BasicBlock::Create(*llvm_context, "", null_error_fn);
+        llvm::IRBuilder<> temp_builder(entry_bb);
+        
+        llvm::Value* message = null_error_fn->arg_begin();
+        
+        llvm::Function* printf_fn = get_or_create_printf();
+        temp_builder.CreateCall(printf_fn, {temp_builder.CreateGlobalString("%s"), message});
+        
+        llvm::Function* exit_fn = get_or_create_exit();
+        temp_builder.CreateCall(exit_fn, {llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 1)});
+        temp_builder.CreateUnreachable();
+    }
+    
+    return null_error_fn;
+}
+llvm::Function* Codegen::get_or_create_printf() {
+    llvm::Function* printf_fn = llvm_module->getFunction("printf");
+    if (!printf_fn) {
+        llvm::Type* int_type = llvm::Type::getInt32Ty(*llvm_context);
+        llvm::FunctionType* printf_type = llvm::FunctionType::get(int_type, {ir_builder->getPtrTy()}, true);
+        printf_fn = llvm::Function::Create(printf_type, llvm::Function::ExternalLinkage, "printf", llvm_module.get());
+    }
+    return printf_fn;
+}
+
+llvm::Function* Codegen::get_or_create_exit() {
+    llvm::Function* exit_fn = llvm_module->getFunction("exit");
+    if (!exit_fn) {
+        llvm::Type* void_type = llvm::Type::getVoidTy(*llvm_context);
+        llvm::Type* int_type = llvm::Type::getInt32Ty(*llvm_context);
+        llvm::FunctionType* exit_type = llvm::FunctionType::get(void_type, {int_type}, false);
+        exit_fn = llvm::Function::Create(exit_type, llvm::Function::ExternalLinkage, "exit", llvm_module.get());
+    }
+    return exit_fn;
+}

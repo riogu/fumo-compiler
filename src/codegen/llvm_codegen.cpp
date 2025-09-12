@@ -1,4 +1,5 @@
 #include "codegen/llvm_codegen.hpp"
+#include "utils/common_utils.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -73,11 +74,34 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             if (!un.expr.value()->type.ptr_count) internal_panic("somehow passed non ptr type to '{}'", node.name());
             // NOTE: might be able to use this to report errors on using function return values
 
-            if (node.llvm_value && !un.expr.value()->llvm_value) un.expr.value()->llvm_value = node.llvm_value;
             // pass the ptr to the original struct to member function calls that were dereferenced
+            if (node.llvm_value && !un.expr.value()->llvm_value) un.expr.value()->llvm_value = node.llvm_value;
             // *ptr as lvalue - the pointer value itself is the address we want
             auto* address = if_value(codegen_value(*un.expr.value()))
                             else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+            // -------------------------------------------------------------------------------------------
+            // check null pointer dereferences
+            llvm::Function* parent_function = ir_builder->GetInsertBlock()->getParent();
+            llvm::Function* null_error_fn = get_or_create_runtime_error_function();
+
+            auto* trap_bb = llvm::BasicBlock::Create(*llvm_context, "null_trap", parent_function);
+            auto* safe_bb = llvm::BasicBlock::Create(*llvm_context, "safe_deref", parent_function);
+            // Check if pointer is null
+            llvm::Constant* null_ptr_const = llvm::Constant::getNullValue(address->getType());
+            llvm::Value* is_null = ir_builder->CreateICmpEQ(address, null_ptr_const, "is_null");
+            ir_builder->CreateCondBr(is_null, trap_bb, safe_bb);
+            // Trap block - executed on null pointer
+            ir_builder->SetInsertPoint(trap_bb);
+            // Create error message with source location if available
+            str error_msg = make_runtime_error(node.source_token, "found null pointer dereference");
+            // Create global string for error message
+            // Create global string for error message
+            llvm::Constant* error_str = ir_builder->CreateGlobalString(error_msg);
+            ir_builder->CreateCall(null_error_fn, {error_str});
+            ir_builder->CreateUnreachable();
+            // Safe dereference block
+            ir_builder->SetInsertPoint(safe_bb);
+            // -------------------------------------------------------------------------------------------
             return address;
             
         }
@@ -115,12 +139,6 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
                 if (is_branch<FunctionCall>(curr_node)) {
                     auto* ret_val = if_value(codegen_value(*curr_node))
                                     else_error(curr_node->source_token, "found no value in postfix expr (FIX).");
-                    // TODO: continue here
-                    // if (i + 1 < postfix.nodes.size()) { // not the last element and wasn't dereferenced
-                    //     report_error(curr_node->source_token, // foo = var.func().x; // '.x' not allowed 
-                    //                  "cannot access member of temporary value returned by function call.");
-                    //     // it adds too much complexity so it wont be in the language for now
-                    // }
                     if (node.type.kind == Type::void_) return std::nullopt; 
                     llvm::Value* temp_alloca = ir_builder->CreateAlloca(ret_val->getType());
                     ir_builder->CreateStore(ret_val, temp_alloca);
@@ -184,8 +202,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             if (un.kind == UnaryExpr::address_of) return codegen_address(*un.expr.value());
 
             if (un.kind == UnaryExpr::dereference) {
-                auto* addr = codegen_address(node).value();
-                return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), addr);
+                auto* address = codegen_address(node).value();
+                return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), address);
             }
             if (un.kind == UnaryExpr::return_statement) {
                 auto* ret_val_type = fumo_to_llvm_type(node.type); // type is passed onto the ret from the value
@@ -406,7 +424,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     } else if (scope.nodes.size() == 1) { // allows init list syntax for i32 and other types
                         auto* rvalue = if_value(codegen_value(*scope.nodes[0]))
                                        else_panic("[Codegen] can't get rvalue for '{}'.", node.name());
-                        return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), rvalue);
+                        return rvalue;
 
                     } else {
                         report_error(node.source_token, "non-struct initializer lists can only have 0 or 1 arguments.");
