@@ -58,7 +58,7 @@ struct Token {
                 return id_gold(std::get<std::string>(literal.value()));
             case TokenType::string: {
                 std::string raw{std::get<std::string>(literal.value())};
-                std::string escaped{};
+                std::string escaped {};
                 escaped.reserve(raw.length());
                 for (char &c : raw) {
                     escaped += (c == '\n') ? "\\n" :

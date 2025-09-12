@@ -96,7 +96,7 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             str error_msg = make_runtime_error(node.source_token, "found null pointer dereference");
             // Create global string for error message
             // Create global string for error message
-            llvm::Constant* error_str = ir_builder->CreateGlobalString(error_msg);
+            llvm::Constant* error_str = ir_builder->CreateGlobalString(error_msg, ".str_error_msg");
             ir_builder->CreateCall(null_error_fn, {error_str});
             ir_builder->CreateUnreachable();
             // Safe dereference block

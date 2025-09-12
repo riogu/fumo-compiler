@@ -54,7 +54,7 @@ int Lexer::get_curr() {
             str_inner += curr;
         } else {
             if (file_stream.peek() != EOF) {
-            get_curr();
+                get_curr();
             } else {
                 lexer_error("Dangling backslash escape character.");
             }

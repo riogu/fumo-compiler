@@ -111,12 +111,8 @@ struct Codegen {
         }
     }
 
-    llvm::Value* create_string_literal(const std::string& str) {
-        llvm::Constant* c_str = llvm::ConstantDataArray::getString(*llvm_context, str, true /* is null terminated */);
-        llvm::GlobalVariable* global_str = new llvm::GlobalVariable(*llvm_module, c_str->getType(), true, // isConstant
-                                                                    llvm::GlobalValue::PrivateLinkage, c_str, ".str");
-        std::vector<llvm::Value*> indices = {llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0)),
-                                             llvm::ConstantInt::get(*llvm_context, llvm::APInt(32, 0))};
-        return ir_builder->CreateInBoundsGEP(c_str->getType(), global_str, indices);
+    llvm::Value* create_string_literal(const str& str) {
+        llvm::GlobalVariable* global_str = ir_builder->CreateGlobalString(str, ".str");
+        return ir_builder->CreateConstGEP2_32(global_str->getType(), global_str, 0, 0);
     }
 };
