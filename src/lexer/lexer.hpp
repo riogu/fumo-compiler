@@ -15,6 +15,7 @@ struct Lexer {
 
   private:
     [[nodiscard]] vec<Token> tokenize();
+    [[nodiscard]] Token parse_string_literal();
     [[nodiscard]] Token parse_numeric_literal();
     [[nodiscard]] Token parse_identifier();
     [[nodiscard]] str peek_line();
