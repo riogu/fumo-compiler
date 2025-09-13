@@ -4,29 +4,32 @@ fumo lang example:
 // forward declarations for libc functions
 fn printf(format: i8*, ...) -> i32;
 
-struct Fumo {
-    let name: i8*;
-    let squished: i32;
-    
-    fn squish(times: i32) -> void {
-        squished = squished + times;
-        printf("%sちゃんは%d回squished!\n", name, squished);
+namespace fm {
+    struct Fumo {
+        let name: i8*;
+        let squished: i32;
+        
+        fn squish(times: i32) -> void {
+            squished = squished + times;
+            printf("%sちゃんは%d回squished!\n", name, squished);
+        }
     }
+    fn pet_fumo(fumo: Fumo*, times: i32) -> void;
 }
 
-fn pet_fumo(fumo: Fumo*, times: i32) -> void {
+fn fm::pet_fumo(fumo: Fumo*, times: i32) -> void {
     printf("petting %s %d times...\n", fumo->name, times);
     fumo->squish(times);
 }
 
-let reimu = Fumo {"Reimu", 66};
-let cirno = Fumo {"Cirno", 418};
+let reimu = fm::Fumo {"Reimu", 66};
+let cirno = fm::Fumo {"Cirno", 418};
 
 fn main() -> i32 {
     printf("fumo lang example.\n");
     
-    pet_fumo(&reimu, 3);
-    pet_fumo(&cirno, 2);
+    fm::pet_fumo(&reimu, 3);
+    fm::pet_fumo(&cirno, 2);
     
     printf("\nfinal pat count:\n");
     printf("Reimu: %d pats\n", reimu.squished);
@@ -34,18 +37,6 @@ fn main() -> i32 {
     
     return 0;
 }
-```
-output:
-```
-fumo lang example.
-petting Reimu 3 times...
-Reimuちゃんは69回squished!
-petting Cirno 2 times...
-Cirnoちゃんは420回squished!
-
-final pat count:
-Reimu: 69 pats
-Cirno: 420 pats
 ```
 
 ## Completed Features
