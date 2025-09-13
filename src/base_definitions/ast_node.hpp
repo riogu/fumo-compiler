@@ -168,10 +168,23 @@ struct TypeDecl {
     bool body_should_move = false;
 };
 
+struct IfStmt {
+    enum Kind {
+        #define IfStmt_kinds                                             \
+        if_statement,            /*                                   */ \
+        else_if_statement        /*                                   */ \
+
+        IfStmt_kinds
+    } kind;
+    ASTNode* condition;
+    ASTNode* then_body; // compound statement {...}
+    Opt<ASTNode*> else_stmt {}; // is either a compound statement or another if
+};
+
 struct ASTNode {
 
-    using NodeBranch = std::variant<Identifier, FunctionCall,
-                                    PrimaryExpr,  UnaryExpr,    BinaryExpr, PostfixExpr,
+    using NodeBranch = std::variant<Identifier, FunctionCall, IfStmt,
+                                    PrimaryExpr,  UnaryExpr, BinaryExpr, PostfixExpr,
                                     VariableDecl, FunctionDecl, TypeDecl,
                                     BlockScope,   NamespaceDecl>;
 

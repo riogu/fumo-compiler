@@ -1,0 +1,19 @@
+// FAIL TEST 7: Nested assignment with initializers
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct OtherStruct {
+    let x: i32;
+    let y: i32;
+}
+
+fn main() -> i32 {
+    let x: SomeStruct;
+    let y: SomeStruct;
+    
+    // This should fail - complex nested assignment with initializers
+    let x = (y = SomeStruct {1, 2}) = OtherStruct {3, 4};
+    return 0;
+}

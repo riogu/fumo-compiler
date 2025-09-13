@@ -1,0 +1,8 @@
+// FAIL TEST 5: Function call followed by initializer (ambiguous)
+fn func() -> i32 { return 0; }
+
+fn main() -> i32 {
+    // This should fail - function call followed by braces
+    func() {1, 2, 3};
+    return 0;
+}

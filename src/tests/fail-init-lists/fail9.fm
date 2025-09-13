@@ -1,0 +1,21 @@
+// FAIL TEST 9: Chained initializer assignments
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct OtherStruct {
+    let x: i32;
+    let y: i32;
+}
+
+struct ThirdStruct {
+    let p: i32;
+    let q: i32;
+}
+
+fn main() -> i32 {
+    // This should fail - chained assignments with initializers
+    SomeStruct {1, 2} = OtherStruct {3, 4} = ThirdStruct {5, 6};
+    return 0;
+}

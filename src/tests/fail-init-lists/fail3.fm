@@ -1,0 +1,14 @@
+// FAIL TEST 3: Assignment chain with initializer
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+fn main() -> i32 {
+    let x: SomeStruct;
+    let y: SomeStruct;
+    
+    // This should fail - chained assignment with initializer
+    let x = y = SomeStruct {1, 2};
+    return 0;
+}

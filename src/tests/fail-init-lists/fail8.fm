@@ -1,0 +1,13 @@
+// FAIL TEST 8: Initializer as function argument in assignment
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+fn func(s: SomeStruct) -> i32 { return 0; }
+
+fn main() -> i32 {
+    // This should fail - function call with initializer assigned to
+    func(SomeStruct {1, 2}) = 5;
+    return 0;
+}

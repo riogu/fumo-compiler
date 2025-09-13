@@ -25,22 +25,32 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
 }
 
-// <statement> ::= <expression-statement>
+// <statement> ::= <return-statement>
+//               | <if-statement>
+//               | <expression-statement>
 [[nodiscard]] ASTNode* Parser::statement() {
     if (token_is_keyword(return)) {
         if (token_is(;)) 
             return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, std::nullopt}});
-        else
-            return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
+        else {
+            auto node = initializer();
+            expect_token(;);
+            return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, node}});
+        }
     }
-    // if (token_is_keyword(if)) {}
     return expression_statement();
+}
+// <if-statement> ::= "if" { "(" }? <expression> { ")" }? <compound-statement> 
+//                    { "else" (<compound-statement> | <if-statement>) }?
+[[nodiscard]] ASTNode* Parser::if_statement() { // maybe make it into an expression later (not a statement)
+    if (token_is_keyword(if)) {
+        auto* node = expression();
+    }
+    return {};
 }
 
 // <expression-statement> = <expression> ";"
 [[nodiscard]] ASTNode* Parser::expression_statement() {
-    // not allowing empty expressions for now
-    // if (token_is(;)) {}
     auto node = expression();
     expect_token(;); // terminate if we dont find a semicolon
     return node;
@@ -53,92 +63,21 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 
 // <assignment> ::= <equality> {"=" <equality>}?
 [[nodiscard]] ASTNode* Parser::assignment() {
-    auto node = equality();
+    // NOTE: assignments as rvalues have not been tested
+    auto node = initializer(); // dont need the optionality above this function
+    if (!node) report_error((*curr_tkn), "expected expression.");
 
     if (token_is(=)) {
         if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
             report_error(node->source_token, "expression is not assignable.");
         }
-        // if (auto* id = get_if<Identifier>(node))            id->is_assigned_to = true;
-        // else if (auto* postfix = get_if<PostfixExpr>(node)) postfix->is_assigned_to = true;
-        // TODO: might need to add this on postfix expr too
-
-        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, equality()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, initializer()}});
     }
+
     return node;
 }
-
-// <equality> ::= <relational> {("==" | "!=") <relational>}*
-[[nodiscard]] ASTNode* Parser::equality() {
-    auto node = relational();
-    while (1) {
-        if (token_is(==)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::equal, node, relational()}});
-        if (token_is(!=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::not_equal, node, relational()}});
-        return node;
-    }
-}
-
-// <relational> ::= <add> { ("<" | ">" | "<=" | ">=")  <add> }*
-[[nodiscard]] ASTNode* Parser::relational() {
-    auto node = add();
-    if (token_is(<))  return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, node, add()}});
-    if (token_is(>))  return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, add(), node}});
-    if (token_is(<=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, node, add()}});
-    if (token_is(>=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, add(), node}});
-    return node;
-}
-
-// <add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
-[[nodiscard]] ASTNode* Parser::add() {
-    auto node = multiply();
-    while (1) {
-        if (token_is(+)) {
-            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::add, node, multiply()}});
-            continue;
-        }
-        if (token_is(-)) {
-            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::sub, node, multiply()}});
-            continue;
-        }
-        return node;
-    }
-}
-
-// <multiplication> ::=  <unary> { ("*" | "/") <unary> }*
-[[nodiscard]] ASTNode* Parser::multiply() {
-    auto node = unary();
-    while (1) {
-        if (token_is(*)) {
-            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::multiply, node, unary()}});
-            continue;
-        }
-        if (token_is(/)) {
-            node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::divide, node, unary()}});
-            continue;
-        }
-        return node;
-    }
-}
-
-// <unary> ::= ("-" | "!" | "~" | "+" | "*") <unary>
-//           | <postfix>
-[[nodiscard]] ASTNode* Parser::unary() {
-    if (token_is(-)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate,      unary()}});
-    if (token_is(!)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not,   unary()}});
-    if (token_is(~)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, unary()}});
-    if (token_is(*)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, unary()}});
-    if (token_is(&)) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::address_of,  unary()}});
-    return postfix();
-}
-
-// <postfix> ::= <primary>
-//             | <postfix> "{" <initializer-list> "}" <postfix>
-//             | <postfix> "->" <postfix>
-//             | <postfix> "." <postfix>
-//             | <postfix> "(" {<argument-list>}* ")" <postfix>
-[[nodiscard]] ASTNode* Parser::postfix() {
-
-    auto temp_node = primary();
+[[nodiscard]] ASTNode* Parser::initializer() {
+    auto temp_node = equality();
 
     if (token_is_str("{")) {
         auto init_list = initializer_list();
@@ -157,7 +96,159 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     }
 
     if (!temp_node) report_error((*curr_tkn), "expected expression.");
+    return temp_node.value();
+}
+// <initializer-list> ::= <postfix> {","}?
+//                      | <postfix> , <initializer-list>
+[[nodiscard]] ASTNode* Parser::initializer_list() {
+    // TODO: add optional named elements syntax "{.foo = 123123}"
 
+    BlockScope init_list {BlockScope::initializer_list};
+    Token start_tkn = *prev_tkn;
+
+    if (peek_token_str("}")) return push(ASTNode {start_tkn, std::move(init_list)});
+
+    init_list.nodes.push_back(assignment());
+    while (1) {
+        if (token_is_str(",")) {
+            if (peek_token_str("}")) { // allow optional hanging comma
+                return push(ASTNode {start_tkn, std::move(init_list)});
+            }
+            init_list.nodes.push_back(assignment());
+            continue;
+        }
+        return push(ASTNode {start_tkn, std::move(init_list)});
+    }
+}
+
+// <equality> ::= <relational> {("==" | "!=") <relational>}*
+[[nodiscard]] Opt<ASTNode*> Parser::equality() {
+    auto node = relational().value_or(nullptr);
+    if (!node) return std::nullopt; // due to initializer list optional type, propagate nullopt
+    while (1) {
+        if (token_is(==)) {
+            if (auto temp = relational()) {
+                return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::equal, node, temp.value()}});
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        if (token_is(!=)) {
+            if (auto temp = relational()) {
+                return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::not_equal, node, temp.value()}});
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        return node;
+    }
+}
+
+// <relational> ::= <add> { ("<" | ">" | "<=" | ">=")  <add> }*
+[[nodiscard]] Opt<ASTNode*> Parser::relational() {
+    auto node = add().value_or(nullptr);
+    if (!node) return std::nullopt;
+
+    if (token_is(<)) {
+        if (auto temp = add()) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, node, temp.value()}});
+        report_error((*curr_tkn), "expected expression.");
+    }
+    if (token_is(>)) {
+        if (auto temp = add()) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, temp.value(), node}});
+        report_error((*curr_tkn), "expected expression.");
+    }
+    if (token_is(<=)) {
+        if (auto temp = add()) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, node, temp.value()}});
+        report_error((*curr_tkn), "expected expression.");
+    }
+    if (token_is(>=)) {
+        if (auto temp = add()) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, temp.value(), node}});
+        report_error((*curr_tkn), "expected expression.");
+    }
+    return node;
+}
+
+// <add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
+[[nodiscard]] Opt<ASTNode*> Parser::add() {
+    auto node = multiply().value_or(nullptr);
+    if (!node) return std::nullopt; 
+
+    while (1) {
+        if (token_is(+)) {
+            if (auto temp = multiply()) {
+                node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::add, node, temp.value()}});
+                continue;
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        if (token_is(-)) {
+            if (auto temp = multiply()) {
+                node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::sub, node, temp.value()}});
+                continue;
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        return node;
+    }
+}
+
+// <multiplication> ::=  <unary> { ("*" | "/") <unary> }*
+[[nodiscard]] Opt<ASTNode*> Parser::multiply() {
+    auto node = unary().value_or(nullptr);
+    if (!node) return std::nullopt;
+
+    while (1) {
+        if (token_is(*)) {
+            if (auto temp = unary()) {
+                node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::multiply, node, temp.value()}});
+                continue;
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        if (token_is(/)) {
+            if (auto temp = unary()) {
+                node = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::divide, node, temp.value()}});
+                continue;
+            }
+            report_error((*curr_tkn), "expected expression.");
+        }
+        return node;
+    }
+}
+
+// <unary> ::= ("-" | "!" | "~" | "+" | "*") <unary>
+//           | <postfix>
+[[nodiscard]] Opt<ASTNode*> Parser::unary() {
+    if (token_is(-)) {
+        if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate, temp.value()}});
+        return std::nullopt;
+    }
+    if (token_is(!)) {
+        if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not, temp.value()}});
+        return std::nullopt;
+    }
+    if (token_is(~)) {
+        if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::bitwise_not, temp.value()}});
+        return std::nullopt;
+    }
+    if (token_is(*)) {
+        if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, temp.value()}});
+        return std::nullopt;
+    }
+    if (token_is(&)) {
+        if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::address_of, temp.value()}});
+        return std::nullopt;
+    }
+    return postfix();
+}
+
+// <postfix> ::= <primary>
+//             | <identifier> "{" <initializer-list> "}" 
+//             | <postfix> "->" <postfix>
+//             | <postfix> "." <postfix>
+//             | <postfix> "(" {<argument-list>}* ")" <postfix>
+[[nodiscard]] Opt<ASTNode*> Parser::postfix() {
+
+    auto temp_node = primary();
+    if (!temp_node) return std::nullopt;
     auto node = temp_node.value();
     Token& tkn = node->source_token;
 
@@ -182,7 +273,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             continue;
         }
         if (token_is(.)) {
-            // NOTE: this could have bugs due to the refactoring that was done
             if(!is_branch<Identifier, FunctionCall>(node)) {
                 report_error(node->source_token, "expected identifier before postfix operator.");
             }
@@ -234,45 +324,23 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (peek_token_str(")")) return {};
 
     vec<ASTNode*> arguments {};
-    arguments.push_back(equality());
+    arguments.push_back(assignment());
     while (1) {
         if (token_is_str(",")) {
-            arguments.push_back(equality());
+            arguments.push_back(assignment());
             continue;
         }
         return arguments;
     }
 }
 
-// <initializer-list> ::= <postfix> {","}?
-//                      | <postfix> , <initializer-list>
-[[nodiscard]] ASTNode* Parser::initializer_list() {
-    // TODO: add optional named elements syntax "{.foo = 123123}"
-
-    BlockScope init_list {BlockScope::initializer_list};
-    Token start_tkn = *prev_tkn;
-
-    if (peek_token_str("}")) return push(ASTNode {start_tkn, std::move(init_list)});
-
-    init_list.nodes.push_back(equality());
-    while (1) {
-        if (token_is_str(",")) {
-            if (peek_token_str("}")) { // allow optional hanging comma
-                return push(ASTNode {start_tkn, std::move(init_list)});
-            }
-            init_list.nodes.push_back(equality());
-            continue;
-        }
-        return push(ASTNode {start_tkn, std::move(init_list)});
-    }
-}
 
 // <primary> ::= "(" <expression> ")"
 //             | <identifier>
 //             | <literal>
 [[nodiscard]] Opt<ASTNode*> Parser::primary() {
     if (token_is_str("(")) {
-        auto node = equality();
+        auto node = assignment();
         expect_token_str(")");
         return node;
     }

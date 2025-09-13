@@ -84,7 +84,6 @@
     break            ,                  \
     while            ,                  \
     enum             ,                  \
-    union            ,                  \
     struct           ,                  \
     builtin_types
 #define literals                        \

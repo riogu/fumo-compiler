@@ -1,0 +1,11 @@
+// FAIL TEST 4: Initializer in binary expression
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+fn main() -> i32 {
+    // This should fail - initializers in binary expression
+    let result = SomeStruct {1, 2} + SomeStruct {3, 4};
+    return 0;
+}

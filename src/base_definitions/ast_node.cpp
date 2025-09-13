@@ -121,6 +121,7 @@
         branch_kind_name(BlockScope);
         branch_kind_name(NamespaceDecl);
         branch_kind_name(TypeDecl);
+        branch_kind_name(IfStmt);
         _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
     }
     std::unreachable();
@@ -144,6 +145,7 @@
         branch_kind_name(BlockScope);
         branch_kind_name(NamespaceDecl);
         branch_kind_name(TypeDecl);
+        branch_kind_name(IfStmt);
         _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
     }
     std::unreachable();

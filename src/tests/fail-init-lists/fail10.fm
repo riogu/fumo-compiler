@@ -1,0 +1,11 @@
+// FAIL TEST 10: Initializer with missing closing brace
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+fn main() -> i32 {
+    // This should fail - missing closing brace
+    let x = SomeStruct {1, 2;
+    return 0;
+}

@@ -1,0 +1,5 @@
+// FAIL TEST 2: Initializer list without type name
+fn main() -> i32 {
+    let x = {1, 2, 3};
+    return 0;
+}

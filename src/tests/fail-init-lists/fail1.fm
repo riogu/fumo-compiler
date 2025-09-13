@@ -1,0 +1,32 @@
+// FAIL TEST 1: Assignment to initializer list (your main concern)
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct OtherStruct {
+    let x: i32;
+    let y: i32;
+}
+
+struct ThirdStruct {
+    let p: i32;
+    let q: i32;
+}
+
+fn func() -> i32 { return 0; }
+
+fn main() -> i32 {
+    let foo: SomeStruct;
+    let y: SomeStruct;
+    let x: i32;
+    let a: i32;
+    let obj: SomeStruct;
+    let arr: SomeStruct;
+    let bar: i32;
+
+    // This should fail - assignment to initializer list
+    foo {213, 123} = {213, 21321};
+    
+    return 0;
+}

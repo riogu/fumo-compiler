@@ -8,6 +8,9 @@ Current structure for the AST parser in BNF format
 
 <statement> ::= <jump-statement>
               | <expression-statement>
+              | <if-statement>
+
+<if-statement> ::= "if" { "(" }? <expression> { ")" }? <compound-statement> { "else" (<compound-statement> | <if-statement>) }?
 
 <jump-statement> ::= "return" {<expression>}? ";"
                    | "continue" ";"

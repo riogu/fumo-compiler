@@ -253,13 +253,13 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 auto* rhs_val  = if_value(codegen_value(*bin.rhs))
                                  else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
 
-                auto* store_inst = ir_builder->CreateStore(rhs_val, lhs_addr);
+                ir_builder->CreateStore(rhs_val, lhs_addr);
 
                 // global initialization goes in fumo init
                 if (auto* var = get_if<VariableDecl>(bin.lhs)) {
                     if (var->kind == VariableDecl::global_var_declaration) ir_builder->SetInsertPoint(old_block);
                 }
-                return store_inst;
+                return rhs_val;
 
             }
 

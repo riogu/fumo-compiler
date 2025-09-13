@@ -1,0 +1,12 @@
+// FAIL TEST 6: Member access followed by initializer
+struct SomeStruct {
+    let member: i32;
+}
+
+fn main() -> i32 {
+    let obj: SomeStruct;
+    
+    // This should fail - member access followed by braces
+    obj.member {1, 2, 3};
+    return 0;
+}

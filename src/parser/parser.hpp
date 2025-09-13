@@ -25,16 +25,18 @@ struct Parser {
     // expressions
     [[nodiscard]] ASTNode* statement();
     [[nodiscard]] ASTNode* expression_statement();
+    [[nodiscard]] ASTNode* if_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
+    [[nodiscard]] ASTNode* initializer();
     [[nodiscard]] ASTNode* initializer_list();
-    [[nodiscard]] ASTNode* equality();
-    [[nodiscard]] ASTNode* relational();
-    [[nodiscard]] ASTNode* add();
-    [[nodiscard]] ASTNode* multiply();
-    [[nodiscard]] ASTNode* unary();
-    [[nodiscard]] ASTNode* postfix();     // NOTE: new addition
-    [[nodiscard]] vec<ASTNode*> argument_list() ;
+    [[nodiscard]] Opt<ASTNode*> equality();
+    [[nodiscard]] Opt<ASTNode*> relational();
+    [[nodiscard]] Opt<ASTNode*> add();
+    [[nodiscard]] Opt<ASTNode*> multiply();
+    [[nodiscard]] Opt<ASTNode*> unary();
+    [[nodiscard]] Opt<ASTNode*> postfix();
+    [[nodiscard]] vec<ASTNode*> argument_list();
     [[nodiscard]] Opt<ASTNode*> primary();
     [[nodiscard]] ASTNode* identifier(Identifier::Kind id_kind = Identifier::unknown_name,
                                       Opt<ASTNode*> declaration = std::nullopt);

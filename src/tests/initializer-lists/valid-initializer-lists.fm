@@ -1,0 +1,148 @@
+fn get_value() -> i32 { return 42; }
+fn another_func() -> i32 { return 24; }
+
+struct SomeStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct OuterStruct {
+    let inner: InnerStruct;
+    let value: i32;
+}
+
+struct InnerStruct {
+    let x: i32;
+    let y: i32;
+}
+
+struct EmptyStruct {}
+
+struct SingleStruct {
+    let value: i32;
+}
+
+struct StringStruct {
+    let s1: string;
+    let s2: string;
+}
+
+struct ExprStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct VarStruct {
+    let x: i32;
+    let y: i32;
+}
+
+struct TrailingStruct {
+    let a: i32;
+    let b: i32;
+    let c: i32;
+}
+
+struct NestedStruct {
+    let inner: InnerStruct;
+    let value: i32;
+}
+
+struct ComplexStruct {
+    let simple: SimpleStruct;
+    let middle: MiddleStruct;
+    let value: i32;
+}
+
+struct SimpleStruct {
+    let a: i32;
+    let b: i32;
+}
+
+struct MiddleStruct {
+    let inner: InnerStruct;
+    let value: i32;
+}
+
+struct FuncStruct {
+    let a: i32;
+    let b: i32;
+}
+
+namespace foo {
+    struct BarStruct {
+        let x: i32;
+        let y: i32;
+    }
+    
+    namespace bar {
+        struct DeepStruct {
+            let inner: InnerStruct;
+            let value: i32;
+        }
+        
+        struct InnerStruct {
+            let a: i32;
+            let b: i32;
+        }
+    }
+}
+// Valid initializer list tests
+fn main() -> i32 {
+    // Test 1: Basic struct initialization
+    let s1 = SomeStruct {123, 456};
+    
+    // Test 2: Nested struct initialization
+    let s2 = OuterStruct {InnerStruct {1, 2}, 3};
+    
+    // Test 3: Empty initializer list
+    let s3 = EmptyStruct {};
+    
+    // Test 4: Single element initializer
+    let s4 = SingleStruct {42};
+    
+    // Test 5: Initializer with string literals
+    let s5 = StringStruct {"hello", "world"};
+    
+    // Test 6: Initializer with expressions
+    let s6 = ExprStruct {1 + 2, 3 * 4};
+    
+    // Test 7: Initializer with variables
+    let x = 10;
+    let y = 20;
+    let s7 = VarStruct {x, y};
+    
+    // Test 8: Trailing comma (should be allowed)
+    let s8 = TrailingStruct {1, 2, 3,};
+    
+    // Test 9: Nested initializers with trailing commas
+    let s9 = NestedStruct {
+        InnerStruct {1, 2,}, 
+        3,
+    };
+    
+    // Test 10: Complex nested structure
+    let s10 = ComplexStruct {
+        SimpleStruct {1, 2},
+        MiddleStruct {
+            InnerStruct {3, 4},
+            5
+        },
+        6
+    };
+    
+    // Test 11: Function call in initializer
+    let s11 = FuncStruct {get_value(), another_func()};
+    
+    // Test 12: Qualified type name
+    let s12 = foo::BarStruct {1, 2};
+    
+    // Test 13: Deeply nested qualified name
+    let s13 = foo::bar::DeepStruct {
+        foo::bar::InnerStruct {1, 2},
+        3
+    };
+
+    return 0;
+}
+
