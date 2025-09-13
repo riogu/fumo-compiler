@@ -35,6 +35,18 @@ fn main() -> i32 {
     return 0;
 }
 ```
+output:
+```
+fumo lang example.
+petting Reimu 3 times...
+Reimuちゃんは69回squished!
+petting Cirno 2 times...
+Cirnoちゃんは420回squished!
+
+final pat count:
+Reimu: 69 pats
+Cirno: 420 pats
+```
 
 ## Completed Features
 ### Language Frontend
