@@ -125,28 +125,39 @@ void clear_output_directories() {
         return;
     }
     
+    // First collect all directories to remove, then remove them
+    std::vector<std::filesystem::path> dirs_to_remove;
+    
     try {
         for (const auto& entry : std::filesystem::recursive_directory_iterator(base_test_path)) {
             if (entry.is_directory()) {
                 std::string dir_name = entry.path().filename().string();
-                // Check if directory name ends with "outputs"
-                if (dir_name.length() >= 7 && 
-                    dir_name.substr(dir_name.length() - 7) == "outputs") {
-                    std::string relative_path = std::filesystem::relative(entry.path()).string();
-                    std::print("  Removing: {}\n", relative_path);
-                    std::filesystem::remove_all(entry.path());
-                    cleared_count++;
+                // Check if directory name ends with "-outputs"
+                if (dir_name.length() >= 8 && 
+                    dir_name.substr(dir_name.length() - 8) == "-outputs") {
+                    dirs_to_remove.push_back(entry.path());
                 }
             }
         }
     } catch (const std::filesystem::filesystem_error& e) {
-        std::print("Error clearing directories: {}\n", e.what());
+        std::print("Error scanning directories: {}\n", e.what());
         return;
+    }
+    
+    // Now remove the directories
+    for (const auto& dir_path : dirs_to_remove) {
+        try {
+            std::string relative_path = std::filesystem::relative(dir_path).string();
+            std::print("  Removing: {}\n", relative_path);
+            std::filesystem::remove_all(dir_path);
+            cleared_count++;
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::print("Error removing directory '{}': {}\n", dir_path.string(), e.what());
+        }
     }
     
     std::print("Cleared {} output directories.\n", cleared_count);
 }
-
 void run_tests(const std::string& test_subdir, const TestConfig& config = TestConfig()) {
     std::string full_path = std::format("src/tests/{}", test_subdir);
     std::vector<TestFile> test_files = collect_test_files(full_path);
@@ -186,10 +197,12 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
             }
         }
         
-        // Generate output file path
+        // Generate output file path next to the test file
         std::string input_filename = test_file.path.stem().string(); // filename without extension
-        std::string output_dir = std::format("{}outputs", input_filename);
-        std::string output_filename = std::format("{}/{}", output_dir, input_filename);
+        std::filesystem::path test_dir = test_file.path.parent_path(); // directory containing the test
+        std::string output_dir_name = input_filename + "-outputs";
+        std::filesystem::path output_dir = test_dir / output_dir_name;
+        std::filesystem::path output_file = output_dir / input_filename;
         
         // Create output directory if it doesn't exist
         std::filesystem::create_directories(output_dir);
@@ -198,7 +211,7 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
         std::string cmd = std::format("ASAN_OPTIONS=detect_leaks=0 ./build/fumo {} -i '{}' -o '{}' 2>&1", 
                                      config.get_options_string(),
                                      test_file.path.string(),
-                                     output_filename);
+                                     output_file.string());
         
         auto [output, status] = exec(cmd.c_str());
         
@@ -209,9 +222,10 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
         
         if (test_passed) {
             std::print("-> \033[38;2;88;154;143m✓ OK\033[0m: {}\n", test_name);
+            std::print("   Output: {}\n", output_file.string());
             // Show output for passing tests if verbose mode is enabled
             if (config.verbose_output && !output.empty() && output != "\n") {
-                std::print("   Output: \n{}\n", output);
+                std::print("   Compiler Output: \n{}\n", output);
             }
             passed++;
         } else {
@@ -220,7 +234,7 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
                       (test_file.expected == ExpectedResult::Pass) ? "PASS" : "FAIL",
                       compiler_succeeded ? "PASS" : "FAIL");
             if (!output.empty()) {
-                std::print("   Output: \n{}\n", output);
+                std::print("   Compiler Output: \n{}\n", output);
                 std::print("   Command: {}\n", cmd);
             }
             failed++;
@@ -256,16 +270,19 @@ void print_help() {
     std::print("  --config <name>     - Use predefined configuration\n");
     std::print("  --opt <option>      - Add compiler option (can be used multiple times)\n");
     std::print("  --verbose, -v       - Show compiler output for passing tests\n");
+    std::print("  --clear-outputs     - Clear all *-outputs directories and exit\n");
     std::print("  --list-configs      - List available configurations\n");
     std::print("  --help              - Show this help\n\n");
     std::print("Examples:\n");
     std::print("  ./test_runner                                    # Run default tests\n");
+    std::print("  ./test_runner --clear-outputs                    # Clear all output directories\n");
     std::print("  ./test_runner --verbose                         # Run with verbose output\n");
     std::print("  ./test_runner --config O3 -v early-ast-tests    # Run with O3 optimizations and verbose\n");
     std::print("  ./test_runner --opt --print-ast -v              # Run with AST printing and verbose\n");
     std::print("\nTest Organization:\n");
     std::print("  Tests are automatically discovered recursively in subdirectories.\n");
     std::print("  Files/directories with 'fail' or 'error' in the name are expected to fail.\n");
+    std::print("  Output files are created in directories named '<filename>-outputs/'.\n");
     std::print("  Example structure:\n");
     std::print("    src/tests/if-statements/\n");
     std::print("    ├── basic/\n");
@@ -274,6 +291,10 @@ void print_help() {
     std::print("    └── fail/\n");
     std::print("        ├── missing_condition.fm  (expected: FAIL)\n");
     std::print("        └── invalid_syntax.fm     (expected: FAIL)\n");
+    std::print("    Output directories:\n");
+    std::print("    ├── simple_if-outputs/\n");
+    std::print("    ├── nested_if-outputs/\n");
+    std::print("    └── missing_condition-outputs/\n");
 }
 
 void list_configurations() {
@@ -293,7 +314,6 @@ TestConfig find_config(const std::string& name) {
     return TestConfig(); // Return default if not found
 }
 
-// Update main function to handle clear-outputs flag
 int main(int argc, char* argv[]) {
     std::vector<std::string> test_dirs;
     TestConfig config;
@@ -333,9 +353,10 @@ int main(int argc, char* argv[]) {
     // Default test directories if none specified
     if (test_dirs.empty()) {
         test_dirs = {
-            // "early-ast-tests",
             "structs-and-postfix", 
             "string-literals",
+            // "if-statements",
+            // "pointer-tests",
             // Add more as needed
         };
     }
