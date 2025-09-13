@@ -9,6 +9,8 @@ namespace factory {
         fn process(p: product*) -> i32;
     }
 }
+struct product {
+}
 fn factory::factory::process(p: product*) -> i32 { return p->get_id(); }
 fn main() -> i32 {
     let f: factory::factory = {};

@@ -178,7 +178,6 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type.kind = decl.value()->type.kind;
                 }
             }
-
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
                 var.kind = VariableDecl::global_var_declaration;
             if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)
@@ -203,35 +202,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type.kind = decl.value()->type.kind;
                 }
             }
+            for (auto& param : func.parameters) analyze(*param);
             for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
             // -------------------------------------------------------------------
-
-            add_declaration(node);
+            add_declaration(node); // should be done first
+            // -------------------------------------------------------------------
 
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
 
-
-            if (func.kind == FunctionDecl::member_func_declaration) {
-                // ASTNode* node_ = push(ASTNode {node.source_token});
-                // node_->branch =
-                //     VariableDecl {VariableDecl::parameter,
-                //                   push({node_->source_token, Identifier {Identifier::declaration_name, "this"}})};
-                //
-                // str temp = id.mangled_name;
-                // while (temp.back() != ':') temp.pop_back();
-                // temp.pop_back(), temp.pop_back();
-                // Identifier temp_id = {.kind = Identifier::type_name, .name = temp};
-                // // getting the type name of the struct that this function is a member of
-                // // a bit hacky but its okay
-                // node_->type = symbol_tree.find_declaration(temp_id).value()->type;
-                // node_->type.ptr_count = 1;
-                //
-                // func.parameters.push_back(node_);
-            }
-            for (auto& param : func.parameters) {
-                analyze(*param);
-                // TODO: analyzing a type should automatically set the node's type
-            }
 
             if (func.body) {
                 func.body.value()->type = node.type; // passing the function's type to the body
@@ -339,17 +317,6 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     curr_id = &id;
                 } else
                     internal_panic("wrong node branch pushed to postfix expression.");
-                {
-
-                    struct foo {
-                        int* x;
-                        foo* func() { return this; }
-                        foo* var = {};
-                    };
-                    int num = 123;
-                    foo bar {};
-                    bar.func()->x = &num;
-                }
                 curr_id->mangled_name = prev_name + curr_id->name;
                 curr_id->base_struct_name = curr_base_name;
                 prev_name = ""; // reset the previous name 
@@ -457,9 +424,11 @@ void Analyzer::add_declaration(ASTNode& node) {
                 for (auto [arg1, arg2] : std::views::zip(func.parameters, first_occurence.parameters)) {
                     if (!is_same_t(arg1->type, arg2->type)) {
                         report_error(node.source_token,
-                                     "{} of '{}' with different parameter types.",
+                                     "{} of '{}' with different parameter types (was '{}', found '{}')",
                                      def_or_decl,
-                                     id.mangled_name);
+                                     id.mangled_name,
+                                     type_name(arg2->type),
+                                     type_name(arg1->type));
                     }
                     // if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
                     //     report_error(node.source_token,
