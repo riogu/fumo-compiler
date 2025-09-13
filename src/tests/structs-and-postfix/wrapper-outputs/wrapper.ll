@@ -4,8 +4,7 @@ target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:
 target triple = "x86_64-pc-linux-gnu"
 
 @0 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
-@.str_error_msg = private unnamed_addr constant [241 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                       ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.1 = private unnamed_addr constant [240 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                      ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.1 = private unnamed_addr constant [254 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                                    ^ found null pointer dereference\0A\0A\00", align 1
 
 ; Function Attrs: nofree nounwind
 declare noundef i32 @printf(ptr nocapture noundef readonly, ...) local_unnamed_addr #0
@@ -35,7 +34,7 @@ define i32 @"wrapper::deref_twice"(ptr readonly %0) local_unnamed_addr #1 {
   br i1 %is_null, label %null_trap, label %safe_deref
 
 null_trap:                                        ; preds = %1
-  tail call void @fumo.runtime_error(ptr nonnull @.str_error_msg)
+  tail call void @fumo.runtime_error(ptr nonnull @.str_error_msg.1)
   unreachable
 
 safe_deref:                                       ; preds = %1

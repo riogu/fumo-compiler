@@ -6,7 +6,7 @@ source_filename = "src/tests/structs-and-postfix/math.fm"
 @0 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 @.str_error_msg = private unnamed_addr constant [175 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/math.fm' at line 15:\0A   |     v_ptr->set_x(5);\0A   |          ^ found null pointer dereference\0A\0A\00", align 1
 @.str_error_msg.1 = private unnamed_addr constant [214 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/math.fm' at line 16:\0A   |     let x_ptr: i32* = v_ptr->get_x_ptr();\0A   |                            ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.2 = private unnamed_addr constant [165 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/math.fm' at line 17:\0A   |     *x_ptr = 6;\0A   |     ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.2 = private unnamed_addr constant [170 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/math.fm' at line 17:\0A   |     *x_ptr = 6;\0A   |          ^ found null pointer dereference\0A\0A\00", align 1
 @.str_error_msg.3 = private unnamed_addr constant [200 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/math.fm' at line 18:\0A   |     return v_ptr->magnitude_squared();\0A   |                 ^ found null pointer dereference\0A\0A\00", align 1
 
 declare i32 @printf(ptr, ...)

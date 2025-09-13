@@ -6,7 +6,7 @@ source_filename = "src/tests/structs-and-postfix/counter.fm"
 @0 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 @.str_error_msg = private unnamed_addr constant [181 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/counter.fm' at line 15:\0A   |     c_ptr->increment();\0A   |          ^ found null pointer dereference\0A\0A\00", align 1
 @.str_error_msg.1 = private unnamed_addr constant [229 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/counter.fm' at line 16:\0A   |     let count_ptr: i32* = c_ptr->get_count_ptr();\0A   |                                ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.2 = private unnamed_addr constant [182 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/counter.fm' at line 17:\0A   |     return *count_ptr;\0A   |            ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.2 = private unnamed_addr constant [191 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/counter.fm' at line 17:\0A   |     return *count_ptr;\0A   |                     ^ found null pointer dereference\0A\0A\00", align 1
 
 declare i32 @printf(ptr, ...)
 

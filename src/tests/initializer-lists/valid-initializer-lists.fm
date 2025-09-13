@@ -5,16 +5,16 @@ struct SomeStruct {
     let a: i32;
     let b: i32;
 }
+struct InnerStruct {
+    let x: i32;
+    let y: i32;
+}
 
 struct OuterStruct {
     let inner: InnerStruct;
     let value: i32;
 }
 
-struct InnerStruct {
-    let x: i32;
-    let y: i32;
-}
 
 struct EmptyStruct {}
 
@@ -23,8 +23,8 @@ struct SingleStruct {
 }
 
 struct StringStruct {
-    let s1: string;
-    let s2: string;
+    let s1: i8*;
+    let s2: i8*;
 }
 
 struct ExprStruct {
@@ -47,6 +47,8 @@ struct NestedStruct {
     let inner: InnerStruct;
     let value: i32;
 }
+struct SimpleStruct;
+struct MiddleStruct;
 
 struct ComplexStruct {
     let simple: SimpleStruct;
@@ -76,15 +78,15 @@ namespace foo {
     }
     
     namespace bar {
+        struct InnerStruct {
+            let a: i32;
+            let b: i32;
+        }
         struct DeepStruct {
             let inner: InnerStruct;
             let value: i32;
         }
         
-        struct InnerStruct {
-            let a: i32;
-            let b: i32;
-        }
     }
 }
 // Valid initializer list tests

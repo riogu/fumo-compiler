@@ -355,6 +355,8 @@ int main(int argc, char* argv[]) {
         test_dirs = {
             "structs-and-postfix", 
             "string-literals",
+            "initializer-lists",
+            "fail-init-lists",
             // "if-statements",
             // "pointer-tests",
             // Add more as needed

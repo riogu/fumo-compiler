@@ -5,7 +5,7 @@ source_filename = "src/tests/structs-and-postfix/graphics.fm"
 
 @0 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 @.str_error_msg = private unnamed_addr constant [233 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/graphics.fm' at line 18:\0A   |     let radius_ptr: i32* = c_ptr->get_radius_ptr();\0A   |                                 ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.1 = private unnamed_addr constant [175 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/graphics.fm' at line 19:\0A   |     *radius_ptr = 10;\0A   |     ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.1 = private unnamed_addr constant [185 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/graphics.fm' at line 19:\0A   |     *radius_ptr = 10;\0A   |               ^ found null pointer dereference\0A\0A\00", align 1
 @.str_error_msg.2 = private unnamed_addr constant [202 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/graphics.fm' at line 20:\0A   |     return c_ptr->get_area_approx();\0A   |                 ^ found null pointer dereference\0A\0A\00", align 1
 
 declare i32 @printf(ptr, ...)

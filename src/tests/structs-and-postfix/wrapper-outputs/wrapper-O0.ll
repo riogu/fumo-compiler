@@ -4,10 +4,10 @@ source_filename = "src/tests/structs-and-postfix/wrapper.fm"
 %wrapper = type { ptr }
 
 @0 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
-@.str_error_msg = private unnamed_addr constant [241 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                       ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.1 = private unnamed_addr constant [240 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                      ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.2 = private unnamed_addr constant [174 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 14:\0A   |     **ptr_ptr = 200;\0A   |      ^ found null pointer dereference\0A\0A\00", align 1
-@.str_error_msg.3 = private unnamed_addr constant [173 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 14:\0A   |     **ptr_ptr = 200;\0A   |     ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg = private unnamed_addr constant [254 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                                    ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.1 = private unnamed_addr constant [254 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 6:\0A   |     fn deref_twice() -> i32 { return **get_ptr_ptr(); }\0A   |                                                    ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.2 = private unnamed_addr constant [181 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 14:\0A   |     **ptr_ptr = 200;\0A   |             ^ found null pointer dereference\0A\0A\00", align 1
+@.str_error_msg.3 = private unnamed_addr constant [181 x i8] c"-> \1B[38;2;235;67;54m[runtime error]\1B[0m in file 'src/tests/structs-and-postfix/wrapper.fm' at line 14:\0A   |     **ptr_ptr = 200;\0A   |             ^ found null pointer dereference\0A\0A\00", align 1
 
 declare i32 @printf(ptr, ...)
 

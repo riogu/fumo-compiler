@@ -126,10 +126,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
                         // allow this case: let var = {123};
                         if (init_list->nodes.size() == 1) bin.rhs->type = init_list->nodes[0]->type;
-                    } else {
-                        report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
-                                     bin.lhs->source_token.to_str());
-                    }
+                        else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
+                                            bin.lhs->source_token.to_str());
+                    } else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
+                                        bin.lhs->source_token.to_str());
+                    
                 }
                 if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                 if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
