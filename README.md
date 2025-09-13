@@ -1,26 +1,26 @@
 # fumo-compiler
 fumo lang example:
 ```cpp
-// Forward declarations for libc functions
+// forward declarations for libc functions
 fn printf(format: i8*, ...) -> i32;
 
 struct Fumo {
     let name: i8*;
-    let softness: i32;
+    let squished: i32;
     
-    fn squish() -> void {
-        softness = softness + 10;
-        printf("*squish* %s is now %d%% soft!\n", name, softness);
+    fn squish(times: i32) -> void {
+        squished = squished + times;
+        printf("%sちゃんは%d回squished!\n", name, squished);
     }
 }
 
 fn pet_fumo(fumo: Fumo*, times: i32) -> void {
-    printf("Petting %s %d times...\n", fumo.name, times);
-    fumo.squish();
+    printf("petting %s %d times...\n", fumo->name, times);
+    fumo->squish(times);
 }
 
-let reimu: Fumo = Fumo {"Reimu", 50};
-let cirno: Fumo = Fumo {"Cirno", 40};
+let reimu = Fumo {"Reimu", 66};
+let cirno = Fumo {"Cirno", 418};
 
 fn main() -> i32 {
     printf("fumo lang example.\n");
@@ -28,12 +28,13 @@ fn main() -> i32 {
     pet_fumo(&reimu, 3);
     pet_fumo(&cirno, 2);
     
-    printf("\nfinal softness levels:\n");
-    printf("Reimu: %d%% soft\n", reimu.softness);
-    printf("Cirno: %d%% soft\n", cirno.softness);
+    printf("\nfinal pat count:\n");
+    printf("Reimu: %d pats\n", reimu.squished);
+    printf("Cirno: %d pats\n", cirno.squished);
     
     return 0;
-}```
+}
+```
 
 ## Completed Features
 ### Language Frontend
