@@ -23,7 +23,8 @@ opt<bool> O1          {"O1",           desc("Few optimizations"),               
 opt<bool> O2          {"O2",           desc("Default optimizations"),                                 cat(fumo_category)};
 opt<bool> O3          {"O3",           desc("Aggressive optimizations"),                              cat(fumo_category)};
 
-opt<bool> output_IR   {"emit-llvm-ir", desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
+opt<bool> output_IR_O0{"emit-ir-O0",   desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
+opt<bool> output_IR   {"emit-ir",      desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
 opt<bool> output_AST  {"emit-ast",     desc("Outputs a .ast file with the generated debug AST"),      cat(fumo_category)};
 opt<bool> output_ASM  {"emit-asm",     desc("Outputs a .asm file with the generated assembly"),       cat(fumo_category)};
 opt<bool> output_OBJ  {"emit-obj",     desc("Outputs a .o object file"),                              cat(fumo_category)};
@@ -74,6 +75,7 @@ auto main(int argc, char** argv) -> int {
                               || cmdline_str == "--help-list-hidden" || cmdline_str == "--help-hidden"
                               || cmdline_str == "-version");
     }
+    llvm::cl::HideUnrelatedOptions(fumo_category);
     if (received_cmdline_str) {
         // this is for testing the compiler. you can pass in a program like:
         // "fn main() -> i32 {let x = 231;}" 
@@ -90,7 +92,6 @@ auto main(int argc, char** argv) -> int {
         file = _file;
         file.output_name = "src/tests/command-line-string.out";
     } else {
-        llvm::cl::HideUnrelatedOptions(fumo_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
         file_name = input_files[0]; // only one file name
@@ -109,6 +110,9 @@ auto main(int argc, char** argv) -> int {
     // NOTE: recursive structs will crash the AST printing until after semantic analysis
     Analyzer analyzer {file};
     analyzer.semantic_analysis(file_root_node);
+    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        std::cerr << "node found:\n  " + node->to_str() + "\n";
+    }
     //--------------------------------------------------------------------------
     // Codegen
     if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();

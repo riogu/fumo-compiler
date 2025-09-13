@@ -22,7 +22,7 @@ struct LinkOptions {
     vec<str> libraries;     // -l flags
     vec<str> library_paths; // -L flags
 };
-extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, 
+extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, output_IR_O0, 
                            print_file, print_IR, print_AST, print_ASM,
                            verbose, no_link, static_link, strip_syms;
 extern llvm::cl::opt<str>  linker_name;

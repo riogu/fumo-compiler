@@ -24,7 +24,7 @@ fn foo::func(a: i32, b: f64) -> void {
     inner::x = 333333;
 }
 
-let global_example: foo::SomeStruct = {{11111, "example"}, 6969};
+let global_example: foo::SomeStruct = {foo::SomeStruct::InnerStruct{11111, "example"}, 6969};
 fn some_func() -> i32* {
     return &global_example.some_number;
 }

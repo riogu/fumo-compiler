@@ -1,5 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
+#include "utils/common_utils.hpp"
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -234,14 +235,16 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             }
             const auto& params = func_decl.parameters;
 
-            if (func_call.argument_list.size() != params.size()) {
-                report_error(node.source_token,
-                             "provided {} arguments, expected {}.",
-                             func_call.argument_list.size(),
-                             params.size());
+            if (func_call.argument_list.size() != params.size()
+            && !(func_decl.is_variadic && func_call.argument_list.size() > params.size())) {
+                str is_variadic_str = func_decl.is_variadic? "or more" : "";
+                report_error(node.source_token, "provided {} arguments, expected {} {}.",
+                             func_call.argument_list.size(), params.size(), is_variadic_str);
             }
+
+            for(auto* arg : func_call.argument_list) analyze(*arg);
+
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
-                analyze(*arg);
                 if (!is_compatible_t(arg->type, param->type)) {
                     report_error(arg->source_token,
                                  "argument of type '{}' is not compatible with function declaration signature.",
@@ -409,29 +412,28 @@ void Analyzer::add_declaration(ASTNode& node) {
                 } else {
                     def_or_decl = "Redeclaration";
                 }
+                if (first_occurence.is_variadic != func.is_variadic) {
+                    report_error(node.source_token, "'{}' of '{}' with different parameters (variadic)",
+                                 def_or_decl, id.mangled_name);
+                }
 
                 if (!is_same_t(node.type, node_iterator->second->type)) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different return type '{}' (expected '{}').",
-                                 def_or_decl,
-                                 id.mangled_name,
-                                 type_name(node.type),
-                                 type_name(node_iterator->second->type));
+                                 def_or_decl, id.mangled_name,
+                                 type_name(node.type), type_name(node_iterator->second->type));
                 }
                 if (func.parameters.size() != first_occurence.parameters.size()) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different parameter count.",
-                                 def_or_decl,
-                                 id.mangled_name);
+                                 def_or_decl, id.mangled_name);
                 }
                 for (auto [arg1, arg2] : std::views::zip(func.parameters, first_occurence.parameters)) {
                     if (!is_same_t(arg1->type, arg2->type)) {
                         report_error(node.source_token,
                                      "{} of '{}' with different parameter types (was '{}', found '{}')",
-                                     def_or_decl,
-                                     id.mangled_name,
-                                     type_name(arg2->type),
-                                     type_name(arg1->type));
+                                     def_or_decl, id.mangled_name,
+                                     type_name(arg2->type), type_name(arg1->type));
                     }
                     // if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
                     //     report_error(node.source_token,

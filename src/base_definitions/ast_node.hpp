@@ -116,6 +116,7 @@ struct FunctionDecl {
     ASTNode* identifier;
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
+    bool is_variadic = false;
     bool body_should_move = false;
 };
 
@@ -222,6 +223,10 @@ constexpr Branch* get_if(ASTNode* node) {
 });
 #define else_panic(...)                         \
     if (!temp) internal_panic(__VA_ARGS__);     \
+    temp;                                       \
+});
+#define else_panic_error(...)                   \
+    if (!temp) internal_error(__VA_ARGS__);     \
     temp;                                       \
 });
 

@@ -1,4 +1,5 @@
 #include "parser/parser.hpp"
+#include "utils/common_utils.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -37,12 +38,18 @@
 //                            "->" {<declaration-specifier>}+
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
+
+    while (token_is_keyword(const) || token_is_keyword(volatile)
+           || token_is_keyword(static) || token_is_keyword(extern)) {}
+
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
 
     FunctionDecl function {FunctionDecl::function_declaration, identifier(Identifier::declaration_name, node)};
 
-    function.parameters = parameter_list(); // could be an empty vector
+    const auto& [params, is_variadic] = parameter_list(); // could be an empty vector
+    function.parameters = params;
+    function.is_variadic = is_variadic;
 
     expect_token(->);
     Type type = declaration_specifier();
@@ -59,9 +66,9 @@
 // <parameter> ::=  <identifier> ":" <declarator-specifier>
 // <parameter-list> ::= <parameter>
 //                    | <parameter-list> "," <parameter>
-[[nodiscard]] vec<ASTNode*> Parser::parameter_list() {
+[[nodiscard]] std::pair<vec<ASTNode*>, bool> Parser::parameter_list() {
     expect_token_str("(");
-    if (token_is_str(")")) return {};
+    if (token_is_str(")")) return {{}, false};
 
     vec<ASTNode*> parameters {};
     while (1) {
@@ -74,11 +81,14 @@
 
             parameters.push_back(std::move(node));
         } else if (token_is(...)) {
+            expect_token_str(")");
+            return {parameters, true}; // is variadic 
         } else {
+            report_error((*curr_tkn), "expected identifier in function parameter declaration.");
         }
 
         if (token_is_str(",")) continue;
-        if (token_is_str(")")) return parameters;
+        if (token_is_str(")")) return {parameters, false};
     }
 }
 

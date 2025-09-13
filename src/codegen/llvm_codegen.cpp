@@ -40,7 +40,8 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
         holds(Identifier, const& id) {
             switch (id.kind) {
                 case Identifier::var_name: {
-                    ASTNode* declaration = id.declaration.value();
+                    ASTNode* declaration = if_value(id.declaration)
+                                           else_panic_error(node.source_token, "missing declaration somehow.");
                     if (!declaration->llvm_value) {
                         internal_panic("[Codegen] forgot to assign llvm::Value to declaration for '{}'.",
                                        get_id(get<VariableDecl>(declaration)).mangled_name);
@@ -481,6 +482,9 @@ void Codegen::register_declaration(ASTNode& node) {
 
         holds(FunctionDecl, const& func) {
 
+            auto* found_func = llvm_module->getFunction(get_id(func).mangled_name);
+            if (found_func) return;
+
             vec<llvm::Type*> param_types {};
             if (func.kind == FunctionDecl::member_func_declaration) { // adding 'this' pointer
                 param_types.push_back(llvm::PointerType::getUnqual(*llvm_context));
@@ -488,7 +492,7 @@ void Codegen::register_declaration(ASTNode& node) {
             for (const auto& param : func.parameters) {
                 param_types.push_back(fumo_to_llvm_type(param->type));
             }
-            llvm::FunctionType* func_type = llvm::FunctionType::get(fumo_to_llvm_type(node.type), param_types, false);
+            llvm::FunctionType* func_type = llvm::FunctionType::get(fumo_to_llvm_type(node.type), param_types, func.is_variadic);
 
             llvm::Function* llvm_func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
                                                                get_id(func).mangled_name, llvm_module.get());

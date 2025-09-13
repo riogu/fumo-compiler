@@ -10,7 +10,7 @@ namespace foo {
         struct InnerStruct {
             let x = 123;
             let y = "string example";
-            fn gaming_func() -> i32 {return x;}
+            fn gaming_func() -> i32 { return x; }
         }
         let some_number: i32;
         let var = InnerStruct {69420, "passing a string"};
@@ -21,13 +21,9 @@ fn foo::func(a: i32, b: f64) -> void {
     x = 111111 + a * a;
     inner::x = 333333;
 }
+// NOTE: this is breaking because we arent correctly initializing the global in fumo.init()
 
-// E this is breaking because we arent correctly initializing the global in fumo.init()
-
-let global_example = foo::SomeStruct {230, foo::SomeStruct::InnerStruct {11111, "example"}};
-fn some_func() -> i32* {
-    return &global_example.some_number;
-}
-fn main() -> void {
-    some_func();
+fn main() -> i32 {
+    let global_example = foo::SomeStruct {230, foo::SomeStruct::InnerStruct {11111, "example"}};
+    return global_example.some_number;
 }

@@ -27,6 +27,12 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
             std::cerr << "node found:\n  " + node->to_str() + "\n";
         }
     }
+    if (output_IR_O0) { // NOTE: this is here for debugging and comparing to the optimized IR
+        fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
+        llvm::raw_fd_ostream dest(name_copy.string(), EC);
+        dest << llvm_ir_to_str();
+        std::cerr << "\nllvm IR for '" << name_copy << "':\n" << llvm_ir_to_str() << std::endl;
+    }
     if (print_IR) {
         dest_file_name.replace_extension(".ll");
         std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
