@@ -438,7 +438,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             if (type_decl.definition_body) {
                 for (auto* node : type_decl.definition_body.value()) {
                     // only codegen member functions
-                    if (is_branch<FunctionDecl>(node)) codegen_value(*node);
+                    if (is_branch<FunctionDecl, TypeDecl>(node)) codegen_value(*node);
                 }
             }
         }
@@ -467,7 +467,7 @@ void Codegen::register_declaration(ASTNode& node) {
             if (type_decl.definition_body) {
                 vec<llvm::Type*> member_types {};
                 for (auto* node : type_decl.definition_body.value()) {
-                    if (!is_branch<FunctionDecl>(node)) member_types.push_back(fumo_to_llvm_type(node->type));
+                    if (!is_branch<FunctionDecl, TypeDecl>(node)) member_types.push_back(fumo_to_llvm_type(node->type));
                 }
                 if (auto error = struct_type->setBodyOrError(member_types)) {
                     // Handle the error

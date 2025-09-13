@@ -10,18 +10,22 @@ namespace foo {
         struct InnerStruct {
             let x = 123;
             let y = "string example";
-        };
-        let var = InnerStruct {69420, "passing a string"};
+            fn gaming_func() -> i32 {return x;}
+        }
         let some_number: i32;
+        let var = InnerStruct {69420, "passing a string"};
     };
 }
 
 fn foo::func(a: i32, b: f64) -> void {
-    x = 111111 + a * b;
+    x = 111111 + a * a;
     inner::x = 333333;
 }
 
-let global_example: foo::SomeStruct = {{11111, "example"}, 6969};
+let global_example = foo::SomeStruct {230, foo::SomeStruct::InnerStruct {11111, "example"}};
 fn some_func() -> i32* {
     return &global_example.some_number;
+}
+fn main() -> void {
+    some_func();
 }

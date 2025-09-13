@@ -152,8 +152,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     if (bin.lhs->type.kind == Type::struct_ && bin.lhs->type.ptr_count == 0) {
                         vec<ASTNode*> type_decl_body;
                         if find_value (get_id(bin.lhs->type).mangled_name, symbol_tree.type_decls) {
-                            type_decl_body = get<TypeDecl>(iter->second).definition_body.value();
+                            for (auto* member : get<TypeDecl>(iter->second).definition_body.value()) {
+                                if (is_branch<VariableDecl, BinaryExpr>(member)) type_decl_body.push_back(member);
+                            } // removing member structs and member functions from the comparison against init lists
                         } else internal_error(node.source_token, "somehow didnt find type declaration.");
+
                         for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
                             if (!is_compatible_t(arg->type, member->type)) {
                                 report_error(arg->source_token,

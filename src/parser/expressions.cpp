@@ -250,19 +250,20 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     // TODO: add optional named elements syntax "{.foo = 123123}"
 
     BlockScope init_list {BlockScope::initializer_list};
+    Token start_tkn = *prev_tkn;
 
-    if (peek_token_str("}")) return push(ASTNode {*prev_tkn, std::move(init_list)});
+    if (peek_token_str("}")) return push(ASTNode {start_tkn, std::move(init_list)});
 
     init_list.nodes.push_back(equality());
     while (1) {
         if (token_is_str(",")) {
             if (peek_token_str("}")) { // allow optional hanging comma
-                return push(ASTNode {*prev_tkn, std::move(init_list)});
+                return push(ASTNode {start_tkn, std::move(init_list)});
             }
             init_list.nodes.push_back(equality());
             continue;
         }
-        return push(ASTNode {*prev_tkn, std::move(init_list)});
+        return push(ASTNode {start_tkn, std::move(init_list)});
     }
 }
 
