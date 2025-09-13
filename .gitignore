@@ -2,4 +2,4 @@
 build
 CMakeCache.txt
 test-fumo
-
+**/*-outputs/
