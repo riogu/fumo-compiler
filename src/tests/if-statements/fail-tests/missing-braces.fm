@@ -1,0 +1,7 @@
+fn main() -> i32 {
+    if (true)  // missing opening brace
+        let x = 5;
+        return x;
+    }  // unmatched closing brace
+    return 0;
+}

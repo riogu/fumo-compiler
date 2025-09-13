@@ -1,0 +1,14 @@
+fn main() -> i32 {
+    let x = 10;
+    let y = 20;
+    
+    if (x > 0) {
+        if (y > 15) {
+            return 42;
+        } else {
+            return 24;
+        }
+    } else {
+        return 0;
+    }
+}

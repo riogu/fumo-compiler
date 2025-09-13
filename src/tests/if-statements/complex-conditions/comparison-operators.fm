@@ -1,0 +1,18 @@
+fn main() -> i32 {
+    let x = 42;
+    let y = 42;
+    let z = 100;
+    
+    if (x == y) {
+        if (x != z) {
+            if (z > x) {
+                if (x >= 42) {
+                    if (y <= 50) {
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}

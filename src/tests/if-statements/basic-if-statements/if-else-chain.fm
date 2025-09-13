@@ -1,0 +1,12 @@
+fn main() -> i32 {
+    let grade = 85;
+    if (grade >= 90) {
+        return 4; // A
+    } else if (grade >= 80) {
+        return 3; // B
+    } else if (grade >= 70) {
+        return 2; // C
+    } else {
+        return 1; // F
+    }
+}

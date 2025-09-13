@@ -1,0 +1,13 @@
+fn main() -> i32 {
+    let x = 10;
+    
+    if (x > 5) {
+        let x = 20; // shadows outer x
+        if (x > 15) {
+            let x = 30; // shadows previous x
+            return x;   // should return 30
+        }
+        return x;       // should return 20
+    }
+    return x;           // should return 10
+}

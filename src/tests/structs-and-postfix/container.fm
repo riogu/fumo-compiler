@@ -20,7 +20,7 @@ fn container::outer::cascade_modify(delta: i32) -> i32 {
     return inner_ptr->get_data();
 }
 fn main() -> i32 {
-    let outer_obj: container::outer = {{42}};
+    let outer_obj: container::outer = {container::inner{42}};
     let outer_ptr: container::outer* = &outer_obj;
     outer_ptr->init();
     return outer_ptr->get_inner_via_ptr()->get_data();

@@ -1,0 +1,6 @@
+fn main() -> i32 {
+    if (undefined_var > 0) {  // undefined variable
+        return 1;
+    }
+    return 0;
+}

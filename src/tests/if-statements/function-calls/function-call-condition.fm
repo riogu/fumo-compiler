@@ -1,0 +1,15 @@
+fn is_positive(x: i32) -> bool {
+    return x > 0;
+}
+
+fn get_value() -> i32 {
+    return 42;
+}
+
+fn main() -> i32 {
+    if (is_positive(get_value())) {
+        return 1;
+    } else {
+        return 0;
+    }
+}

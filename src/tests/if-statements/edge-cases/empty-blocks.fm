@@ -1,0 +1,17 @@
+fn main() -> i32 {
+    let x = 42;
+    
+    if (x > 0) {
+        // empty if block
+    } else {
+        return 1;
+    }
+    
+    if (x < 0) {
+        return 2;
+    } else {
+        // empty else block
+    }
+    
+    return 0;
+}

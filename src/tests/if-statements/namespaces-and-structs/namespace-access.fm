@@ -1,0 +1,21 @@
+namespace math {
+    let pi = 3.14159;
+    
+    fn abs(x: i32) -> i32 {
+        if (x < 0) {
+            return -x;
+        }
+        return x;
+    }
+}
+
+fn main() -> i32 {
+    let value = -42;
+    
+    if (math::abs(value) > 40) {
+        if (math::pi > 3.0) {
+            return 1;
+        }
+    }
+    return 0;
+}

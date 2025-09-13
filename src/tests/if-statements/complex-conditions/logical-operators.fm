@@ -1,0 +1,16 @@
+fn main() -> i32 {
+    let a = 5;
+    let b = 10;
+    let c = 15;
+    
+    if (a < b && b < c) {
+        return 1; // true
+    }
+    if (a > b || c > b) {
+        return 2; // true
+    }
+    if (!(a > b)) {
+        return 3; // true
+    }
+    return 0;
+}

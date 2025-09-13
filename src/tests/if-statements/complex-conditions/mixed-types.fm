@@ -1,0 +1,14 @@
+fn main() -> i32 {
+    let int_val = 42;
+    let float_val = 3.14;
+    let bool_val = true;
+    
+    if (int_val > 40) {
+        if (float_val > 3.0) {
+            if (bool_val) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}

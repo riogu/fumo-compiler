@@ -1,0 +1,16 @@
+fn main() -> i32 {
+    let a = 10;
+    let b = 20;
+    let ptr1: i32* = &a;
+    let ptr2: i32* = &b;
+    let ptr3: i32* = &a;
+    
+    if (ptr1 == ptr3) {
+        if (ptr1 != ptr2) {
+            if (*ptr1 < *ptr2) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}

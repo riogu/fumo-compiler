@@ -1,0 +1,26 @@
+struct Point {
+    let x: i32;
+    let y: i32;
+    
+    fn is_origin() -> bool {
+        return x == 0 && y == 0;
+    }
+    
+    fn distance_from_origin() -> i32 {
+        // simplified distance (no sqrt)
+        return x * x + y * y;
+    }
+}
+
+fn main() -> i32 {
+    let p = Point{3, 4};
+    
+    if (!p.is_origin()) {
+        if (p.distance_from_origin() > 20) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+    return 0;
+}

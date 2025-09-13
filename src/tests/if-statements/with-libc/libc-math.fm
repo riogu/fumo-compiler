@@ -1,0 +1,15 @@
+// Forward declare libc functions
+fn abs(x: i32) -> i32;
+fn fabs(x: f64) -> f64;
+
+fn main() -> i32 {
+    let negative = -42;
+    let float_val = -3.14;
+    
+    if (abs(negative) > 40) {
+        if (fabs(float_val) > 3.0) {
+            return 1;
+        }
+    }
+    return 0;
+}

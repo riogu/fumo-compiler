@@ -1,0 +1,6 @@
+fn main() -> i32 {
+    if () {  // missing condition
+        return 1;
+    }
+    return 0;
+}
