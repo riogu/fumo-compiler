@@ -239,20 +239,28 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
         holds(BinaryExpr, const& bin) {
 
             if (bin.kind == BinaryExpr::assignment) {
+                auto* old_block = ir_builder->GetInsertBlock();
+
+                if (auto* var = get_if<VariableDecl>(bin.lhs)) {
+                    if (var->kind == VariableDecl::global_var_declaration) {
+                        ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
+                        ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+                    }
+                }
                 auto* lhs_addr = if_value(codegen_address(*bin.lhs))
                                  else_error(node.source_token, "cannot assign to expression.");
                                          
                 auto* rhs_val  = if_value(codegen_value(*bin.rhs))
                                  else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
 
-                // global initialization goes in fumo init
-                if (auto var = get_if<VariableDecl>(bin.lhs)) {
-                    if (var->kind == VariableDecl::global_var_declaration) {
-                        return fumo_init_builder->CreateStore(rhs_val, lhs_addr);
-                    }
-                }
+                auto* store_inst = ir_builder->CreateStore(rhs_val, lhs_addr);
 
-                return ir_builder->CreateStore(rhs_val, lhs_addr);
+                // global initialization goes in fumo init
+                if (auto* var = get_if<VariableDecl>(bin.lhs)) {
+                    if (var->kind == VariableDecl::global_var_declaration) ir_builder->SetInsertPoint(old_block);
+                }
+                return store_inst;
+
             }
 
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);

@@ -3,14 +3,20 @@ source_filename = "src/tests/structs-and-postfix/example.fm"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
+%"foo::SomeStruct" = type { i32, %"foo::SomeStruct::InnerStruct" }
+%"foo::SomeStruct::InnerStruct" = type { i32, ptr }
+
 @x = local_unnamed_addr global i32 0
 @"foo::x" = local_unnamed_addr global i32 0
 @"foo::inner::x" = local_unnamed_addr global i32 0
+@global_example = local_unnamed_addr global %"foo::SomeStruct" zeroinitializer
+@.str.3 = private unnamed_addr constant [8 x i8] c"example\00", align 1
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
 define void @fumo.init() local_unnamed_addr #0 {
-  store i32 69, ptr @x, align 4
+  store %"foo::SomeStruct" { i32 230, %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 } }, ptr @global_example, align 16
   store i32 69420, ptr @"foo::x", align 4
+  store i32 69, ptr @x, align 4
   ret void
 }
 
@@ -37,8 +43,9 @@ define i32 @"foo::SomeStruct::InnerStruct::gaming_func"(ptr nocapture readonly %
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
 define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
-  store i32 69, ptr @x, align 4
+  store %"foo::SomeStruct" { i32 230, %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 } }, ptr @global_example, align 16
   store i32 69420, ptr @"foo::x", align 4
+  store i32 69, ptr @x, align 4
   ret i32 230
 }
 

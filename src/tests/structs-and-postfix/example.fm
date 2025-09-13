@@ -23,7 +23,7 @@ fn foo::func(a: i32, b: f64) -> void {
 }
 // NOTE: this is breaking because we arent correctly initializing the global in fumo.init()
 
+let global_example = foo::SomeStruct {230, foo::SomeStruct::InnerStruct {11111, "example"}};
 fn main() -> i32 {
-    let global_example = foo::SomeStruct {230, foo::SomeStruct::InnerStruct {11111, "example"}};
     return global_example.some_number;
 }

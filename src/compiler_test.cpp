@@ -38,7 +38,7 @@ struct TestConfig {
     std::string description;
     bool verbose_output = false; 
     TestConfig() : description("default") {
-        compiler_options = {"-print-file", "-print-ast", "-print-ir", "-print-file", "-emit-ir"};
+        compiler_options = {"-print-file", "-emit-ir-O0", "-print-ir", "-emit-ir"};
     }
     TestConfig(std::vector<std::string> opts, std::string desc = "") 
         : compiler_options(std::move(opts)), description(std::move(desc)) {}
