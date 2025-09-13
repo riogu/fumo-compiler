@@ -60,15 +60,15 @@ fn some_func() -> i32* {
 - Nested struct support in codegen
 - Struct initialization and constructor calls
 ### Pointer System
-- Pointer arithmetic operations
 - Runtime null pointer dereference checks with error reporting
-- Safe pointer operations with trap handling
 ### User Features
 - Command-line interface with file input
 - Multiple output formats (`--emit=asm`, `--emit=obj`, `--emit=llvm-ir`, `--emit=ast`)
 - Debug output options    (`--print-ir`, `--print-asm`, `--print-ast`)
 - Error reporting and diagnostics
 ## Currently Working On
+### Pointer System
+- Pointer arithmetic operations
 ### Control Flow & String Literals
 - `if/else` statement implementation
 - `while` loop code generation
