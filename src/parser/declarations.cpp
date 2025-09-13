@@ -65,15 +65,17 @@
 
     vec<ASTNode*> parameters {};
     while (1) {
-        expect_token(identifier);
-        ASTNode* node = push(ASTNode {*prev_tkn});
-        node->branch = VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name, node)};
+        if(token_is(identifier)) {
+            ASTNode* node = push(ASTNode {*prev_tkn});
+            node->branch = VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name, node)};
 
-        expect_token(:);
-        node->type = declaration_specifier();
+            expect_token(:);
+            node->type = declaration_specifier();
 
-
-        parameters.push_back(std::move(node));
+            parameters.push_back(std::move(node));
+        } else if (token_is(...)) {
+        } else {
+        }
 
         if (token_is_str(",")) continue;
         if (token_is_str(")")) return parameters;

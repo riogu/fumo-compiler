@@ -98,7 +98,7 @@ void Codegen::clear_metadata() {
     }
 }
 
-llvm::Function* Codegen::get_or_create_runtime_error_function() {
+llvm::Function* Codegen::get_or_create_fumo_runtime_error() {
     static llvm::Function* null_error_fn = nullptr;
     
     if (!null_error_fn) {
@@ -124,6 +124,21 @@ llvm::Function* Codegen::get_or_create_runtime_error_function() {
     
     return null_error_fn;
 }
+void Codegen::create_libc_functions() {
+    get_or_create_printf();
+    get_or_create_puts();
+    get_or_create_strlen();
+    get_or_create_strcmp();
+    get_or_create_strcpy();
+    get_or_create_strcat();
+    get_or_create_malloc();
+    get_or_create_free();
+    get_or_create_exit();
+    get_or_create_abort();
+    get_or_create_memcpy();
+    get_or_create_memset();
+}
+// printf - int printf(const char *s, ...)
 llvm::Function* Codegen::get_or_create_printf() {
     llvm::Function* printf_fn = llvm_module->getFunction("printf");
     if (!printf_fn) {
@@ -134,6 +149,86 @@ llvm::Function* Codegen::get_or_create_printf() {
     return printf_fn;
 }
 
+// puts - int puts(const char *s)
+llvm::Function* Codegen::get_or_create_puts() {
+    llvm::Function* puts_fn = llvm_module->getFunction("puts");
+    if (!puts_fn) {
+        llvm::Type* int_type = llvm::Type::getInt32Ty(*llvm_context);
+        llvm::FunctionType* puts_type = llvm::FunctionType::get(int_type, {ir_builder->getPtrTy()}, false);
+        puts_fn = llvm::Function::Create(puts_type, llvm::Function::ExternalLinkage, "puts", llvm_module.get());
+    }
+    return puts_fn;
+}
+
+// strlen - size_t strlen(const char *s)
+llvm::Function* Codegen::get_or_create_strlen() {
+    llvm::Function* strlen_fn = llvm_module->getFunction("strlen");
+    if (!strlen_fn) {
+        llvm::Type* size_t_type = llvm::Type::getInt64Ty(*llvm_context); // size_t is typically 64-bit
+        llvm::FunctionType* strlen_type = llvm::FunctionType::get(size_t_type, {ir_builder->getPtrTy()}, false);
+        strlen_fn = llvm::Function::Create(strlen_type, llvm::Function::ExternalLinkage, "strlen", llvm_module.get());
+    }
+    return strlen_fn;
+}
+
+// strcmp - int strcmp(const char *s1, const char *s2)
+llvm::Function* Codegen::get_or_create_strcmp() {
+    llvm::Function* strcmp_fn = llvm_module->getFunction("strcmp");
+    if (!strcmp_fn) {
+        llvm::Type* int_type = llvm::Type::getInt32Ty(*llvm_context);
+        llvm::FunctionType* strcmp_type = llvm::FunctionType::get(int_type, {ir_builder->getPtrTy(), ir_builder->getPtrTy()}, false);
+        strcmp_fn = llvm::Function::Create(strcmp_type, llvm::Function::ExternalLinkage, "strcmp", llvm_module.get());
+    }
+    return strcmp_fn;
+}
+
+// strcpy - char *strcpy(char *dest, const char *src)
+llvm::Function* Codegen::get_or_create_strcpy() {
+    llvm::Function* strcpy_fn = llvm_module->getFunction("strcpy");
+    if (!strcpy_fn) {
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::FunctionType* strcpy_type = llvm::FunctionType::get(ptr_type, {ptr_type, ptr_type}, false);
+        strcpy_fn = llvm::Function::Create(strcpy_type, llvm::Function::ExternalLinkage, "strcpy", llvm_module.get());
+    }
+    return strcpy_fn;
+}
+
+// strcat - char *strcat(char *dest, const char *src)
+llvm::Function* Codegen::get_or_create_strcat() {
+    llvm::Function* strcat_fn = llvm_module->getFunction("strcat");
+    if (!strcat_fn) {
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::FunctionType* strcat_type = llvm::FunctionType::get(ptr_type, {ptr_type, ptr_type}, false);
+        strcat_fn = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", llvm_module.get());
+    }
+    return strcat_fn;
+}
+
+// malloc - void *malloc(size_t size)
+llvm::Function* Codegen::get_or_create_malloc() {
+    llvm::Function* malloc_fn = llvm_module->getFunction("malloc");
+    if (!malloc_fn) {
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::Type* size_t_type = llvm::Type::getInt64Ty(*llvm_context);
+        llvm::FunctionType* malloc_type = llvm::FunctionType::get(ptr_type, {size_t_type}, false);
+        malloc_fn = llvm::Function::Create(malloc_type, llvm::Function::ExternalLinkage, "malloc", llvm_module.get());
+    }
+    return malloc_fn;
+}
+
+// free - void free(void *ptr)
+llvm::Function* Codegen::get_or_create_free() {
+    llvm::Function* free_fn = llvm_module->getFunction("free");
+    if (!free_fn) {
+        llvm::Type* void_type = llvm::Type::getVoidTy(*llvm_context);
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::FunctionType* free_type = llvm::FunctionType::get(void_type, {ptr_type}, false);
+        free_fn = llvm::Function::Create(free_type, llvm::Function::ExternalLinkage, "free", llvm_module.get());
+    }
+    return free_fn;
+}
+
+// exit - void exit(int status)
 llvm::Function* Codegen::get_or_create_exit() {
     llvm::Function* exit_fn = llvm_module->getFunction("exit");
     if (!exit_fn) {
@@ -143,4 +238,40 @@ llvm::Function* Codegen::get_or_create_exit() {
         exit_fn = llvm::Function::Create(exit_type, llvm::Function::ExternalLinkage, "exit", llvm_module.get());
     }
     return exit_fn;
+}
+
+// abort - void abort(void)
+llvm::Function* Codegen::get_or_create_abort() {
+    llvm::Function* abort_fn = llvm_module->getFunction("abort");
+    if (!abort_fn) {
+        llvm::Type* void_type = llvm::Type::getVoidTy(*llvm_context);
+        llvm::FunctionType* abort_type = llvm::FunctionType::get(void_type, {}, false);
+        abort_fn = llvm::Function::Create(abort_type, llvm::Function::ExternalLinkage, "abort", llvm_module.get());
+    }
+    return abort_fn;
+}
+
+// memcpy - void *memcpy(void *dest, const void *src, size_t n)
+llvm::Function* Codegen::get_or_create_memcpy() {
+    llvm::Function* memcpy_fn = llvm_module->getFunction("memcpy");
+    if (!memcpy_fn) {
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::Type* size_t_type = llvm::Type::getInt64Ty(*llvm_context);
+        llvm::FunctionType* memcpy_type = llvm::FunctionType::get(ptr_type, {ptr_type, ptr_type, size_t_type}, false);
+        memcpy_fn = llvm::Function::Create(memcpy_type, llvm::Function::ExternalLinkage, "memcpy", llvm_module.get());
+    }
+    return memcpy_fn;
+}
+
+// memset - void *memset(void *s, int c, size_t n)
+llvm::Function* Codegen::get_or_create_memset() {
+    llvm::Function* memset_fn = llvm_module->getFunction("memset");
+    if (!memset_fn) {
+        llvm::Type* ptr_type = ir_builder->getPtrTy();
+        llvm::Type* int_type = llvm::Type::getInt32Ty(*llvm_context);
+        llvm::Type* size_t_type = llvm::Type::getInt64Ty(*llvm_context);
+        llvm::FunctionType* memset_type = llvm::FunctionType::get(ptr_type, {ptr_type, int_type, size_t_type}, false);
+        memset_fn = llvm::Function::Create(memset_type, llvm::Function::ExternalLinkage, "memset", llvm_module.get());
+    }
+    return memset_fn;
 }

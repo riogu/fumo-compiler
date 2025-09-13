@@ -25,7 +25,7 @@ inline constexpr std::nullopt_t None = std::nullopt;
 struct File {
     fs::path path_name;
     std::string contents;
-    fs::path output_name = "tests/command-line-string.out";
+    fs::path output_name = "src/tests/command-line-string.out";
     // fs::path output_name = "fumo.out";
 };
 

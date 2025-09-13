@@ -1,0 +1,16 @@
+// Pointer-to-pointer with member functions - PASS
+struct wrapper {
+    let ptr: i32* = {};
+    fn set_ptr(p: i32*) -> void { ptr = p; }
+    fn get_ptr_ptr() -> i32**;
+    fn deref_twice() -> i32 { return **get_ptr_ptr(); }
+};
+fn wrapper::get_ptr_ptr() -> i32** { return &ptr; }
+fn main() -> i32 {
+    let x: i32 = 100;
+    let w: wrapper = {};
+    w.set_ptr(&x);
+    let ptr_ptr: i32** = w.get_ptr_ptr();
+    **ptr_ptr = 200;
+    return w.deref_twice();
+}

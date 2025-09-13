@@ -1,0 +1,17 @@
+// Testing member function on temporary - FAIL
+namespace factory {
+    struct product {
+        let id: i32 = 0;
+        fn get_id() -> i32 { return id; }
+    }
+    struct factory {
+        fn create(id: i32) -> product { return product{id}; }
+        fn process(p: product*) -> i32;
+    }
+}
+fn factory::factory::process(p: product*) -> i32 { return p->get_id(); }
+fn main() -> i32 {
+    let f: factory::factory = {};
+    return f.create(42).get_id();
+}
+

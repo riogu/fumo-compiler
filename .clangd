@@ -1,0 +1,8 @@
+If:
+  PathMatch: .*\.fm
+Index:
+  Background: Skip     
+CompileFlags:
+  Remove: [-*]        
+Diagnostics:
+  Suppress: ["*"]    

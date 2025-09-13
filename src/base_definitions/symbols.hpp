@@ -52,7 +52,8 @@
     greater_greater_equals,             \
     dot_dot_dot,                        \
     minus_greater,                      \
-    colon_colon
+    colon_colon,                        \
+    quotation_mark
 #define builtin_types                   \
     i8               ,                  \
     i32              ,                  \
@@ -146,7 +147,8 @@
 ">>=",                  \
 "...",                  \
 "->" ,                  \
-"::" 
+"::" ,                  \
+"\"" 
 
 #define add_parens(S) (S)
 #define symbol_reprs_ map_macro(add_parens, symbol_reprs__)

@@ -17,20 +17,20 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
 
-    // should remove this later
-
-    // std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
-    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-    // }
-
-    if (output_IR) { // NOTE: this is here for debugging and comparing to the optimized IR
-        fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
-        llvm::raw_fd_ostream dest(name_copy.string(), EC);
-        dest << llvm_ir_to_str();
-        std::cerr << "\nllvm IR for '" << name_copy << "':\n" << llvm_ir_to_str() << std::endl;
+    if (print_file) {
+        dest_file_name.replace_extension(".fm");
+        std::cerr << "\ninput file '" << llvm_module->getSourceFileName() << "':\n" <<  file.contents << std::endl;
     }
-
+    if (print_AST) {
+        std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
+        for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+            std::cerr << "node found:\n  " + node->to_str() + "\n";
+        }
+    }
+    if (print_IR) {
+        dest_file_name.replace_extension(".ll");
+        std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
+    }
     std::string error_buffer;
     llvm::raw_string_ostream error_stream(error_buffer);
     if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
@@ -126,26 +126,16 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
                       << str(asm_buffer.data(), asm_buffer.size()) << std::endl;
         }
     }
-    if (output_OBJ || !emit_flag_was_set) {
-        dest_file_name.replace_extension(".o");
-        llvm::raw_fd_ostream dest(dest_file_name.string(), EC, llvm::sys::fs::OF_None);
+    if(emit_flag_was_set){}
+    dest_file_name.replace_extension(".o");
+    llvm::raw_fd_ostream dest(dest_file_name.string(), EC, llvm::sys::fs::OF_None);
 
-        llvm::legacy::PassManager pass;
-        if (target_machine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::ObjectFile)) {
-            internal_panic("Target does not support emission of object files.");
-        }
-        pass.run(*llvm_module);
+    llvm::legacy::PassManager pass;
+    if (target_machine->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::ObjectFile)) {
+        internal_panic("Target does not support emission of object files.");
     }
-    if (print_AST) {
-        std::cerr << "\ndebug AST for '" << llvm_module->getSourceFileName() << "':\n";
-        for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-            std::cerr << "node found:\n  " + node->to_str() + "\n";
-        }
-    }
-    if (print_IR) {
-        dest_file_name.replace_extension(".ll");
-        std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
-    }
+    pass.run(*llvm_module);
+    
 }
 
 

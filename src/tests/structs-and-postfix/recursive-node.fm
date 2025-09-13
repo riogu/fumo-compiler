@@ -1,0 +1,18 @@
+// Struct with pointer members and complex postfix expressions - PASS
+struct node {
+    let value: i32 = 0;
+    let next: node* = {};
+    fn get_next() -> node* { return next; }
+    fn set_next(n: node*) -> void { next = n; }
+};
+fn main() -> i32 {
+    let node1 = node {10};
+    let node2 = node {20};
+    let node3 = node {30};
+    let node4 = node {40};
+    node1.set_next(&node2);
+    node2.set_next(&node3);
+    node3.set_next(&node4);
+    node3.set_next(&node4);
+    return node1.get_next()->get_next()->get_next()->value;
+}

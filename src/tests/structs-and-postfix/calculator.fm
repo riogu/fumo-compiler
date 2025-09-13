@@ -1,0 +1,17 @@
+// Basic calculator struct with external definition - PASS
+// TODO: fix this tests
+
+struct calculator {
+    let value: i32 = 0;
+    fn get_value() -> i32 { return value; }
+    fn double() -> i32;
+    fn triple() -> i32 { return get_value() * 3; }
+};
+fn calculator::double() -> i32 { return get_value() * 2; }
+fn main() -> i32 {
+    let calc: calculator = {34};
+    let calc_ptr: calculator* = &calc;
+    let result: i32 = calc_ptr->double();
+    return result + 1;
+}
+

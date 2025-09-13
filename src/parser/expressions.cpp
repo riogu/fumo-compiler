@@ -1,4 +1,3 @@
-#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
@@ -7,7 +6,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     curr_tkn = tkns.begin();
 
     while (curr_tkn + 1 != tkns.end()) {
-        if (token_is_keyword(let)) AST.push_back(variable_declaration());
+        if (token_is_keyword(let)) 
+            AST.push_back(variable_declaration());
         else if (token_is_keyword(fn))
             AST.push_back(function_declaration());
         else if (token_is_keyword(namespace))
@@ -33,6 +33,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else
             return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, expression_statement()}});
     }
+    // if (token_is_keyword(if)) {}
     return expression_statement();
 }
 
@@ -80,8 +81,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // <relational> ::= <add> { ("<" | ">" | "<=" | ">=")  <add> }*
 [[nodiscard]] ASTNode* Parser::relational() {
     auto node = add();
-    if (token_is(<)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, node, add()}});
-    if (token_is(>)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, add(), node}});
+    if (token_is(<))  return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, node, add()}});
+    if (token_is(>))  return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_than, add(), node}});
     if (token_is(<=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, node, add()}});
     if (token_is(>=)) return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::less_equals, add(), node}});
     return node;
@@ -134,7 +135,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 //             | <postfix> "{" <initializer-list> "}" <postfix>
 //             | <postfix> "->" <postfix>
 //             | <postfix> "." <postfix>
-//             | <postfix> "(" {<initializer>}* ")" <postfix>
+//             | <postfix> "(" {<argument-list>}* ")" <postfix>
 [[nodiscard]] ASTNode* Parser::postfix() {
 
     auto temp_node = primary();
@@ -288,7 +289,9 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return push(
             ASTNode {*prev_tkn,
                      PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                     Type {push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+                     Type {.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "i8"}}),
+                           .kind = Type::i8_,
+                           .ptr_count = 1}});
 
     // NOTE: only variable names go through primary() to be found
     if (token_is(identifier)) return identifier(Identifier::var_name);

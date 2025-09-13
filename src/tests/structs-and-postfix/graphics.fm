@@ -1,0 +1,22 @@
+// Nested namespaces with postfix chaining - PASS
+namespace graphics {
+    namespace shapes {
+        struct circle {
+            let radius: i32 = 0;
+            fn get_radius() -> i32 { return radius; }
+            fn get_area_approx() -> i32;
+            fn get_radius_ptr() -> i32* { return &radius; }
+        };
+    };
+}
+fn graphics::shapes::circle::get_area_approx() -> i32 {
+    return get_radius() * get_radius() * 3;
+}
+fn main() -> i32 {
+    let c: graphics::shapes::circle = {5};
+    let c_ptr: graphics::shapes::circle* = &c;
+    let radius_ptr: i32* = c_ptr->get_radius_ptr();
+    *radius_ptr = 10;
+    return c_ptr->get_area_approx();
+}
+

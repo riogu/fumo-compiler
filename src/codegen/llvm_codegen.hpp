@@ -14,7 +14,7 @@ enum struct LinkerType { AUTO, GCC, CLANG};
 
 struct LinkOptions {
     LinkerType linker = LinkerType::AUTO;
-    str output_name = "tests/command-line-string.out";
+    str output_name = "src/tests/command-line-string.out";
     vec<str> object_files;
     bool static_link = false;
     bool strip_symbols = false;
@@ -84,10 +84,7 @@ struct Codegen {
     void clear_metadata();
     void create_libc_main();
     void verify_user_main();
-    llvm::Function* get_or_create_exit();
-    llvm::Function* get_or_create_printf();
-    llvm::Function* get_or_create_runtime_error_function();
-
+    void create_libc_functions();
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 
         if (fumo_type.ptr_count) return ir_builder->getPtrTy();
@@ -111,8 +108,17 @@ struct Codegen {
         }
     }
 
-    llvm::Value* create_string_literal(const str& str) {
-        llvm::GlobalVariable* global_str = ir_builder->CreateGlobalString(str, ".str");
-        return ir_builder->CreateConstGEP2_32(global_str->getType(), global_str, 0, 0);
-    }
+    llvm::Function* get_or_create_fumo_runtime_error();
+    llvm::Function* get_or_create_printf();
+    llvm::Function* get_or_create_puts();
+    llvm::Function* get_or_create_strlen();
+    llvm::Function* get_or_create_strcmp();
+    llvm::Function* get_or_create_strcpy();
+    llvm::Function* get_or_create_strcat();
+    llvm::Function* get_or_create_malloc();
+    llvm::Function* get_or_create_free();
+    llvm::Function* get_or_create_exit();
+    llvm::Function* get_or_create_abort();
+    llvm::Function* get_or_create_memcpy();
+    llvm::Function* get_or_create_memset();
 };

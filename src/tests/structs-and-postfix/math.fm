@@ -1,0 +1,20 @@
+// Namespaced structs with mixed inline/external definitions - PASS
+namespace math {
+    struct vector {
+        let x: i32 = 0;
+        let y: i32 = 0;
+        fn magnitude_squared() -> i32 { return x*x + y*y; }
+        fn set_x(new_x: i32) -> void;
+        fn get_x_ptr() -> i32* { return &x; }
+    };
+}
+fn math::vector::set_x(new_x: i32) -> void { x = new_x; }
+fn main() -> i32 {
+    let v: math::vector = {3, 4};
+    let v_ptr: math::vector* = &v;
+    v_ptr->set_x(5);
+    let x_ptr: i32* = v_ptr->get_x_ptr();
+    *x_ptr = 6;
+    return v_ptr->magnitude_squared();
+}
+

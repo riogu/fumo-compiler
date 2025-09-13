@@ -56,7 +56,6 @@ fn some_func() -> i32* {
 - Return value handling for all function types
 - Standard C library integration and linking (libc functions available)
 ### Struct Implementation
-- Struct memory layout and alignment
 - Member access code generation
 - Nested struct support in codegen
 - Struct initialization and constructor calls

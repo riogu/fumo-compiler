@@ -1,0 +1,13 @@
+// Struct with null pointer member access - PASS (will cause runtime error)
+struct node {
+    let value: i32 = 0;
+    let next: node* = {};
+    fn get_next() -> node* { return next; }
+}
+fn main() -> i32 {
+    let node1 = node {5};
+    let node2 = node {69};
+    node1.next->value = node2.value;
+    return node1.get_next()->value;// will cause runtime error
+}
+

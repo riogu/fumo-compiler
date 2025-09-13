@@ -4,6 +4,8 @@
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
 
+    create_libc_functions();
+
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
                                                        "fumo.init", llvm_module.get());
@@ -15,10 +17,8 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", fumo_init);
     fumo_init_builder->SetInsertPoint(bblock);
     fumo_init_builder->SetCurrentDebugLocation(llvm::DebugLoc());
-
     // codegen
     // ---------------------------------------------------------------------------
-
     // forward declaration of all structs as opaque first
     for (const auto& [name, _] : symbol_tree.type_decls) llvm::StructType::create(*llvm_context, name);
 
@@ -82,7 +82,7 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             // -------------------------------------------------------------------------------------------
             // check null pointer dereferences
             llvm::Function* parent_function = ir_builder->GetInsertBlock()->getParent();
-            llvm::Function* null_error_fn = get_or_create_runtime_error_function();
+            llvm::Function* null_error_fn = get_or_create_fumo_runtime_error();
 
             auto* trap_bb = llvm::BasicBlock::Create(*llvm_context, "null_trap", parent_function);
             auto* safe_bb = llvm::BasicBlock::Create(*llvm_context, "safe_deref", parent_function);
@@ -92,10 +92,8 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             ir_builder->CreateCondBr(is_null, trap_bb, safe_bb);
             // Trap block - executed on null pointer
             ir_builder->SetInsertPoint(trap_bb);
-            // Create error message with source location if available
+
             str error_msg = make_runtime_error(node.source_token, "found null pointer dereference");
-            // Create global string for error message
-            // Create global string for error message
             llvm::Constant* error_str = ir_builder->CreateGlobalString(error_msg, ".str_error_msg");
             ir_builder->CreateCall(null_error_fn, {error_str});
             ir_builder->CreateUnreachable();
@@ -191,7 +189,10 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case PrimaryExpr::floating_point:
                     return llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context),
                                                  std::get<double>(prim.value));
-                case PrimaryExpr::str:
+                case PrimaryExpr::str: {
+                    auto* global_str = ir_builder->CreateGlobalString(std::get<str>(prim.value), ".str");
+                    return ir_builder->CreateConstGEP2_32(global_str->getType(), global_str, 0, 0);
+                }
                 default:
                     internal_panic("codegen not implemented for '{}'", node.kind_name());
             }

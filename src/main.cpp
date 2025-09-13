@@ -23,10 +23,10 @@ opt<bool> O1          {"O1",           desc("Few optimizations"),               
 opt<bool> O2          {"O2",           desc("Default optimizations"),                                 cat(fumo_category)};
 opt<bool> O3          {"O3",           desc("Aggressive optimizations"),                              cat(fumo_category)};
 
-opt<bool> output_IR   {"emit=llvm-ir", desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
-opt<bool> output_AST  {"emit=ast",     desc("Outputs a .ast file with the generated debug AST"),      cat(fumo_category)};
-opt<bool> output_ASM  {"emit=asm",     desc("Outputs a .asm file with the generated assembly"),       cat(fumo_category)};
-opt<bool> output_OBJ  {"emit=obj",     desc("Outputs a .o object file"),                              cat(fumo_category)};
+opt<bool> output_IR   {"emit-llvm-ir", desc("Outputs a .ll file with the generated llvm IR"),         cat(fumo_category)};
+opt<bool> output_AST  {"emit-ast",     desc("Outputs a .ast file with the generated debug AST"),      cat(fumo_category)};
+opt<bool> output_ASM  {"emit-asm",     desc("Outputs a .asm file with the generated assembly"),       cat(fumo_category)};
+opt<bool> output_OBJ  {"emit-obj",     desc("Outputs a .o object file"),                              cat(fumo_category)};
 
 opt<bool> print_file  {"print-file",   desc("Print the inputed file contents to the terminal"),       cat(fumo_category)};
 opt<bool> print_IR    {"print-ir",     desc("Print llvm-IR to the terminal"),                         cat(fumo_category)};
@@ -55,6 +55,8 @@ auto main(int argc, char** argv) -> int {
     llvm::InitLLVM init(argc, argv);
     str file_name = "command-line-string.fm";
     str cmdline_str = "";
+    // -O3 -emit=llvm-ir -print-ast -print-file -print-ir -v
+
 
     //--------------------------------------------------------------------------
     // Lexer and Command-line arguments parsing
@@ -86,7 +88,7 @@ auto main(int argc, char** argv) -> int {
         auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
         tokens = _tokens;
         file = _file;
-        file.output_name = "tests/command-line-string.out";
+        file.output_name = "src/tests/command-line-string.out";
     } else {
         llvm::cl::HideUnrelatedOptions(fumo_category);
         llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));

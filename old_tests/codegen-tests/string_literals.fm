@@ -1,0 +1,131 @@
+// Basic string literal assignment and usage
+t(
+"fn puts(s: i8*) -> i32;\n"
+"fn main() -> i32 {\n"
+"    let message: i8* = \"Hello, World!\";\n"
+"    puts(message);\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String literal with printf
+t(
+"fn main() -> i32 {\n"
+"    let name: i8* = \"Alice\";\n"
+"    let age: i32 = 25;\n"
+"    printf(\"Name: %s, Age: %d\\n\", name, age);\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String literal with escape sequences
+t(
+"fn main() -> i32 {\n"
+"    let text: i8* = \"Line 1\\nLine 2\\tTabbed\";\n"
+"    printf(\"%s\\n\", text);\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String literal as function parameter
+t(
+"fn print_greeting(msg: i8*) -> void {\n"
+"    printf(\"Greeting: %s\\n\", msg);\n"
+"}\n"
+"fn main() -> i32 {\n"
+"    print_greeting(\"Welcome!\");\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String literal in struct
+t(
+"struct person {\n"
+"    let name: i8* = \"Unknown\";\n"
+"    let age: i32 = 0;\n"
+"    fn introduce() -> void;\n"
+"};\n"
+"fn person::introduce() -> void {\n"
+"    printf(\"Hi, I'm %s, age %d\\n\", name, age);\n"
+"}\n"
+"fn main() -> i32 {\n"
+"    let p: person = {\"Bob\", 30};\n"
+"    p.introduce();\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String comparison using strcmp
+t(
+"fn main() -> i32 {\n"
+"    let str1: i8* = \"hello\";\n"
+"    let str2: i8* = \"hello\";\n"
+"    let str3: i8* = \"world\";\n"
+"    if (strcmp(str1, str2) == 0) {\n"
+"        puts(\"Strings match!\");\n"
+"    }\n"
+"    if (strcmp(str1, str3) != 0) {\n"
+"        puts(\"Strings differ!\");\n"
+"    }\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String length calculation
+t(
+"fn main() -> i32 {\n"
+"    let message: i8* = \"Programming\";\n"
+"    let len: i32 = strlen(message);\n"
+"    printf(\"Length of '%s' is %d\\n\", message, len);\n"
+"    return len;\n"
+"}\n"
+,pass),
+
+// Empty string literal
+t(
+"fn main() -> i32 {\n"
+"    let empty: i8* = \"\";\n"
+"    printf(\"Empty string length: %d\\n\", strlen(empty));\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// String literal with quotes escaped
+t(
+"fn main() -> i32 {\n"
+"    let quoted: i8* = \"She said \\\"Hello\\\" to me.\";\n"
+"    puts(quoted);\n"
+"    return 0;\n"
+"}\n"
+,pass),
+
+// Multiple string literals in namespace
+t(
+"namespace messages {\n"
+"    struct config {\n"
+"        let error_msg: i8* = \"Error occurred!\";\n"
+"        let success_msg: i8* = \"Operation successful!\";\n"
+"        fn print_error() -> void;\n"
+"        fn print_success() -> void;\n"
+"    };\n"
+"}\n"
+"fn messages::config::print_error() -> void {\n"
+"    puts(error_msg);\n"
+"}\n"
+"fn messages::config::print_success() -> void {\n"
+"    puts(success_msg);\n"
+"}\n"
+"fn main() -> i32 {\n"
+"    let cfg: messages::config = {};\n"
+"    cfg.print_success();\n"
+"    cfg.print_error();\n"
+"    return 0;\n"
+"}\n"
+,pass),
+// Invalid: trying to assign string to non-pointer type (should fail)
+t(
+"fn main() -> i32 {\n"
+"    let invalid: i32 = \"This should fail\";\n"
+"    return 0;\n"
+"}\n"
+,fail)

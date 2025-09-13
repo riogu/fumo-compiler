@@ -1,0 +1,27 @@
+// Complex nested struct with pointers and postfix - PASS
+namespace container {
+    struct inner {
+        let data: i32 = 0;
+        fn get_data() -> i32 { return data; }
+        fn modify_data(delta: i32) -> void;
+    };
+    struct outer {
+        let inner_obj: inner = {};
+        let inner_ptr: inner* = {};
+        fn init() -> void { inner_ptr = &inner_obj; }
+        fn get_inner_via_ptr() -> inner*;
+        fn cascade_modify(delta: i32) -> i32;
+    };
+}
+fn container::inner::modify_data(delta: i32) -> void { data = data + delta; }
+fn container::outer::get_inner_via_ptr() -> inner* { return inner_ptr; }
+fn container::outer::cascade_modify(delta: i32) -> i32 {
+    inner_ptr->modify_data(delta);
+    return inner_ptr->get_data();
+}
+fn main() -> i32 {
+    let outer_obj: container::outer = {{42}};
+    let outer_ptr: container::outer* = &outer_obj;
+    outer_ptr->init();
+    return outer_ptr->get_inner_via_ptr()->get_data();
+}

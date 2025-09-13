@@ -1,0 +1,18 @@
+// Member function modifying member variable - with pointer access and external definition - PASS
+struct counter {
+    let count: i32 = 0;
+    fn increment() -> void;
+    fn get_count() -> i32 { return count; }
+    fn get_count_ptr() -> i32*;
+};
+fn counter::increment() -> void {
+    count = count + 1;
+}
+fn counter::get_count_ptr() -> i32* { return &count; }
+fn main() -> i32 {
+    let c: counter = {68};
+    let c_ptr: counter* = &c;
+    c_ptr->increment();
+    let count_ptr: i32* = c_ptr->get_count_ptr();
+    return *count_ptr;
+}
