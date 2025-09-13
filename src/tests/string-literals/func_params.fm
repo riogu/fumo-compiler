@@ -1,0 +1,9 @@
+// String literal as function parameter
+fn printf(string: i8*, ...) -> i32;
+fn print_greeting(msg: i8*) -> void {
+    printf("Greeting: %s\n", msg);
+}
+fn main() -> i32 {
+    print_greeting("Welcome!");
+    return 0;
+}

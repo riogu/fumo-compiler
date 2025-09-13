@@ -1,0 +1,8 @@
+// String literal with escape sequences
+fn printf(string: i8*, ...) -> i32;
+fn main() -> i32 {
+    let text: i8* = "Line 1\nLine 2\tTabbed";
+    printf("%s\n", text);
+    return 0;
+}
+

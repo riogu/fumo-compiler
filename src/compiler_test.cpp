@@ -38,7 +38,7 @@ struct TestConfig {
     std::string description;
     bool verbose_output = false; 
     TestConfig() : description("default") {
-        compiler_options = {"-print-file", "-print-ast", "-print-ir", "-print-file", "-emit-llvm-ir"};
+        compiler_options = {"-print-file", "-print-ast", "-print-ir", "-print-file", "-emit-ir"};
     }
     TestConfig(std::vector<std::string> opts, std::string desc = "") 
         : compiler_options(std::move(opts)), description(std::move(desc)) {}
@@ -59,6 +59,7 @@ ExpectedResult get_expected_result(const std::filesystem::path& file_path) {
     
     // Check for explicit markers in filename
     if (filename.find("_fail") != std::string::npos || 
+        filename.find("-fail") != std::string::npos ||
         filename.find("fail_") != std::string::npos ||
         filename.find("error_") != std::string::npos) {
         return ExpectedResult::Fail;
@@ -162,14 +163,14 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
 // Predefined test configurations
 std::vector<TestConfig> get_test_configurations() {
     return {
-        TestConfig({"-print-file", "-print-ast", "-print-ir", "-print-file", "-emit-llvm-ir"}, "default"),
+        TestConfig({"-print-file", "-print-ast", "-print-ir", "-print-file", "-emit-ir"}, "default"),
         TestConfig({"--O0"}, "O0"),
         TestConfig({"--O1"}, "O1"),
         TestConfig({"--O2"}, "O2"),
         TestConfig({"--O3"}, "O3"),
         TestConfig({"--print-ast"}, "print-ast"),
         TestConfig({"--emit-ast"}, "emit-ast"),
-        TestConfig({"--emit-llvm-ir"}, "emit-ir"),
+        TestConfig({"--emit-ir"}, "emit-ir"),
         TestConfig({"--emit-asm"}, "emit-asm"),
         TestConfig({"-c"}, "compile-only"),
         TestConfig({"--static"}, "static"),

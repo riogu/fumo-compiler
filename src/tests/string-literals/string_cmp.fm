@@ -1,0 +1,19 @@
+// NOTE: do this test later when you have added if statements
+
+// String comparison using strcmp
+// fn puts(s: i8*) -> i32;
+// fn strcmp(s1: i8*, s2: i8*) -> i32;
+//
+// fn main() -> i32 {
+//     let str1: i8* = "hello";
+//     let str2: i8* = "hello";
+//     let str3: i8* = "world";
+//     if (strcmp(str1, str2) == 0) {
+//         puts("Strings match!");
+//     }
+//     if (strcmp(str1, str3) != 0) {
+//         puts("Strings differ!");
+//     }
+//     return 0;
+// }
+//

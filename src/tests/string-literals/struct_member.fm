@@ -1,0 +1,15 @@
+// String literal in struct
+fn printf(string: i8*, ...) -> i32;
+struct person {
+    let name: i8* = "Unknown";
+    let age: i32 = 0;
+    fn introduce() -> void;
+};
+fn person::introduce() -> void {
+    printf("Hi, I'm %s, age %d\n", name, age);
+}
+fn main() -> i32 {
+    let p: person = {"Bob", 30};
+    p.introduce();
+    return 0;
+}

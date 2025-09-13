@@ -1,0 +1,22 @@
+// Multiple string literals in namespace
+fn puts(s: i8*) -> i32;
+namespace messages {
+    struct config {
+        let error_msg: i8* = "Error occurred!";
+        let success_msg: i8* = "Operation successful!";
+        fn print_error() -> void;
+        fn print_success() -> void;
+    };
+}
+fn messages::config::print_error() -> void {
+    puts(error_msg);
+}
+fn messages::config::print_success() -> void {
+    puts(success_msg);
+}
+fn main() -> i32 {
+    let cfg: messages::config = {};
+    cfg.print_success();
+    cfg.print_error();
+    return 0;
+}

@@ -84,7 +84,7 @@
             expect_token_str(")");
             return {parameters, true}; // is variadic 
         } else {
-            report_error((*curr_tkn), "expected identifier in function parameter declaration.");
+            report_error((*curr_tkn), "expected identifier. NOTE: forward declarations need parameter names.");
         }
 
         if (token_is_str(",")) continue;

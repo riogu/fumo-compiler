@@ -1,5 +1,5 @@
 // String literal with printf
-fn printf(string: i8*, ...) -> void*;
+fn printf(string: i8*, ...) -> i32;
 fn main() -> i32 {
     let fumofumo: i8* = "fumos";
     let amount: i32 = 69;
