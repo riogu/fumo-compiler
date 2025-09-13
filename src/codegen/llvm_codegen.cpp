@@ -347,7 +347,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         // this means we are callin a member function from another member function
                         // so we must pass forward the "this" argument
                         node.llvm_value = ir_builder->CreateLoad(ir_builder->getPtrTy(), current_this_ptr.value());
-
+                        arg_values.push_back(node.llvm_value);
                     } else {
                         // FIXME: current_this_ptr was empty
                         if (!node.llvm_value) internal_error(node.source_token, "didn't set llvm::Value for '{}'", node.name());
