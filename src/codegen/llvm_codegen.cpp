@@ -133,11 +133,16 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
             for (std::size_t i = 1; i < postfix.nodes.size(); i++) {
                 curr_node = postfix.nodes[i];
                 curr_node->llvm_value = curr_ptr; // used later by the elements for codegen
-                // if present, it wasnt wrapped by a dereference earlier, so its either the last element,
-                // or it had a member access which we don't allow (no temporaries in fumo lang).
+                // if present, it wasnt wrapped by a dereference earlier
                 if (is_branch<FunctionCall>(curr_node)) {
                     auto* ret_val = if_value(codegen_value(*curr_node))
                                     else_error(curr_node->source_token, "found no value in postfix expr (FIX).");
+                    auto* prev_node = postfix.nodes[i - 1]; // trying to access pointer element with '.' syntax.
+                    if (i < postfix.nodes.size() && prev_node->type.ptr_count) { 
+                        report_error(prev_node->source_token, // not the last element and wasn't dereferenced
+                                     "Member reference type '{}' is a pointer; did you mean to use '->'?",
+                                     type_name(prev_node->type));
+                    }
                     if (node.type.kind == Type::void_) return std::nullopt; 
                     llvm::Value* temp_alloca = ir_builder->CreateAlloca(ret_val->getType());
                     ir_builder->CreateStore(ret_val, temp_alloca);
