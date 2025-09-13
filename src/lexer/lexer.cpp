@@ -1,4 +1,3 @@
-// clang-format off
 #include "lexer.hpp"
 #include <fstream>
 #include <iostream>
@@ -98,7 +97,7 @@
 
             case '/':
                 if (next_char_is(/))
-                    while (!next_char_is(EOF) && !next_char_is(\n)) curr = get_curr();
+                    while (file_stream.peek() != EOF && !next_char_is(\n)) curr = get_curr();
                 else
                     tokens.push_back(next_char_is(=) ? make_and_consume_token(/=)
                                                      : make_token(/));
