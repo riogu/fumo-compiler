@@ -1,7 +1,7 @@
 ; ModuleID = 'src/tests/structs-and-postfix/example-outputs/example'
 source_filename = "src/tests/structs-and-postfix/example.fm"
 
-%"foo::SomeStruct" = type { i32, %"foo::SomeStruct::InnerStruct" }
+%"foo::SomeStruct" = type { %"foo::SomeStruct::InnerStruct", i32 }
 %"foo::SomeStruct::InnerStruct" = type { i32, ptr }
 
 @x = global i32 0
@@ -51,23 +51,23 @@ define void @fumo.init() #0 {
   %6 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %2, i32 0, i32 1
   store ptr @.str.1, ptr %6, align 8
   %7 = load %"foo::SomeStruct::InnerStruct", ptr %2, align 8
-  %8 = getelementptr inbounds nuw %"foo::SomeStruct", ptr %1, i32 0, i32 1
+  %8 = getelementptr inbounds nuw %"foo::SomeStruct", ptr %1, i32 0, i32 0
   store %"foo::SomeStruct::InnerStruct" %7, ptr %8, align 8
-  %9 = getelementptr inbounds nuw %"foo::SomeStruct", ptr %1, i32 0, i32 0
-  store i32 230, ptr %9, align 4
-  %10 = alloca %"foo::SomeStruct::InnerStruct", align 8
-  store %"foo::SomeStruct::InnerStruct" zeroinitializer, ptr %10, align 8
-  %11 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %10, i32 0, i32 0
-  store i32 123, ptr %11, align 4
-  %12 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %10, i32 0, i32 1
-  store ptr @.str.2, ptr %12, align 8
-  %13 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %10, i32 0, i32 0
-  store i32 11111, ptr %13, align 4
-  %14 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %10, i32 0, i32 1
-  store ptr @.str.3, ptr %14, align 8
-  %15 = load %"foo::SomeStruct::InnerStruct", ptr %10, align 8
+  %9 = alloca %"foo::SomeStruct::InnerStruct", align 8
+  store %"foo::SomeStruct::InnerStruct" zeroinitializer, ptr %9, align 8
+  %10 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %9, i32 0, i32 0
+  store i32 123, ptr %10, align 4
+  %11 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %9, i32 0, i32 1
+  store ptr @.str.2, ptr %11, align 8
+  %12 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %9, i32 0, i32 0
+  store i32 11111, ptr %12, align 4
+  %13 = getelementptr inbounds nuw %"foo::SomeStruct::InnerStruct", ptr %9, i32 0, i32 1
+  store ptr @.str.3, ptr %13, align 8
+  %14 = load %"foo::SomeStruct::InnerStruct", ptr %9, align 8
+  %15 = getelementptr inbounds nuw %"foo::SomeStruct", ptr %1, i32 0, i32 0
+  store %"foo::SomeStruct::InnerStruct" %14, ptr %15, align 8
   %16 = getelementptr inbounds nuw %"foo::SomeStruct", ptr %1, i32 0, i32 1
-  store %"foo::SomeStruct::InnerStruct" %15, ptr %16, align 8
+  store i32 66, ptr %16, align 4
   %17 = load %"foo::SomeStruct", ptr %1, align 8
   store %"foo::SomeStruct" %17, ptr @global_example, align 8
   store i32 69420, ptr @"foo::x", align 4
@@ -106,7 +106,7 @@ define i32 @"foo::SomeStruct::InnerStruct::gaming_func"(ptr %0) {
 }
 
 define internal i32 @fumo.user_main() {
-  %1 = load i32, ptr @global_example, align 4
+  %1 = load i32, ptr getelementptr inbounds nuw (%"foo::SomeStruct", ptr @global_example, i32 0, i32 1), align 4
   ret i32 %1
 }
 

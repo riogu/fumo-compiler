@@ -3,7 +3,7 @@ source_filename = "src/tests/structs-and-postfix/example.fm"
 target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-linux-gnu"
 
-%"foo::SomeStruct" = type { i32, %"foo::SomeStruct::InnerStruct" }
+%"foo::SomeStruct" = type { %"foo::SomeStruct::InnerStruct", i32 }
 %"foo::SomeStruct::InnerStruct" = type { i32, ptr }
 
 @x = local_unnamed_addr global i32 0
@@ -14,7 +14,7 @@ target triple = "x86_64-pc-linux-gnu"
 
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
 define void @fumo.init() local_unnamed_addr #0 {
-  store %"foo::SomeStruct" { i32 230, %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 } }, ptr @global_example, align 16
+  store %"foo::SomeStruct" { %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 }, i32 66 }, ptr @global_example, align 16
   store i32 69420, ptr @"foo::x", align 4
   store i32 69, ptr @x, align 4
   ret void
@@ -41,14 +41,16 @@ define i32 @"foo::SomeStruct::InnerStruct::gaming_func"(ptr nocapture readonly %
   ret i32 %2
 }
 
-; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none)
-define noundef i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #0 {
-  store %"foo::SomeStruct" { i32 230, %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 } }, ptr @global_example, align 16
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none)
+define i32 @main(i32 %argc, ptr nocapture readnone %argv) local_unnamed_addr #3 {
+  store %"foo::SomeStruct" { %"foo::SomeStruct::InnerStruct" { i32 11111, ptr @.str.3 }, i32 66 }, ptr @global_example, align 16
   store i32 69420, ptr @"foo::x", align 4
   store i32 69, ptr @x, align 4
-  ret i32 230
+  %1 = load i32, ptr getelementptr inbounds nuw (i8, ptr @global_example, i64 16), align 16
+  ret i32 %1
 }
 
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) "used" }
 attributes #1 = { mustprogress nofree norecurse nosync nounwind willreturn memory(write, argmem: none, inaccessiblemem: none) }
 attributes #2 = { mustprogress nofree norecurse nosync nounwind willreturn memory(argmem: read) }
+attributes #3 = { mustprogress nofree norecurse nosync nounwind willreturn memory(readwrite, argmem: none, inaccessiblemem: none) "used" }
