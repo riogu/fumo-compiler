@@ -1,4 +1,5 @@
 .cache
 build
 CMakeCache.txt
+test-fumo
 
