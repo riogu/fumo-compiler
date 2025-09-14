@@ -1,4 +1,6 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
+#include "utils/common_utils.hpp"
 
 ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     tokens = tkns;
@@ -33,20 +35,47 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         if (token_is(;)) 
             return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, std::nullopt}});
         else {
-            auto node = initializer();
+            auto* node = initializer();
             expect_token(;);
             return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::return_statement, node}});
         }
+    }
+    if (peek_keyword(if)) {
+        return if_value(if_statement()) else_error((*curr_tkn), "expected expression after 'if' statement.");
     }
     return expression_statement();
 }
 // <if-statement> ::= "if" { "(" }? <expression> { ")" }? <compound-statement> 
 //                    { "else" (<compound-statement> | <if-statement>) }?
-[[nodiscard]] ASTNode* Parser::if_statement() { // maybe make it into an expression later (not a statement)
-    if (token_is_keyword(if)) {
-        auto* node = expression();
+[[nodiscard]] Opt<ASTNode*> Parser::if_statement() { 
+    IfStmt ifstmt {}; // maybe make it into an expression later (not a statement)
+    Opt<ASTNode*> node {};
+
+    if (token_is_keyword(else)) {
+        ifstmt.kind = IfStmt::else_statement;
+        if (token_is_keyword(if)) ifstmt.kind = IfStmt::else_if_statement;
+    } 
+    else if (token_is_keyword(if)) ifstmt.kind = IfStmt::if_statement;
+    else {
+        return std::nullopt;
     }
-    return {};
+    Token tkn = *prev_tkn;
+
+    if (token_is_keyword(let)) {
+        ifstmt.condition = variable_declaration();
+    } else if (token_is_str("(")) {
+        ifstmt.condition = assignment();
+        expect_token_str(")");
+    } else {
+        ifstmt.condition = equality();
+    }
+
+    expect_token_str("{");
+    ifstmt.body = compound_statement();
+
+    ifstmt.else_stmt = if_statement();
+
+    return push(ASTNode {tkn, ifstmt});
 }
 
 // <expression-statement> = <expression> ";"

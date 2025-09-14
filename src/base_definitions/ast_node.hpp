@@ -172,13 +172,14 @@ struct IfStmt {
     enum Kind {
         #define IfStmt_kinds                                             \
         if_statement,            /*                                   */ \
+        else_statement,          /*                                   */ \
         else_if_statement        /*                                   */ \
 
         IfStmt_kinds
     } kind;
-    ASTNode* condition;
-    ASTNode* then_body; // compound statement {...}
-    Opt<ASTNode*> else_stmt {}; // is either a compound statement or another if
+    Opt<ASTNode*> condition {};
+    ASTNode* body; // compound statement {...}
+    Opt<ASTNode*> else_stmt {}; // is else, or else if 
 };
 
 struct ASTNode {

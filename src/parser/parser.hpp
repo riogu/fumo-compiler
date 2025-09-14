@@ -25,7 +25,7 @@ struct Parser {
     // expressions
     [[nodiscard]] ASTNode* statement();
     [[nodiscard]] ASTNode* expression_statement();
-    [[nodiscard]] ASTNode* if_statement();
+    [[nodiscard]] Opt<ASTNode*> if_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
     [[nodiscard]] ASTNode* initializer();
@@ -69,6 +69,11 @@ struct Parser {
     constexpr bool peek_is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end() && ((curr_tkn)->type == type);
     }
+
+    #define peek_keyword(keyword) peek_tkn_keyword(#keyword)
+    constexpr bool peek_tkn_keyword(str_view keyword) {
+        return (curr_tkn->type == TokenType::keyword && std::get<str>(curr_tkn->literal.value()) == keyword);
+    }
     #define token_is_keyword(keyword) is_tkn_keyword(#keyword)
     constexpr bool is_tkn_keyword(std::string_view keyword) {
         if (curr_tkn->type == TokenType::keyword && std::get<str>(curr_tkn->literal.value()) == keyword) {
@@ -79,7 +84,7 @@ struct Parser {
     }
 
     #define expect_token(tok) consume_tkn_or_error(tkn(tok), #tok)
-    #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), #tok)
+    #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error((*curr_tkn), "expected '{}'.", repr);
     }

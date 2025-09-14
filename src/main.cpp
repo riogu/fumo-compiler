@@ -108,18 +108,18 @@ auto main(int argc, char** argv) -> int {
     //--------------------------------------------------------------------------
     // Semantic Analysis
     // NOTE: recursive structs will crash the AST printing until after semantic analysis
-    Analyzer analyzer {file};
-    analyzer.semantic_analysis(file_root_node);
-    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-    // }
+    // Analyzer analyzer {file};
+    // analyzer.semantic_analysis(file_root_node);
+    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        std::cerr << "node found:\n  " + node->to_str() + "\n";
+    }
     //--------------------------------------------------------------------------
     // Codegen
     if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
     // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
     //     std::cerr << "node found:\n  " + node->to_str() + "\n";
     // }
-    Codegen codegen {file, analyzer.symbol_tree};
-    codegen.codegen_file(file_root_node);
-    codegen.compile_and_link_module(opt_level);
+    // Codegen codegen {file, analyzer.symbol_tree};
+    // codegen.codegen_file(file_root_node);
+    // codegen.compile_and_link_module(opt_level);
 }
