@@ -56,7 +56,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case Identifier::member_var_name:
                 case Identifier::func_call_name:
                 case Identifier::member_func_call_name:
-                    curr_postfix_id = &id;
+                    curr_postfix_id = &id; // for solving postfix expression identifiers
                 case Identifier::unknown_name:
                 case Identifier::declaration_name:
                 case Identifier::type_name:
@@ -69,6 +69,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case PrimaryExpr::integer:
                 case PrimaryExpr::floating_point:
                 case PrimaryExpr::str:
+                case PrimaryExpr::bool_:
                     break;
                 default:
                     internal_panic("semantic analysis missing for '{}'.", node.name());
@@ -175,7 +176,9 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     break; 
 
                 case BinaryExpr::logical_and:
-                case BinaryExpr::logical_or:
+                case BinaryExpr::logical_or: // these are always bools
+                    node.type.kind = Type::bool_;
+                    auto& id = get_id(node.type); id.name = "bool"; id.mangled_name = "bool";
                     break; // dont have to be the same type, so we ignore comparisons
             }
             // int x;

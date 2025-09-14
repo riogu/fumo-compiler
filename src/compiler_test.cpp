@@ -287,7 +287,7 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
         std::filesystem::create_directories(output_dir);
         
         // Build the command with compiler options and output file
-        std::string cmd = std::format("ASAN_OPTIONS=detect_leaks=0 ./build/fumo {} -i '{}' -o '{}' 2>&1", 
+        std::string cmd = std::format("./build/fumo {} -i '{}' -o '{}' 2>&1", 
                                      config.get_options_string(),
                                      test_file.path.string(),
                                      output_file.string());
@@ -451,7 +451,7 @@ int main(int argc, char* argv[]) {
             "string-literals",
             "initializer-lists",
             "fail-init-lists",
-            // "if-statements",
+            "if-statements",
             // "pointer-tests",
             // Add more as needed
         };
