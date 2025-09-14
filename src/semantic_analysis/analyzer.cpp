@@ -229,14 +229,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             // -------------------------------------------------------------------
 
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
-
-
             if (func.body) {
                 func.body.value()->type = node.type; // passing the function's type to the body
                 for (auto& node : get<BlockScope>(func.body.value()).nodes) analyze(*node);
                 if (func.body_should_move) func.body = std::nullopt;
             }
-
             for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
         }
 
@@ -394,7 +391,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                                  type_name(cond->type));
                 }
             }
-            for (auto& node : get<BlockScope>(if_stmt.body).nodes) analyze(*node);
+            analyze(*if_stmt.body);
             if (if_stmt.else_stmt) analyze(*if_stmt.else_stmt.value());
         }
         _default internal_panic("semantic analysis missing for '{}'.", node.name());
@@ -478,14 +475,9 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         holds(VariableDecl, &var) {
             Identifier& id = get_id(var);
-
             auto [_, was_inserted] = symbol_tree.push_variable_decl(id, node);
 
             if (!was_inserted && var.kind != VariableDecl::parameter) {
-
-                for (const auto& node : get<NamespaceDecl>(root_node).nodes) {
-                    std::cerr << "node found:\n  " + node->to_str() + "\n";
-                }
                 report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
             }
         }

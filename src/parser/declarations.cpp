@@ -15,10 +15,7 @@
                      "variable declaration '{}' can't be qualified.", id.mangled_name);
     }
 
-    if (token_is(:)) {
-        node->type = declaration_specifier();
-    } else
-        node->type.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
+    if (token_is(:)) node->type = declaration_specifier();
 
     node->branch = std::move(variable);
 

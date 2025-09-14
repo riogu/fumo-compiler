@@ -18,6 +18,7 @@
 #pragma once
 
 #include "base_definitions/ast_node.hpp"
+#include "utils/common_utils.hpp"
 
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 #define each_case_label(the_case) case the_case:

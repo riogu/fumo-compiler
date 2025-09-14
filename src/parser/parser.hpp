@@ -1,5 +1,6 @@
 #pragma once
 #include "base_definitions/ast_node.hpp"
+#include <memory>
 
 
 
@@ -15,9 +16,19 @@ struct Parser {
     std::stringstream file_stream;
     vec<ASTNode*> AST;
 
-    ASTNode* push(const ASTNode& node) {
+    ASTNode* push(ASTNode&& node) {
+        if (!node.type.identifier) {
+             ASTNode temp {*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}};
+             all_nodes.push_back(std::make_unique<ASTNode>(std::move(temp)));
+             node.type.identifier = all_nodes.back().get();
+        }
         all_nodes.push_back(std::make_unique<ASTNode>(node));
         return all_nodes.back().get();
+    }
+    Type make_type(Type::Kind kind, str name, int ptr_count) {
+        return Type {.identifier = push(ASTNode {*prev_tkn, Identifier {Identifier::type_name, name}}),
+                     .kind = kind,
+                     .ptr_count = ptr_count};
     }
 
     // implemention of the FumoLang BNF (language_specification/fumo_bnf.md)

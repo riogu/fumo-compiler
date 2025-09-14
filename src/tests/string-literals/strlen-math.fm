@@ -3,7 +3,7 @@ fn printf(format: i8*, ...) -> i32;
 fn strlen(s: i8*) -> i64;  // size_t is typically 64-bit
 fn main() -> i32 {
     let message: i8* = "Programming";
-    let len: i32 = strlen(message);
+    let len: i64 = strlen(message);
     printf("Length of '%s' is %d\n", message, len);
     return len;
 }

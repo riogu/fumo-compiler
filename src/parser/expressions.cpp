@@ -20,7 +20,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         else if (token_is(;)) {}
         else
             report_error((*curr_tkn), "expected declaration.");
-        // AST.push_back(statement()); /* NOTE: no longer valid in global */
+        // AST.push_back(statement()); /* NOTE: no longer valid in global, only for testing parsing */
     }
     auto id = push(ASTNode {*tkns.begin(), Identifier {Identifier::declaration_name, "fumo_module"}});
     return push(ASTNode {*tkns.begin(), NamespaceDecl {NamespaceDecl::translation_unit, id, std::move(AST)}});
@@ -115,8 +115,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
                 report_error(temp_node.value()->source_token, "expected identifier before initializer list.");
             }
             init_list->type.identifier = temp_node.value();
-        } else {
-            init_list->type.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}});
         }
         expect_token_str("}");
         return init_list;
@@ -392,29 +390,21 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(int))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::integer, prev_tkn->literal.value()},
-                             Type {push({*prev_tkn, Identifier {Identifier::type_name, "i32"}}), Type::i32_}});
+                             make_type(Type::i32_, "i32", 0)});
     if (token_is(float))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::floating_point, prev_tkn->literal.value()},
-                             Type {push({*prev_tkn, Identifier {Identifier::type_name, "f64"}}), Type::f64_}});
+                             make_type(Type::f64_, "f64", 0)});
     if (token_is(string))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::str, prev_tkn->literal.value()},
-                             Type {.identifier = push({*prev_tkn, Identifier {Identifier::type_name, "i8"}}),
-                                   .kind = Type::i8_,
-                                   .ptr_count = 1}});
+                             make_type(Type::i8_, "i8", 1)});
+    if (token_is_keyword(true))
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::bool_, true}, make_type(Type::bool_, "bool", 0)});
+    if (token_is_keyword(false))
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::bool_, false}, make_type(Type::bool_, "bool", 0)});
 
-    // NOTE: only variable names go through primary() to be found
-    if (token_is_keyword(true)) {
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::bool_, true},
-                             Type {push({*prev_tkn, Identifier {Identifier::type_name, "bool"}}), Type::bool_}});
-    }
-    if (token_is_keyword(false)) {
-        return push(ASTNode {*prev_tkn,
-                             PrimaryExpr {PrimaryExpr::bool_, false},
-                             Type {push({*prev_tkn, Identifier {Identifier::type_name, "bool"}}), Type::bool_}});
-    }
+    // NOTE: only variable names 
     if (token_is(identifier)) return identifier(Identifier::var_name);
 
     return std::nullopt;
@@ -432,5 +422,5 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         id.scope_counts++;
     }
     id.mangled_name = id.name;
-    return push(ASTNode {token, id, Type {push({*prev_tkn, Identifier {Identifier::type_name, "Undetermined Type"}})}});
+    return push(ASTNode {token, id});
 }
