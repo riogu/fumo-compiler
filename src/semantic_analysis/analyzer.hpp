@@ -10,6 +10,7 @@ struct Analyzer {
     SymbolTableStack symbol_tree {};
     vec<unique_ptr<ASTNode>> extra_nodes {}; // used for member functions to allocate a parameter
     Opt<Identifier*> curr_postfix_id {};
+    ASTNode* root_node;
 
   private:
     std::stringstream file_stream;

@@ -146,7 +146,8 @@ vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
 void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
         case(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
-             BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals) {
+             BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals,
+             BinaryExpr::logical_and, BinaryExpr::logical_or) {
             report_error(node.source_token, "incompatible types in binary expression: '{}' {} '{}'.",
                          type_name(bin.lhs->type), node.source_token.to_str(), type_name(bin.rhs->type));
         } 

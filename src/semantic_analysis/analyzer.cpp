@@ -4,6 +4,7 @@
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
+    root_node = file_root_node;
 
     symbol_tree.push_scope("", ScopeKind::Namespace);
     // NOTE: this is here so the global namespace is unnamed
@@ -160,7 +161,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case BinaryExpr::equal:
                 case BinaryExpr::not_equal:// we can compare pointers and numbers only
                     if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
-                    if (!is_ptr_t(bin.lhs->type) && !is_arithmetic_t(bin.lhs->type)) {}
+                    // we know they are equal so we only check lhs
+                    if (!is_ptr_t(bin.lhs->type) && !is_arithmetic_t(bin.lhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break;
 
@@ -381,17 +383,16 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         // }
 
         holds(IfStmt, &if_stmt) {
-            // need to check if values can be truthy or falsy
-            // ill make 0 and null falsy
-            // if let var = fumo{213, 123}; {
-            // }
-            // if x > y && z == 10 {}
             if (auto* cond = if_stmt.condition.value_or(nullptr)) {
-                if (is_branch<VariableDecl>(cond)) { // if assigned, it becomes a BinaryExpr
+                if (is_branch<VariableDecl>(cond)) { 
+                    // only happens if it WASNT assigned (else its wrapped by a BinaryExpr::assignment)
                     report_error(cond->source_token, "variable declaration in condition must have an initializer.");
                 }
                 analyze(*cond);
-                Type type = cond->type;
+                if (!is_ptr_t(cond->type) && !is_arithmetic_t(cond->type)) {
+                    report_error(cond->source_token, "value of type '{}' is not convertible to 'bool'",
+                                 type_name(cond->type));
+                }
             }
             for (auto& node : get<BlockScope>(if_stmt.body).nodes) analyze(*node);
             if (if_stmt.else_stmt) analyze(*if_stmt.else_stmt.value());
@@ -480,8 +481,13 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             auto [_, was_inserted] = symbol_tree.push_variable_decl(id, node);
 
-            if (!was_inserted && var.kind != VariableDecl::parameter)
+            if (!was_inserted && var.kind != VariableDecl::parameter) {
+
+                for (const auto& node : get<NamespaceDecl>(root_node).nodes) {
+                    std::cerr << "node found:\n  " + node->to_str() + "\n";
+                }
                 report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+            }
         }
 
         holds(NamespaceDecl, &nmspace_decl) {

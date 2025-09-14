@@ -55,6 +55,7 @@ fn main() -> i32 {
 - Pointer operations and address-of operator
 - Member access for struct fields
 ### Code Generation
+- String literal handling and storage
 - LLVM IR backend with optimization support
 - Function code generation with proper linkage
 - Global variable handling with initialization
@@ -81,4 +82,4 @@ fn main() -> i32 {
 ### Control Flow & String Literals
 - `if/else` statement implementation
 - `while` loop code generation
-- String literal handling and storage
+
