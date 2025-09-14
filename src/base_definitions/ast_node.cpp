@@ -7,7 +7,11 @@
     match(*this) {
         holds(Identifier, const& id) {
             result += std::format("{}{}{}", gray("⟮"), white_gray(id.mangled_name), gray("⟯"));
-            result += gray(" => ") + yellow(get_id(id.declaration.value()->type).mangled_name);
+            if (!id.declaration) {
+                result += gray(" => ") + yellow(type_name(type));
+            } else {
+                result += gray(" => ") + yellow(type_name(id.declaration.value()->type));
+            }
         }
         holds(PrimaryExpr, const& prim) {
             result += std::format("{}{}{}", gray("⟮"), source_token.to_str(), gray("⟯"));
@@ -31,8 +35,7 @@
         }
         holds(VariableDecl, const& var) {
             result += std::format("{}{}{} {} ", gray("⟮"), white_gray(get_id(var).mangled_name), gray("⟯"), gray("=>"));
-            str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            result += yellow(get_id(type).mangled_name) + purple_blue(ptr_str);
+            result += yellow(type_name(type));
         }
         holds(FunctionDecl, const& func) {
             std::string temp = purple_blue("fn ") + blue(get_id(func).mangled_name) + gray("(");
@@ -42,13 +45,12 @@
 
                 str ptr_str; for (int i = 0; i < param->type.ptr_count; i++) ptr_str += "*";
 
-                temp += white_gray(get_name(var)) + gray(": ") + yellow(get_id(param->type).mangled_name) + gray(ptr_str);
+                temp += white_gray(get_name(var)) + gray(": ") + yellow(type_name(param->type)) + gray(ptr_str);
 
                 if (i != func.parameters.size() - 1) temp += gray(", ");
             }
             temp += gray(")");
-            str ptr_str; for (int i = 0; i < type.ptr_count; i++) ptr_str += "*";
-            temp += gray(" -> ") + yellow(get_name(type)) + gray(ptr_str);
+            temp += gray(" -> ") + yellow(type_name(type));
 
             result += std::format("{} {}", gray("=>"), temp);
             if (func.body) result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"),
@@ -88,7 +90,7 @@
             result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
         }
         holds(TypeDecl, const& type_decl) {
-            result += gray("=> ") + purple_blue("struct ") + yellow(get_id(type).mangled_name);
+            result += gray("=> ") + purple_blue("struct ") + yellow(type_name(type));
             if (type_decl.definition_body) {
                 result += std::format("\n{}{} ", std::string(depth * 2, ' '), gray("↳"));
                 result += purple_blue("definition ") + gray("{");
@@ -98,6 +100,18 @@
                     result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), node->to_str(depth));
                 depth--;
                 result += std::format("\n{}{}", std::string(depth * 2, ' '), gray("}"));
+            }
+        }
+        holds(IfStmt, const& if_stmt) {
+            if (if_stmt.condition) {
+                result += std::format("{}\n{}  {}\n{}{}",
+                                      gray("⟮"), std::string(depth * 2, ' '),  
+                                      if_stmt.condition.value()->to_str(depth),
+                                      std::string(depth * 2, ' '), gray("⟯"));
+            }
+            result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), if_stmt.body->to_str(depth));
+            if (if_stmt.else_stmt) {
+            result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), if_stmt.else_stmt.value()->to_str(depth));
             }
         }
         _default { PANIC(std::format("couldn't print node of kind: {}.", yellow(branch_name()) + gray("::") + enum_green(kind_name()))); }

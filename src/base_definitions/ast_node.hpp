@@ -38,7 +38,8 @@ struct PrimaryExpr {
         /* empty_expr,*/         /* ;                                 */ \
         integer,                 /* i32 | i64 | i8                    */ \
         floating_point,          /*                                   */ \
-        str                      /*                                   */ \
+        str,                     /*                                   */ \
+        bool_                    /*                                   */ \
 
         PrimaryExpr_kinds
     } kind;
@@ -71,6 +72,8 @@ struct BinaryExpr {
         not_equal,               /* !=                                */ \
         less_than,               /* < | >                             */ \
         less_equals,             /* <= | >=                           */ \
+        logical_and,             /* &&                                */ \
+        logical_or,              /* ||                                */ \
         assignment               /* =                                 */ \
 
         BinaryExpr_kinds

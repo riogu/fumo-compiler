@@ -2,117 +2,56 @@
 // All tests in main() with proper variable declarations
 
 fn main() -> void {
-    // Variable declarations
-    let x: i32 = 10; let y: i32 = 5; let a: i32 = 0;
 
-    // Test 1: Simple if with true condition
+    // Test 13: Logical AND condition
+    if ((x > 0)) && (y > 0) {
+        result = 1;
+    }
+    // Test 14: Logical OR condition  
+    if (x < 0 || y < 0) {
+        result = -1;
+    }
+    let flag: bool = true; let condition: bool = true; let outer_condition: bool = true; let inner_condition: bool = false;
+    // Test 15: Logical NOT condition
+    if (!flag) {
+        result = 0;
+    }
+    // Test 16: Parenthesized complex condition
+    if ((x > 5 && y < 10) || flag) {
+        result = 42;
+    }
+    // Test 17: Multiple statements in if block
     if (true) {
         x = 1;
-    }
-    // Test 2: Simple if with false condition  
-    if (false) {
         y = 2;
+        z = x + y;
     }
-    // Test 3: If with else - both blocks
-    if (true) {
+    // Test 18: Multiple statements in both branches
+    if (condition) {
         a = 1;
+        b = 2;
     } else {
-        a = 2;
+        a = 3;
+        b = 4;
     }
-} // NOTE: gotta remove this '}' later 
+    // Test 19: Longer else-if chain
+    if (x == 1) {
+        result = 1;
+    } else if (x == 2) {
+        result = 2;
+    } else if (x == 3) {
+        result = 3;
+    } else {
+        result = 99;
+    }
+    // Test 20: Dangling else case (else should bind to inner if)
+    if (outer_condition) {
+        if (inner_condition) {
+            x = 1;
+        } else {
+            x = 2;
+        }
+        
+    }
 
-// let z: i32 = 0;  let b: i32 = 0; let result: i32 = 0;
-//     // Test 4: If with variable condition
-//     if (x) {
-//         result = 1;
-//     }
-//     // Test 5: If with comparison condition
-//     if (x > 5) {
-//         result = 2;
-//     }
-//     // Test 6: If with equality condition
-//     if (x == 10) {
-//         result = 3;
-//     }
-//     // Test 7: Single statement if (no braces)
-//     if (true) {
-//         x = 5;
-//     }
-//     // Test 8: Single statement if-else (no braces)
-//     if (false) {
-//         x = 1;
-//     } else
-//         x = 2;
-//     // Test 9: Empty if block
-//     if (true) {
-//     }
-//     // Test 10: Empty else block
-//     if (false) {
-//         x = 1;
-//     } else {
-//     }
-//     // Test 11: Simple else-if
-//     if (x < 0) {
-//         result = -1;
-//     } else if (x == 0) {
-//         result = 0;
-//     } else {
-//         result = 1;
-//     }
-//     // Test 12: Nested if statements
-//     if (x > 0) {
-//         if (y > 0) {
-//             result = 1;
-//         }
-//     }
-//     // Test 13: Logical AND condition
-//     if (x > 0 && y > 0) {
-//         result = 1;
-//     }
-//     // Test 14: Logical OR condition  
-//     if (x < 0 || y < 0) {
-//         result = -1;
-//     }
-// let flag: bool = true; let condition: bool = true; let outer_condition: bool = true; let inner_condition: bool = false;
-//     // Test 15: Logical NOT condition
-//     if (!flag) {
-//         result = 0;
-//     }
-//     // Test 16: Parenthesized complex condition
-//     if ((x > 5 && y < 10) || flag) {
-//         result = 42;
-//     }
-//     // Test 17: Multiple statements in if block
-//     if (true) {
-//         x = 1;
-//         y = 2;
-//         z = x + y;
-//     }
-//     // Test 18: Multiple statements in both branches
-//     if (condition) {
-//         a = 1;
-//         b = 2;
-//     } else {
-//         a = 3;
-//         b = 4;
-//     }
-//     // Test 19: Longer else-if chain
-//     if (x == 1) {
-//         result = 1;
-//     } else if (x == 2) {
-//         result = 2;
-//     } else if (x == 3) {
-//         result = 3;
-//     } else {
-//         result = 99;
-//     }
-//     // Test 20: Dangling else case (else should bind to inner if)
-//     if (outer_condition) {
-//         if (inner_condition) 
-//             x = 1;
-//          else 
-//             x = 2;
-//         
-//     }
-//
-// }
+}

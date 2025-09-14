@@ -25,12 +25,14 @@ struct Parser {
     // expressions
     [[nodiscard]] ASTNode* statement();
     [[nodiscard]] ASTNode* expression_statement();
-    [[nodiscard]] Opt<ASTNode*> if_statement();
+    [[nodiscard]] ASTNode* if_statement(IfStmt::Kind kind);
+    [[nodiscard]] Opt<ASTNode*> else_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();
     [[nodiscard]] ASTNode* initializer();
     [[nodiscard]] ASTNode* initializer_list();
     [[nodiscard]] Opt<ASTNode*> equality();
+    [[nodiscard]] Opt<ASTNode*> logical();
     [[nodiscard]] Opt<ASTNode*> relational();
     [[nodiscard]] Opt<ASTNode*> add();
     [[nodiscard]] Opt<ASTNode*> multiply();
@@ -60,7 +62,7 @@ struct Parser {
     #define token_is_str(tok) is_tkn(str_to_tkn_type(tok))
     #define token_is(tok) is_tkn(tkn(tok))
     constexpr bool is_tkn(const TokenType& type) {
-        return curr_tkn != tokens.end() && ((curr_tkn)->type == type) ? prev_tkn = curr_tkn++, true : false;
+        return curr_tkn != tokens.end() && (curr_tkn->type == type) ? prev_tkn = curr_tkn++, true : false;
     }
 
     #define peek_token_str(tok) peek_is_tkn(str_to_tkn_type(tok))

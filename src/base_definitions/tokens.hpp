@@ -17,7 +17,7 @@ const std::unordered_map<TokenType, std::string> all_token_strings {
     zip_to_macro(_make_hashmap1_, punctuators_, symbol_reprs_)
 };
 
-using Literal = std::variant<int64_t, double, std::string>;
+using Literal = std::variant<int64_t, double, std::string, bool>;
 
 
 #define make_color(rgb, symbol) std::string("\033[38;2;" #rgb "m") + std::string(symbol) + std::string("\033[0m")

@@ -84,6 +84,8 @@
     break            ,                  \
     while            ,                  \
     enum             ,                  \
+    true             ,                  \
+    false            ,                  \
     struct           ,                  \
     builtin_types
 #define literals                        \
@@ -138,10 +140,10 @@
 "||" ,                  \
 "--" ,                  \
 "++" ,                  \
+"##" ,                  \
 "&&" ,                  \
 ">>" ,                  \
 "<<" ,                  \
-"##" ,                  \
 "<<=",                  \
 ">>=",                  \
 "...",                  \
