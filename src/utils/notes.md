@@ -23,6 +23,10 @@
    - Add string literals.
 
    - Add if/else, while.
+   
+   - Add pointer arithmetic
+
+   - Add cast operator
 
    - Polish docs + example programs.
 

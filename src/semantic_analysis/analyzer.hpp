@@ -16,6 +16,7 @@ struct Analyzer {
 
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
+    void check_initializer_lists(const ASTNode& node, BinaryExpr& bin);
 
     ASTNode* create_main_node(Token& token) {
         // NOTE: not being used anymore

@@ -267,13 +267,9 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 return rhs_val;
 
             }
-
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);
             auto* rhs_val = codegen_value(*bin.rhs).value_or(nullptr);
-
-            if (!lhs_val || !rhs_val) {
-                internal_panic("[Codegen] found null value in binary operand for '{}'.", node.name());
-            }
+            if (!lhs_val || !rhs_val) internal_panic("[Codegen] found null value in binary operand for '{}'.", node.name());
 
             switch (bin.kind) {
                 case BinaryExpr::add:

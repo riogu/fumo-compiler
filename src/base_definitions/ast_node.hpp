@@ -262,12 +262,13 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     return temp;
 }
 // Type checking functions
+[[nodiscard]] constexpr bool is_ptr_t(const Type& type) { return type.ptr_count; }
 [[nodiscard]] constexpr bool is_arithmetic_t(const Type& type) {
     return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
          || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_)
             && !type.ptr_count;
 }
-[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) { // wont be used for now
     return ((is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count)
          || (a.kind == b.kind && type_name(a) == type_name(b)));
 }

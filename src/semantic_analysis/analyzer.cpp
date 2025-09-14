@@ -117,64 +117,77 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(BinaryExpr, &bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
-
-            if (bin.kind == BinaryExpr::assignment) {
-                if (is_branch<FunctionCall>(bin.lhs)) { // didnt have a dereference so its invalid
-                    report_error(node.source_token, "cannot assign to temporary function return value.");
-                }
-                if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
-                    if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
-                        // allow this case: let var = {123};
-                        if (init_list->nodes.size() == 1) bin.rhs->type = init_list->nodes[0]->type;
-                        else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
+            switch (bin.kind) {
+                case BinaryExpr::assignment: {
+                    if (is_branch<FunctionCall>(bin.lhs)) { // didnt have a dereference so its invalid
+                        report_error(node.source_token, "cannot assign to temporary function return value.");
+                    }
+                    if (bin.lhs->type.kind == Type::Undetermined && bin.rhs->type.kind == Type::Undetermined) {
+                        if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
+                            // allow this case: let var = {123};
+                            if (init_list->nodes.size() == 1) bin.rhs->type = init_list->nodes[0]->type;
+                            else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
+                                                bin.lhs->source_token.to_str());
+                        } else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
                                             bin.lhs->source_token.to_str());
-                    } else report_error(node.source_token, "cannot deduce type for '{}' from assignment.",
-                                        bin.lhs->source_token.to_str());
-                    
+                    }
+                    if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
+                    if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
+                    // this extra check avoids the case where you use another type with the same layout on the rhs
+                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    // ----------------------------------------------------------------------------
+                    // checks for initializer lists (make sure they match the original type)
+                    // also allow those edge cases with pointers and initializer lists
+                    check_initializer_lists(node, bin);
+                    // ----------------------------------------------------------------------------
+                    node.type = bin.lhs->type;
+                    break;
                 }
-                if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
-                if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
-                // this extra check avoids the case where you use another type with the same layout on the rhs
-                if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
-                // ----------------------------------------------------------------------------
-                // checks for initializer lists (make sure they match the original type)
-                // also allow those edge cases with pointers and initializer lists
-                if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
-                    if (bin.lhs->type.ptr_count && init_list->nodes.size() > 1) {
-                        report_error(node.source_token, "non-struct initializer lists can only have one argument.");
+                case BinaryExpr::add: 
+                case BinaryExpr::sub:
+                    if (bin.lhs->type.kind == Type::i32_ && is_ptr_t(bin.rhs->type)) {
+                        report_error(bin.rhs->source_token,
+                                     "pointer arithmetic is only allowed on the rhs of an expression ex: (ptr + 3).")
                     }
-                    if (bin.lhs->type.ptr_count && init_list->nodes.size() == 1) {
-                        auto* first_elem = init_list->nodes[0];
-                        if (!is_compatible_t(bin.lhs->type, first_elem->type)) {
-                            report_error(first_elem->source_token,
-                                         "cannot assign to variable of type '{}' with expression of type '{}'.",
-                                         type_name(bin.lhs->type), type_name(first_elem->type));
-                        }
-                    }
-                    if (bin.lhs->type.kind == Type::struct_ && bin.lhs->type.ptr_count == 0) {
-                        vec<ASTNode*> type_decl_body;
-                        if find_value (get_id(bin.lhs->type).mangled_name, symbol_tree.type_decls) {
-                            for (auto* member : get<TypeDecl>(iter->second).definition_body.value()) {
-                                if (is_branch<VariableDecl, BinaryExpr>(member)) type_decl_body.push_back(member);
-                            } // removing member structs and member functions from the comparison against init lists
-                        } else internal_error(node.source_token, "somehow didnt find type declaration.");
+                    // special cases for pointer arithmetic
+                    if (is_ptr_t(bin.lhs->type) && bin.rhs->type.kind == Type::i32_) {
+                        // do pointer arithmetic later with this expression
+                    } 
+                    else if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    node.type = bin.lhs->type;
+                    break;
 
-                        for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
-                            if (!is_compatible_t(arg->type, member->type)) {
-                                report_error(arg->source_token,
-                                             "cannot initialize member variable of type '{}' with argument of type '{}'.",
-                                             type_name(member->type), type_name(arg->type));
-                            }
-                        }
-                    }
-                }
-                // ----------------------------------------------------------------------------
+                case BinaryExpr::equal:
+                case BinaryExpr::not_equal:// we can compare pointers and numbers only
+                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_ptr_t(bin.lhs->type) && !is_arithmetic_t(bin.lhs->type)) {}
+                    node.type = bin.lhs->type;
+                    break;
+
+                case BinaryExpr::less_than:
+                case BinaryExpr::less_equals: 
+                case BinaryExpr::multiply:
+                case BinaryExpr::divide:
+                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    node.type = bin.lhs->type;
+                    break; 
+
+                case BinaryExpr::logical_and:
+                case BinaryExpr::logical_or:
+                    break; // dont have to be the same type, so we ignore comparisons
             }
-            if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
-            node.type = bin.lhs->type;
+            // int x;
+            // int* y = &x;
+            // auto e = 1 + 69 + y;
+            // *(y + 3) =312;
+
         }
 
         holds(VariableDecl, &var) {
+            auto temp = var;
+            auto e = &node;
+            auto ee = &node;
+            if(e == ee) {}
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
@@ -367,6 +380,22 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         //     node.type = postfix.nodes.back()->type;
         // }
 
+        holds(IfStmt, &if_stmt) {
+            // need to check if values can be truthy or falsy
+            // ill make 0 and null falsy
+            // if let var = fumo{213, 123}; {
+            // }
+            // if x > y && z == 10 {}
+            if (auto* cond = if_stmt.condition.value_or(nullptr)) {
+                if (is_branch<VariableDecl>(cond)) { // if assigned, it becomes a BinaryExpr
+                    report_error(cond->source_token, "variable declaration in condition must have an initializer.");
+                }
+                analyze(*cond);
+                Type type = cond->type;
+            }
+            for (auto& node : get<BlockScope>(if_stmt.body).nodes) analyze(*node);
+            if (if_stmt.else_stmt) analyze(*if_stmt.else_stmt.value());
+        }
         _default internal_panic("semantic analysis missing for '{}'.", node.name());
     }
 }

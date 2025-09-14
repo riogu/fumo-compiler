@@ -147,7 +147,7 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
     switch (bin.kind) {
         case(BinaryExpr::add,   BinaryExpr::sub,       BinaryExpr::multiply,  BinaryExpr::divide,
              BinaryExpr::equal, BinaryExpr::not_equal, BinaryExpr::less_than, BinaryExpr::less_equals) {
-            report_error(node.source_token, "invalid operands to binary expression: '{}' {} '{}'.",
+            report_error(node.source_token, "incompatible types in binary expression: '{}' {} '{}'.",
                          type_name(bin.lhs->type), node.source_token.to_str(), type_name(bin.rhs->type));
         } 
         case BinaryExpr::assignment:
@@ -155,4 +155,37 @@ void Analyzer::report_binary_error(const ASTNode& node, const BinaryExpr& bin) {
                          type_name(bin.lhs->type), type_name(bin.rhs->type));
         default: internal_panic("expected binary node for error, got '{}'.", node.kind_name());
     }
+}
+
+void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
+    if (auto* init_list = get_if<BlockScope>(bin.rhs)) {
+        if (bin.lhs->type.ptr_count && init_list->nodes.size() > 1) {
+            report_error(node.source_token, "non-struct initializer lists can only have one argument.");
+        }
+        if (bin.lhs->type.ptr_count && init_list->nodes.size() == 1) {
+            auto* first_elem = init_list->nodes[0];
+            if (!is_compatible_t(bin.lhs->type, first_elem->type)) {
+                report_error(first_elem->source_token,
+                             "cannot assign to variable of type '{}' with expression of type '{}'.",
+                             type_name(bin.lhs->type), type_name(first_elem->type));
+            }
+        }
+        if (bin.lhs->type.kind == Type::struct_ && bin.lhs->type.ptr_count == 0) {
+            vec<ASTNode*> type_decl_body;
+            if find_value (get_id(bin.lhs->type).mangled_name, symbol_tree.type_decls) {
+                for (auto* member : get<TypeDecl>(iter->second).definition_body.value()) {
+                    if (is_branch<VariableDecl, BinaryExpr>(member)) type_decl_body.push_back(member);
+                } // removing member structs and member functions from the comparison against init lists
+            } else internal_error(node.source_token, "somehow didnt find type declaration.");
+
+            for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
+                if (!is_compatible_t(arg->type, member->type)) {
+                    report_error(arg->source_token,
+                                 "cannot initialize member variable of type '{}' with argument of type '{}'.",
+                                 type_name(member->type), type_name(arg->type));
+                }
+            }
+        }
+    }
+
 }
