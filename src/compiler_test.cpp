@@ -113,6 +113,14 @@ std::vector<TestFile> collect_test_files(const std::string& test_dir) {
     return test_files;
 }
 
+// New function to create a test file from a single file path
+TestFile create_single_test_file(const std::string& file_path) {
+    TestFile test_file;
+    test_file.path = std::filesystem::path(file_path);
+    test_file.expected = get_expected_result(test_file.path);
+    return test_file;
+}
+
 void clear_output_directories() {
     std::print("Clearing all output directories...\n");
     int cleared_count = 0;
@@ -158,6 +166,77 @@ void clear_output_directories() {
     
     std::print("Cleared {} output directories.\n", cleared_count);
 }
+
+void run_single_test(const std::string& file_path, const TestConfig& config = TestConfig()) {
+    // Check if file exists and has correct extension
+    if (!std::filesystem::exists(file_path)) {
+        std::print("Test file '{}' does not exist!\n", file_path);
+        return;
+    }
+    
+    std::filesystem::path test_path(file_path);
+    if (test_path.extension() != ".fm") {
+        std::print("Warning: File '{}' does not have .fm extension\n", file_path);
+    }
+    
+    TestFile test_file = create_single_test_file(file_path);
+    
+    std::print("\nRunning single test: {} ({})\n", file_path, config.description);
+    if (!config.compiler_options.empty()) {
+        std::print("Compiler options: {}\n", config.get_options_string());
+    }
+    if (config.verbose_output) {
+        std::print("Verbose output: enabled\n");
+    }
+    std::print("Expected result: {}\n", 
+              test_file.expected == ExpectedResult::Pass ? "PASS" : "FAIL");
+    std::print("================================================\n");
+    
+    // Generate output file path next to the test file
+    std::string input_filename = test_file.path.stem().string();
+    std::filesystem::path test_dir = test_file.path.parent_path();
+    std::string output_dir_name = input_filename + "-outputs";
+    std::filesystem::path output_dir = test_dir / output_dir_name;
+    std::filesystem::path output_file = output_dir / input_filename;
+    
+    // Create output directory if it doesn't exist
+    std::filesystem::create_directories(output_dir);
+    
+    // Build the command with compiler options and output file
+    std::string cmd = std::format("./build/fumo {} -i '{}' -o '{}' 2>&1", 
+                                 config.get_options_string(),
+                                 test_file.path.string(),
+                                 output_file.string());
+    
+    auto [output, status] = exec(cmd.c_str());
+    
+    bool compiler_succeeded = (WEXITSTATUS(status) == 0);
+    bool test_passed = (test_file.expected == ExpectedResult::Pass) ? compiler_succeeded : !compiler_succeeded;
+    
+    std::string test_name = test_file.path.filename().string();
+    
+    if (test_passed) {
+        std::print("-> \033[38;2;88;154;143m✓ OK\033[0m: {}\n", test_name);
+        std::print("   Output: {}\n", output_file.string());
+        // Show output for passing tests if verbose mode is enabled
+        if (config.verbose_output && !output.empty() && output != "\n") {
+            std::print("   Compiler Output: \n{}\n", output);
+        }
+    } else {
+        std::print("-> \033[38;2;235;67;54m❌FAILED\033[0m: {}\n", test_name);
+        std::print("   Expected: {}, Got: {}\n", 
+                  (test_file.expected == ExpectedResult::Pass) ? "PASS" : "FAIL",
+                  compiler_succeeded ? "PASS" : "FAIL");
+        if (!output.empty()) {
+            std::print("   Compiler Output: \n{}\n", output);
+            std::print("   Command: {}\n", cmd);
+        }
+    }
+    
+    std::print("================================================\n");
+    std::print("Result: {}\n", test_passed ? "PASSED" : "FAILED");
+}
+
 void run_tests(const std::string& test_subdir, const TestConfig& config = TestConfig()) {
     std::string full_path = std::format("src/tests/{}", test_subdir);
     std::vector<TestFile> test_files = collect_test_files(full_path);
@@ -265,8 +344,10 @@ std::vector<TestConfig> get_test_configurations() {
 
 void print_help() {
     std::print("Test Runner Usage:\n");
-    std::print("  ./test_runner [options] [test_directories...]\n\n");
+    std::print("  ./test_runner [options] [test_directories...]\n");
+    std::print("  ./test_runner --test <file_path> [options]\n\n");
     std::print("Options:\n");
+    std::print("  --test <file>       - Run a single test file (can be relative or absolute path)\n");
     std::print("  --config <name>     - Use predefined configuration\n");
     std::print("  --opt <option>      - Add compiler option (can be used multiple times)\n");
     std::print("  --verbose, -v       - Show compiler output for passing tests\n");
@@ -274,15 +355,19 @@ void print_help() {
     std::print("  --list-configs      - List available configurations\n");
     std::print("  --help              - Show this help\n\n");
     std::print("Examples:\n");
-    std::print("  ./test_runner                                    # Run default tests\n");
-    std::print("  ./test_runner --clear-outputs                    # Clear all output directories\n");
-    std::print("  ./test_runner --verbose                         # Run with verbose output\n");
-    std::print("  ./test_runner --config O3 -v early-ast-tests    # Run with O3 optimizations and verbose\n");
-    std::print("  ./test_runner --opt --print-ast -v              # Run with AST printing and verbose\n");
+    std::print("  ./test_runner                                              # Run default tests\n");
+    std::print("  ./test_runner --clear-outputs                              # Clear all output directories\n");
+    std::print("  ./test_runner --verbose                                    # Run with verbose output\n");
+    std::print("  ./test_runner --config O3 -v early-ast-tests               # Run with O3 optimizations and verbose\n");
+    std::print("  ./test_runner --opt --print-ast -v                         # Run with AST printing and verbose\n");
+    std::print("  ./test_runner --test src/tests/if-statements/basic/test.fm # Run single test file\n");
+    std::print("  ./test_runner --test ../tests/if-statements/fail/bad.fm -v # Run single test with verbose\n");
+    std::print("  ./test_runner --test comparison-operators.fm --config O2   # Run single test with O2 config\n");
     std::print("\nTest Organization:\n");
     std::print("  Tests are automatically discovered recursively in subdirectories.\n");
     std::print("  Files/directories with 'fail' or 'error' in the name are expected to fail.\n");
     std::print("  Output files are created in directories named '<filename>-outputs/'.\n");
+    std::print("  Single test files can be specified with absolute or relative paths.\n");
     std::print("  Example structure:\n");
     std::print("    src/tests/if-statements/\n");
     std::print("    ├── basic/\n");
@@ -316,6 +401,7 @@ TestConfig find_config(const std::string& name) {
 
 int main(int argc, char* argv[]) {
     std::vector<std::string> test_dirs;
+    std::string single_test_file;
     TestConfig config;
     bool parsing_test_dirs = false;
     
@@ -332,6 +418,8 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--list-configs") {
             list_configurations();
             return 0;
+        } else if (arg == "--test" && i + 1 < argc) {
+            single_test_file = argv[++i];
         } else if (arg == "--config" && i + 1 < argc) {
             config = find_config(argv[++i]);
         } else if (arg == "--opt" && i + 1 < argc) {
@@ -348,6 +436,12 @@ int main(int argc, char* argv[]) {
             config.compiler_options.push_back(arg);
             config.description = "custom";
         }
+    }
+    
+    // If a single test file is specified, run it and exit
+    if (!single_test_file.empty()) {
+        run_single_test(single_test_file, config);
+        return 0;
     }
     
     // Default test directories if none specified
