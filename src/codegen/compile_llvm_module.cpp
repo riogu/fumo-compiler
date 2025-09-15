@@ -7,6 +7,7 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/WithColor.h>
 #include "codegen/llvm_codegen.hpp"
+#include "utils/common_utils.hpp"
 
 void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
 
@@ -31,7 +32,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
         fs::path name_copy = dest_file_name.parent_path() / dest_file_name.stem(); name_copy += "-O0.ll";
         llvm::raw_fd_ostream dest(name_copy.string(), EC);
         dest << llvm_ir_to_str();
-        std::cerr << "\nllvm IR for '" << name_copy << "':\n" << llvm_ir_to_str() << std::endl;
+        // std::cerr << "\nllvm IR for '" << name_copy << "':\n" << llvm_ir_to_str() << std::endl;
     }
     if (print_IR) {
         dest_file_name.replace_extension(".ll");
@@ -42,7 +43,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
         error_stream.flush();
         std::cerr << error_buffer << '\n';
-        std::exit(1);
+        internal_panic("found error while generating llvm IR.");
     }
 
     llvm::InitializeAllTargets();

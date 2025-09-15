@@ -2,7 +2,7 @@ fn is_positive(x: i32) -> bool {
     return x > 0;
 }
 
-fn get_value() -> i32 {
+fn get_value() -> i64 {
     return 42;
 }
 

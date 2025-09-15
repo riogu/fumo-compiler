@@ -29,7 +29,8 @@ struct File {
     // fs::path output_name = "fumo.out";
 };
 
-#define internal_panic(fmt, ...) PANIC(std::format("internal fumo error: " fmt __VA_OPT__(, __VA_ARGS__)))
+#define internal_panic(fmt, ...) PANIC(std::format("internal fumo error: " fmt "\n[INFO] please report this error to https://github.com/riogu/fumo-compiler/issues with this crash."\
+                                                   __VA_OPT__(, __VA_ARGS__)))
 #define internal_error(tok, ...)                                                                \
 {                                                                                               \
     file_stream.seekg(file_stream.beg);                                                         \

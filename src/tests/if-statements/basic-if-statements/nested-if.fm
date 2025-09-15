@@ -3,12 +3,19 @@ fn main() -> i32 {
     let y = 20;
     
     if (x > 0) {
+        x = 31231;
+    } else {
         if (y > 15) {
             return 42;
-        } else {
-            return 24;
+        } else if y > 3 {
+            if y < 3 {
+                x = 123;
+            }
+            else if x < 3 {
+                y = 3;
+            }
         }
-    } else {
-        return 0;
+        y = 3;
     }
+    x = 43;
 }

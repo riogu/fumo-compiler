@@ -1,20 +1,22 @@
 // Basic if statement parsing tests
 // All tests in main() with proper variable declarations
 
+let x: i32; let y: i32; let z: i32; let result: i32; let a: i32; let b: i32;
+let flag: bool = true; let condition: bool = true; let outer_condition: bool = true; let inner_condition: bool = false;
+
 fn main() -> void {
 
     // Test 13: Logical AND condition
-    let x: i32; let y: i32; let z: i32; let result: i32; let a: i32; let b: i32;
-    if ((x > 0)) && (y > 0) {
+
+    if (x > 0) && (y > 0) {
         result = 1;
     }
     // Test 14: Logical OR condition  
-    if (x < 0 || y < 0) {
+    if x < 0 || y < 0 {
         result = -1;
     }
-    let flag: bool = true; let condition: bool = true; let outer_condition: bool = true; let inner_condition: bool = false;
     // Test 15: Logical NOT condition
-    if (!flag) {
+    if !flag {
         result = 0;
     }
     // Test 16: Parenthesized complex condition

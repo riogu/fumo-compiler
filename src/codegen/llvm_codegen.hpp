@@ -22,6 +22,13 @@ struct LinkOptions {
     vec<str> libraries;     // -l flags
     vec<str> library_paths; // -L flags
 };
+struct TypePromotion {
+    llvm::Type* common_type;
+    llvm::Value* promoted_lhs;
+    llvm::Value* promoted_rhs;
+    bool is_signed;
+};
+
 extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, output_IR_O0, 
                            print_file, print_IR, print_AST, print_ASM,
                            verbose, no_link, static_link, strip_syms;
@@ -86,6 +93,8 @@ struct Codegen {
     void verify_user_main();
     void create_libc_functions();
     llvm::Value* node_to_bool(ASTNode& node);
+    TypePromotion promote_operands(llvm::Value* lhs, llvm::Value* rhs, bool lhs_signed = true,
+                                   bool rhs_signed = true);
 
     llvm::Value* llvm_value_to_bool(llvm::Value* val) {
         // you can add optional types and that kinda thing here later 

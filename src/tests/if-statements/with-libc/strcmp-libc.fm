@@ -1,14 +1,15 @@
 // Forward declare libc functions
 fn strcmp(s1: i8*, s2: i8*) -> i32;
-fn strlen(s: i8*) -> i32;
+fn strlen(s: i8*) -> i64;
 
 fn main() -> i32 {
     let str1 = "hello";
     let str2 = "world";
     let str3 = "hello";
     
+    let var = strlen(str1);
     if (strcmp(str1, str3) == 0) {
-        if (strlen(str1) > 3) {
+        if ( var > 3) {
             return 1;
         }
     }

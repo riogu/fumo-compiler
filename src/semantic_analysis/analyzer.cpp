@@ -136,7 +136,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                     if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
                     // this extra check avoids the case where you use another type with the same layout on the rhs
-                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     // ----------------------------------------------------------------------------
                     // checks for initializer lists (make sure they match the original type)
                     // also allow those edge cases with pointers and initializer lists
@@ -147,34 +147,37 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 }
                 case BinaryExpr::add: 
                 case BinaryExpr::sub:
-                    if (bin.lhs->type.kind == Type::i32_ && is_ptr_t(bin.rhs->type)) {
+                    if (is_int_t(bin.lhs->type) && is_ptr_t(bin.rhs->type)) {
                         report_error(bin.rhs->source_token,
                                      "pointer arithmetic is only allowed on the rhs of an expression ex: (ptr + 3).")
                     }
                     // special cases for pointer arithmetic
-                    if (is_ptr_t(bin.lhs->type) && bin.rhs->type.kind == Type::i32_) {
-                        // do pointer arithmetic later with this expression
-                    } 
-                    else if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (is_ptr_t(bin.lhs->type) && is_int_t(bin.rhs->type)) {} 
+                    else if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break;
 
-                case BinaryExpr::equal:
+                case BinaryExpr::equal: {
                 case BinaryExpr::not_equal:// we can compare pointers and numbers only
-                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     // we know they are equal so we only check lhs
                     if (!is_ptr_t(bin.lhs->type) && !is_arithmetic_t(bin.lhs->type)) report_binary_error(node, bin);
-                    node.type = bin.lhs->type;
+                    node.type.kind = Type::bool_;
+                    auto& id = get_id(node.type); id.name = "bool"; id.mangled_name = "bool";
                     break;
-
-                case BinaryExpr::less_than:
-                case BinaryExpr::less_equals: 
+                }
                 case BinaryExpr::multiply:
                 case BinaryExpr::divide:
-                    if (!is_same_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break; 
-
+                case BinaryExpr::less_than:
+                case BinaryExpr::less_equals: {
+                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    node.type.kind = Type::bool_;
+                    auto& id = get_id(node.type); id.name = "bool"; id.mangled_name = "bool";
+                    break; 
+                }
                 case BinaryExpr::logical_and:
                 case BinaryExpr::logical_or: // these are always bools
                     node.type.kind = Type::bool_;

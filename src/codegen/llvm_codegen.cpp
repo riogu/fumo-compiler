@@ -192,8 +192,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
         holds(PrimaryExpr, const& prim) {
             switch (prim.kind) {
                 case PrimaryExpr::integer:
-                    return llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(*llvm_context),
-                                                        std::get<int64_t>(prim.value));
+                    return ir_builder->getInt32(std::get<int64_t>(prim.value));
                 case PrimaryExpr::floating_point:
                     return llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context),
                                                  std::get<double>(prim.value));
@@ -201,8 +200,10 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     auto* global_str = ir_builder->CreateGlobalString(std::get<str>(prim.value), ".str");
                     return ir_builder->CreateConstGEP2_32(global_str->getType(), global_str, 0, 0);
                 }
+                case PrimaryExpr::bool_:
+                    return ir_builder->getInt1(std::get<bool>(prim.value));
                 default:
-                    internal_panic("codegen not implemented for '{}'", node.kind_name());
+                    internal_panic("codegen not implemented for '{}'", node.name());
             }
         }
 
@@ -219,9 +220,23 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 if (ir_builder->getCurrentFunctionReturnType() == llvm::Type::getVoidTy(*llvm_context) && un.expr) {
                     report_error(node.source_token, "void function shouldn't return a value.");
                 }
-                if (ir_builder->getCurrentFunctionReturnType() != ret_val_type) {
-                    report_error(node.source_token, "function return type does not match return value's type '{}'.",
-                                 type_name(node.type));
+                if (ir_builder->getCurrentFunctionReturnType() != ret_val_type) { 
+                    // check if we can promote the returned value to the function return,
+                    // otherwise we report an error
+                    auto func_name = ir_builder->GetInsertBlock()->getParent()->getName().data();
+                    Type func_type = symbol_tree.all_declarations[func_name]->type;
+
+                    if (is_arithmetic_t(func_type) && is_arithmetic_t(node.type)) {
+                        auto* func_ret_dummy = llvm::UndefValue::get(ir_builder->getCurrentFunctionReturnType());
+                        auto* val = if_value(codegen_value(*un.expr.value()))
+                                    else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+                        auto promo = promote_operands(val, func_ret_dummy, is_signed_t(node.type), is_signed_t(func_type));
+                        return ir_builder->CreateRet(promo.promoted_lhs);
+                    } else {
+                        report_error(node.source_token, "function return type '{}' does not match return value's type '{}'.",
+                                     type_name(func_type),
+                                     type_name(node.type));
+                    }
                 }
                 if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
 
@@ -237,7 +252,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     else {
                         report_error(node.source_token, "cannot apply '-' to value of type '{}'", type_name(un.expr.value()->type));
                     }
-
                 case UnaryExpr::logic_not: 
                     if (val->getType()->isIntegerTy()) {
                         if (val->getType()->isIntegerTy(1)) return ir_builder->CreateNot(val);
@@ -253,7 +267,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     } else {
                         report_error(node.source_token, "cannot apply '!' to value of type '{}'", type_name(un.expr.value()->type));
                     }
-
                 case UnaryExpr::bitwise_not: 
                     if (val->getType()->isIntegerTy()) return ir_builder->CreateNot(val);
                     else {
@@ -293,24 +306,27 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 }
                 case BinaryExpr::logical_and: {
                     llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
-                    auto* lhs_block = ir_builder->GetInsertBlock();
                     auto* rhs_block = llvm::BasicBlock::Create(*llvm_context, "logic_and.rhs", curr_func);
                     auto* end_block = llvm::BasicBlock::Create(*llvm_context, "logic_and.end", curr_func);
 
                     auto* lhs_val = if_value(codegen_value(*bin.lhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    auto* lhs_block = ir_builder->GetInsertBlock(); // AFTER the lhs codegen
                     lhs_val = llvm_value_to_bool(lhs_val);
                     // short circuit the lhs (if true, try rhs, else end)
                     ir_builder->CreateCondBr(lhs_val, rhs_block, end_block);
 
                     // evaluate rhs (only if the lhs was false do we get here)
                     ir_builder->SetInsertPoint(rhs_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+
                     auto* rhs_val = if_value(codegen_value(*bin.rhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
                     llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
                     ir_builder->CreateBr(end_block);
 
                     ir_builder->SetInsertPoint(end_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                     // phi nodes select the final value based on which block we came from
                     // so if we came from the rhs, we use that as the final value (only executed if lhs was true)
                     // (basically, its how we make temporaries have multiple values while still in SSA form)
@@ -321,22 +337,26 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 }
                 case BinaryExpr::logical_or: {
                     llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
-                    auto* lhs_block = ir_builder->GetInsertBlock();
                     auto* rhs_block = llvm::BasicBlock::Create(*llvm_context, "logic_or.rhs", curr_func);
                     auto* end_block = llvm::BasicBlock::Create(*llvm_context, "logic_or.end", curr_func);
 
                     auto* lhs_val = if_value(codegen_value(*bin.lhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    auto* lhs_block = ir_builder->GetInsertBlock();
+
                     lhs_val = llvm_value_to_bool(lhs_val); // if true, go to the end, else continue
                     ir_builder->CreateCondBr(lhs_val, end_block, rhs_block);
 
                     ir_builder->SetInsertPoint(rhs_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+
                     auto* rhs_val = if_value(codegen_value(*bin.rhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
                     llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
                     ir_builder->CreateBr(end_block);
 
                     ir_builder->SetInsertPoint(end_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                     llvm::PHINode* phi = ir_builder->CreatePHI(ir_builder->getInt1Ty(), 2, "phi.result");
                     phi->addIncoming(ir_builder->getTrue(), lhs_block); // lhs was true
                     phi->addIncoming(rhs_bool, rhs_block);
@@ -348,50 +368,63 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);
             auto* rhs_val = codegen_value(*bin.rhs).value_or(nullptr);
             if (!lhs_val || !rhs_val) internal_panic("[Codegen] found null value in binary operand for '{}'.", node.name());
-
+            //-------------------------------------------------------------------------------------------
+            // pointer arithmetic cases
+            if (bin.kind == BinaryExpr::add) {
+                if (is_ptr_t(node.type)) {
+                    Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
+                    return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, rhs_val);
+                }
+            }
+            if (bin.kind == BinaryExpr::sub) {
+                if (is_ptr_t(node.type)) {
+                    Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
+                    return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, ir_builder->CreateNeg(rhs_val));
+                }
+            }
+            if (bin.kind == BinaryExpr::equal) {
+                if (is_ptr_t(node.type)) return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+            }
+            if (bin.kind == BinaryExpr::not_equal) {
+                if (is_ptr_t(node.type)) return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+            }
+            //-------------------------------------------------------------------------------------------
+            // normal binary operator cases
+            TypePromotion promo = promote_operands(lhs_val, rhs_val, is_signed_t(bin.lhs->type), is_signed_t(bin.rhs->type));
+            lhs_val = promo.promoted_lhs; rhs_val = promo.promoted_rhs;
+            auto* op_type = promo.common_type;
             switch (bin.kind) {
-                case BinaryExpr::add:
-                    if (is_int_t(node.type))   return ir_builder->CreateAdd(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFAdd(lhs_val, rhs_val);
-                    // pointer arithmetic: ptr + offset
-                    if (is_ptr_t(node.type)) {
-                        Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
-                        return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, rhs_val);
-                    }
+                case BinaryExpr::add: 
+                    if (op_type->isIntegerTy()) return ir_builder->CreateAdd(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFAdd(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::sub:
-                    if (is_int_t(node.type))   return ir_builder->CreateSub(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFSub(lhs_val, rhs_val);
-                    if (is_ptr_t(node.type)) {
-                        Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
-                        return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, ir_builder->CreateNeg(rhs_val));
-                    }
+                    if (op_type->isIntegerTy()) return ir_builder->CreateSub(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFSub(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::multiply:
-                    if (is_int_t(node.type))   return ir_builder->CreateMul(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFMul(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateMul(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFMul(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::divide:
-                    if (is_int_t(node.type))   return ir_builder->CreateSDiv(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFDiv(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateSDiv(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFDiv(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::equal:
-                    if (is_int_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
-                    if (is_ptr_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::not_equal:
-                    if (is_int_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
-                    if (is_ptr_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::less_than:
-                    if (is_int_t(node.type))   return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::less_equals:
-                    if (is_int_t(node.type))   return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
-                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
+                    if (op_type->isIntegerTy()) return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
+                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
                     break;
                 default: internal_panic("codegen not implemented for '{}'", node.name());
             }
@@ -473,6 +506,12 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     // All function arguments are rvalues
                     auto* val = if_value(codegen_value(*arg))
                                 else_panic("[Codegen] couldn't codegen function argument '{}'.", arg->name());
+                    // Type func_type = symbol_tree.all_declarations[get_id(func_call).mangled_name]->type;
+                    // if (is_arithmetic_t(func_type) && is_arithmetic_t(node.type)) {
+                    //     auto* param_dummy = llvm::UndefValue::get();
+                    //     auto promo = promote_operands(val, param_dummy, is_signed_t(node.type), is_signed_t(func_type));
+                    //     return ir_builder->CreateRet(promo.promoted_lhs);
+                    // }
                     arg_values.push_back(val);
                 }
                 return ir_builder->CreateCall(llvm_func, arg_values);
@@ -563,49 +602,76 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
         }
 
         holds(IfStmt, &if_stmt) { // NOTE: we use node.llvm_value to store the final merging "end.if" block
-            if (if_stmt.kind == IfStmt::if_statement) {
-                node.llvm_value = llvm::BasicBlock::Create(*llvm_context, "end.if", // make end block
-                                                           ir_builder->GetInsertBlock()->getParent());
-            }
+            llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
+
             switch (if_stmt.kind) {
                 case IfStmt::if_statement: 
                 case IfStmt::else_if_statement: {
-                    llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
-                    auto* if_true_block = llvm::BasicBlock::Create(*llvm_context, "begin.if", curr_func);
                     // ----------------------------------------------------------------------
+                    // if statement condition
                     auto* cond = if_value(if_stmt.condition) else_panic("missing condition in '{}'.", node.name());
                     auto* cond_val = if_value(codegen_value(*cond))
                                      else_panic_error(cond->source_token, "can't get rvalue for argument of '{}'.", node.name());
                     cond_val = llvm_value_to_bool(cond_val);
                     // ----------------------------------------------------------------------
+                    // create basic blocks for if statement
+
+                    auto* if_true_block = llvm::BasicBlock::Create(*llvm_context, "begin.if", curr_func);
+
+                    llvm::BasicBlock* else_block = nullptr;
                     if (auto* else_stmt = if_stmt.else_stmt.value_or(nullptr)) {
                         str block_name = get<IfStmt>(else_stmt).kind == IfStmt::else_statement ? "else" : "else.if";
-                        else_stmt->llvm_value = llvm::BasicBlock::Create(*llvm_context, block_name, curr_func);
-                        ir_builder->CreateCondBr(cond_val, if_true_block, llvm::cast<llvm::BasicBlock>(else_stmt->llvm_value));
-                    } else { // there was no else, jump to after the if statement
+                        else_block = llvm::BasicBlock::Create(*llvm_context, block_name, curr_func);
+                    } 
+                    if (if_stmt.kind == IfStmt::if_statement) {
+                        node.llvm_value = llvm::BasicBlock::Create(*llvm_context, "end.if", // make end block
+                                                                   ir_builder->GetInsertBlock()->getParent());
+                    }
+                    // ----------------------------------------------------------------------
+                    if (else_block) {
+                        ir_builder->CreateCondBr(cond_val, if_true_block, else_block);
+                    }
+                    else { // there was no else, jump to after the if statement
                         ir_builder->CreateCondBr(cond_val, if_true_block, llvm::cast<llvm::BasicBlock>(node.llvm_value));
                     }
-
+                    // ----------------------------------------------------------------------
+                    // if body
                     ir_builder->SetInsertPoint(if_true_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                     codegen_value(*if_stmt.body);
-                    if (!if_true_block->getTerminator()) { // only if there was no return or similar by the user
+
+                    if (!ir_builder->GetInsertBlock()->getTerminator()) {
+                        // only if there was no return or similar by the user
                         ir_builder->CreateBr(llvm::cast<llvm::BasicBlock>(node.llvm_value));
                     }
 
                     if (auto* else_stmt = if_stmt.else_stmt.value_or(nullptr)) {
-                        auto* else_block = llvm::cast<llvm::BasicBlock>(else_stmt->llvm_value);
+                        else_stmt->llvm_value = node.llvm_value; // pass on the end.if branch
 
                         ir_builder->SetInsertPoint(else_block);
+                        ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                         codegen_value(*else_stmt); // simply codegen the else statement
 
-                        if (!else_block->getTerminator()) { // node.llvm_value stores the final merge basic block
+                        if (!else_block->getTerminator()) {
+                            ir_builder->SetInsertPoint(else_block);
                             ir_builder->CreateBr(llvm::cast<llvm::BasicBlock>(node.llvm_value));
                         }
-                    }
+                    } // node.llvm_value stores the final merge basic block
+                    // needs to be moved to the end for correctness (checking final return later)
+                    auto* end_block = llvm::cast<llvm::BasicBlock>(node.llvm_value);
+                    end_block->moveAfter(&curr_func->back());
+
+                    ir_builder->SetInsertPoint(end_block);
+                    ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                     break;
                 }
                 case IfStmt::else_statement: 
                     codegen_value(*if_stmt.body);
+
+                    if (!ir_builder->GetInsertBlock()->getTerminator()) {
+                        // only if there was no return or similar by the user
+                        ir_builder->CreateBr(llvm::cast<llvm::BasicBlock>(node.llvm_value));
+                    }
                     break;
             }
         }

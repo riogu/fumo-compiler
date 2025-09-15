@@ -275,3 +275,98 @@ llvm::Function* Codegen::get_or_create_memset() {
     }
     return memset_fn;
 }
+
+TypePromotion Codegen::promote_operands(llvm::Value* lhs, llvm::Value* rhs, bool lhs_signed, bool rhs_signed) {
+    llvm::Type* lhs_type = lhs->getType();
+    llvm::Type* rhs_type = rhs->getType();
+    
+    // If types already match, no promotion needed
+    if (lhs_type == rhs_type) {
+        return {lhs_type, lhs, rhs, lhs_signed && rhs_signed};
+    }
+    
+    // Integer promotion rules
+    if (lhs_type->isIntegerTy() && rhs_type->isIntegerTy()) {
+        unsigned lhs_bits = lhs_type->getIntegerBitWidth();
+        unsigned rhs_bits = rhs_type->getIntegerBitWidth();
+        
+        llvm::Type* target_type;
+        bool result_signed;
+        
+        if (lhs_bits > rhs_bits) {
+            target_type = lhs_type;
+            result_signed = lhs_signed;
+        } else if (rhs_bits > lhs_bits) {
+            target_type = rhs_type;
+            result_signed = rhs_signed;
+        } else {
+            // Same width - unsigned wins if either is unsigned
+            target_type = lhs_type; // They're the same width
+            result_signed = lhs_signed && rhs_signed;
+        }
+        
+        // Promote operands
+        llvm::Value* new_lhs = lhs;
+        llvm::Value* new_rhs = rhs;
+        
+        if (lhs_type != target_type) {
+            if (lhs_signed) {
+                new_lhs = ir_builder->CreateSExt(lhs, target_type);
+            } else {
+                new_lhs = ir_builder->CreateZExt(lhs, target_type);
+            }
+        }
+        
+        if (rhs_type != target_type) {
+            if (rhs_signed) {
+                new_rhs = ir_builder->CreateSExt(rhs, target_type);
+            } else {
+                new_rhs = ir_builder->CreateZExt(rhs, target_type);
+            }
+        }
+        
+        return {target_type, new_lhs, new_rhs, result_signed};
+    }
+    
+    // Float promotion (int -> float, float -> double)
+    if (lhs_type->isFloatingPointTy() || rhs_type->isFloatingPointTy()) {
+        llvm::Type* target_type;
+        
+        // Determine target floating point type
+        if (lhs_type->isDoubleTy() || rhs_type->isDoubleTy()) {
+            target_type = ir_builder->getDoubleTy();
+        } else {
+            target_type = ir_builder->getFloatTy();
+        }
+        
+        llvm::Value* new_lhs = lhs;
+        llvm::Value* new_rhs = rhs;
+        
+        // Convert lhs if needed
+        if (lhs_type->isIntegerTy()) {
+            if (lhs_signed) {
+                new_lhs = ir_builder->CreateSIToFP(lhs, target_type);
+            } else {
+                new_lhs = ir_builder->CreateUIToFP(lhs, target_type);
+            }
+        } else if (lhs_type->isFloatTy() && target_type->isDoubleTy()) {
+            new_lhs = ir_builder->CreateFPExt(lhs, target_type);
+        }
+        
+        // Convert rhs if needed
+        if (rhs_type->isIntegerTy()) {
+            if (rhs_signed) {
+                new_rhs = ir_builder->CreateSIToFP(rhs, target_type);
+            } else {
+                new_rhs = ir_builder->CreateUIToFP(rhs, target_type);
+            }
+        } else if (rhs_type->isFloatTy() && target_type->isDoubleTy()) {
+            new_rhs = ir_builder->CreateFPExt(rhs, target_type);
+        }
+        
+        return {target_type, new_lhs, new_rhs, true}; // floats are "signed"
+    }
+    
+    // No valid promotion
+    internal_panic("cannot find common type for promotion of operands.");
+}

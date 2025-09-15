@@ -83,4 +83,4 @@ fn main() -> i32 {
 - `if/else` statement implementation
 - `while` loop code generation
 ### Control Flow Analysis
-- analysis of function control flow
+- Analysis of function control flow

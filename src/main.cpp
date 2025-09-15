@@ -3,12 +3,19 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "codegen/llvm_codegen.hpp"
 #include "utils/common_utils.hpp"
-
+#include <csignal>
 #include <llvm/Passes/OptimizationLevel.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/InitLLVM.h>
+#include "llvm/Support/Signals.h"
 
+void custom_handler(int sig) {
+    // print stack trace without bug report message
+    // this removes the "PLEASE submit a bug report" message specifically
+    llvm::sys::PrintStackTrace(llvm::errs());
+    std::exit(1);
+}
 
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
@@ -53,13 +60,13 @@ list<str> lib_paths   {"L",            desc("Add directory to library search pat
                        value_desc("directory"), ZeroOrMore,                                           cat(fumo_category)};
 
 
+
 auto main(int argc, char** argv) -> int {
-    llvm::InitLLVM init(argc, argv);
+    llvm::InitLLVM init(argc, argv); 
+    signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
+    signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);
     str file_name = "command-line-string.fm";
     str cmdline_str = "";
-    // -O3 -emit=llvm-ir -print-ast -print-file -print-ir -v
-
-
     //--------------------------------------------------------------------------
     // Lexer and Command-line arguments parsing
     Lexer lexer {};
