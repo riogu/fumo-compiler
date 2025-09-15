@@ -383,18 +383,33 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         // }
 
         holds(IfStmt, &if_stmt) {
-            if (auto* cond = if_stmt.condition.value_or(nullptr)) {
+            bool was_assignment = false;
+            if (if_stmt.kind == IfStmt::if_statement || if_stmt.kind == IfStmt::else_if_statement) {
+                auto* cond = if_value(if_stmt.condition)
+                             else_panic_error(node.source_token, "somehow found no condition in '{}'.", node.name());
                 if (is_branch<VariableDecl>(cond)) { 
                     // only happens if it WASNT assigned (else its wrapped by a BinaryExpr::assignment)
                     report_error(cond->source_token, "variable declaration in condition must have an initializer.");
                 }
-                analyze(*cond);
+                if (auto* decl = get_if<BinaryExpr>(cond); decl && decl->kind == BinaryExpr::assignment) {
+                    auto& nodes = get<BlockScope>(if_stmt.body).nodes;
+                    nodes.insert(nodes.begin(), cond);
+                    was_assignment = true;
+                    // we want the variable declaration to be 'scoped' inside the if statement body
+                    // we remove it from the body after name resolution
+                } else {
+                    analyze(*cond);
+                }
                 if (!is_ptr_t(cond->type) && !is_arithmetic_t(cond->type)) {
                     report_error(cond->source_token, "value of type '{}' is not convertible to 'bool'",
                                  type_name(cond->type));
                 }
             }
             analyze(*if_stmt.body);
+            if (was_assignment) { // removing the variable from the body (for codegen later)
+                auto& nodes = get<BlockScope>(if_stmt.body).nodes;
+                nodes.erase(nodes.begin());
+            }
             if (if_stmt.else_stmt) analyze(*if_stmt.else_stmt.value());
         }
         _default internal_panic("semantic analysis missing for '{}'.", node.name());

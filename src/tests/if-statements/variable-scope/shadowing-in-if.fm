@@ -1,16 +1,6 @@
 fn main() -> i32 {
     let x = 10;
-    {
-        let x = 123;
-    }
-    {
-        let x = 123;
-    }
-    
-    if (1) {
-        {
-            let x = 20; // shadows outer x
-        }
+    if (let x = 20) {
         if (x > 15) {
             let x = 30; // shadows previous x
             return x;   // should return 30

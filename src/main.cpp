@@ -9,6 +9,7 @@
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/InitLLVM.h>
 
+
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
@@ -105,10 +106,6 @@ auto main(int argc, char** argv) -> int {
     // Parser
     Parser parser {file};
     auto file_root_node = parser.parse_tokens(tokens);
-
-    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-    // }
     //--------------------------------------------------------------------------
     // Semantic Analysis
     // NOTE: recursive structs will crash the AST printing until after semantic analysis
@@ -120,7 +117,8 @@ auto main(int argc, char** argv) -> int {
     // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
     //     std::cerr << "node found:\n  " + node->to_str() + "\n";
     // }
-    // Codegen codegen {file, analyzer.symbol_tree};
-    // codegen.codegen_file(file_root_node);
-    // codegen.compile_and_link_module(opt_level);
+    Codegen codegen {file, analyzer.symbol_tree};
+    codegen.codegen_file(file_root_node);
+    codegen.compile_and_link_module(opt_level);
 }
+

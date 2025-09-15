@@ -16,7 +16,7 @@ namespace fm {
 
 fn fm::pet_fumo(fumo: Fumo*, times: i32) -> void {
     printf("petting %s %d times...\n", fumo->name, times);
-    fumo.squish(times);
+    fumo->squish(times);
 }
 
 let reimu = fm::Fumo {"Reimu", 66};

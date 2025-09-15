@@ -49,8 +49,17 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     IfStmt ifstmt {kind}; // maybe make it into an expression later (not a statement)
     Token tkn = *prev_tkn;
 
-    if (token_is_keyword(let))  ifstmt.condition = variable_declaration();
-    else ifstmt.condition = logical();
+    if (token_is_keyword(let)) {
+        report_error((*prev_tkn), "variable declarations in if conditions must be sorrounded by parentheses.");
+    }
+    if (peek_token_str("(") && peek_keyword_amount("let", 1)) {
+        // here to enforce parentheses around variable declarations in the condition
+        expect_token_str("("); // consume the parentheses
+        token_is_keyword(let);
+        ifstmt.condition = variable_declaration(true);
+        expect_token_str(")");
+    } else
+        ifstmt.condition = logical();
 
     expect_token_str("{");
     ifstmt.body = compound_statement();

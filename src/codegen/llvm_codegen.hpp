@@ -85,6 +85,27 @@ struct Codegen {
     void create_libc_main();
     void verify_user_main();
     void create_libc_functions();
+    llvm::Value* node_to_bool(ASTNode& node);
+
+    llvm::Value* llvm_value_to_bool(llvm::Value* val) {
+        // you can add optional types and that kinda thing here later 
+        if (val->getType()->isIntegerTy(1)) return val;
+
+        if (val->getType()->isIntegerTy()) {
+            llvm::Value* zero = llvm::ConstantInt::get(val->getType(), 0);
+            return ir_builder->CreateICmpNE(val, zero, "tobool");
+        }
+        if (val->getType()->isPointerTy()) {
+            llvm::Value* null_ptr = llvm::ConstantPointerNull::get(ir_builder->getPtrTy());
+            return ir_builder->CreateICmpNE(val, null_ptr, "tobool");
+        }
+        if (val->getType()->isFloatingPointTy()) {
+            llvm::Value* zero_fp = llvm::ConstantFP::get(val->getType(), 0.0);
+            return ir_builder->CreateFCmpONE(val, zero_fp, "tobool");
+        }
+        internal_panic("Cannot convert type to boolean");
+    }
+
     constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 
         if (fumo_type.ptr_count) return ir_builder->getPtrTy();

@@ -56,8 +56,13 @@
     quotation_mark
 #define builtin_types                   \
     i8               ,                  \
+    u8               ,                  \
+    u16              ,                  \
+    i16              ,                  \
     i32              ,                  \
+    u32              ,                  \
     i64              ,                  \
+    u64              ,                  \
     f32              ,                  \
     f64              ,                  \
     str              ,                  \

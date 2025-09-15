@@ -1,4 +1,5 @@
 #include "codegen/llvm_codegen.hpp"
+#include "base_definitions/ast_node.hpp"
 #include "utils/common_utils.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
@@ -9,6 +10,7 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
                                                        "fumo.init", llvm_module.get());
+
     fumo_init->setLinkage(llvm::GlobalValue::ExternalLinkage);
     fumo_init->setDSOLocal(false);
     // fumo_init->addFnAttr(llvm::Attribute::NoInline);
@@ -227,45 +229,122 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
             auto* val = if_value(codegen_value(*un.expr.value()))
                         else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+
             switch (un.kind) {
                 case UnaryExpr::negate:
-                    return ir_builder->CreateNeg(val);
-                case UnaryExpr::logic_not:
-                    return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::getBool(*llvm_context, 0));
+                    if (val->getType()->isIntegerTy()) return ir_builder->CreateNeg(val);
+                    else if (val->getType()->isFloatingPointTy()) return ir_builder->CreateFNeg(val);
+                    else {
+                        report_error(node.source_token, "cannot apply '-' to value of type '{}'", type_name(un.expr.value()->type));
+                    }
+
+                case UnaryExpr::logic_not: 
+                    if (val->getType()->isIntegerTy()) {
+                        if (val->getType()->isIntegerTy(1)) return ir_builder->CreateNot(val);
+                        else {
+                            return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::get(val->getType(), 0));
+                        }
+
+                    } else if (val->getType()->isPointerTy()) { // Pointer: compare with null
+                        return ir_builder->CreateICmpEQ(val, llvm::ConstantPointerNull::get(ir_builder->getPtrTy()));
+
+                    } else if (val->getType()->isFloatingPointTy()) {
+                        return ir_builder->CreateFCmpOEQ(val, llvm::ConstantFP::get(val->getType(), 0.0));
+
+                    } else {
+                        report_error(node.source_token, "cannot apply '!' to value of type '{}'", type_name(un.expr.value()->type));
+                    }
+
                 case UnaryExpr::bitwise_not: 
-                    return ir_builder->CreateNot(val);
-                case UnaryExpr::return_statement:
-                    return ir_builder->CreateRet(val);
+                    if (val->getType()->isIntegerTy()) return ir_builder->CreateNot(val);
+                    else {
+                        report_error(node.source_token, "cannot apply '~' to value of type '{}'", type_name(un.expr.value()->type));
+                    }
+
+                case UnaryExpr::return_statement: return ir_builder->CreateRet(val);
+
                 default:
                     internal_panic("codegen not implemented for '{}'", node.name());
             }
         }
 
         holds(BinaryExpr, const& bin) {
+            switch (bin.kind) {
+                case BinaryExpr::assignment: {
+                    auto* old_block = ir_builder->GetInsertBlock();
 
-            if (bin.kind == BinaryExpr::assignment) {
-                auto* old_block = ir_builder->GetInsertBlock();
-
-                if (auto* var = get_if<VariableDecl>(bin.lhs)) {
-                    if (var->kind == VariableDecl::global_var_declaration) {
-                        ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
-                        ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+                    if (auto* var = get_if<VariableDecl>(bin.lhs)) {
+                        if (var->kind == VariableDecl::global_var_declaration) {
+                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
+                            ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
+                        }
                     }
+                    auto* lhs_addr = if_value(codegen_address(*bin.lhs))
+                                     else_error(node.source_token, "cannot assign to expression.");
+                                             
+                    auto* rhs_val  = if_value(codegen_value(*bin.rhs))
+                                     else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
+
+                    ir_builder->CreateStore(rhs_val, lhs_addr);
+
+                    if (auto* var = get_if<VariableDecl>(bin.lhs)) { // put the ir_builder back outside fumo.init
+                        if (var->kind == VariableDecl::global_var_declaration) ir_builder->SetInsertPoint(old_block);
+                    }
+                    return rhs_val;
                 }
-                auto* lhs_addr = if_value(codegen_address(*bin.lhs))
-                                 else_error(node.source_token, "cannot assign to expression.");
-                                         
-                auto* rhs_val  = if_value(codegen_value(*bin.rhs))
-                                 else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
+                case BinaryExpr::logical_and: {
+                    llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
+                    auto* lhs_block = ir_builder->GetInsertBlock();
+                    auto* rhs_block = llvm::BasicBlock::Create(*llvm_context, "logic_and.rhs", curr_func);
+                    auto* end_block = llvm::BasicBlock::Create(*llvm_context, "logic_and.end", curr_func);
 
-                ir_builder->CreateStore(rhs_val, lhs_addr);
+                    auto* lhs_val = if_value(codegen_value(*bin.lhs))
+                                    else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    lhs_val = llvm_value_to_bool(lhs_val);
+                    // short circuit the lhs (if true, try rhs, else end)
+                    ir_builder->CreateCondBr(lhs_val, rhs_block, end_block);
 
-                // global initialization goes in fumo init
-                if (auto* var = get_if<VariableDecl>(bin.lhs)) {
-                    if (var->kind == VariableDecl::global_var_declaration) ir_builder->SetInsertPoint(old_block);
+                    // evaluate rhs (only if the lhs was false do we get here)
+                    ir_builder->SetInsertPoint(rhs_block);
+                    auto* rhs_val = if_value(codegen_value(*bin.rhs))
+                                    else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
+                    ir_builder->CreateBr(end_block);
+
+                    ir_builder->SetInsertPoint(end_block);
+                    // phi nodes select the final value based on which block we came from
+                    // so if we came from the rhs, we use that as the final value (only executed if lhs was true)
+                    // (basically, its how we make temporaries have multiple values while still in SSA form)
+                    llvm::PHINode* phi = ir_builder->CreatePHI(ir_builder->getInt1Ty(), 2, "phi.result");
+                    phi->addIncoming(ir_builder->getFalse(), lhs_block); // came from lhs (so we had false)
+                    phi->addIncoming(rhs_bool, rhs_block); // came from rhs
+                    return phi;
                 }
-                return rhs_val;
+                case BinaryExpr::logical_or: {
+                    llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
+                    auto* lhs_block = ir_builder->GetInsertBlock();
+                    auto* rhs_block = llvm::BasicBlock::Create(*llvm_context, "logic_or.rhs", curr_func);
+                    auto* end_block = llvm::BasicBlock::Create(*llvm_context, "logic_or.end", curr_func);
 
+                    auto* lhs_val = if_value(codegen_value(*bin.lhs))
+                                    else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    lhs_val = llvm_value_to_bool(lhs_val); // if true, go to the end, else continue
+                    ir_builder->CreateCondBr(lhs_val, end_block, rhs_block);
+
+                    ir_builder->SetInsertPoint(rhs_block);
+                    auto* rhs_val = if_value(codegen_value(*bin.rhs))
+                                    else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
+                    ir_builder->CreateBr(end_block);
+
+                    ir_builder->SetInsertPoint(end_block);
+                    llvm::PHINode* phi = ir_builder->CreatePHI(ir_builder->getInt1Ty(), 2, "phi.result");
+                    phi->addIncoming(ir_builder->getTrue(), lhs_block); // lhs was true
+                    phi->addIncoming(rhs_bool, rhs_block);
+                    return phi;
+                }
+                default: // the rest of the cases work the same
+                         // implemented below
             }
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);
             auto* rhs_val = codegen_value(*bin.rhs).value_or(nullptr);
@@ -273,21 +352,42 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
             switch (bin.kind) {
                 case BinaryExpr::add:
-                    return ir_builder->CreateAdd(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateAdd(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFAdd(lhs_val, rhs_val);
+                    // pointer arithmetic: ptr + offset
+                    if(is_ptr_t(node.type))    return ir_builder->CreateGEP(ir_builder->getInt8Ty(), lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::sub:
-                    return ir_builder->CreateSub(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateSub(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFSub(lhs_val, rhs_val);
+                    if(is_ptr_t(node.type))    return ir_builder->CreateGEP(ir_builder->getInt8Ty(), lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::multiply:
-                    return ir_builder->CreateMul(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateMul(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFMul(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::divide:
-                    return ir_builder->CreateSDiv(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateSDiv(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFDiv(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::equal:
-                    return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+                    if (is_ptr_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::not_equal:
-                    return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+                    if (is_ptr_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::less_than:
-                    return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 case BinaryExpr::less_equals:
-                    return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
+                    if (is_int_t(node.type))   return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
+                    if (is_float_t(node.type)) return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
+                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
                 default:
                     internal_panic("codegen not implemented for '{}'", node.name());
             }
@@ -382,7 +482,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case BlockScope::compound_statement:
                     for (auto* node : scope.nodes) {
                         // var->member(); // this is valid (ignoring return value)
-                        // only happens if we have a postfix by itself (not an assignment)
+                        // ONLY happens if we have a postfix by itself (not an assignment)
                         if (is_branch<PostfixExpr>(node) || is_branch<VariableDecl>(node)) {
                              codegen_address(*node);
                         } else {
@@ -457,6 +557,53 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             for (auto* node : nmspace.nodes) codegen_value(*node);
         }
 
+        holds(IfStmt, &if_stmt) { // NOTE: we use node.llvm_value to store the final merging "end.if" block
+            if (if_stmt.kind == IfStmt::if_statement) {
+                node.llvm_value = llvm::BasicBlock::Create(*llvm_context, "end.if", // make merge block
+                                                           ir_builder->GetInsertBlock()->getParent());
+            }
+            switch (if_stmt.kind) {
+                case IfStmt::if_statement: 
+                case IfStmt::else_if_statement: {
+                    llvm::Function* curr_func = ir_builder->GetInsertBlock()->getParent();
+                    auto* if_true_block = llvm::BasicBlock::Create(*llvm_context, "begin.if", curr_func);
+                    // ----------------------------------------------------------------------
+                    auto* cond = if_value(if_stmt.condition) else_panic("missing condition in '{}'.", node.name());
+                    auto* cond_val = if_value(codegen_value(*cond))
+                                     else_panic_error(cond->source_token, "can't get rvalue for argument of '{}'.", node.name());
+                    cond_val = llvm_value_to_bool(cond_val);
+                    // ----------------------------------------------------------------------
+                    if (auto* else_stmt = if_stmt.else_stmt.value_or(nullptr)) {
+                        str block_name = get<IfStmt>(else_stmt).kind == IfStmt::else_statement ? "else" : "else.if";
+                        else_stmt->llvm_value = llvm::BasicBlock::Create(*llvm_context, block_name, curr_func);
+                        ir_builder->CreateCondBr(cond_val, if_true_block, llvm::cast<llvm::BasicBlock>(else_stmt->llvm_value));
+                    } else { // there was no else, jump to after the if statement
+                        ir_builder->CreateCondBr(cond_val, if_true_block, llvm::cast<llvm::BasicBlock>(node.llvm_value));
+                    }
+
+                    ir_builder->SetInsertPoint(if_true_block);
+                    codegen_value(*if_stmt.body);
+                    if (!if_true_block->getTerminator()) { // only if there was no return or similar by the user
+                        ir_builder->CreateBr(llvm::cast<llvm::BasicBlock>(node.llvm_value));
+                    }
+
+                    if (auto* else_stmt = if_stmt.else_stmt.value_or(nullptr)) {
+                        auto* else_block = llvm::cast<llvm::BasicBlock>(else_stmt->llvm_value);
+
+                        ir_builder->SetInsertPoint(else_block);
+                        codegen_value(*else_stmt); // simply codegen the else statement
+
+                        if (!else_block->getTerminator()) { // node.llvm_value stores the final merge basic block
+                            ir_builder->CreateBr(llvm::cast<llvm::BasicBlock>(node.llvm_value));
+                        }
+                    }
+                    break;
+                }
+                case IfStmt::else_statement: 
+                    codegen_value(*if_stmt.body);
+                    break;
+            }
+        }
         _default {
             report_error(node.source_token, "expression for '{}' is not an rvalue.", node.name());
         }

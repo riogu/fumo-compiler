@@ -62,7 +62,7 @@ struct Parser {
     [[nodiscard]] ASTNode* enum_declaration();
     [[nodiscard]] vec<ASTNode*> named_scope_definition();
     // variable
-    [[nodiscard]] ASTNode* variable_declaration();
+    [[nodiscard]] ASTNode* variable_declaration(bool optional_comma = false);
     // function
     [[nodiscard]] ASTNode* function_declaration();
     [[nodiscard]] ASTNode* compound_statement();
@@ -82,16 +82,23 @@ struct Parser {
     constexpr bool peek_is_tkn(const TokenType& type) {
         return curr_tkn != tokens.end() && ((curr_tkn)->type == type);
     }
+    constexpr bool peek_keyword_amount(str_view keyword, int increase) {
+        auto next = curr_tkn + increase;
+        return next != tokens.end()
+            && (next->type == TokenType::keyword && std::get<str>(next->literal.value()) == keyword);
+    }
 
     #define peek_keyword(keyword) peek_tkn_keyword(#keyword)
     constexpr bool peek_tkn_keyword(str_view keyword) {
-        return (curr_tkn->type == TokenType::keyword && std::get<str>(curr_tkn->literal.value()) == keyword);
+        return curr_tkn != tokens.end()
+            && (curr_tkn->type == TokenType::keyword && std::get<str>(curr_tkn->literal.value()) == keyword);
     }
     #define token_is_keyword(keyword) is_tkn_keyword(#keyword)
     constexpr bool is_tkn_keyword(std::string_view keyword) {
-        if (curr_tkn->type == TokenType::keyword && std::get<str>(curr_tkn->literal.value()) == keyword) {
+        if (curr_tkn != tokens.end() && curr_tkn->type == TokenType::keyword
+            && std::get<str>(curr_tkn->literal.value()) == keyword) {
             prev_tkn = curr_tkn++; 
-            return true; 
+            return true;
         }
         return false;
     }

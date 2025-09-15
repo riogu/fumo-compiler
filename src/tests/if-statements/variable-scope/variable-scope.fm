@@ -1,9 +1,9 @@
 fn main() -> i32 {
     let outer = 10;
     
-    if (outer > 5) {
+    if outer > 5 {
         let inner = 20;
-        if (inner > outer) {
+        if inner > outer {
             let deeply_nested = 30;
             return deeply_nested;
         }

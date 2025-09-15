@@ -196,7 +196,11 @@ struct ASTNode {
     NodeBranch branch;
     Type type {};
 
-    llvm::Value* llvm_value = nullptr;
+    // can be the if statement's "end.if" block, 
+    // can be the stack pointer of a declaration that an identifier is tied to, etc.
+    // this member is used to keep necessary shared state between nodes in the codegen,
+    // whenever an llvm:Value ties various members together.
+    llvm::Value* llvm_value = nullptr; 
 
     [[nodiscard]] std::string to_str(int64_t depth = 0) const;
     [[nodiscard]] std::string kind_name() const;
@@ -262,16 +266,24 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     return temp;
 }
 // Type checking functions
+[[nodiscard]] constexpr bool is_int_t(const Type& type) {
+    return (type.kind == Type::u8_ || type.kind == Type::u32_ || type.kind == Type::u64_ ||
+            type.kind == Type::i8_ || type.kind == Type::i32_ || type.kind == Type::i64_) && !type.ptr_count;
+}
+[[nodiscard]] constexpr bool is_float_t(const Type& type) {
+    return (type.kind == Type::f32_ || type.kind == Type::f64_) && !type.ptr_count;
+}
 [[nodiscard]] constexpr bool is_ptr_t(const Type& type) { return type.ptr_count; }
 [[nodiscard]] constexpr bool is_arithmetic_t(const Type& type) {
-    return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_
-         || type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_)
-            && !type.ptr_count;
-}
-[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) { // wont be used for now
-    return ((is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count)
-         || (a.kind == b.kind && type_name(a) == type_name(b)));
+    return (type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_ ||
+            type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_) && !type.ptr_count;
 }
 [[nodiscard]] constexpr bool is_same_t(const Type& a, const Type& b) {
     return (a.kind == b.kind && type_name(a) == type_name(b));
+}
+[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+    // return ((is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count)
+    //      || (a.kind == b.kind && type_name(a) == type_name(b)));
+    // NOTE: wont be used for now
+    return is_same_t(a, b);
 }

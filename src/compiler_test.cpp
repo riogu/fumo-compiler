@@ -36,12 +36,26 @@ struct TestFile {
 struct TestConfig {
     std::vector<std::string> compiler_options;
     std::string description;
-    bool verbose_output = false; 
+    bool verbose_output = false;
+    bool has_custom_options = false;
+    
     TestConfig() : description("default") {
         compiler_options = {"-print-file", "-emit-ir-O0", "-print-ir", "-emit-ir"};
+        has_custom_options = false;
     }
+    
     TestConfig(std::vector<std::string> opts, std::string desc = "") 
-        : compiler_options(std::move(opts)), description(std::move(desc)) {}
+        : compiler_options(std::move(opts)), description(std::move(desc)), has_custom_options(true) {}
+    
+    void add_custom_option(const std::string& option) {
+        if (!has_custom_options) {
+            // First custom option - clear defaults and mark as custom
+            compiler_options.clear();
+            has_custom_options = true;
+            description = "custom";
+        }
+        compiler_options.push_back(option);
+    }
     
     std::string get_options_string() const {
         std::string result;
@@ -402,7 +416,7 @@ TestConfig find_config(const std::string& name) {
 int main(int argc, char* argv[]) {
     std::vector<std::string> test_dirs;
     std::string single_test_file;
-    TestConfig config;
+    TestConfig config {};
     bool parsing_test_dirs = false;
     
     // Parse command line arguments
@@ -423,8 +437,7 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--config" && i + 1 < argc) {
             config = find_config(argv[++i]);
         } else if (arg == "--opt" && i + 1 < argc) {
-            config.compiler_options.push_back(argv[++i]);
-            config.description = "custom";
+            config.add_custom_option(argv[++i]);
         } else if (arg == "--verbose" || arg == "-v") {
             config.verbose_output = true;
         } else if (arg == "--") {
@@ -433,8 +446,7 @@ int main(int argc, char* argv[]) {
             test_dirs.push_back(arg);
         } else {
             // This is a compiler option
-            config.compiler_options.push_back(arg);
-            config.description = "custom";
+            config.add_custom_option(arg);
         }
     }
     

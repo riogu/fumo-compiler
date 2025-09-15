@@ -3,7 +3,7 @@
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
-[[nodiscard]] ASTNode* Parser::variable_declaration() {
+[[nodiscard]] ASTNode* Parser::variable_declaration(bool optional_comma) {
     // TODO: should allow declarating multiple identifiers with separating commas (add later)
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
@@ -21,13 +21,16 @@
 
     if (token_is(=)) {
         ASTNode* assignment = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, initializer()}});
-        expect_token(;);
+        if (optional_comma) token_is(;);
+        else expect_token(;);
         return assignment;
     } else if (get_name(node->type) == "Undetermined Type") {
         report_error((*prev_tkn), "declaring a variable with deduced type requires an initializer.");
     }
 
-    expect_token(;);
+    if (optional_comma) token_is(;);
+    else expect_token(;);
+
     return node;
 }
 
