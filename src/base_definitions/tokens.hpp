@@ -8,10 +8,10 @@
 #include "utils/zip-macro.hpp"
 #include <libassert/assert.hpp>
 
-#define make_enum_member(_v) _v,
-enum struct TokenType {map_macro(make_enum_member, all_tokens)};
-
 #define _make_hashmap1_(a, b) {TokenType::IDENTITY a, IDENTITY b},
+#define make_enum_member(_v) _v,
+
+enum struct TokenType {map_macro(make_enum_member, all_tokens)};
 
 const std::unordered_map<TokenType, std::string> all_token_strings {
     zip_to_macro(_make_hashmap1_, punctuators_, symbol_reprs_)

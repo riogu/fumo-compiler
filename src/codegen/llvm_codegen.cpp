@@ -465,7 +465,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         node.llvm_value = ir_builder->CreateLoad(ir_builder->getPtrTy(), current_this_ptr.value());
                         arg_values.push_back(node.llvm_value);
                     } else {
-                        // FIXME: current_this_ptr was empty
                         if (!node.llvm_value) internal_error(node.source_token, "didn't set llvm::Value for '{}'", node.name());
                         if(!current_this_ptr.value())  internal_error(node.source_token, "didn't set curr_this_ptr '{}'", node.name());
                     }
@@ -565,7 +564,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
         holds(IfStmt, &if_stmt) { // NOTE: we use node.llvm_value to store the final merging "end.if" block
             if (if_stmt.kind == IfStmt::if_statement) {
-                node.llvm_value = llvm::BasicBlock::Create(*llvm_context, "end.if", // make merge block
+                node.llvm_value = llvm::BasicBlock::Create(*llvm_context, "end.if", // make end block
                                                            ir_builder->GetInsertBlock()->getParent());
             }
             switch (if_stmt.kind) {
