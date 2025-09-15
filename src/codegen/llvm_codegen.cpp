@@ -244,8 +244,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         else {
                             return ir_builder->CreateICmpEQ(val, llvm::ConstantInt::get(val->getType(), 0));
                         }
-
-                    } else if (val->getType()->isPointerTy()) { // Pointer: compare with null
+                    } else if (val->getType()->isPointerTy()) { // compare with nullptr
                         return ir_builder->CreateICmpEQ(val, llvm::ConstantPointerNull::get(ir_builder->getPtrTy()));
 
                     } else if (val->getType()->isFloatingPointTy()) {
@@ -355,42 +354,49 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     if (is_int_t(node.type))   return ir_builder->CreateAdd(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFAdd(lhs_val, rhs_val);
                     // pointer arithmetic: ptr + offset
-                    if(is_ptr_t(node.type))    return ir_builder->CreateGEP(ir_builder->getInt8Ty(), lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    if (is_ptr_t(node.type)) {
+                        Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
+                        return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, rhs_val);
+                    }
+                    break;
                 case BinaryExpr::sub:
                     if (is_int_t(node.type))   return ir_builder->CreateSub(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFSub(lhs_val, rhs_val);
-                    if(is_ptr_t(node.type))    return ir_builder->CreateGEP(ir_builder->getInt8Ty(), lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    if (is_ptr_t(node.type)) {
+                        Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
+                        return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, ir_builder->CreateNeg(rhs_val));
+                    }
+                    break;
                 case BinaryExpr::multiply:
                     if (is_int_t(node.type))   return ir_builder->CreateMul(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFMul(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    break;
                 case BinaryExpr::divide:
                     if (is_int_t(node.type))   return ir_builder->CreateSDiv(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFDiv(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    break;
                 case BinaryExpr::equal:
                     if (is_int_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
                     if (is_ptr_t(node.type))   return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    break;
                 case BinaryExpr::not_equal:
                     if (is_int_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
                     if (is_ptr_t(node.type))   return ir_builder->CreateICmpNE(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    break;
                 case BinaryExpr::less_than:
                     if (is_int_t(node.type))   return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
+                    break;
                 case BinaryExpr::less_equals:
                     if (is_int_t(node.type))   return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
                     if (is_float_t(node.type)) return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
-                    internal_error(node.source_token, "invalid types in '{}'.", node.name());
-                default:
-                    internal_panic("codegen not implemented for '{}'", node.name());
+                    break;
+                default: internal_panic("codegen not implemented for '{}'", node.name());
             }
+            internal_error(node.source_token, "invalid types in '{}', found '{}' and '{}'.",
+                           node.name(), type_name(bin.lhs->type), type_name(bin.rhs->type));
         }
 
         // let x = myvar.member.other->foo().e;

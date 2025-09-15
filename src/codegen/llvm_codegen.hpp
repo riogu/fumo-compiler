@@ -116,14 +116,20 @@ struct Codegen {
                 if (type == nullptr) internal_panic("couldn't get llvm::Type for '{}'", type_name(fumo_type));
                 return type;
             }
+            case Type::u8_:      // same llvm type as i8, etc...
             case Type::i8_:      return llvm::Type::getInt8Ty(*llvm_context);   
+            case Type::u16_:    
+            case Type::i16_:     return llvm::Type::getInt16Ty(*llvm_context);   
+            case Type::u32_:   
             case Type::i32_:     return llvm::Type::getInt32Ty(*llvm_context);  
+            case Type::u64_:  
             case Type::i64_:     return llvm::Type::getInt64Ty(*llvm_context);  
             case Type::f32_:     return llvm::Type::getFloatTy(*llvm_context);  
             case Type::f64_:     return llvm::Type::getDoubleTy(*llvm_context); 
             case Type::bool_:    return llvm::Type::getInt1Ty(*llvm_context);   
             case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);
             case Type::str_:     return llvm::PointerType::getUnqual(*llvm_context);
+                break;
             default:
                 internal_panic("couldn't get llvm::Type for '{}'", type_name(fumo_type));
         }
