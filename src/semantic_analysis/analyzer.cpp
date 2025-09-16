@@ -184,18 +184,9 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     auto& id = get_id(node.type); id.name = "bool"; id.mangled_name = "bool";
                     break; // dont have to be the same type, so we ignore comparisons
             }
-            // int x;
-            // int* y = &x;
-            // auto e = 1 + 69 + y;
-            // *(y + 3) =312;
-
         }
 
         holds(VariableDecl, &var) {
-            auto temp = var;
-            auto e = &node;
-            auto ee = &node;
-            if(e == ee) {}
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
@@ -204,10 +195,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type.kind = decl.value()->type.kind;
                 }
             }
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace)
-                var.kind = VariableDecl::global_var_declaration;
-            if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)
-                var.kind = VariableDecl::member_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
 
             add_declaration(node);
         }
@@ -403,12 +392,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 } else {
                     analyze(*cond);
                 }
+                analyze(*if_stmt.body);
                 if (!is_ptr_t(cond->type) && !is_arithmetic_t(cond->type)) {
                     report_error(cond->source_token, "value of type '{}' is not convertible to 'bool'",
                                  type_name(cond->type));
                 }
+            } else { // done this way so we correctly check the type after analyzing it above ^
+                analyze(*if_stmt.body); 
             }
-            analyze(*if_stmt.body);
             if (was_assignment) { // removing the variable from the body (for codegen later)
                 auto& nodes = get<BlockScope>(if_stmt.body).nodes;
                 nodes.erase(nodes.begin());

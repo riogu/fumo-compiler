@@ -95,6 +95,7 @@ struct Codegen {
     llvm::Value* node_to_bool(ASTNode& node);
     TypePromotion promote_operands(llvm::Value* lhs, llvm::Value* rhs, bool lhs_signed = true,
                                    bool rhs_signed = true);
+    llvm::Value* convert_int_type(llvm::Value* value, llvm::Type* target_type, bool is_signed = true);
 
     llvm::Value* llvm_value_to_bool(llvm::Value* val) {
         // you can add optional types and that kinda thing here later 

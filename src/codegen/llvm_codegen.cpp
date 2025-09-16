@@ -396,35 +396,35 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             switch (bin.kind) {
                 case BinaryExpr::add: 
                     if (op_type->isIntegerTy()) return ir_builder->CreateAdd(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFAdd(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFAdd(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::sub:
                     if (op_type->isIntegerTy()) return ir_builder->CreateSub(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFSub(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFSub(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::multiply:
                     if (op_type->isIntegerTy()) return ir_builder->CreateMul(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFMul(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFMul(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::divide:
                     if (op_type->isIntegerTy()) return ir_builder->CreateSDiv(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFDiv(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFDiv(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::equal:
                     if (op_type->isIntegerTy()) return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFCmpOEQ(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::not_equal:
                     if (op_type->isIntegerTy()) return ir_builder->CreateICmpNE(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFCmpONE(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::less_than:
                     if (op_type->isIntegerTy()) return ir_builder->CreateICmpSLT(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFCmpOLT(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::less_equals:
                     if (op_type->isIntegerTy()) return ir_builder->CreateICmpSLE(lhs_val, rhs_val);
-                    if (op_type->isFloatTy())   return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy())   return ir_builder->CreateFCmpOLE(lhs_val, rhs_val);
                     break;
                 default: internal_panic("codegen not implemented for '{}'", node.name());
             }
@@ -502,16 +502,20 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         if(!current_this_ptr.value())  internal_error(node.source_token, "didn't set curr_this_ptr '{}'", node.name());
                     }
                 }
-                for (auto* arg : func_call.argument_list) {
+                auto& func_decl = get<FunctionDecl>(symbol_tree.all_declarations[get_id(func_call).mangled_name]);
+                for (int i = 0; i < func_call.argument_list.size(); i++) {
+                    auto* arg = func_call.argument_list[i];
                     // All function arguments are rvalues
                     auto* val = if_value(codegen_value(*arg))
                                 else_panic("[Codegen] couldn't codegen function argument '{}'.", arg->name());
-                    // Type func_type = symbol_tree.all_declarations[get_id(func_call).mangled_name]->type;
-                    // if (is_arithmetic_t(func_type) && is_arithmetic_t(node.type)) {
-                    //     auto* param_dummy = llvm::UndefValue::get();
-                    //     auto promo = promote_operands(val, param_dummy, is_signed_t(node.type), is_signed_t(func_type));
-                    //     return ir_builder->CreateRet(promo.promoted_lhs);
-                    // }
+                    // we need to promote integers correctly for every situation, function args, initializer lists, etc...
+                    // might be worth doing it in semantic analysis instead of here
+                    if (i < func_decl.parameters.size()) {
+                        auto* param = func_decl.parameters[i];
+                        if (is_arithmetic_t(arg->type) && is_arithmetic_t(param->type)) {
+                                val = convert_int_type(val, fumo_to_llvm_type(param->type));
+                        }
+                    }
                     arg_values.push_back(val);
                 }
                 return ir_builder->CreateCall(llvm_func, arg_values);
@@ -560,14 +564,23 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         //-------------------------------------------------------------------------
                         // the values the user passed in
                         // NOTE: adding {.member = 40} syntax is easy for the codegen
+                        const auto& member_nodes = type_decl.definition_body.value();
                         for (std::size_t i = 0; i < scope.nodes.size(); ++i) {
-                            auto* rvalue = if_value(codegen_value(*scope.nodes[i]))
+                            auto* arg = scope.nodes[i];
+                            auto* val = if_value(codegen_value(*arg))
                                            else_panic("[Codegen] can't get rvalue for argument of '{}'.", node.name());
+                            // numeric promotion
+                            if (i < member_nodes.size()) {
+                                auto* member = member_nodes[i];
+                                if (is_arithmetic_t(arg->type) && is_arithmetic_t(member->type)) {
+                                        val = convert_int_type(val, fumo_to_llvm_type(member->type));
+                                }
+                            }
                             // LLVM treats each struct ptr as an array, so we must derefence it at '0'
                             // getelementptr inbounds nuw %struct.foo, ptr %struct_ptr, i32 0, i32 i
                             // ptr %struct_ptr -> this is "an array" of structs with 1 element
                             auto* field_ptr = ir_builder->CreateStructGEP(struct_type, struct_ptr, i);
-                            ir_builder->CreateStore(rvalue, field_ptr); // Store to field i
+                            ir_builder->CreateStore(val, field_ptr); // Store to field i
                         }
                         // we expect an rvalue, so we must load the value (not return the alloca)
                         return ir_builder->CreateLoad(struct_type, struct_ptr);
