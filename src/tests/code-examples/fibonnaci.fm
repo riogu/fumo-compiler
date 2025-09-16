@@ -9,14 +9,7 @@ fn fib(n: i64) -> i64 {
 }
 
 fn main() -> void {
-    // null
-    // while
-    // CFA
-    let var: i32*; // is always default initialized to NULL
-    if let var = func(); && 3 { 
-    }
-    else {
-    }
+    let var: i64*; // is always default initialized to NULL
     scanf("%ld", &var);
-    printf("%ld\n", fib(var));
+    printf("%ld\n", fib(*var));
 }

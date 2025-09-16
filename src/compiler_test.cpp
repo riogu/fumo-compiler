@@ -301,10 +301,10 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
         std::filesystem::create_directories(output_dir);
         
         // Build the command with compiler options and output file
-        std::string cmd = std::format("./build/fumo {} -i '{}' -o '{}' 2>&1", 
-                                     config.get_options_string(),
-                                     test_file.path.string(),
-                                     output_file.string());
+        std::string cmd = std::format("./build/fumo '{}' {} -o '{}' 2>&1", 
+                                      test_file.path.string(),
+                                      config.get_options_string(),
+                                      output_file.string());
         
         auto [output, status] = exec(cmd.c_str());
         

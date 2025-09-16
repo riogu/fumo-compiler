@@ -371,22 +371,22 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             //-------------------------------------------------------------------------------------------
             // pointer arithmetic cases
             if (bin.kind == BinaryExpr::add) {
-                if (is_ptr_t(node.type)) {
+                if (is_ptr_t(bin.lhs->type)) {
                     Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
                     return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, rhs_val);
                 }
             }
             if (bin.kind == BinaryExpr::sub) {
-                if (is_ptr_t(node.type)) {
+                if (is_ptr_t(bin.lhs->type)) {
                     Type pointed_type = node.type; pointed_type.ptr_count--; // get pointed-to type
                     return ir_builder->CreateGEP(fumo_to_llvm_type(pointed_type), lhs_val, ir_builder->CreateNeg(rhs_val));
                 }
             }
             if (bin.kind == BinaryExpr::equal) {
-                if (is_ptr_t(node.type)) return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
+                if (is_ptr_t(bin.lhs->type) && is_ptr_t(bin.rhs->type)) return ir_builder->CreateICmpEQ(lhs_val, rhs_val);
             }
             if (bin.kind == BinaryExpr::not_equal) {
-                if (is_ptr_t(node.type)) return ir_builder->CreateICmpNE(lhs_val, rhs_val);
+                if (is_ptr_t(bin.lhs->type) && is_ptr_t(bin.rhs->type)) return ir_builder->CreateICmpNE(lhs_val, rhs_val);
             }
             //-------------------------------------------------------------------------------------------
             // normal binary operator cases
