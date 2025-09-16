@@ -54,7 +54,7 @@ fn main() -> i32 {
 - Lexer/Tokenizer with full token recognition
 - Recursive descent parser with AST generation
 - Symbol table and scoped name resolution
-- Type system with primitives (`i32`, `f64`, `void`, pointers, strings)
+- Type system with primitives (`i32`, `f64`, `void`, pointers, strings, etc)
 ### Language Constructs
 - Variable declarations with type inference and explicit typing
 - Function declarations and definitions with parameters
