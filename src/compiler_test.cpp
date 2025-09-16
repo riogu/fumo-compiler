@@ -181,6 +181,100 @@ void clear_output_directories() {
     std::print("Cleared {} output directories.\n", cleared_count);
 }
 
+// Add this new function after the existing functions, before run_single_test
+
+void move_compiler_outputs_to_directory(const std::filesystem::path& test_file_path, 
+                                       const std::filesystem::path& output_dir) {
+    std::filesystem::path test_dir = test_file_path.parent_path();
+    std::string base_filename = test_file_path.stem().string(); // filename without .fm extension
+    
+    // List of file extensions/patterns that should be moved to output directory
+    std::vector<std::string> output_extensions = {
+        ".ll",     // LLVM IR files
+        ".asm",    // Assembly files  
+        ".s",      // Assembly files (alternative extension)
+        ".o",      // Object files
+        ".out",    // Executable files
+        ".ast",    // AST files
+        ""         // Executable without extension (same name as base)
+    };
+    
+    // Special patterns for files with suffixes like -O0.ll, -O1.ll, etc.
+    std::vector<std::string> optimization_suffixes = {
+        "-O0", "-O1", "-O2", "-O3"
+    };
+    
+    std::vector<std::filesystem::path> files_to_move;
+    
+    try {
+        // Scan the test directory for files that match our patterns
+        for (const auto& entry : std::filesystem::directory_iterator(test_dir)) {
+            if (!entry.is_regular_file()) continue;
+            
+            std::string filename = entry.path().filename().string();
+            std::string stem = entry.path().stem().string();
+            std::string extension = entry.path().extension().string();
+            
+            // Skip the original .fm test file
+            if (extension == ".fm") continue;
+            
+            bool should_move = false;
+            
+            // Check if this file starts with our base filename
+            if (filename.starts_with(base_filename)) {
+                // Check for exact matches with extensions
+                for (const auto& ext : output_extensions) {
+                    if (filename == base_filename + ext) {
+                        should_move = true;
+                        break;
+                    }
+                }
+                
+                // Check for optimization suffix patterns (e.g., fibonacci-O0.ll)
+                if (!should_move) {
+                    for (const auto& opt_suffix : optimization_suffixes) {
+                        for (const auto& ext : output_extensions) {
+                            if (filename == base_filename + opt_suffix + ext) {
+                                should_move = true;
+                                break;
+                            }
+                        }
+                        if (should_move) break;
+                    }
+                }
+            }
+            
+            if (should_move) {
+                files_to_move.push_back(entry.path());
+            }
+        }
+        
+        // Move the files
+        for (const auto& file_path : files_to_move) {
+            std::filesystem::path destination = output_dir / file_path.filename();
+            try {
+                // Create output directory if it doesn't exist
+                std::filesystem::create_directories(output_dir);
+                
+                // Move the file
+                std::filesystem::rename(file_path, destination);
+                
+                // Optional: print what we moved (uncomment for debugging)
+                // std::print("   Moved: {} -> {}\n", 
+                //           std::filesystem::relative(file_path).string(),
+                //           std::filesystem::relative(destination).string());
+            } catch (const std::filesystem::filesystem_error& e) {
+                std::print("   Warning: Failed to move {} to {}: {}\n", 
+                          file_path.string(), destination.string(), e.what());
+            }
+        }
+        
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::print("   Warning: Error scanning directory {}: {}\n", 
+                  test_dir.string(), e.what());
+    }
+}
+// Modified run_single_test function - replace the existing one
 void run_single_test(const std::string& file_path, const TestConfig& config = TestConfig()) {
     // Check if file exists and has correct extension
     if (!std::filesystem::exists(file_path)) {
@@ -223,6 +317,9 @@ void run_single_test(const std::string& file_path, const TestConfig& config = Te
                                  output_file.string());
     
     auto [output, status] = exec(cmd.c_str());
+    
+    // Move compiler output files to the output directory
+    move_compiler_outputs_to_directory(test_file.path, output_dir);
     
     bool compiler_succeeded = (WEXITSTATUS(status) == 0);
     bool test_passed = (test_file.expected == ExpectedResult::Pass) ? compiler_succeeded : !compiler_succeeded;
@@ -307,6 +404,9 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
                                       output_file.string());
         
         auto [output, status] = exec(cmd.c_str());
+        
+        // Move compiler output files to the output directory
+        move_compiler_outputs_to_directory(test_file.path, output_dir);
         
         bool compiler_succeeded = (WEXITSTATUS(status) == 0);
         bool test_passed = (test_file.expected == ExpectedResult::Pass) ? compiler_succeeded : !compiler_succeeded;
@@ -478,3 +578,4 @@ int main(int argc, char* argv[]) {
     
     return 0;
 }
+
