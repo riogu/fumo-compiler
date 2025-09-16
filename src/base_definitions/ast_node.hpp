@@ -39,7 +39,8 @@ struct PrimaryExpr {
         integer,                 /* i32 | i64 | i8                    */ \
         floating_point,          /*                                   */ \
         str,                     /*                                   */ \
-        bool_                    /*                                   */ \
+        bool_,                   /*                                   */ \
+        void_                    /*                                   */ \
 
         PrimaryExpr_kinds
     } kind;

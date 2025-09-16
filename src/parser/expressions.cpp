@@ -412,6 +412,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::bool_, true}, make_type(Type::bool_, "bool", 0)});
     if (token_is_keyword(false))
         return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::bool_, false}, make_type(Type::bool_, "bool", 0)});
+    if (token_is_keyword(null))
+        return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::void_, true}, make_type(Type::void_, "null", 1)});
 
     // NOTE: only variable names 
     if (token_is(identifier)) return identifier(Identifier::var_name);

@@ -464,7 +464,7 @@ int main(int argc, char* argv[]) {
             "initializer-lists",
             "fail-init-lists",
             "if-statements",
-            // "pointer-tests",
+            "pointer-tests",
             // Add more as needed
         };
     }

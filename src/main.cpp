@@ -10,13 +10,6 @@
 #include <llvm/Support/InitLLVM.h>
 #include "llvm/Support/Signals.h"
 
-void custom_handler(int sig) {
-    // print stack trace without bug report message
-    // this removes the "PLEASE submit a bug report" message specifically
-    llvm::sys::PrintStackTrace(llvm::errs());
-    std::exit(1);
-}
-
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
@@ -59,12 +52,18 @@ list<str> libraries   {"l",            desc("Link with library"),
 list<str> lib_paths   {"L",            desc("Add directory to library search path"), 
                        value_desc("directory"), ZeroOrMore,                                           cat(fumo_category)};
 
-
+void custom_handler(int sig) {
+    // print stack trace without bug report message
+    // this removes the "PLEASE submit a bug report" message specifically
+    llvm::sys::PrintStackTrace(llvm::errs());
+    std::exit(1);
+}
 
 auto main(int argc, char** argv) -> int {
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
     signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);
+
     str file_name = "command-line-string.fm";
     str cmdline_str = "";
     //--------------------------------------------------------------------------

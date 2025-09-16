@@ -1,10 +1,10 @@
 fn main() -> i32 {
-    let ptr: i32* = nullptr;
+    let ptr: i32*;
     let value = 42;
     let valid_ptr: i32* = &value;
     
-    if (ptr == nullptr) {
-        if (valid_ptr != nullptr) {
+    if (ptr) {
+        if (valid_ptr) {
             return 1;
         }
     }

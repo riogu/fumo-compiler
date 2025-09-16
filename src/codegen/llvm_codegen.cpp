@@ -202,6 +202,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 }
                 case PrimaryExpr::bool_:
                     return ir_builder->getInt1(std::get<bool>(prim.value));
+                case PrimaryExpr::void_:
+                    return llvm::Constant::getNullValue(ir_builder->getPtrTy());
                 default:
                     internal_panic("codegen not implemented for '{}'", node.name());
             }

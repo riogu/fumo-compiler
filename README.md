@@ -113,7 +113,7 @@ fn main() -> i32 {
 
 ### Compiler Pipeline
 ```
-Source → Tokenizer → Parser → AST → Semantic Analysis → LLVM IR → Object Code
+Source → Tokenizer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
 ```
 
 ## Architecture Details

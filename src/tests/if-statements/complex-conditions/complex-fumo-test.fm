@@ -4,12 +4,11 @@ namespace math {
     struct Point {
         let x: f64;
         let y: f64;
-        
+
         fn distance_from_origin() -> f64 {
             return x * x + y * y;
         }
     }
-    
     namespace utils {
         struct Stats {
             let count: i32;
@@ -43,6 +42,7 @@ fn process_point(pt: math::Point*) -> void {
         }
     }
 }
+
 
 fn demonstrate_features() -> void {
     let point = math::Point {3.0, 4.0};

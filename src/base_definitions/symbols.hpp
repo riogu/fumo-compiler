@@ -67,6 +67,7 @@
     f64              ,                  \
     str              ,                  \
     void             ,                  \
+    Any              ,                  \
     bool
 #define keywords                        \
     namespace        ,                  \
@@ -92,6 +93,7 @@
     true             ,                  \
     false            ,                  \
     struct           ,                  \
+    null             ,                  \
     builtin_types
 #define literals                        \
     identifier,                         \

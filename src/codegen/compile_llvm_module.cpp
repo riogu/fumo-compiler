@@ -18,6 +18,19 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     std::error_code EC;
     fs::path dest_file_name = llvm_module->getModuleIdentifier();
 
+    std::string error_buffer;
+    llvm::raw_string_ostream error_stream(error_buffer);
+    if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
+        dest_file_name.replace_extension(".fm");
+        std::cerr << "\ninput file '" << llvm_module->getSourceFileName() << "':\n" <<  file.contents << std::endl;
+        error_stream.flush();
+        std::cerr << error_buffer << '\n';
+
+        dest_file_name.replace_extension(".ll");
+        std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
+        internal_panic("found error while generating llvm IR.");
+    }
+
     if (print_file) {
         dest_file_name.replace_extension(".fm");
         std::cerr << "\ninput file '" << llvm_module->getSourceFileName() << "':\n" <<  file.contents << std::endl;
@@ -37,13 +50,6 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     if (print_IR) {
         dest_file_name.replace_extension(".ll");
         std::cerr << "\nllvm IR for '" << dest_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
-    }
-    std::string error_buffer;
-    llvm::raw_string_ostream error_stream(error_buffer);
-    if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
-        error_stream.flush();
-        std::cerr << error_buffer << '\n';
-        internal_panic("found error while generating llvm IR.");
     }
 
     llvm::InitializeAllTargets();
