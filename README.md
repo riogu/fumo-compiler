@@ -20,6 +20,10 @@ namespace fm {
 fn fm::pet_fumo(fumo: Fumo*, times: i32) -> void {
     printf("petting %s %d times...\n", fumo->name, times);
     fumo->squish(times);
+    
+    if fumo->squished > 100 {
+        printf("%s is getting very squished!\n", fumo->name);
+    }
 }
 
 let reimu = fm::Fumo {"Reimu", 66};
@@ -31,11 +35,17 @@ fn main() -> i32 {
     fm::pet_fumo(&reimu, 3);
     fm::pet_fumo(&cirno, 2);
     
+    if (let total_pats: i32 = reimu.squished + cirno.squished) {
+        printf("\ntotal pats across all fumos: %d\n", total_pats);
+        if total_pats > 500 {
+            printf("that's a lot of pats!\n");
+        } else {
+            printf("need more pats"\n);
+        }
+    }
     printf("\nfinal pat count:\n");
     printf("Reimu: %d pats\n", reimu.squished);
     printf("Cirno: %d pats\n", cirno.squished);
-    
-    return 0;
 }
 ```
 
