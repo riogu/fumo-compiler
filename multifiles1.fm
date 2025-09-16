@@ -1,7 +1,0 @@
-fn printf (format: i8* , ... ) -> i32;
-fn foo(x: i32) -> i32;
-
-fn main() -> i32 {
-    printf("%d\n", foo(64));
-    return 0;
-}
