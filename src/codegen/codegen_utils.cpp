@@ -370,12 +370,14 @@ TypePromotion Codegen::promote_operands(llvm::Value* lhs, llvm::Value* rhs, bool
     // No valid promotion
     internal_panic("cannot find common type for promotion of operands.");
 }
-llvm::Value* Codegen::convert_int_type(llvm::Value* value, llvm::Type* target_type, bool is_signed) {
+llvm::Value* Codegen::convert_arithmetic_t(llvm::Value* value, llvm::Type* target_type, bool is_signed) {
     llvm::Type* source_type = value->getType();
     
     if (source_type == target_type) {
         return value;
     }
+    
+    // Integer to integer conversion
     if (source_type->isIntegerTy() && target_type->isIntegerTy()) {
         unsigned source_bits = source_type->getIntegerBitWidth();
         unsigned target_bits = target_type->getIntegerBitWidth();
@@ -387,5 +389,32 @@ llvm::Value* Codegen::convert_int_type(llvm::Value* value, llvm::Type* target_ty
                              : ir_builder->CreateZExt(value, target_type);
         }
     }
-    return value;
+    
+    // Float to float conversion
+    if (source_type->isFloatingPointTy() && target_type->isFloatingPointTy()) {
+        unsigned source_bits = source_type->getPrimitiveSizeInBits();
+        unsigned target_bits = target_type->getPrimitiveSizeInBits();
+        
+        if (source_bits < target_bits) {
+            // f32 -> f64
+            return ir_builder->CreateFPExt(value, target_type);
+        } else if (source_bits > target_bits) {
+            // f64 -> f32
+            return ir_builder->CreateFPTrunc(value, target_type);
+        }
+    }
+    
+    // Integer to float conversion
+    if (source_type->isIntegerTy() && target_type->isFloatingPointTy()) {
+        return is_signed ? ir_builder->CreateSIToFP(value, target_type)
+                         : ir_builder->CreateUIToFP(value, target_type);
+    }
+    
+    // Float to integer conversion
+    if (source_type->isFloatingPointTy() && target_type->isIntegerTy()) {
+        return is_signed ? ir_builder->CreateFPToSI(value, target_type)
+                         : ir_builder->CreateFPToUI(value, target_type);
+    }
+    
+    return value; // No conversion possible/needed
 }

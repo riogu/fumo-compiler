@@ -194,7 +194,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case PrimaryExpr::integer:
                     return ir_builder->getInt32(std::get<int64_t>(prim.value));
                 case PrimaryExpr::floating_point:
-                    return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*llvm_context),
+                    return llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context),
                                                  std::get<double>(prim.value));
                 case PrimaryExpr::str: {
                     auto* global_str = ir_builder->CreateGlobalString(std::get<str>(prim.value), ".str");
@@ -216,22 +216,19 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), address);
             }
             if (un.kind == UnaryExpr::return_statement) {
-                auto* ret_val_type = fumo_to_llvm_type(node.type); // type is passed onto the ret from the value
+                auto* val = if_value(codegen_value(*un.expr.value()))
+                            else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
                 if (ir_builder->getCurrentFunctionReturnType() == llvm::Type::getVoidTy(*llvm_context) && un.expr) {
                     report_error(node.source_token, "void function shouldn't return a value.");
                 }
-                if (ir_builder->getCurrentFunctionReturnType() != ret_val_type) { 
+                if (ir_builder->getCurrentFunctionReturnType() != val->getType()) { 
                     // check if we can promote the returned value to the function return,
                     // otherwise we report an error
                     auto func_name = ir_builder->GetInsertBlock()->getParent()->getName().data();
                     Type func_type = symbol_tree.all_declarations[func_name]->type;
 
                     if (is_arithmetic_t(func_type) && is_arithmetic_t(node.type)) {
-                        auto* func_ret_dummy = llvm::UndefValue::get(ir_builder->getCurrentFunctionReturnType());
-                        auto* val = if_value(codegen_value(*un.expr.value()))
-                                    else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
-                        auto promo = promote_operands(val, func_ret_dummy, is_signed_t(node.type), is_signed_t(func_type));
-                        return ir_builder->CreateRet(promo.promoted_lhs);
+                        val = convert_arithmetic_t(val, ir_builder->getCurrentFunctionReturnType());
                     } else {
                         report_error(node.source_token, "function return type '{}' does not match return value's type '{}'.",
                                      type_name(func_type),
@@ -239,6 +236,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     }
                 }
                 if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
+                return ir_builder->CreateRet(val);
 
             }
 
@@ -272,8 +270,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     else {
                         report_error(node.source_token, "cannot apply '~' to value of type '{}'", type_name(un.expr.value()->type));
                     }
-
-                case UnaryExpr::return_statement: return ir_builder->CreateRet(val);
 
                 default:
                     internal_panic("codegen not implemented for '{}'", node.name());
@@ -513,7 +509,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     if (i < func_decl.parameters.size()) {
                         auto* param = func_decl.parameters[i];
                         if (is_arithmetic_t(arg->type) && is_arithmetic_t(param->type)) {
-                                val = convert_int_type(val, fumo_to_llvm_type(param->type));
+                                val = convert_arithmetic_t(val, fumo_to_llvm_type(param->type));
                         }
                     }
                     arg_values.push_back(val);
@@ -573,7 +569,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                             if (i < member_nodes.size()) {
                                 auto* member = member_nodes[i];
                                 if (is_arithmetic_t(arg->type) && is_arithmetic_t(member->type)) {
-                                        val = convert_int_type(val, fumo_to_llvm_type(member->type));
+                                        val = convert_arithmetic_t(val, fumo_to_llvm_type(member->type));
                                 }
                             }
                             // LLVM treats each struct ptr as an array, so we must derefence it at '0'

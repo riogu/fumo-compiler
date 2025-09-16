@@ -95,7 +95,7 @@ struct Codegen {
     llvm::Value* node_to_bool(ASTNode& node);
     TypePromotion promote_operands(llvm::Value* lhs, llvm::Value* rhs, bool lhs_signed = true,
                                    bool rhs_signed = true);
-    llvm::Value* convert_int_type(llvm::Value* value, llvm::Type* target_type, bool is_signed = true);
+    llvm::Value* convert_arithmetic_t(llvm::Value* value, llvm::Type* target_type, bool is_signed = true);
 
     llvm::Value* llvm_value_to_bool(llvm::Value* val) {
         // you can add optional types and that kinda thing here later 
@@ -116,7 +116,7 @@ struct Codegen {
         internal_panic("Cannot convert type to boolean");
     }
 
-    constexpr llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
+    llvm::Type* fumo_to_llvm_type(const Type& fumo_type) {
 
         if (fumo_type.ptr_count) return ir_builder->getPtrTy();
 
