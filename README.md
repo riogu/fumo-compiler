@@ -64,6 +64,8 @@ fn main() -> i32 {
 - Global variable initialization
 - Pointer operations and address-of operator
 - Member access for struct fields
+- Control flow statements (`if/else` with no-parentheses syntax)
+- Variable declarations within if statements
 ### Code Generation
 - String literal handling and storage
 - LLVM IR backend with optimization support
@@ -75,6 +77,9 @@ fn main() -> i32 {
 - Arithmetic expression codegen with full operator support
 - Return value handling for all function types
 - Standard C library integration and linking (libc functions available)
+- Numeric type conversions and integer promotions
+- Control flow code generation for if/else statements
+- Pointer arithmetic operations
 ### Struct Implementation
 - Member access code generation
 - Nested struct support in codegen
@@ -86,11 +91,9 @@ fn main() -> i32 {
 - Multiple output formats (`--emit=asm`, `--emit=obj`, `--emit=llvm-ir`, `--emit=ast`)
 - Debug output options    (`--print-ir`, `--print-asm`, `--print-ast`)
 - Error reporting and diagnostics
+
 ## Currently Working On
-### Pointer System
-- Pointer arithmetic operations
 ### Control Flow & String Literals
-- `if/else` statement implementation
 - `while` loop code generation
 ### Control Flow Analysis
 - Analysis of function control flow
