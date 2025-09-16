@@ -8,6 +8,7 @@
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/ManagedStatic.h>
 #include <llvm/Support/InitLLVM.h>
+#include <print>
 #include "llvm/Support/Signals.h"
 
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
@@ -38,7 +39,7 @@ opt<bool> print_ASM   {"print-asm",    desc("Prints the output ASM to the termin
 opt<bool> verbose     {"v",            desc("Show commands executed during compilation and linking"), cat(fumo_category)};
 
 opt<str>  out_file    {"o",            desc("Output filename"), value_desc("filename"),               cat(fumo_category)};
-list<str> input_files {"i",            desc("Input files"),     value_desc("filenames"), OneOrMore,   cat(fumo_category)};
+list<str> input_files {Positional,    desc("Input source files"), value_desc("filenames"), OneOrMore, cat(fumo_category)};
 
 // Linking control
 opt<bool> no_link     {"c",            desc("Compile only, do not link (produces .o files)"),         cat(fumo_category)};
@@ -59,72 +60,68 @@ void custom_handler(int sig) {
     std::exit(1);
 }
 
+// #define fn auto
+// #define i64 int64_t
+//
+// fn fib(i64 n) -> i64 {
+//     //1
+//     if (n < 2) {
+//         return 0;
+//     } else {
+//         //2
+//         if(n > 2) return fib(n - 1) + fib(n - 2);
+//         //3
+//         else return 0;
+//     }
+// }
+// fn e() -> int {
+//     i64 var;
+//     scanf("%ld", &var);
+//     printf("%ld\n", fib(var));
+//     return 0;
+// }
+// while loops
+// control flow analysis
+// void*
+// casting
+// var as i32*;
 auto main(int argc, char** argv) -> int {
+    // TODO: warn users if they provide a non existent source file
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
     signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);
 
-    str file_name = "command-line-string.fm";
-    str cmdline_str = "";
     //--------------------------------------------------------------------------
     // Lexer and Command-line arguments parsing
-    Lexer lexer {};
-    vec<Token> tokens; File file;
-    bool received_cmdline_str = false;
+    vec<str> obj_files = {};
 
-    if (argc == 2) {
-        cmdline_str = argv[1];
-        // cant delete llvm 'Generic Options' from their cl parser
-        // so we will allow the user to pass them in
-        received_cmdline_str = !(cmdline_str == "-h"                 || cmdline_str == "-help" 
-                              || cmdline_str == "--help-list"        || cmdline_str == "--help-list"
-                              || cmdline_str == "-help-list-hidden"  || cmdline_str == "-help-hidden"
-                              || cmdline_str == "--help-list-hidden" || cmdline_str == "--help-hidden"
-                              || cmdline_str == "-version");
-    }
     llvm::cl::HideUnrelatedOptions(fumo_category);
-    if (received_cmdline_str) {
-        // this is for testing the compiler. you can pass in a program like:
-        // "fn main() -> i32 {let x = 231;}" 
-        // as one string to the compiler (with no flags) and it will compile it. it uses the flags below
-        output_IR = true; output_ASM = true; output_OBJ = true;
-        // print_file = true; 
-        // print_AST = true;
-        // print_IR = true;
-        verbose = true;
+    llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
 
-        { map_macro(was_opt_level, 0, 1, 2, 3); }
-        auto [_tokens, _file] = lexer.tokenize_string(file_name, cmdline_str);
-        tokens = _tokens;
-        file = _file;
-        file.output_name = "src/tests/command-line-string.out";
-    } else {
-        llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
-
-        file_name = input_files[0]; // only one file name
+    for (const auto& file_name : input_files) {
+        if (!std::filesystem::exists(file_name)) internal_panic("Error: file '{}' not found\n", file_name); 
 
         { map_macro(was_opt_level, 0, 1, 2, 3); }
 
-        auto [_tokens, _file] = lexer.tokenize_file(file_name);
-        tokens = _tokens; file = _file;
+        Lexer lexer {};
+        auto [tokens, file] = lexer.tokenize_file(file_name);
+        //--------------------------------------------------------------------------
+        // Parser
+        Parser parser {file};
+        auto file_root_node = parser.parse_tokens(tokens);
+        //--------------------------------------------------------------------------
+        // Semantic Analysis
+        Analyzer analyzer {file};
+        analyzer.semantic_analysis(file_root_node);
+        //--------------------------------------------------------------------------
+        // recursive structs will crash the AST printing until after semantic analysis
+        // Codegen
+        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+        // }
+        Codegen codegen {file, analyzer.symbol_tree};
+        codegen.codegen_file(file_root_node);
+        obj_files.push_back(codegen.compile_file(opt_level));
     }
-    //--------------------------------------------------------------------------
-    // Parser
-    Parser parser {file};
-    auto file_root_node = parser.parse_tokens(tokens);
-    //--------------------------------------------------------------------------
-    // Semantic Analysis
-    // NOTE: recursive structs will crash the AST printing until after semantic analysis
-    Analyzer analyzer {file};
-    analyzer.semantic_analysis(file_root_node);
-    //--------------------------------------------------------------------------
-    // Codegen
-    if (out_file.getNumOccurrences()) file.output_name = out_file.getValue();
-    // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-    //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-    // }
-    Codegen codegen {file, analyzer.symbol_tree};
-    codegen.codegen_file(file_root_node);
-    codegen.compile_and_link_module(opt_level);
+    link_object_files(obj_files, out_file.getNumOccurrences()? out_file.getValue() : "fumo.out");
 }
-

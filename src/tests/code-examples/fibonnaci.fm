@@ -1,0 +1,22 @@
+fn scanf (format: i8* , ... ) -> i32;
+fn printf (format: i8* , ... ) -> i32;
+
+fn fib(n: i64) -> i64 {
+    if n < 2 {
+        return n; 
+    } 
+    return fib(n - 1) + fib(n - 2);
+}
+
+fn main() -> void {
+    // null
+    // while
+    // CFA
+    let var: i32*; // is always default initialized to NULL
+    if let var = func(); && 3 { 
+    }
+    else {
+    }
+    scanf("%ld", &var);
+    printf("%ld\n", fib(var));
+}

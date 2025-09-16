@@ -465,6 +465,7 @@ int main(int argc, char* argv[]) {
             "fail-init-lists",
             "if-statements",
             "pointer-tests",
+            "code-examples",
             // Add more as needed
         };
     }

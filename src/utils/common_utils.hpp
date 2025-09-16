@@ -25,8 +25,6 @@ inline constexpr std::nullopt_t None = std::nullopt;
 struct File {
     fs::path path_name;
     std::string contents;
-    fs::path output_name = "src/tests/command-line-string.out";
-    // fs::path output_name = "fumo.out";
 };
 
 #define internal_panic(fmt, ...) PANIC(std::format("internal fumo error: " fmt "\n[INFO] please report this error to https://github.com/riogu/fumo-compiler/issues with this crash."\

@@ -9,7 +9,7 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
-                                                       "fumo.init", llvm_module.get());
+                                                       "fumo.init.for: " + file.path_name.string(), llvm_module.get());
 
     fumo_init->setLinkage(llvm::GlobalValue::ExternalLinkage);
     fumo_init->setDSOLocal(false);
@@ -33,7 +33,9 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     fumo_init_builder->CreateRetVoid();
 
     verify_user_main();
-    create_libc_main();
+
+    auto* user_main = llvm_module->getFunction("fumo.user_main");
+    if (user_main) { create_libc_main(); }
 }
 // returns the ADDRESS where a value is stored (for assignment, address-of)
 Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
@@ -285,7 +287,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
                     if (auto* var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
-                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
+                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init.for: " + file.path_name.string()));
                             ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                         }
                     }

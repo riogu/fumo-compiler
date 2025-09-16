@@ -45,10 +45,11 @@ void Codegen::create_libc_main() {
     llvm::BasicBlock* entry_block = llvm::BasicBlock::Create(*llvm_context, "", main_func);
     ir_builder->SetInsertPoint(entry_block);
     
-    llvm::Function* fumo_init = llvm_module->getFunction("fumo.init");
+    llvm::Function* fumo_init = llvm_module->getFunction("fumo.init.for: " + file.path_name.string());
     ir_builder->CreateCall(fumo_init);
     
     llvm::Function* user_main = llvm_module->getFunction("fumo.user_main");
+
     if (!user_main) {
         ir_builder->CreateRet(ir_builder->getInt32(0));
         return;

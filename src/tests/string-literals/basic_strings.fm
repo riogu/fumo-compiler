@@ -5,14 +5,3 @@ fn main() -> i32 {
     puts(message);
     return 0;
 }
-// String literal with pointer arithmetic (if supported)
-// fn printf(string: i8*, ...) -> i32;
-// fn main() -> i32 {
-//     let text: i8* = "ABCDEF";
-//     let ptr: i8* = text + 2;
-//     printf("Original: %s\n", text);
-//     printf("From index 2: %s\n", ptr);
-//     printf("Character at index 2: %c\n", *ptr);
-//     return 0;
-// }
-//

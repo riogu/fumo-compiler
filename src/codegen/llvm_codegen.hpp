@@ -37,6 +37,10 @@ extern llvm::cl::list<str> libraries, lib_paths;
 
 enum struct ValueKind { no_value, address, value };
 
+LinkOptions build_link_options(const str& output_name, const vec<str>& object_files);
+Result<void, str> link_executable(const LinkOptions& opts);
+void link_object_files(vec<str> obj_files, fs::path exec_name);
+
 struct Codegen {
   private:
     std::map<str, llvm::AllocaInst*> variable_env;
@@ -62,7 +66,7 @@ struct Codegen {
         llvm_context = std::make_unique<llvm::LLVMContext>();
         ir_builder   = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
         fumo_init_builder = std::make_unique<llvm::IRBuilder<>>(*llvm_context);
-        llvm_module  = std::make_unique<llvm::Module>(file.output_name.string(), *llvm_context);
+        llvm_module  = std::make_unique<llvm::Module>(file.path_name.string(), *llvm_context);
         llvm_module->setSourceFileName(file.path_name.string());
         file_stream << file.contents;
     }
@@ -70,11 +74,7 @@ struct Codegen {
     void codegen_file(ASTNode* file_scope);
 
     void compile_module(llvm::OptimizationLevel opt_level);
-    void compile_and_link_module(llvm::OptimizationLevel opt_level);
-
-    Result<void, str> link_executable(const LinkOptions& opts);
-    Result<void, str> link_simple(const str& object_file, LinkerType linker_type = LinkerType::AUTO);
-    LinkOptions build_link_options(const str& output_name, const vec<str>& object_files);
+    [[nodiscard]] fs::path compile_file(llvm::OptimizationLevel opt_level);
 
     [[nodiscard]] str llvm_ir_to_str() {
         std::string outstr;

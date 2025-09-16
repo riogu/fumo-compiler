@@ -1,6 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 
-Result<void, str> Codegen::link_executable(const LinkOptions& opts) {
+Result<void, str> link_executable(const LinkOptions& opts) {
 
     vec<str> cmd;
     LinkerType linker = opts.linker;
@@ -47,7 +47,7 @@ Result<void, str> Codegen::link_executable(const LinkOptions& opts) {
 }
 
 
-LinkOptions Codegen::build_link_options(const str& output_name, const vec<str>& object_files) {
+LinkOptions build_link_options(const str& output_name, const vec<str>& object_files) {
 
     LinkOptions opts {
         .output_name    = output_name,
