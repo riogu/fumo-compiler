@@ -194,7 +194,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case PrimaryExpr::integer:
                     return ir_builder->getInt32(std::get<int64_t>(prim.value));
                 case PrimaryExpr::floating_point:
-                    return llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context),
+                    return llvm::ConstantFP::get(llvm::Type::getDoubleTy(*llvm_context),
                                                  std::get<double>(prim.value));
                 case PrimaryExpr::str: {
                     auto* global_str = ir_builder->CreateGlobalString(std::get<str>(prim.value), ".str");

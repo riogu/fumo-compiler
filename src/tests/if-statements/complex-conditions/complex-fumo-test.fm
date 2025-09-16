@@ -1,0 +1,75 @@
+fn printf(format: i8*, ...) -> i32;
+
+namespace math {
+    struct Point {
+        let x: f64;
+        let y: f64;
+        
+        fn distance_from_origin() -> f64 {
+            return x * x + y * y;
+        }
+    }
+    
+    namespace utils {
+        struct Stats {
+            let count: i32;
+            let sum: f64;
+            
+            fn add_value(val: f64) -> void {
+                count = count + 1;
+                sum = sum + val;
+            }
+            
+            fn average() -> f64 {
+                if count > 0 {
+                    return sum / count;
+                }
+                return 0.0;
+            }
+        }
+    }
+}
+
+let global_counter: i32 = 100;
+
+fn process_point(pt: math::Point*) -> void {
+    printf("Point: (%.2f, %.2f)\n", pt->x, pt->y);
+    
+    if (let dist: f64 = pt->distance_from_origin()) {
+        if dist > 25.0 {
+            printf("Point is far from origin: %.2f\n", dist);
+        } else {
+            printf("Point is close to origin: %.2f\n", dist);
+        }
+    }
+}
+
+fn demonstrate_features() -> void {
+    let point = math::Point {3.0, 4.0};
+    let stats = math::utils::Stats {0, 0.0};
+    
+    stats.add_value(point.x);
+    stats.add_value(point.y * 2.0);
+    
+    process_point(&point);
+    
+    let ptr: i32* = &global_counter;
+    printf("Global counter: %d, Address: %p\n", *ptr, ptr);
+    
+    let small_int: i8 = 42;
+    let big_int: i64 = small_int;
+    
+    if big_int == global_counter {
+        printf("Values match!\n");
+    }
+}
+
+fn main() -> i32 {
+    printf("Fumo language feature demonstration\n");
+    demonstrate_features();
+    
+    let nested_stats = math::utils::Stats {5, 100.0};
+    printf("Average: %.2f\n", nested_stats.average());
+    
+    return 0;
+}

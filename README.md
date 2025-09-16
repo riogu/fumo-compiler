@@ -40,7 +40,7 @@ fn main() -> i32 {
         if total_pats > 500 {
             printf("that's a lot of pats!\n");
         } else {
-            printf("need more pats"\n);
+            printf("need more pats\n");
         }
     }
     printf("\nfinal pat count:\n");
