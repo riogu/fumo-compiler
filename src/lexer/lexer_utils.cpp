@@ -59,6 +59,9 @@ int Lexer::get_curr() {
                 lexer_error("Dangling backslash escape character.");
             }
             switch (curr) {
+                case '0': str_inner += '\0'; break;
+                case 'a': str_inner += '\a'; break;
+                case 'r': str_inner += '\r'; break;
                 case 'n': str_inner += '\n'; break;
                 case 't': str_inner += '\t'; break;
                 case '"': str_inner += '"'; break;
