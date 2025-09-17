@@ -4,7 +4,7 @@ fn sscanf(string: i8*, format: i8*, ...) -> i32;
 fn test_basic_character_literals() -> void {
     printf("=== Testing Basic Character Literals ===\n");
     
-    let letter = 'A';
+    let letter: i8 = 'A';
     let digit: i8 = '4';
     let lowercase: i8 = 'z';
     let space_char: i8 = ' ';

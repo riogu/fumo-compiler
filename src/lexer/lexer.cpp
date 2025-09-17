@@ -29,12 +29,10 @@
             tokens.push_back(parse_character_literal());
             continue;
         }
-
         if (curr == '"') {
             tokens.push_back(parse_string_literal());
             continue;
         }
-
         if (std::isdigit(curr)) {
             tokens.push_back(parse_numeric_literal());
             continue;

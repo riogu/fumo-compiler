@@ -67,7 +67,10 @@ int Lexer::get_curr() {
                 case '\'': str_inner += '\''; break;
                 default: lexer_error("Invalid escape code.");
             }
+        } else {
+            str_inner += curr;
         }
+
         get_curr();
 
         if (str_inner.size() > 1) {
