@@ -101,6 +101,7 @@
     builtin_type,                       \
     integer,                            \
     floating_point,                     \
+    char_literal,                       \
     string
 
 #define all_tokens punctuators, literals, is_EOF
