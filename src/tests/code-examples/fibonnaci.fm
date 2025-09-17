@@ -5,14 +5,12 @@ fn fib(n: i64) -> i64 {
     if n < 2 {
         return n; 
     } 
-    else {
-        return fib(n - 1) + fib(n - 2);
-    }
+    return fib(n - 1) + fib(n - 2);
     // the issue is that my "end.if" block is unreachable, but it has no terminator in generated IR
 }
 
 fn main() -> void {
-    let var: i64*; // is always default initialized to NULL
+    let var: i64;
     scanf("%ld", &var);
-    printf("%ld\n", fib(*var));
+    printf("%ld\n", fib(var));
 }

@@ -23,6 +23,33 @@ std::pair<std::string, int> exec(const char* cmd) {
     return {result, status};
 }
 
+bool run_rebuild() {
+    std::print("Running rebuild script...\n");
+    std::print("================================================\n");
+    
+    auto [output, status] = exec("bash rebuild.sh 2>&1");
+    
+    // Print the rebuild output
+    if (!output.empty()) {
+        std::print("{}", output);
+    }
+    
+    bool rebuild_succeeded = (WEXITSTATUS(status) == 0);
+    
+    if (rebuild_succeeded) {
+        std::print("================================================\n");
+        std::print("\033[38;2;88;154;143m✓ Rebuild successful\033[0m\n");
+        std::print("================================================\n");
+    } else {
+        std::print("================================================\n");
+        std::print("\033[38;2;235;67;54m❌ Rebuild failed\033[0m\n");
+        std::print("Exit code: {}\n", WEXITSTATUS(status));
+        std::print("================================================\n");
+    }
+    
+    return rebuild_succeeded;
+}
+
 enum class ExpectedResult {
     Pass,
     Fail
@@ -513,11 +540,13 @@ TestConfig find_config(const std::string& name) {
     return TestConfig(); // Return default if not found
 }
 
+// Then modify your main() function - replace the existing main with this:
 int main(int argc, char* argv[]) {
     std::vector<std::string> test_dirs;
     std::string single_test_file;
     TestConfig config {};
     bool parsing_test_dirs = false;
+    bool skip_rebuild = false;  // Add option to skip rebuild
     
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -532,6 +561,8 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--list-configs") {
             list_configurations();
             return 0;
+        } else if (arg == "--skip-rebuild") {  // New option
+            skip_rebuild = true;
         } else if (arg == "--test" && i + 1 < argc) {
             single_test_file = argv[++i];
         } else if (arg == "--config" && i + 1 < argc) {
@@ -548,6 +579,15 @@ int main(int argc, char* argv[]) {
             // This is a compiler option
             config.add_custom_option(arg);
         }
+    }
+    
+    // Run rebuild script unless skipped or doing clear-outputs only
+    if (!skip_rebuild) {
+        if (!run_rebuild()) {
+            std::print("Build failed! Exiting without running tests.\n");
+            return 1;
+        }
+        std::print("\n");  // Add spacing after rebuild
     }
     
     // If a single test file is specified, run it and exit
