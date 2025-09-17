@@ -1,0 +1,163 @@
+fn printf(format: i8*, ...) -> i32;
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+
+// Test 1: Basic counting loop
+fn test_basic_count() -> void {
+    printf("Test 1: Basic counting\n");
+    let i: i32 = 0;
+    while i < 5 {
+        printf("Count: %d\n", i);
+        i = i + 1;
+    }
+    printf("Final i: %d\n", i);
+}
+
+// Test 2: Countdown loop  
+fn test_countdown() -> void {
+    printf("Test 2: Countdown\n");
+    let i: i32 = 5;
+    while i > 0 {
+        printf("Countdown: %d\n", i);
+        i = i - 1;
+    }
+    printf("Liftoff!\n");
+}
+// Test 3: Zero iterations (condition false from start)
+fn test_zero_iterations() -> void {
+    printf("Test 3: Zero iterations\n");
+    let i: i32 = 10;
+    while i < 5 {
+        printf("This should not print\n");
+        i = i + 1;
+    }
+    printf("Loop never executed, i is still: %d\n", i);
+}
+
+// Test 4: Variable scope - variables from outside accessible inside
+fn test_variable_scope() -> void {
+    printf("Test 4: Variable scope\n");
+    let outer: i32 = 42;
+    let counter: i32 = 0;
+    while counter < 3 {
+        printf("Outer variable: %d, Counter: %d\n", outer, counter);
+        counter = counter + 1;
+    }
+    printf("After loop - Outer: %d, Counter: %d\n", outer, counter);
+}
+
+// Test 5: Nested while loops
+fn test_nested_loops() -> void {
+    printf("Test 5: Nested loops\n");
+    let i: i32 = 0;
+    while i < 3 {
+        printf("Outer loop i: %d\n", i);
+        let j: i32 = 0;
+        while j < 2 {
+            printf("  Inner loop j: %d\n", j);
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+}
+
+// Test 6: Complex condition with multiple variables
+fn test_complex_condition() -> void {
+    printf("Test 6: Complex condition\n");
+    let a: i32 = 1;
+    let b: i32 = 10;
+    while a < 5 && b > 5 {
+        printf("a: %d, b: %d\n", a, b);
+        a = a + 1;
+        b = b - 1;
+    }
+    printf("Final: a: %d, b: %d\n", a, b);
+}
+
+// Test 7: While loop with function calls
+fn increment_and_print(val: i32*) -> bool {
+    *val = *val + 1;
+    printf("Function called, value is now: %d\n", *val);
+    return *val < 4;
+}
+
+fn test_function_calls() -> void {
+    printf("Test 7: Function calls in condition\n");
+    let x: i32 = 0;
+    while increment_and_print(&x) {
+        printf("Inside loop body, x: %d\n", x);
+    }
+    printf("Final x: %d\n", x);
+}
+
+// Test 8: Early termination with return
+fn test_early_return() -> i32 {
+    printf("Test 8: Early return from loop\n");
+    let i: i32 = 0;
+    while i < 10 {
+        printf("i: %d\n", i);
+        if i == 3 {
+            printf("Returning early!\n");
+            return i;
+        }
+        i = i + 1;
+    }
+    return -1; // Should never reach here
+}
+
+// Test 9: Pointer arithmetic in loop
+fn test_pointer_arithmetic() -> void {
+    printf("Test 9: Pointer arithmetic\n");
+    let arr: i32* = malloc(5 * 4); // 5 integers
+    let i: i32 = 0;
+    
+    // Initialize array
+    while i < 5 {
+        *(arr + i) = i * 2;
+        i = i + 1;
+    }
+    
+    // Print array
+    i = 0;
+    while i < 5 {
+        printf("arr[%d] = %d\n", i, *(arr + i));
+        i = i + 1;
+    }
+    
+    free(arr);
+}
+
+
+fn main() -> i32 {
+    printf("=== While Loop Tests ===\n");
+    
+    test_basic_count();
+    printf("\n");
+    
+    // test_countdown();
+    // printf("\n");
+    // 
+    // test_zero_iterations();
+    // printf("\n");
+    // 
+    // test_variable_scope();
+    // printf("\n");
+    // 
+    // test_nested_loops();
+    // printf("\n");
+    // 
+    // test_complex_condition();
+    // printf("\n");
+    // 
+    // test_function_calls();
+    // printf("\n");
+    // 
+    // let early_result: i32 = test_early_return();
+    // printf("Early return result: %d\n", early_result);
+    // printf("\n");
+    // 
+    // test_pointer_arithmetic();
+    
+    printf("=== All tests complete ===\n");
+    return 0;
+}

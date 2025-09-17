@@ -429,6 +429,15 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             }
             if (if_stmt.else_stmt) analyze(*if_stmt.else_stmt.value());
         }
+        holds(WhileStmt, &while_loop) {
+            auto* cond = while_loop.condition;
+            analyze(*cond);
+            if (!is_ptr_t(cond->type) && !is_arithmetic_t(cond->type)) {
+                report_error(cond->source_token, "value of type '{}' is not convertible to 'bool'",
+                             type_name(cond->type));
+            }
+            analyze(*while_loop.body);
+        }
         _default internal_panic("semantic analysis missing for '{}'.", node.name());
     }
 }

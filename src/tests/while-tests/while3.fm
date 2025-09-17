@@ -1,0 +1,40 @@
+fn printf(format: i8*, ...) -> i32;
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+
+// Test 5: While loop with early return
+fn test_early_return() -> i32 {
+    let count: i32 = 0;
+    while count < 100 {
+        if count == 5 {
+            return count;
+        }
+        count = count + 1;
+    }
+    return -1;  // Should never reach here
+}
+
+// Test 6: Variable scoping in while loop
+fn test_scoping() -> void {
+    let x: i32 = 42;
+    printf("Before loop: x = %d\n", x);
+    
+    while x > 40 {
+        let y: i32 = x * 2;  // y only exists in loop
+        printf("Inside loop: x = %d, y = %d\n", x, y);
+        x = x - 1;
+    }
+    
+    printf("After loop: x = %d\n", x);
+    // y is not accessible here - should not compile if referenced
+}
+
+
+fn main() -> i32 {
+    printf("\n--- Test 5: Early Return ---\n");
+    let result: i32 = test_early_return();
+    printf("Early return result: %d\n", result);
+    
+    printf("\n--- Test 6: Scoping ---\n");
+    test_scoping();
+}

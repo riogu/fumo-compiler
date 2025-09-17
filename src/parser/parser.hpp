@@ -37,6 +37,7 @@ struct Parser {
     [[nodiscard]] ASTNode* statement();
     [[nodiscard]] ASTNode* expression_statement();
     [[nodiscard]] ASTNode* if_statement(IfStmt::Kind kind);
+    [[nodiscard]] ASTNode* while_loop();
     [[nodiscard]] Opt<ASTNode*> else_statement();
     [[nodiscard]] ASTNode* expression();
     [[nodiscard]] ASTNode* assignment();

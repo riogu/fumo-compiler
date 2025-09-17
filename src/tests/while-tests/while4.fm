@@ -1,0 +1,31 @@
+fn printf(format: i8*, ...) -> i32;
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+
+// Test 8: While loop modifying condition variable inside body
+fn test_modify_condition_var() -> void {
+    let n: i32 = 10;
+    while n > 0 {
+        printf("n = %d\n", n);
+        n = n - 2;  // Modify by 2 each time
+    }
+    printf("Final n = %d\n", n);  // Should be 0 or -1
+}
+
+// Test 9: Empty while loop body (should compile but do nothing)
+fn test_empty_body() -> void {
+    let count: i32 = 0;
+    while count < 3 {
+        count = count + 1;
+    }
+    printf("Count after empty body loop: %d\n", count);
+}
+
+fn main() -> i32 {
+
+    printf("\n--- Test 8: Modify Condition Var ---\n");
+    test_modify_condition_var();
+    
+    printf("\n--- Test 9: Empty Body ---\n");
+    test_empty_body();
+}

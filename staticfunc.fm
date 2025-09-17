@@ -1,0 +1,37 @@
+fn printf(format: i8*, ...) -> i32;
+
+struct Point {
+    let x: f64;
+    let y: f64;
+    
+    fn distance_from_origin() -> f64 {
+        return x * x + y * y;
+    }
+    // Static constructors
+    fn static new(x: f64, y: f64) -> Point {
+        return Point {x, y};
+    }
+    fn static origin() -> Point {
+        return Point {0.0, 0.0};
+    }
+    // Static utility function
+    fn static distance_between(p1: Point*, p2: Point*) -> f64 {
+        let dx: f64 = p2->x - p1->x;
+        let dy: f64 = p2->y - p1->y;
+        return dx * dx + dy * dy;
+    }
+}
+fn main() -> i32 {
+    // Using static constructors
+    let point1 = Point::new(3.0, 4.0);
+    let origin = Point::origin();
+    
+    // Using static utility function
+    let dist = Point::distance_between(&point1, &origin);
+    
+    printf("Point1: (%.1f, %.1f)\n", point1.x, point1.y);
+    printf("Distance from origin: %.1f\n", point1.distance_from_origin());
+    printf("Distance between points: %.1f\n", dist);
+    
+    return 0;
+}

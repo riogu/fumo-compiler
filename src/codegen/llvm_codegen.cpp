@@ -1,6 +1,5 @@
 #include "codegen/llvm_codegen.hpp"
 #include "base_definitions/ast_node.hpp"
-#include "utils/common_utils.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -22,7 +21,7 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     for (const auto& [name, _] : symbol_tree.type_decls) llvm::StructType::create(*llvm_context, name);
 
     for (const auto& [_, node] : symbol_tree.all_declarations) register_declaration(*node);
-    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {codegen_value(*node);}
+    for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) codegen_value(*node);
     // ---------------------------------------------------------------------------
 
     fumo_init_builder->SetInsertPoint(&fumo_init->back());
@@ -483,10 +482,12 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 }
 
                 current_this_ptr = std::nullopt;
-                for (auto& block : *llvm_func) { // cleanup untermined unreachable blocks
-                    if (!block.getTerminator()) {
-                        llvm::IRBuilder<> builder(&block);
-                        builder.CreateUnreachable();
+                if (get_id(func).mangled_name != "fumo.user_main") { // main function has special handling
+                    for (auto& block : *llvm_func) { // cleanup untermined unreachable blocks
+                        if (!block.getTerminator()) { // main has an implicit return 0; for users
+                            llvm::IRBuilder<> builder(&block);
+                            builder.CreateUnreachable();
+                        }
                     }
                 }
             }
@@ -699,6 +700,29 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     }
                     break;
             }
+        }
+        holds(WhileStmt, &while_stmt) {
+            auto* curr_func = ir_builder->GetInsertBlock()->getParent();
+            auto* cond_block = llvm::BasicBlock::Create(*llvm_context, "while.cond", curr_func);
+            auto* body_block = llvm::BasicBlock::Create(*llvm_context, "while.body", curr_func);
+            auto* end_block  = llvm::BasicBlock::Create(*llvm_context, "while.end", curr_func);
+    
+            // start at the condition block (so we can loop back to it)
+            ir_builder->CreateBr(cond_block);
+
+            ir_builder->SetInsertPoint(cond_block); // evalute condition inside the cond block
+            auto* cond_val = if_value(codegen_value(*while_stmt.condition))
+                             else_panic_error(node.source_token, "couldn't generate while loop condition");
+            ir_builder->CreateCondBr(cond_val, body_block, end_block);
+
+            ir_builder->SetInsertPoint(body_block);
+            codegen_value(*while_stmt.body);
+
+            if (!ir_builder->GetInsertBlock()->getTerminator()) {
+                ir_builder->CreateBr(cond_block); // jump back to condition of we reach the end
+            }
+
+            ir_builder->SetInsertPoint(end_block);
         }
         _default {
             report_error(node.source_token, "expression for '{}' is not an rvalue.", node.name());

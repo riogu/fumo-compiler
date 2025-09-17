@@ -1,4 +1,6 @@
 #include "base_definitions/ast_node.hpp"
+#include "utils/map-macro.hpp"
+#include "utils/sequence-for.hpp"
 
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;
@@ -114,6 +116,9 @@
             result += std::format("\n{}{} {}", std::string(depth * 2, ' '), gray("↳"), if_stmt.else_stmt.value()->to_str(depth));
             }
         }
+        holds(WhileStmt, const& while_loop) {
+
+        }
         _default { PANIC(std::format("couldn't print node of kind: {}.", yellow(branch_name()) + gray("::") + enum_green(kind_name()))); }
     }
     return result;
@@ -136,6 +141,7 @@
         branch_kind_name(NamespaceDecl);
         branch_kind_name(TypeDecl);
         branch_kind_name(IfStmt);
+        branch_kind_name(WhileStmt);
         _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
     }
     std::unreachable();
@@ -148,18 +154,7 @@
 
 [[nodiscard]] std::string ASTNode::branch_name() const {
     match(*this) {
-        branch_kind_name(Identifier);
-        branch_kind_name(PrimaryExpr);
-        branch_kind_name(UnaryExpr);
-        branch_kind_name(BinaryExpr);
-        branch_kind_name(PostfixExpr);
-        branch_kind_name(VariableDecl);
-        branch_kind_name(FunctionDecl);
-        branch_kind_name(FunctionCall);
-        branch_kind_name(BlockScope);
-        branch_kind_name(NamespaceDecl);
-        branch_kind_name(TypeDecl);
-        branch_kind_name(IfStmt);
+        map_macro(branch_kind_name, NodeKinds)
         _default { PANIC(std::format("couldn't get kind name for node {}.", source_token.to_str())); }
     }
     std::unreachable();

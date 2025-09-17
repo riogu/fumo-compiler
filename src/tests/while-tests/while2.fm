@@ -1,0 +1,36 @@
+fn printf(format: i8*, ...) -> i32;
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+
+
+// Test 3: While loop with complex condition
+fn test_complex_condition() -> void {
+    let x: i32 = 10;
+    let y: i32 = 5;
+    while x > y && y < 8 {
+        printf("x = %d, y = %d\n", x, y);
+        x = x - 1;
+        y = y + 1;
+    }
+    printf("Final: x = %d, y = %d\n", x, y);
+}
+
+// Test 4: Nested while loops
+fn test_nested_while() -> void {
+    let outer: i32 = 0;
+    while outer < 2 {
+        let inner: i32 = 0;
+        while inner < 2 {
+            printf("outer = %d, inner = %d\n", outer, inner);
+            inner = inner + 1;
+        }
+        outer = outer + 1;
+    }
+}
+fn main() -> i32 {
+    printf("\n--- Test 3: Complex Condition ---\n");
+    test_complex_condition();
+    
+    printf("\n--- Test 4: Nested While ---\n");
+    test_nested_while();
+}

@@ -187,10 +187,24 @@ struct IfStmt {
     ASTNode* body; // compound statement {...}
     Opt<ASTNode*> else_stmt {}; // is else, or else if 
 };
+struct WhileStmt {
+    enum Kind {
+        #define WhileStmt_kinds                                         \
+        while_loop              /*                                   */ \
+
+       WhileStmt_kinds 
+    } kind = while_loop;
+    ASTNode* condition;
+    ASTNode* body; // compound statement {...}
+
+};
+#define NodeKinds  Identifier,   FunctionCall, IfStmt, WhileStmt,       \
+                   PrimaryExpr,  UnaryExpr, BinaryExpr, PostfixExpr,    \
+                   VariableDecl, FunctionDecl, TypeDecl,                \
+                   BlockScope,   NamespaceDecl                          \
 
 struct ASTNode {
-
-    using NodeBranch = std::variant<Identifier, FunctionCall, IfStmt,
+    using NodeBranch = std::variant<Identifier, FunctionCall, IfStmt, WhileStmt,
                                     PrimaryExpr,  UnaryExpr, BinaryExpr, PostfixExpr,
                                     VariableDecl, FunctionDecl, TypeDecl,
                                     BlockScope,   NamespaceDecl>;

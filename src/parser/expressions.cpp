@@ -1,3 +1,4 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 #include "utils/common_utils.hpp"
 
@@ -40,8 +41,21 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         }
     }
     if (token_is_keyword(if)) return if_statement(IfStmt::if_statement);
+    if (token_is_keyword(while)) return while_loop();
 
     return expression_statement();
+}
+
+[[nodiscard]] ASTNode* Parser::while_loop() {
+    WhileStmt while_loop {};
+    Token tkn = *prev_tkn;
+    while_loop.condition = if_value(logical())
+                           else_error((*curr_tkn), "expected condition in while loop");
+
+    expect_token_str("{");
+    while_loop.body = compound_statement();
+
+    return push(ASTNode {tkn, while_loop});
 }
 // <if-statement> ::= "if" { "(" }? <expression> { ")" }? <compound-statement> 
 //                    { "else" (<compound-statement> | <if-statement>) }?
@@ -59,7 +73,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         ifstmt.condition = variable_declaration(true);
         expect_token_str(")");
     } else
-        ifstmt.condition = logical();
+        ifstmt.condition = if_value(logical())
+                           else_error((*curr_tkn), "expected condition in if statement");
 
     expect_token_str("{");
     ifstmt.body = compound_statement();
