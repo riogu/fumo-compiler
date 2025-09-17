@@ -1,0 +1,234 @@
+fn printf(format: i8*, ...) -> i32;
+fn sscanf(str: i8*, format: i8*, ...) -> i32;
+
+fn test_japanese_hiragana() -> void {
+    printf("\n=== Testing Japanese Hiragana Characters ===\n");
+    
+    // Basic hiragana characters
+    let a: i32 = 'あ';      // a
+    let ka: i32 = 'か';     // ka
+    let sa: i32 = 'さ';     // sa
+    let ta: i32 = 'た';     // ta
+    let na: i32 = 'な';     // na
+    let ha: i32 = 'は';     // ha (wa when particle)
+    let ma: i32 = 'ま';     // ma
+    let ya: i32 = 'や';     // ya
+    let ra: i32 = 'ら';     // ra
+    let wa: i32 = 'わ';     // wa
+    let wo: i32 = 'を';     // wo (particle)
+    let n: i32 = 'ん';      // n
+    
+    printf("Hiragana characters (UTF-8 values):\n");
+    printf("あ (a): %d\n", a);
+    printf("か (ka): %d\n", ka);
+    printf("さ (sa): %d\n", sa);
+    printf("た (ta): %d\n", ta);
+    printf("な (na): %d\n", na);
+    printf("は (ha): %d\n", ha);
+    printf("ま (ma): %d\n", ma);
+    printf("や (ya): %d\n", ya);
+    printf("ら (ra): %d\n", ra);
+    printf("わ (wa): %d\n", wa);
+    printf("を (wo): %d\n", wo);
+    printf("ん (n): %d\n", n);
+    
+    // Test some combinations
+    let small_tsu: i32 = 'っ';  // Small tsu (sokuon)
+    let small_ya: i32 = 'ゃ';   // Small ya
+    let small_yu: i32 = 'ゅ';   // Small yu
+    let small_yo: i32 = 'ょ';   // Small yo
+    
+    printf("\nSmall characters:\n");
+    printf("っ (small tsu): %d\n", small_tsu);
+    printf("ゃ (small ya): %d\n", small_ya);
+    printf("ゅ (small yu): %d\n", small_yu);
+    printf("ょ (small yo): %d\n", small_yo);
+}
+
+fn test_japanese_katakana() -> void {
+    printf("\n=== Testing Japanese Katakana Characters ===\n");
+    
+    // Basic katakana characters
+    let a_kata: i32 = 'ア';     // a
+    let ka_kata: i32 = 'カ';    // ka
+    let sa_kata: i32 = 'サ';    // sa
+    let ta_kata: i32 = 'タ';    // ta
+    let na_kata: i32 = 'ナ';    // na
+    let ha_kata: i32 = 'ハ';    // ha
+    let ma_kata: i32 = 'マ';    // ma
+    let ya_kata: i32 = 'ヤ';    // ya
+    let ra_kata: i32 = 'ラ';    // ra
+    let wa_kata: i32 = 'ワ';    // wa
+    let n_kata: i32 = 'ン';     // n
+    
+    printf("Katakana characters (UTF-8 values):\n");
+    printf("ア (a): %d\n", a_kata);
+    printf("カ (ka): %d\n", ka_kata);
+    printf("サ (sa): %d\n", sa_kata);
+    printf("タ (ta): %d\n", ta_kata);
+    printf("ナ (na): %d\n", na_kata);
+    printf("ハ (ha): %d\n", ha_kata);
+    printf("マ (ma): %d\n", ma_kata);
+    printf("ヤ (ya): %d\n", ya_kata);
+    printf("ラ (ra): %d\n", ra_kata);
+    printf("ワ (wa): %d\n", wa_kata);
+    printf("ン (n): %d\n", n_kata);
+    
+    // Extended katakana for foreign sounds
+    let v_sound: i32 = 'ヴ';    // vu
+    let small_tsu_kata: i32 = 'ッ'; // Small tsu
+    
+    printf("\nExtended katakana:\n");
+    printf("ヴ (vu): %d\n", v_sound);
+    printf("ッ (small tsu): %d\n", small_tsu_kata);
+}
+
+fn test_japanese_kanji() -> void {
+    printf("\n=== Testing Japanese Kanji Characters ===\n");
+    
+    // Common kanji characters
+    let ichi: i32 = '一';      // one
+    let ni: i32 = '二';        // two
+    let san: i32 = '三';       // three
+    let yon: i32 = '四';       // four
+    let go: i32 = '五';        // five
+    let roku: i32 = '六';      // six
+    let nana: i32 = '七';      // seven
+    let hachi: i32 = '八';     // eight
+    let kyuu: i32 = '九';      // nine
+    let juu: i32 = '十';       // ten
+    
+    printf("Number kanji (UTF-8 values):\n");
+    printf("一 (ichi/one): %d\n", ichi);
+    printf("二 (ni/two): %d\n", ni);
+    printf("三 (san/three): %d\n", san);
+    printf("四 (yon/four): %d\n", yon);
+    printf("五 (go/five): %d\n", go);
+    printf("六 (roku/six): %d\n", roku);
+    printf("七 (nana/seven): %d\n", nana);
+    printf("八 (hachi/eight): %d\n", hachi);
+    printf("九 (kyuu/nine): %d\n", kyuu);
+    printf("十 (juu/ten): %d\n", juu);
+    
+    // Common everyday kanji
+    let hito: i32 = '人';      // person
+    let hon: i32 = '本';       // book/origin
+    let nihon: i32 = '日';     // day/sun/Japan
+    let getsu: i32 = '月';     // moon/month
+    let mizu: i32 = '水';      // water
+    let ki: i32 = '木';        // tree/wood
+    let kin: i32 = '金';       // gold/money/Friday
+    let tsuchi: i32 = '土';    // earth/soil
+    let yama: i32 = '山';      // mountain
+    let kawa: i32 = '川';      // river
+    
+    printf("\nCommon kanji:\n");
+    printf("人 (hito/person): %d\n", hito);
+    printf("本 (hon/book): %d\n", hon);
+    printf("日 (hi/day): %d\n", nihon);
+    printf("月 (tsuki/moon): %d\n", getsu);
+    printf("水 (mizu/water): %d\n", mizu);
+    printf("木 (ki/tree): %d\n", ki);
+    printf("金 (kin/gold): %d\n", kin);
+    printf("土 (tsuchi/earth): %d\n", tsuchi);
+    printf("山 (yama/mountain): %d\n", yama);
+    printf("川 (kawa/river): %d\n", kawa);
+}
+
+fn test_japanese_character_comparison() -> void {
+    printf("\n=== Testing Japanese Character Comparison ===\n");
+    
+    let a_hira: i32 = 'あ';
+    let a_kata: i32 = 'ア';
+    let ka_hira: i32 = 'か';
+    let ka_kata: i32 = 'カ';
+    
+    printf("Hiragana vs Katakana comparison:\n");
+    printf("あ (hira a) = %d, ア (kata a) = %d\n", a_hira, a_kata);
+    printf("か (hira ka) = %d, カ (kata ka) = %d\n", ka_hira, ka_kata);
+    
+    if a_hira != a_kata {
+        printf("あ ≠ ア (different Unicode values) ✓\n");
+    }
+    
+    if ka_hira < ka_kata {
+        printf("か < カ (hiragana comes before katakana in Unicode) ✓\n");
+    }
+    
+    // Test kanji comparison
+    let ichi: i32 = '一';
+    let ni: i32 = '二';
+    
+    if ichi < ni {
+        printf("一 < 二 (Unicode ordering) ✓\n");
+    }
+    
+    printf("Character ordering: %d < %d\n", ichi, ni);
+}
+
+fn test_mixed_japanese_arrays() -> void {
+    printf("\n=== Testing Mixed Japanese Character Arrays ===\n");
+    
+    // Note: This assumes your language supports wide character arrays
+    // You might need to adjust based on your string implementation
+    
+    printf("Testing individual Japanese characters in variables:\n");
+    
+    let greeting_chars: i32[6] = {'こ', 'ん', 'に', 'ち', 'は', '\0'};
+    printf("Greeting characters stored (こんにちは):\n");
+    for (let i: i32 = 0; i < 5; i = i + 1) {
+        printf("Position %d: %d\n", i, greeting_chars[i]);
+    }
+    
+    let name_chars: i32[4] = {'田', '中', '太', '\0'};
+    printf("Name characters stored (田中太):\n");
+    for (let i: i32 = 0; i < 3; i = i + 1) {
+        printf("Position %d: %d\n", i, name_chars[i]);
+    }
+}
+
+fn test_edge_cases() -> void {
+    printf("\n=== Testing Edge Cases ===\n");
+    
+    // Test minimum and maximum char values
+    let min_char: i8 = 0;
+    let max_printable: i8 = 126;  // '~'
+    
+    printf("Minimum char value: %d\n", min_char);
+    printf("Maximum printable ASCII: %d ('%c')\n", max_printable, max_printable);
+    
+    // Test some non-printable characters
+    let bell: i8 = '\a';  // Alert/bell
+    let form_feed: i8 = '\f';
+    let vertical_tab: i8 = '\v';
+    
+    printf("Bell character ASCII: %d\n", bell);
+    printf("Form feed ASCII: %d\n", form_feed);
+    printf("Vertical tab ASCII: %d\n", vertical_tab);
+    
+    // Test Unicode range differences
+    printf("\nUnicode range comparison:\n");
+    let ascii_a: i8 = 'a';         // ASCII: 97
+    let hira_a: i32 = 'あ';        // Unicode: 12354
+    let kata_a: i32 = 'ア';        // Unicode: 12450
+    let kanji_one: i32 = '一';     // Unicode: 19968
+    
+    printf("ASCII 'a': %d\n", ascii_a);
+    printf("Hiragana 'あ': %d\n", hira_a);
+    printf("Katakana 'ア': %d\n", kata_a);
+    printf("Kanji '一': %d\n", kanji_one);
+}
+
+fn main() -> i32 {
+    printf("Character Literal Tests for Fumo Language\n");
+    printf("=========================================\n");
+    // Japanese character tests
+    test_japanese_hiragana();
+    test_japanese_katakana();
+    test_japanese_kanji();
+    test_japanese_character_comparison();
+    test_mixed_japanese_arrays();
+    
+    printf("\n=== All Character Literal Tests Complete ===\n");
+    return 0;
+}

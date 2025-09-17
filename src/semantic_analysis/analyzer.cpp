@@ -79,6 +79,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case PrimaryExpr::str:
                 case PrimaryExpr::bool_:
                 case PrimaryExpr::void_:
+                case PrimaryExpr::char_literal:
                     break;
                 default:
                     internal_panic("semantic analysis missing for '{}'.", node.name());

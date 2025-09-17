@@ -411,7 +411,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     if (token_is(char_literal))
         return push(ASTNode {*prev_tkn,
                              PrimaryExpr {PrimaryExpr::char_literal, prev_tkn->literal.value()},
-                             make_type(Type::u8_, "i8", 1)});
+                             make_type(Type::i32_, "i32", 0)});
+
     if (token_is_keyword(true))
         return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::bool_, true}, make_type(Type::bool_, "bool", 0)});
     if (token_is_keyword(false))

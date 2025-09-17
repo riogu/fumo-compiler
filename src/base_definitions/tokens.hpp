@@ -67,6 +67,18 @@ struct Token {
                 }
                 return enum_green(escaped);
             }
+            case TokenType::char_literal: {
+                std::string raw{std::get<std::string>(literal.value())};
+                std::string escaped {};
+                escaped.reserve(raw.length());
+                for (char &c : raw) {
+                    escaped += (c == '\n') ? "\\n" :
+                               (c == '\t') ? "\\t" :
+                               std::string(1, c);
+                }
+                return enum_green(escaped);
+            }
+
             case TokenType::is_EOF:
                 return "EOF";
             default: 

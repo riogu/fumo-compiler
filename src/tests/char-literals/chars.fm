@@ -1,0 +1,214 @@
+fn printf(format: i8*, ...) -> i32;
+fn sscanf(str: i8*, format: i8*, ...) -> i32;
+
+fn test_basic_character_literals() -> void {
+    printf("=== Testing Basic Character Literals ===\n");
+    
+    let digit: i8 = '4';
+    let letter: i8 = 'A';
+    let lowercase: i8 = 'z';
+    let space_char: i8 = ' ';
+    
+    printf("Digit '4' = %d (ASCII value)\n", digit);
+    printf("Letter 'A' = %d (ASCII value)\n", letter);
+    printf("Letter 'z' = %d (ASCII value)\n", lowercase);
+    printf("Space ' ' = %d (ASCII value)\n", space_char);
+    
+    // Test character output
+    printf("Characters: %c %c %c '%c'\n", digit, letter, lowercase, space_char);
+}
+
+fn test_special_character_literals() -> void {
+    printf("\n=== Testing Special Character Literals ===\n");
+    
+    let newline: i8 = '\n';
+    let tab: i8 = '\t';
+    let carriage_return: i8 = '\r';
+    let backslash: i8 = '\\';
+    let single_quote: i8 = '\'';
+    let null_char: i8 = '\0';
+    
+    printf("Newline ASCII: %d\n", newline);
+    printf("Tab ASCII: %d\n", tab);
+    printf("Carriage return ASCII: %d\n", carriage_return);
+    printf("Backslash ASCII: %d\n", backslash);
+    printf("Single quote ASCII: %d\n", single_quote);
+    printf("Null character ASCII: %d\n", null_char);
+    
+    printf("Tab test:\tAfter tab\n");
+    printf("Backslash test: %c\n", backslash);
+    printf("Quote test: %c\n", single_quote);
+}
+
+fn test_punctuation_characters() -> void {
+    printf("\n=== Testing Punctuation Character Literals ===\n");
+    
+    let exclamation: i8 = '!';
+    let question: i8 = '?';
+    let semicolon: i8 = ';';
+    let comma: i8 = ',';
+    let period: i8 = '.';
+    let colon: i8 = ':';
+    
+    printf("Punctuation: %c%c%c %c%c%c\n", 
+           exclamation, question, period, comma, semicolon, colon);
+    printf("ASCII values: %d %d %d %d %d %d\n",
+           exclamation, question, period, comma, semicolon, colon);
+}
+
+fn test_bracket_characters() -> void {
+    printf("\n=== Testing Bracket Character Literals ===\n");
+    
+    let open_paren: i8 = '(';
+    let close_paren: i8 = ')';
+    let open_bracket: i8 = '[';
+    let close_bracket: i8 = ']';
+    let open_brace: i8 = '{';
+    let close_brace: i8 = '}';
+    
+    printf("Brackets: %c%c %c%c %c%c\n", 
+           open_paren, close_paren,
+           open_bracket, close_bracket,
+           open_brace, close_brace);
+    
+    printf("ASCII values: %d %d %d %d %d %d\n",
+           open_paren, close_paren,
+           open_bracket, close_bracket,
+           open_brace, close_brace);
+}
+
+fn test_operator_characters() -> void {
+    printf("\n=== Testing Operator Character Literals ===\n");
+    
+    let plus: i8 = '+';
+    let minus: i8 = '-';
+    let multiply: i8 = '*';
+    let divide: i8 = '/';
+    let modulo: i8 = '%';
+    let equals: i8 = '=';
+    let less_than: i8 = '<';
+    let greater_than: i8 = '>';
+    
+    printf("Operators: %c%c%c%c%c%c%c%c\n",
+           plus, minus, multiply, divide, modulo, equals, less_than, greater_than);
+    
+    printf("ASCII values: %d %d %d %d %d %d %d %d\n",
+           plus, minus, multiply, divide, modulo, equals, less_than, greater_than);
+}
+
+fn test_character_arithmetic() -> void {
+    printf("\n=== Testing Character Arithmetic ===\n");
+    
+    let char_a: i8 = 'A';
+    let char_z: i8 = 'Z';
+    let digit_0: i8 = '0';
+    let digit_9: i8 = '9';
+    
+    printf("'A' to 'Z' range: %d to %d (difference: %d)\n", 
+           char_a, char_z, char_z - char_a);
+    printf("'0' to '9' range: %d to %d (difference: %d)\n", 
+           digit_0, digit_9, digit_9 - digit_0);
+    
+    // Convert uppercase to lowercase
+    let lowercase_a: i8 = char_a + 32;
+    printf("'A' + 32 = %c (ASCII %d)\n", lowercase_a, lowercase_a);
+    
+    // Test digit to number conversion
+    let digit_value: i32 = digit_9 - digit_0;
+    printf("'9' - '0' = %d\n", digit_value);
+}
+
+fn test_character_comparison() -> void {
+    printf("\n=== Testing Character Comparison ===\n");
+    
+    let char1: i8 = 'A';
+    let char2: i8 = 'B';
+    let char3: i8 = 'A';
+    
+    if char1 == char3 {
+        printf("'%c' equals '%c' ✓\n", char1, char3);
+    }
+    
+    if char1 < char2 {
+        printf("'%c' is less than '%c' ✓\n", char1, char2);
+    }
+    
+    if char2 > char1 {
+        printf("'%c' is greater than '%c' ✓\n", char2, char1);
+    }
+    
+    let digit1: i8 = '5';
+    let digit2: i8 = '7';
+    
+    if digit1 < digit2 {
+        printf("'%c' is less than '%c' ✓\n", digit1, digit2);
+    }
+}
+
+fn test_character_arrays() -> void {
+    printf("\n=== Testing Character Arrays ===\n");
+    
+    let chars: i8[6] = {'H', 'e', 'l', 'l', 'o', '\0'};
+    printf("Character array as string: %s\n", chars);
+    
+    let vowels: i8[6] = {'a', 'e', 'i', 'o', 'u', '\0'};
+    printf("Vowels: ");
+    for (let i: i32 = 0; i < 5; i = i + 1) {
+        printf("%c ", vowels[i]);
+    }
+    printf("\n");
+}
+
+fn test_sscanf_with_characters() -> void {
+    printf("\n=== Testing sscanf with Characters ===\n");
+    
+    let input: i8* = "X 5 @";
+    let char1: i8;
+    let char2: i8;
+    let char3: i8;
+    
+    let result: i32 = sscanf(input, "%c %c %c", &char1, &char2, &char3);
+    printf("Parsed %d characters from '%s'\n", result, input);
+    printf("Characters: '%c' '%c' '%c'\n", char1, char2, char3);
+    printf("ASCII values: %d %d %d\n", char1, char2, char3);
+}
+
+fn test_edge_cases() -> void {
+    printf("\n=== Testing Edge Cases ===\n");
+    
+    // Test minimum and maximum char values
+    let min_char: i8 = 0;
+    let max_printable: i8 = 126;  // '~'
+    
+    printf("Minimum char value: %d\n", min_char);
+    printf("Maximum printable ASCII: %d ('%c')\n", max_printable, max_printable);
+    
+    // Test some non-printable characters
+    let bell: i8 = '\a';  // Alert/bell
+    let form_feed: i8 = '\f';
+    let vertical_tab: i8 = '\v';
+    
+    printf("Bell character ASCII: %d\n", bell);
+    printf("Form feed ASCII: %d\n", form_feed);
+    printf("Vertical tab ASCII: %d\n", vertical_tab);
+}
+
+fn main() -> i32 {
+    printf("Character Literal Tests for Fumo Language\n");
+    printf("=========================================\n");
+    
+    test_basic_character_literals();
+    test_special_character_literals();
+    test_punctuation_characters();
+    test_bracket_characters();
+    test_operator_characters();
+    test_character_arithmetic();
+    test_character_comparison();
+    test_character_arrays();
+    test_sscanf_with_characters();
+    test_edge_cases();
+    
+    printf("\n=== All Character Literal Tests Complete ===\n");
+    return 0;
+}
+
