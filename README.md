@@ -14,6 +14,13 @@ namespace math {
         fn distance_from_origin() -> f64 {
             return x * x + y * y;
         }
+        // Static constructors
+        fn static new(x: f64, y: f64) -> Point {
+            return Point {x, y};
+        }
+        fn static origin() -> Point {
+            return Point {0.0, 0.0};
+        }
     }
     
     namespace utils {
@@ -31,6 +38,10 @@ namespace math {
                     return sum / count;
                 }
                 return 0.0;
+            }
+            
+            fn static new() -> Stats {
+                return Stats {0, 0.0};
             }
         }
     }
@@ -50,32 +61,28 @@ fn process_point(pt: math::Point*) -> void {
     }
 }
 
-fn demonstrate_features() -> void {
-    let point = math::Point {3.0, 4.0};
-    let stats = math::utils::Stats {0, 0.0};
+fn main() -> i32 {
+    printf("Fumo language demonstration\n");
     
-    stats.add_value(point.x);
-    stats.add_value(point.y * 2.0);
+    // Static constructors vs initializer lists
+    let point1 = math::Point::new(3.0, 4.0);
+    let point2 = math::Point {1.5, 2.5};
+    let origin = math::Point::origin();
     
-    process_point(&point);
+    let stats = math::utils::Stats::new();
+    let preset_stats = math::utils::Stats {2, 10.0};
+    
+    stats.add_value(point1.x);
+    stats.add_value(point2.y);
+    
+    process_point(&point1);
+    process_point(&origin);
+    
+    printf("Stats average: %.2f\n", stats.average());
+    printf("Preset average: %.2f\n", preset_stats.average());
     
     let ptr: i32* = &global_counter;
-    printf("Global counter: %d, Address: %p\n", *ptr, ptr);
-    
-    let small_int: i8 = 42;
-    let big_int: i64 = small_int;
-    
-    if big_int == global_counter {
-        printf("Values match!\n");
-    }
-}
-
-fn main() -> i32 {
-    printf("Fumo language feature demonstration\n");
-    demonstrate_features();
-    
-    let nested_stats = math::utils::Stats {5, 100.0};
-    printf("Average: %.2f\n", nested_stats.average());
+    printf("Global counter: %d\n", *ptr);
     
     return 0;
 }
