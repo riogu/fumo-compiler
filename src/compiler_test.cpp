@@ -40,7 +40,7 @@ struct TestConfig {
     bool has_custom_options = false;
     
     TestConfig() : description("default") {
-        compiler_options = {"-print-file", "-emit-ir-O0", "-print-ir", "-emit-ir"};
+        compiler_options = {"-print-file", "-emit-ir-O0", "-emit-ir"};
         has_custom_options = false;
     }
     

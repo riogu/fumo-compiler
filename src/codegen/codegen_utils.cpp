@@ -19,10 +19,7 @@ void Codegen::verify_user_main() {
                 report_error(symbol_tree.function_decls["fumo.user_main"]->source_token,
                              "main has invalid return type. (NOTE: use void or i32).");
             }
-
-        } else if (!llvm::isa<llvm::ReturnInst>(term)) {
-            internal_panic("main ended with '{}', a non 'ret' terminator instruction.", term->getOpcodeName());
-        }
+        } 
     }
 }
 void Codegen::create_libc_main() {

@@ -19,7 +19,14 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.curr_scope_name = "::";
     symbol_tree.pop_scope();
 
-    if (auto map_node = symbol_tree.function_decls.extract("main"); !map_node.empty()) {
+    auto map_node = symbol_tree.function_decls.extract("main");
+
+    // analyze control flow
+    for (auto& [_, func] : symbol_tree.function_decls) {
+        analyze_function_control_flow(*func); 
+    }
+
+    if ( !map_node.empty()) {
         // rename 'main' to link with libc later
         auto& id = get_id(get<FunctionDecl>(map_node.mapped()));
         map_node.key() = "fumo.user_main";
@@ -27,8 +34,6 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         id.name = "fumo.user_main";
         symbol_tree.function_decls.insert(std::move(map_node));
     }
-
-    for(auto& [_, func]: symbol_tree.function_decls)         analyze_function_control_flow(*func); 
     for(auto& [_, func]: symbol_tree.member_function_decls)  analyze_function_control_flow(*func); 
 }
 
