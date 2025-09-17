@@ -113,7 +113,7 @@ struct Token {
     if (str == "int")           return TokenType::integer;
     if (str == "float")         return TokenType::floating_point;
     if (str == "string")        return TokenType::string;
-    if (str == "char_literal")  return TokenType::string;
+    if (str == "char_literal")  return TokenType::char_literal;
     if (str == "identifier")    return TokenType::identifier;
     if (str == "is_EOF")        return TokenType::is_EOF;
     if (str == "builtin_type")  return TokenType::builtin_type;

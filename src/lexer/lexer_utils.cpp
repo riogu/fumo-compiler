@@ -46,42 +46,43 @@ int Lexer::get_curr() {
 
 [[nodiscard]] Token Lexer::parse_character_literal() {
     std::string str_inner{};
-    get_curr();
-    int counter = 0;
-    while (file_stream.peek() != EOF) {
-        if (curr == '\'') break;
 
-        if (curr != '\\') {
-            str_inner += curr;
-        } else {
-            if (file_stream.peek() != EOF) {
-                get_curr();
-            } else {
-                lexer_error("Dangling backslash escape character.");
-            }
+    get_curr();
+    if (curr == '\'') lexer_error("empty character constant.");
+
+    while (file_stream.peek() != EOF) {
+        if (curr == '\\') {
+            get_curr();
             switch (curr) {
-                case '0': str_inner += '\0'; break;
-                case 'a': str_inner += '\a'; break;
-                case 'r': str_inner += '\r'; break;
-                case 'n': str_inner += '\n'; break;
-                case 't': str_inner += '\t'; break;
-                case '"': str_inner += '"'; break;
+                case '0':  str_inner += '\0'; break;
+                case 'a':  str_inner += '\a'; break;
+                case 'r':  str_inner += '\r'; break;
+                case 'n':  str_inner += '\n'; break;
+                case 't':  str_inner += '\t'; break;
+                case 'f':  str_inner += '\f'; break;
+                case 'v':  str_inner += '\v'; break;
+                case 'e':  str_inner += '\e'; break;
+                case '"':  str_inner += '"';  break;
                 case '\\': str_inner += '\\'; break;
+                case '\'': str_inner += '\''; break;
                 default: lexer_error("Invalid escape code.");
             }
         }
-
         get_curr();
-        counter++;
-        if (counter > 2 || (str_inner[1] == '\\' && counter > 3)) {
+
+        if (str_inner.size() > 1) {
             lexer_error("Invalid number of characters in character literal.");
         }
+
+        if (curr == '\'') break;
     }
+
     if (curr != '\'') {
-        lexer_error("Unmatched quote in string literal.");
+        lexer_error("Unmatched quote in character literal.");
     }
-    return Token { .type = TokenType::string,
-                   .literal = std::move(str_inner),
+    int64_t char_literal = str_inner[0];
+    return Token { .type = TokenType::char_literal,
+                   .literal = char_literal,
                    .line_number = __FUMO_LINE_NUM__,
                    .line_offset = __FUMO_LINE_OFFSET__,
                    .file_offset = file_stream.tellg(),
@@ -108,8 +109,12 @@ int Lexer::get_curr() {
                 case 'r': str_inner += '\r'; break;
                 case 'n': str_inner += '\n'; break;
                 case 't': str_inner += '\t'; break;
-                case '"': str_inner += '"'; break;
-                case '\\': str_inner += '\\'; break;
+                case 'f': str_inner += '\f'; break;
+                case 'v': str_inner += '\v'; break;
+                case 'e': str_inner += '\e'; break;
+                case '"': str_inner += '"';  break;
+                case '\\': str_inner += '\\'; str_inner += '\\'; break;
+                case '\'': str_inner += '\\'; str_inner += '\''; break;
                 default: lexer_error("Invalid escape code.");
             }
         }
@@ -119,11 +124,8 @@ int Lexer::get_curr() {
     if (curr != '"') {
         lexer_error("Unmatched quote in string literal.");
     }
-    return Token { .type = TokenType::string,
-                   .literal = std::move(str_inner),
-                   .line_number = __FUMO_LINE_NUM__,
-                   .line_offset = __FUMO_LINE_OFFSET__,
-                   .file_offset = file_stream.tellg(),
+    return Token { .type = TokenType::string, .literal = std::move(str_inner),
+                   .line_number = __FUMO_LINE_NUM__, .line_offset = __FUMO_LINE_OFFSET__, .file_offset = file_stream.tellg(),
                    .file_name = __FUMO_FILE__.string()};
 }
 

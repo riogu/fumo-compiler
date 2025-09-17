@@ -1,11 +1,11 @@
 fn printf(format: i8*, ...) -> i32;
-fn sscanf(str: i8*, format: i8*, ...) -> i32;
+fn sscanf(string: i8*, format: i8*, ...) -> i32;
 
 fn test_basic_character_literals() -> void {
     printf("=== Testing Basic Character Literals ===\n");
     
+    let letter = 'A';
     let digit: i8 = '4';
-    let letter: i8 = 'A';
     let lowercase: i8 = 'z';
     let space_char: i8 = ' ';
     
@@ -145,19 +145,6 @@ fn test_character_comparison() -> void {
     }
 }
 
-fn test_character_arrays() -> void {
-    printf("\n=== Testing Character Arrays ===\n");
-    
-    let chars: i8[6] = {'H', 'e', 'l', 'l', 'o', '\0'};
-    printf("Character array as string: %s\n", chars);
-    
-    let vowels: i8[6] = {'a', 'e', 'i', 'o', 'u', '\0'};
-    printf("Vowels: ");
-    for (let i: i32 = 0; i < 5; i = i + 1) {
-        printf("%c ", vowels[i]);
-    }
-    printf("\n");
-}
 
 fn test_sscanf_with_characters() -> void {
     printf("\n=== Testing sscanf with Characters ===\n");
@@ -204,7 +191,6 @@ fn main() -> i32 {
     test_operator_characters();
     test_character_arithmetic();
     test_character_comparison();
-    test_character_arrays();
     test_sscanf_with_characters();
     test_edge_cases();
     

@@ -608,6 +608,7 @@ int main(int argc, char* argv[]) {
             "code-examples",
             "control-flow",
             "fail-control-flow",
+            "char-literals",
             // Add more as needed
         };
     }
