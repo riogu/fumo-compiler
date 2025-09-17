@@ -11,6 +11,16 @@
 #include <print>
 #include "llvm/Support/Signals.h"
 
+struct foo {
+    int x;
+    void func() {}
+
+    static foo make() {
+        return foo {};
+    }
+};
+
+
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;

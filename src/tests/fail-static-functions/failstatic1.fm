@@ -1,0 +1,26 @@
+namespace test {
+    struct Stateful {
+        let state: i32;
+        
+        fn static bad_modify() -> void {
+            state = 100;  // ERROR: Cannot modify instance member from static function
+        }
+    }
+}
+
+fn main() -> i32 {
+    return 0;
+}
+namespace test {
+    struct Problematic {
+        let member: f64;
+        
+        fn static problematic_static() -> f64 {
+            return member;  // ERROR: Implicit 'this' access in static function
+        }
+    }
+}
+
+fn main() -> i32 {
+    return 0;
+}

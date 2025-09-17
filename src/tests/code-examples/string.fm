@@ -1,0 +1,9 @@
+namespace fumo {
+    struct str {
+        let data: i8*;
+        let size: u64;
+        fn static new() -> str {
+            //
+        }
+    }
+}

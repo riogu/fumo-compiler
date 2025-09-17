@@ -1,0 +1,216 @@
+fn printf(format: i8*, ...) -> i32;
+
+namespace math {
+    struct Point {
+        let x: f64;
+        let y: f64;
+
+        // Instance method
+        fn distance_from_origin() -> f64 {
+            return x * x + y * y;
+        }
+        
+        // Static constructor
+        fn static new(x: f64, y: f64) -> Point {
+            return Point {x, y};
+        }
+        
+        // Static utility function
+        fn static origin() -> Point {
+            return Point {0.0, 0.0};
+        }
+        
+        // Static function with parameters
+        fn static distance_between(p1: Point*, p2: Point*) -> f64 {
+            let dx: f64 = p2->x - p1->x;
+            let dy: f64 = p2->y - p1->y;
+            return dx * dx + dy * dy;
+        }
+        
+        // Static function returning primitive type
+        fn static is_valid_coordinate(x: f64, y: f64) -> bool {
+            if x == 0.0 && y == 0.0 {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+}
+
+// Test 1: Basic static function call via type namespace
+fn test_static_namespace_access() -> void {
+    printf("=== Testing static namespace access ===\n");
+    
+    // Call static function using type namespace
+    let origin: math::Point = math::Point::origin();
+    printf("Origin point: (%.1f, %.1f)\n", origin.x, origin.y);
+    
+    // Call static factory method
+    let point: math::Point = math::Point::new(5.0, 12.0);
+    printf("Created point: (%.1f, %.1f)\n", point.x, point.y);
+    
+    // Call static function with parameters
+    let dist: f64 = math::Point::distance_between(&origin, &point);
+    printf("Distance from origin: %.2f\n", dist);
+    
+    // Call static function returning primitive
+    let valid: bool = math::Point::is_valid_coordinate(3.0, 4.0);
+    if valid {
+        printf("Coordinates valid: true\n");
+    } else {
+        printf("Coordinates valid: false\n");
+    }
+}
+
+// Test 2: Static function call from instance (should work)
+fn test_static_instance_access() -> void {
+    printf("\n=== Testing static access from instance ===\n");
+    
+    let point: math::Point = math::Point {3.0, 4.0};
+    
+    // Call static function through instance (should work)
+    let origin: math::Point = point.origin();
+    printf("Origin via instance: (%.1f, %.1f)\n", origin.x, origin.y);
+    
+    // Call another static function through instance
+    let new_point: math::Point = point.new(7.0, 24.0);
+    printf("New point via instance: (%.1f, %.1f)\n", new_point.x, new_point.y);
+}
+
+namespace utils {
+    struct Counter {
+        let count: i32;
+        
+        // Static factory method
+        fn static create(initial: i32) -> Counter {
+            return Counter {initial};
+        }
+        
+        // Static constant
+        fn static max_value() -> i32 {
+            return 1000;
+        }
+        
+        // Static function calling other static function
+        fn static is_valid_count(value: i32) -> bool {
+            if value >= 0 && value <= Counter::max_value() {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+
+// Test 3: Nested static function calls
+fn test_nested_static_calls() -> void {
+    printf("\n=== Testing nested static calls ===\n");
+    
+    // Static function calling other static function
+    let valid: bool = utils::Counter::is_valid_count(500);
+    if valid {
+        printf("Count 500 is valid: true\n");
+    } else {
+        printf("Count 500 is valid: false\n");
+    }
+    
+    let invalid: bool = utils::Counter::is_valid_count(1500);
+    if invalid {
+        printf("Count 1500 is valid: true\n");
+    } else {
+        printf("Count 1500 is valid: false\n");
+    }
+}
+
+// Test 4: Static functions in expressions
+fn test_static_in_expressions() -> void {
+    printf("\n=== Testing static functions in expressions ===\n");
+    
+    // Use static function in conditional
+    if math::Point::is_valid_coordinate(1.0, 2.0) {
+        printf("Coordinates are valid\n");
+    }
+    
+    // Use static function in assignment
+    let max_allowed: i32 = utils::Counter::max_value();
+    printf("Max allowed count: %d\n", max_allowed);
+    
+    // Chain static calls
+    let counter: utils::Counter = utils::Counter::create(utils::Counter::max_value() / 2);
+    printf("Created counter with half max value: %d\n", counter.count);
+}
+
+// Test 6: Complex usage with multiple types
+fn test_complex_usage() -> void {
+    printf("\n=== Testing complex static usage ===\n");
+    
+    // Create individual points using static factory
+    let point1: math::Point = math::Point::new(0.0, 0.0);
+    let point2: math::Point = math::Point::new(3.0, 4.0);
+    let point3: math::Point = math::Point::new(6.0, 8.0);
+    
+    // Use static function to validate each point
+    let valid1: bool = math::Point::is_valid_coordinate(point1.x, point1.y);
+    let valid2: bool = math::Point::is_valid_coordinate(point2.x, point2.y);
+    let valid3: bool = math::Point::is_valid_coordinate(point3.x, point3.y);
+    
+    if valid1 {
+        printf("Point 1 valid: true\n");
+    } else {
+        printf("Point 1 valid: false\n");
+    }
+    
+    if valid2 {
+        printf("Point 2 valid: true\n");
+    } else {
+        printf("Point 2 valid: false\n");
+    }
+    
+    if valid3 {
+        printf("Point 3 valid: true\n");
+    } else {
+        printf("Point 3 valid: false\n");
+    }
+    
+    // Calculate distances using static function
+    let dist1: f64 = math::Point::distance_between(&point1, &point2);
+    let dist2: f64 = math::Point::distance_between(&point2, &point3);
+    printf("Distance 1->2: %.2f, 2->3: %.2f\n", dist1, dist2);
+}
+
+// Test 7: Static functions with different return types
+fn test_return_types() -> void {
+    printf("\n=== Testing different return types ===\n");
+    
+    // Returning struct
+    let origin: math::Point = math::Point::origin();
+    
+    // Returning primitive
+    let max: i32 = utils::Counter::max_value();
+    
+    // Returning bool
+    let valid: bool = math::Point::is_valid_coordinate(1.0, 1.0);
+    
+    printf("Origin: (%.1f, %.1f), Max: %d, ", origin.x, origin.y, max);
+    if valid {
+        printf("Valid: true\n");
+    } else {
+        printf("Valid: false\n");
+    }
+}
+
+fn main() -> i32 {
+    printf("Starting static function tests...\n");
+    
+    test_static_namespace_access();
+    test_static_instance_access();
+    test_nested_static_calls();
+    test_static_in_expressions();
+    test_complex_usage();
+    test_return_types();
+    
+    printf("\nAll static function tests completed!\n");
+    return 0;
+}

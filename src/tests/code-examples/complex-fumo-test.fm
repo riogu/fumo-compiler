@@ -8,6 +8,9 @@ namespace math {
         fn distance_from_origin() -> f64 {
             return x * x + y * y;
         }
+        fn static new(x: f64, y: f64) -> Point {
+            return Point {x, y};
+        }
     }
     namespace utils {
         struct Stats {

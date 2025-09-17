@@ -609,6 +609,7 @@ int main(int argc, char* argv[]) {
             "control-flow",
             "fail-control-flow",
             "char-literals",
+            "static-member-functions",
             // Add more as needed
         };
     }

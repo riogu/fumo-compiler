@@ -41,10 +41,9 @@
     // while (token_is_keyword(const) || token_is_keyword(volatile)
     //        || token_is_keyword(static) || token_is_keyword(extern)) {
     // }
-    // bool is_static = false;
-    // if (token_is_keyword(static)) {
-    //     is_static = true;
-    // }
+    std::unordered_set<Type::TypeQualifier> qualifiers {};
+    if (token_is_keyword(static)) qualifiers.insert(Type::static_); // adding static functions
+    
 
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
@@ -57,6 +56,7 @@
 
     expect_token(->);
     Type type = declaration_specifier();
+    type.qualifiers.insert(qualifiers.begin(), qualifiers.end()); // add static qualifier to type
     node->type = type;
 
     if (token_is_str("{")) function.body = compound_statement();

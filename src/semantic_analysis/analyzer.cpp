@@ -218,7 +218,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             // TODO: check if all returns in the body have the correct type of the function
             Identifier& id = get_id(func);
 
-            vec<Scope> scopes = iterate_qualified_names(func);
+            vec<Scope> scopes = iterate_qualified_names(func, node);
             // -------------------------------------------------------------------
             // hack to get the type checked correctly
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
@@ -243,16 +243,26 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 if (func.body_should_move) func.body = std::nullopt;
             }
             for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
+            // -------------------------------------------------------------------
+            // checks for static member functions (only allowed in structs for now)
+            if (node.type.qualifiers.contains(Type::static_)) {
+                if (func.kind == FunctionDecl::function_declaration) {
+                    // we dont allow other kinds of static functions, since they arent implemented yet
+                    // (the ones that define the linkage of a function)
+                    report_error(node.source_token, "static function declarations are only allowed in struct member functions.");
+                }
+
+            }
         }
 
         holds(FunctionCall, &func_call) {
-            // TODO: this is probably wrong, wont find the function decl correctly
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
 
             const auto& func_decl = get<FunctionDecl>(get_id(func_call).declaration.value());
             if (func_decl.kind == FunctionDecl::member_func_declaration) {
                 func_call.kind = FunctionCall::member_function_call;
+                // as it is, we can call static member functions from instances of objects
             }
             const auto& params = func_decl.parameters;
 
@@ -434,10 +444,7 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         holds(FunctionDecl, &func) {
             Identifier& id = get_id(func);
-            // TODO: member function calls should be rewritten to take a pointer
-            // to an instance of the class they are defined in. the "this" implicit pointer in C++
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
-
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
             // std::println("function '{}' had type {}", id.mangled_name, type_name(node.type));
@@ -447,8 +454,7 @@ void Analyzer::add_declaration(ASTNode& node) {
                 && func.kind == FunctionDecl::member_func_declaration) {
                 str temp = id.mangled_name; while (temp.back() != ':') temp.pop_back(); 
                 temp.pop_back(), temp.pop_back(); // get parent name
-                report_error(node.source_token, 
-                             "out-of-line definition of '{}' does not match any declaration in '{}'",
+                report_error(node.source_token, "out-of-line definition of '{}' does not match any declaration in '{}'",
                              id.mangled_name, temp);
             }
             if (!was_inserted) {

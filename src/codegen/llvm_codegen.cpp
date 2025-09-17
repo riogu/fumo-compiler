@@ -458,7 +458,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
 
                 int this_arg_offset = 0;
-                if (func.kind == FunctionDecl::member_func_declaration) { // adding 'this' pointer
+                if (func.kind == FunctionDecl::member_func_declaration  // adding 'this' pointer
+                    && !node.type.qualifiers.contains(Type::static_)) { // except static member functions
                     this_arg_offset = 1;
                     current_this_ptr = ir_builder->CreateAlloca(ir_builder->getPtrTy(), nullptr, "this");
                     // copy the parameter VALUE into the local ADDRESS
@@ -497,7 +498,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             // TODO: add 'this' pointer if its a member function (in llvm_value member)
             if (auto* llvm_func = llvm_module->getFunction(get_id(func_call).mangled_name)) {
                 vec<llvm::Value*> arg_values {};
-                if (func_call.kind == FunctionCall::member_function_call) {
+                if (func_call.kind == FunctionCall::member_function_call &&
+                    !node.type.qualifiers.contains(Type::static_)) { // dont add 'this' for static functions
                     if (node.llvm_value) {
                         arg_values.push_back(node.llvm_value);
                     } else if (current_this_ptr) {
@@ -577,13 +579,15 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                             auto* arg = scope.nodes[i];
                             auto* val = if_value(codegen_value(*arg))
                                            else_panic("[Codegen] can't get rvalue for argument of '{}'.", node.name());
-                            // numeric promotion
+                            //-------------------------------------------------------------------------
+                            // numeric promotion (probably remove once we add casting)
                             if (i < member_nodes.size()) {
                                 auto* member = member_nodes[i];
                                 if (is_arithmetic_t(arg->type) && is_arithmetic_t(member->type)) {
                                         val = convert_arithmetic_t(val, fumo_to_llvm_type(member->type));
                                 }
                             }
+                            //-------------------------------------------------------------------------
                             // LLVM treats each struct ptr as an array, so we must derefence it at '0'
                             // getelementptr inbounds nuw %struct.foo, ptr %struct_ptr, i32 0, i32 i
                             // ptr %struct_ptr -> this is "an array" of structs with 1 element
@@ -733,7 +737,8 @@ void Codegen::register_declaration(ASTNode& node) {
             if (found_func) return;
 
             vec<llvm::Type*> param_types {};
-            if (func.kind == FunctionDecl::member_func_declaration) { // adding 'this' pointer
+            if (func.kind == FunctionDecl::member_func_declaration &&  // adding 'this' pointer
+                !node.type.qualifiers.contains(Type::static_)) {       // but not to static functions
                 param_types.push_back(llvm::PointerType::getUnqual(*llvm_context));
             }
             for (const auto& param : func.parameters) {

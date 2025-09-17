@@ -68,7 +68,8 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
             if find_value (id.mangled_name, member_variable_decls) return iter->second;
             break;
         case Identifier::member_func_call_name:
-            if find_value (id.mangled_name, member_function_decls) return iter->second;
+            if find_value (id.mangled_name, member_function_decls)  return iter->second;
+            if find_value (id.mangled_name, function_decls)         return iter->second;
             break;
 
 
@@ -86,7 +87,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
     if find_value (name, type_decls)      return ScopeKind::TypeBody;
     internal_panic("couldnt find scope kind for '{}'.", name);
 }
-vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
+vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func, ASTNode& node) {
     // NOTE: bad code to iterate through each qualified scope in an out-of-line definition of a function
     vec<Scope> scopes {};
     auto& id = get_id(func);
@@ -99,7 +100,12 @@ vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
         ScopeKind scope_kind;
         if find_value (temp, symbol_tree.type_decls) {
             func.kind = FunctionDecl::member_func_declaration;
-            scope_kind = ScopeKind::MemberFuncBody;
+
+            if (node.type.qualifiers.contains(Type::static_)) 
+                scope_kind = ScopeKind::FunctionBody; // static functions arent "member" functions
+            else                                      // all it does is use the Type as a namespace
+                scope_kind = ScopeKind::MemberFuncBody;
+
             id.base_struct_name = temp;
         } else {
             func.kind = FunctionDecl::function_declaration;
@@ -132,7 +138,11 @@ vec<Scope> Analyzer::iterate_qualified_names(FunctionDecl & func) {
     switch (symbol_tree.curr_scope_kind) {
         case ScopeKind::TypeBody:
             func.kind = FunctionDecl::member_func_declaration;
-            scopes.push_back(Scope{id.name, ScopeKind::MemberFuncBody});
+            if (node.type.qualifiers.contains(Type::static_))  {
+                scopes.push_back(Scope{id.name, ScopeKind::FunctionBody});
+            } else {
+                scopes.push_back(Scope{id.name, ScopeKind::MemberFuncBody});
+            }
             break;
         default:
             func.kind = FunctionDecl::function_declaration;
@@ -190,4 +200,3 @@ void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
     }
 
 }
-
