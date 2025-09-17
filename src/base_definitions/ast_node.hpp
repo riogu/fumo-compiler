@@ -40,7 +40,7 @@ struct PrimaryExpr {
         floating_point,          /*                                   */ \
         str,                     /*                                   */ \
         bool_,                   /*                                   */ \
-        char_,                   /*                                   */ \
+        char_literal,            /*                                   */ \
         void_                    /*                                   */ \
 
         PrimaryExpr_kinds
