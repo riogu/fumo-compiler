@@ -24,11 +24,10 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     if (llvm::verifyModule(*llvm_module, &llvm::WithColor::error(error_stream))) {
         source_file_name.replace_extension(".fm");
         std::cerr << "\ninput file '" << llvm_module->getSourceFileName() << "':\n" <<  file.contents << std::endl;
-        error_stream.flush();
-        std::cerr << error_buffer << '\n';
-
         source_file_name.replace_extension(".ll");
         std::cerr << "\nllvm IR for '" << source_file_name.string() << "':\n" << llvm_ir_to_str() << std::endl;
+        error_stream.flush();
+        std::cerr << error_buffer << '\n';
         internal_panic("found error while generating llvm IR.");
     }
 

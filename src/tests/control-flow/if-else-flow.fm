@@ -1,0 +1,16 @@
+// Control Flow Analysis Tests - These should all PASS
+
+// Basic return tests
+fn test_simple_return() -> i32 {
+    return 42;
+}
+
+fn test_void_no_return() -> void {
+    let x = 42;
+}
+
+fn test_void_with_return() -> void {
+    return;
+}
+
+

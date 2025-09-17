@@ -1,0 +1,11 @@
+fn test_nested_if_outer_incomplete(x: i32, y: i32) -> i32 {
+    if x > 0 {
+        if y > 0 {
+            return 1;
+        }
+        else {
+            return 2;
+        }
+    }
+    // Missing else for outer if
+}

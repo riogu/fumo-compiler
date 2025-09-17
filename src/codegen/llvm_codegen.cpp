@@ -220,6 +220,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), address);
             }
             if (un.kind == UnaryExpr::return_statement) {
+                if (node.type.kind == Type::void_ && !node.type.ptr_count) return ir_builder->CreateRetVoid();
+
                 auto* val = if_value(codegen_value(*un.expr.value()))
                             else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
                 if (ir_builder->getCurrentFunctionReturnType() == llvm::Type::getVoidTy(*llvm_context) && un.expr) {
@@ -239,7 +241,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                                      type_name(node.type));
                     }
                 }
-                if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
                 return ir_builder->CreateRet(val);
 
             }
@@ -477,9 +478,17 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
                 codegen_value(*func.body.value());
 
-                if (node.type.kind == Type::void_) ir_builder->CreateRetVoid();
+                if (!ir_builder->GetInsertBlock()->getTerminator()) {
+                    if (node.type.kind == Type::void_) ir_builder->CreateRetVoid();
+                }
 
                 current_this_ptr = std::nullopt;
+                for (auto& block : *llvm_func) { // cleanup untermined unreachable blocks
+                    if (!block.getTerminator()) {
+                        llvm::IRBuilder<> builder(&block);
+                        builder.CreateUnreachable();
+                    }
+                }
             }
             return llvm_func;
         }
@@ -695,7 +704,6 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
     
     return std::nullopt;
 }
-
 
 // adds function prototypes and forward declarations of types
 void Codegen::register_declaration(ASTNode& node) {

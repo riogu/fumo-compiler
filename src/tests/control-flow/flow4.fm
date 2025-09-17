@@ -1,0 +1,12 @@
+fn test_early_return_unreachable(x: i32) -> i32 {
+    return 42;
+    let y = 100; // Unreachable
+    if x > 0 {
+        return 1;
+    }
+}
+
+// Void function tests
+fn test_void_conditional_return(x: i32) -> void {
+    return;
+}

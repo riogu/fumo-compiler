@@ -3,6 +3,8 @@
 #include "base_definitions/ast_node.hpp"
 #include "base_definitions/symbol_table_stack.hpp"
 
+enum struct ControlFlowResult;
+
 struct Analyzer {
     Analyzer(const File& file) { file_stream << file.contents; }
     void semantic_analysis(ASTNode* file_scope);
@@ -18,6 +20,9 @@ struct Analyzer {
     void analyze(ASTNode& node);
     void report_binary_error(const ASTNode& node, const BinaryExpr& bin);
     void check_initializer_lists(const ASTNode& node, BinaryExpr& bin);
+
+    void analyze_function_control_flow(ASTNode& node);
+    ControlFlowResult control_flow_analysis(ASTNode& node);
 
     ASTNode* create_main_node(Token& token) {
         // NOTE: not being used anymore

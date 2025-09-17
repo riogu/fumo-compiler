@@ -190,3 +190,4 @@ void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
     }
 
 }
+

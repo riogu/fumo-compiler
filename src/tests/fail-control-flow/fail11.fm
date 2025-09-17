@@ -1,0 +1,8 @@
+// Sequential failures
+fn test_sequential_conditional_no_final(x: i32) -> i32 {
+    if x > 0 {
+        return x;
+    }
+    
+    let y = 42; // No return after this
+}

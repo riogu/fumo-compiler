@@ -27,6 +27,9 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         id.name = "fumo.user_main";
         symbol_tree.function_decls.insert(std::move(map_node));
     }
+
+    for(auto& [_, func]: symbol_tree.function_decls) { analyze_function_control_flow(*func); }
+    for(auto& [_, func]: symbol_tree.member_function_decls) { analyze_function_control_flow(*func); }
 }
 
 void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
@@ -78,7 +81,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(UnaryExpr, &un) {
-            // TODO: add checks for '!' and such to only work on arithmetic types
+            if (un.kind == UnaryExpr::return_statement) {
+                if (un.expr) {
+                    analyze(*un.expr.value());
+                    node.type = un.expr.value()->type;
+                } else // allow returning nothing for void functions (control flow)
+                    node.type = {push({node.source_token, Identifier {Identifier::type_name, "void"}}), Type::void_};
+                return;
+            }
             analyze(*un.expr.value());
             switch (un.kind) {
                 case UnaryExpr::negate:
@@ -110,11 +120,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     }
                     node.type.ptr_count++;
                     break;
-                case UnaryExpr::return_statement:
-                    if (un.expr) node.type = un.expr.value()->type;
-                    else // allow returning nothing for void functions (control flow)
-                        node.type = {push({node.source_token, Identifier {Identifier::type_name, "void"}}), Type::void_};
-                    break;
+                default: internal_panic("semantic analysis missing for '{}'.", node.name());
             }
         }
         holds(BinaryExpr, &bin) {

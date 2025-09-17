@@ -1,0 +1,22 @@
+// Else-if chain tests
+fn test_else_if_all_return(x: i32) -> i32 {
+    if x > 0 {
+        return 1;
+    }
+    else if x < 0 {
+        return -1;
+    }
+    else {
+        return 0;
+    }
+}
+
+fn test_else_if_return_after(x: i32) -> i32 {
+    if x > 100 {
+        return 100;
+    }
+    else if x > 50 {
+        let y = x;
+    }
+    return x;
+}

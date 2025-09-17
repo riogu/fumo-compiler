@@ -1,0 +1,4 @@
+// Basic missing return
+fn test_missing_return() -> i32 {
+    let x = 42;
+}

@@ -5,7 +5,10 @@ fn fib(n: i64) -> i64 {
     if n < 2 {
         return n; 
     } 
-    return fib(n - 1) + fib(n - 2);
+    else {
+        return fib(n - 1) + fib(n - 2);
+    }
+    // the issue is that my "end.if" block is unreachable, but it has no terminator in generated IR
 }
 
 fn main() -> void {

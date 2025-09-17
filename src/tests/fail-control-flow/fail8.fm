@@ -1,0 +1,13 @@
+// Nested if failures
+fn test_nested_if_inner_incomplete(x: i32, y: i32) -> i32 {
+    if x > 0 {
+        if y > 0 {
+            return 1;
+        }
+        // Missing else for inner if
+    }
+    else {
+        return 0;
+    }
+    // Path where x > 0 && y <= 0 doesn't return
+}

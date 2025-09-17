@@ -1,0 +1,17 @@
+fn test_deep_nesting_incomplete(a: i32, b: i32, c: i32) -> i32 {
+    if a > 0 {
+        if b > 0 {
+            if c > 0 {
+                return 1;
+            }
+            // Missing else for innermost if
+        }
+        else {
+            return 3;
+        }
+    }
+    else {
+        return 4;
+    }
+    // Path: a > 0 && b > 0 && c <= 0 has no return
+}
