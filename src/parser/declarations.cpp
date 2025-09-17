@@ -1,5 +1,4 @@
 #include "parser/parser.hpp"
-#include "utils/common_utils.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -39,8 +38,13 @@
 //                            {<compound-statement>}?
 [[nodiscard]] ASTNode* Parser::function_declaration() {
 
-    while (token_is_keyword(const) || token_is_keyword(volatile)
-           || token_is_keyword(static) || token_is_keyword(extern)) {}
+    // while (token_is_keyword(const) || token_is_keyword(volatile)
+    //        || token_is_keyword(static) || token_is_keyword(extern)) {
+    // }
+    // bool is_static = false;
+    // if (token_is_keyword(static)) {
+    //     is_static = true;
+    // }
 
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});

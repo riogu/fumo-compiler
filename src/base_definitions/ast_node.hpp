@@ -121,6 +121,7 @@ struct FunctionDecl {
     vec<ASTNode*> parameters {}; // if its empty we have no params
     Opt<ASTNode*> body {}; // compound statement {...}
     bool is_variadic = false;
+    bool is_static = false;
     bool body_should_move = false;
 };
 

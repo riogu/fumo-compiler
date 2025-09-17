@@ -8,12 +8,9 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     create_libc_functions();
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
-    llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
-                                                       "fumo.init.for: " + file.path_name.string(), llvm_module.get());
-
-    fumo_init->setLinkage(llvm::GlobalValue::ExternalLinkage);
-    fumo_init->setDSOLocal(false);
-    // fumo_init->addFnAttr(llvm::Attribute::NoInline);
+    llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
+                                                       "fumo.init", llvm_module.get());
+    fumo_init->setDSOLocal(true);
     fumo_init->addFnAttr("used");
 
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", fumo_init);
@@ -288,7 +285,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
 
                     if (auto* var = get_if<VariableDecl>(bin.lhs)) {
                         if (var->kind == VariableDecl::global_var_declaration) {
-                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init.for: " + file.path_name.string()));
+                            ir_builder->SetInsertPointPastAllocas(llvm_module->getFunction("fumo.init"));
                             ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                         }
                     }
