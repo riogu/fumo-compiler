@@ -9,6 +9,12 @@ include(FetchContent)
 # set(CMAKE_CXX_FLAGS_RELEASE "" CACHE STRING "" FORCE)
 option(USE_LIBASSERT "Use libassert" ON)
 
+# enable ccache if available to speed up compilation
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+endif()
+
 function(add_git_dependency libName gitURL gitTag)
  FetchContent_Declare(
    ${libName}
@@ -17,9 +23,7 @@ function(add_git_dependency libName gitURL gitTag)
    GIT_SHALLOW TRUE
    GIT_PROGRESS TRUE
  )
- if(NOT ("${libName}" STREQUAL "libname"))
-   FetchContent_MakeAvailable(${libName})
- endif()
+ FetchContent_MakeAvailable(${libName})
 endfunction()
 
 
@@ -59,6 +63,6 @@ else()
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
- set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address -fno-sanitize=leak -fno-omit-frame-pointer -Werror -Wall -Wno-unused-variable")
+ set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address,leak,undefined -fno-omit-frame-pointer -Werror -Wall -Wno-unused-variable")
 
 endif()

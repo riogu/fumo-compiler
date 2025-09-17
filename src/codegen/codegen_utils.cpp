@@ -97,15 +97,16 @@ void Codegen::clear_metadata() {
 }
 
 llvm::Function* Codegen::get_or_create_fumo_runtime_error() {
-    static llvm::Function* null_error_fn = nullptr;
+    llvm::Function* null_error_fn = llvm_module->getFunction("fumo.runtime_error");
     
     if (!null_error_fn) {
         // void fumo.runtime_error(const char* message)
         llvm::Type* void_type = llvm::Type::getVoidTy(*llvm_context);
         llvm::FunctionType* fn_type = llvm::FunctionType::get(void_type, {ir_builder->getPtrTy()}, false);
         
-        null_error_fn = llvm::Function::Create(fn_type, llvm::Function::ExternalLinkage, 
+        null_error_fn = llvm::Function::Create(fn_type, llvm::Function::InternalLinkage, 
                                               "fumo.runtime_error", llvm_module.get());
+        null_error_fn->setDSOLocal(true);
         
         llvm::BasicBlock* entry_bb = llvm::BasicBlock::Create(*llvm_context, "", null_error_fn);
         llvm::IRBuilder<> temp_builder(entry_bb);
