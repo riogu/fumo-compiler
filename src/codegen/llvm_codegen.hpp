@@ -45,9 +45,9 @@ struct Codegen {
   private:
     std::map<str, llvm::AllocaInst*> variable_env;
     unique_ptr<llvm::LLVMContext> llvm_context;
-    unique_ptr<llvm::IRBuilder<>> ir_builder;
+    std::unique_ptr<llvm::Module> llvm_module; // if the module isnt destroyed before the context we get segv
+    std::unique_ptr<llvm::IRBuilder<>> ir_builder;
     std::unique_ptr<llvm::IRBuilder<>> fumo_init_builder; 
-    unique_ptr<llvm::Module> llvm_module; // if the module isnt destroyed before the context we get segv
     std::stringstream file_stream;
     SymbolTableStack symbol_tree {};
     ASTNode* file_root_node;
