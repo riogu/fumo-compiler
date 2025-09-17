@@ -14,7 +14,6 @@ namespace math {
         fn distance_from_origin() -> f64 {
             return x * x + y * y;
         }
-        // Static constructors
         fn static new(x: f64, y: f64) -> Point {
             return Point {x, y};
         }
@@ -22,7 +21,6 @@ namespace math {
             return Point {0.0, 0.0};
         }
     }
-    
     namespace utils {
         struct Stats {
             let count: i32;
@@ -32,14 +30,12 @@ namespace math {
                 count = count + 1;
                 sum = sum + val;
             }
-            
             fn average() -> f64 {
                 if count > 0 {
                     return sum / count;
                 }
                 return 0.0;
             }
-            
             fn static new() -> Stats {
                 return Stats {0, 0.0};
             }
@@ -64,7 +60,7 @@ fn process_point(pt: math::Point*) -> void {
 fn main() -> i32 {
     printf("Fumo language demonstration\n");
     
-    // Static constructors vs initializer lists
+    // static constructors and initializer lists
     let point1 = math::Point::new(3.0, 4.0);
     let point2 = math::Point {1.5, 2.5};
     let origin = math::Point::origin();
@@ -72,8 +68,17 @@ fn main() -> i32 {
     let stats = math::utils::Stats::new();
     let preset_stats = math::utils::Stats {2, 10.0};
     
-    stats.add_value(point1.x);
-    stats.add_value(point2.y);
+    let i: i32 = 0;
+    while i < 3 {
+        if i == 0 {
+            stats.add_value(point1.x);
+        } else if i == 1 {
+            stats.add_value(point1.y);
+        } else {
+            stats.add_value(point2.y);
+        }
+        i = i + 1;
+    }
     
     process_point(&point1);
     process_point(&origin);
@@ -120,26 +125,65 @@ fn main() -> i32 {
 ```
 Source → Tokenizer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
 ```
+## Testing
+The compiler includes tests organized by feature:
 
-## Implementation Status
+**Core Language Features:**
+- Control flow (`if-statements/`, `while-tests/`)
+- Data types (`structs-and-postfix/`, `pointer-tests/`)
+- Literals (`char-literals/`, `string-literals/`)
+- Object initialization (`initializer-lists/`)
+- Static member functions (`static-member-functions/`)
 
-### Completed
-- Lexical analysis and parsing
-- AST generation with source location tracking
-- Symbol table with namespace resolution
-- Type checking and inference
-- LLVM IR code generation
-- Function calls and struct member access
-- Control flow implementation (`if/else`) and analysis of unreachable code 
-- Integer type conversions
-- Runtime null pointer checks
-- Command-line interface with multiple output formats
+**Error Handling:**
+- Correct parser errors (`fail-*` directories)
+- Invalid syntax detection and reporting
+- Type system violation detection
 
-### In Progress
-- Loop constructs (`while`, `for`)
-- Documentation/code examples/language specification
+**Code Generation:**
+- LLVM IR correctness verification
+- C interop compatibility testing
 
-## Build Requirements
+## Build and Usage
+
+### Requirements
 - LLVM 20+
 - C++23 compiler
 - CMake
+
+### Building
+```bash
+./initialize_build.sh    # Initial setup
+./rebuild.sh             # Rebuild after changes
+./test.sh                # Run test suite
+./install.sh             # Install 'fumo' command system-wide
+```
+
+### Usage
+```bash
+fumo source.fm                # Compile and run
+fumo source.fm -o output      # Compile to executable
+fumo --help                   # Show all compiler options
+```
+
+### In Progress
+- Documentation/code examples/language specification
+
+## Planned Features
+
+### Core Language
+- Type casting system
+- Generics/templates for containers and functions
+- Sum types (tagged unions) with exhaustiveness checking
+- Pattern matching for control flow and destructuring
+
+### Control Flow
+- `foreach` iteration over generic containers
+- `break` and `continue` statements
+
+### Standard Library
+- Generic array and vector types (`fm::vec<T>, fm::array<T>`)
+- String manipulation library (`fm::str`)
+- Memory management utilities and `unique_ptr<T>` implementation
+- Optional<T>
+- Basic I/O beyond C interop
