@@ -84,7 +84,7 @@ fn main() -> i32 {
 
 ### Type System
 - Static typing with compile-time checking
-- Primitive types: `i8`, `i16`, `i32`, `i64`, `f32`, `f64`, `void`, `bool`
+- Primitive types: `i8`, `i16`, `i32`, `i64`, `f32`, `f64`, `void`, `bool`, etc
 - Composite types: Pointers, structs with member functions
 - Integer promotion following C conversion rules
 - Null pointer dereference checking at runtime
@@ -100,8 +100,7 @@ fn main() -> i32 {
 ## Implementation
 
 ### Frontend
-- Hand-written tokenizer and recursive descent parser
-- AST generation with typed nodes
+- Hand-written tokenizer and recursive descent parser with AST generation
 - Symbol table with scoped resolution
 - Type checking and semantic analysis
 
@@ -109,30 +108,11 @@ fn main() -> i32 {
 - LLVM IR code generation
 - Integration with LLVM optimization passes
 - C calling convention for libc compatibility
-- Stack-based memory allocation
 
 ### Compiler Pipeline
 ```
 Source → Tokenizer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
 ```
-
-## Architecture Details
-
-### Parser
-- LL(1) recursive descent with operator precedence
-- AST nodes with pattern matching for analysis passes
-- Source location tracking for error reporting
-
-### Type System
-- Unification-based type inference for local variables
-- Automatic integer promotions and conversions
-- LLVM struct types with alignment
-
-### Code Generation
-- Direct LLVM IR generation in SSA form
-- Standard calling conventions
-- Phi node generation for control flow
-
 
 ## Implementation Status
 
@@ -143,14 +123,14 @@ Source → Tokenizer → Parser/AST → Semantic Analysis → LLVM IR Codegen �
 - Type checking and inference
 - LLVM IR code generation
 - Function calls and struct member access
-- Control flow implementation (`if/else`)
+- Control flow implementation (`if/else`) and analysis of unreachable code 
 - Integer type conversions
 - Runtime null pointer checks
 - Command-line interface with multiple output formats
 
 ### In Progress
 - Loop constructs (`while`, `for`)
-- Control flow analysis
+- Documentation/code examples/language specification
 
 ## Build Requirements
 - LLVM 20+

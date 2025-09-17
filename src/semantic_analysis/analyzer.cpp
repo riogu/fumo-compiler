@@ -28,8 +28,8 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         symbol_tree.function_decls.insert(std::move(map_node));
     }
 
-    for(auto& [_, func]: symbol_tree.function_decls) { analyze_function_control_flow(*func); }
-    for(auto& [_, func]: symbol_tree.member_function_decls) { analyze_function_control_flow(*func); }
+    for(auto& [_, func]: symbol_tree.function_decls)         analyze_function_control_flow(*func); 
+    for(auto& [_, func]: symbol_tree.member_function_decls)  analyze_function_control_flow(*func); 
 }
 
 void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
