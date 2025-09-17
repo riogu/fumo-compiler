@@ -37,6 +37,9 @@
             tokens.push_back(parse_string_literal());
             continue;
         }
+        if (curr == '\'') {
+            tokens.push_back(parse_character_literal());
+        }
         switch (curr) {
             //
             // -----------------------------------------------------------
