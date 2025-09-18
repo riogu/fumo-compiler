@@ -1,4 +1,3 @@
-// External memory functions (assume these exist)
 fn malloc(size: i64) -> i8*;
 fn free(ptr: i8*) -> void;
 fn memcpy(dest: i8*, src: i8*, n: i64) -> void;
@@ -23,7 +22,7 @@ namespace fm {
         // Static constructors
         fn static new() -> str {
             let data: i8* = malloc(1);
-            *data = '\0';  // null terminate
+            *data = '\0';  
             return str {data, 0, 1};
         }
         
@@ -32,28 +31,24 @@ namespace fm {
             let cap: i32 = len + 1;
             let data: i8* = malloc(cap);
             memcpy(data, cstr, len);
-            *(data + len) = '\0';  // null terminate
+            *(data + len) = '\0';  
             return str {data, len, cap};
         }
-        
         // Core methods
         fn c_str() -> i8* {
             return data;
         }
-        
         fn size() -> i32 {
             return length;
         }
-        
         fn empty() -> bool {
             return length == '\0';
         }
-        
         fn at(index: i32) -> i8 {
             if index >= 0 && index < length {
                 return *(data + index);
             }
-            return 0;  // safe fallback
+            return 0;  
         }
         
         fn equals(other: str*) -> bool {
@@ -75,7 +70,7 @@ namespace fm {
             
             if new_len + 1 > capacity {
                 // Need to grow
-                let new_cap: i32 = (new_len + 1) * 2;  // double capacity
+                let new_cap: i32 = (new_len + 1) * 2;  
                 let new_data: i8* = malloc(new_cap);
                 memcpy(new_data, data, length);
                 free(data);
@@ -85,7 +80,7 @@ namespace fm {
             
             memcpy(data + length, other->data, other->length);
             length = new_len;
-            *(data + length) = '\0'; // null terminate
+            *(data + length) = '\0';
         }
         
         fn append_cstr(cstr: i8*) -> void {
@@ -113,7 +108,7 @@ namespace fm {
         
         fn destroy() -> void {
             free(data);
-            // data = null;
+            data = null;
             length = '\0';
             capacity = '\0';
         }
@@ -151,7 +146,7 @@ namespace fm {
 // Usage example
 fn printf(format: i8*, ...) -> i32;
 
-fn main() -> i32 {
+fn main() -> void {
     let s1 = fm::str::new();
     let s2 = fm::str::from_cstr("Hello");
     let s3 = fm::str::from_cstr(" World");
@@ -170,5 +165,4 @@ fn main() -> i32 {
     s2.destroy();
     s3.destroy();
     
-    return 0;
 }
