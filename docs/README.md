@@ -1,149 +1,9 @@
----
-
-## Best Practices
-
-### Code Organization
-- Use namespaces to group related functionality
-- Prefer static constructor methods over direct struct initialization for complex setup
-- Keep external C function declarations at the top of files
-- Use descriptive names for variables and functions
-
-### Memory Management
-- Always pair `malloc` with `free`
-- Implement `destroy()` methods for structs that allocate memory
-- Check for null pointers before dereferencing
-- Use stack allocation when possible
-
-### Type Usage
-- Use explicit types for function parameters and return values
-- Rely on type inference for local variables when the type is obvious
-- Prefer specific integer types (`i32`, `i64`) over generic `int`
-
-### Error Handling
-- Use return codes for functions that can fail
-- Document expected error conditions in comments
-- Check return values from C library functions
-
----
-
-## Standard Library
-
-Currently, Fumo relies on C standard library functions for most operations. You can declare and use C functions directly:
-
-```cpp
-// C standard library declarations
-fn malloc(size: i64) -> i8*;
-fn free(ptr: i8*) -> void;
-fn memcpy(dest: i8*, src: i8*, n: i64) -> void;
-fn printf(format: const i8*, ...) -> i32;
-fn scanf(format: const i8*, ...) -> i32;
-
-// Usage
-let ptr = malloc(100);
-printf("Allocated memory at: %p\n", ptr);
-free(ptr);
-```
-
-### Future Standard Library
-
-Planned standard library components will be in the `fm` namespace:
-
-- `fm::str` - String manipulation
-- `fm::vec<T>` - Dynamic arrays  
-- `fm::map<K,V>` - Hash maps
-- `fm::optional<T>` - Optional values
-
----
-
-## Compiler Options
-
-```bash
-fumo [options] source.fm
-
-Options:
-  -o <file>     Output executable name
-  -c            Compile only (no linking)
-  --emit-llvm   Output LLVM IR instead of executable
-  --help        Show help message
-  --version     Show compiler version
-
-Examples:
-  fumo hello.fm                    # Compile and run
-  fumo hello.fm -o hello          # Compile to 'hello' executable
-  fumo hello.fm --emit-llvm       # Output LLVM IR
-```
-
-## Roadmap
-
-### Current Features ✅
-- Static typing with inference
-- Functions and structs
-- Basic control flow (if/while)
-- Namespaces
-- Pointer operations
-- C interoperability
-
-### In Progress 🚧
-- Comprehensive documentation
-- Better error messages
-- More examples and tutorials
-
-### Planned Features 🎯
-- **Type System**: Generics, sum types, pattern matching
-- **Control Flow**: `foreach`, `break`/`continue`
-- **Standard Library**: Collections, strings, memory management
-- **Language Features**: Type casting, better array support
-
-### Future Considerations 💭
-- Package system
-- Async/await
-- Compile-time evaluation
-- IDE integration
-
----
-
-### Reporting Issues
-
-If you encounter bugs, unexpected behavior, or have suggestions for improvements, please make an issue. When reporting issues, include:
-
-- Fumo source code that reproduces the problem
-- Expected vs actual behavior
-- Full error messages or output (with backtrace)
-------
-
-## Error Reference
-
-### Common Compile Errors
-
-**Type Mismatch:**
-```
-error: cannot assign f64 to i32
-  let x: i32 = 3.14;
-               ^^^^
-```
-*Solution:* Use correct type or explicit conversion.
-
-**Undefined Symbol:**
-```
-error: undefined symbol 'undeclared_var'
-  printf("%d", undeclared_var);
-               ^^^^^^^^^^^^^^
-```
-*Solution:* Declare the variable before use.
-
-**Invalid Member Access:**
-```
-error: struct 'Point' has no member 'z'
-  let val = point.z;
-                  ^
-```
-*Solution:* Check struct definition for available members.
-
----# Fumo Programming Language Documentation
+# Fumo Programming Language Documentation
 
 ## Table of Contents
 
 ### Getting Started
+- [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Your First Program](#your-first-program)
@@ -169,6 +29,8 @@ error: struct 'Point' has no member 'z'
 - [Standard Library](#standard-library)
 - [Compiler Options](#compiler-options)
 - [Error Messages](#error-messages)
+- [Operator Precedence](#operator-precedence)
+- [Current Limitations](#current-limitations)
 
 ### Development
 - [Development Setup](#development-setup)
@@ -178,13 +40,19 @@ error: struct 'Point' has no member 'z'
 
 ---
 
+## Overview
+
+Fumo is a statically-typed systems programming language that compiles to native code via LLVM. It combines C-like performance and memory control with modern language features like type inference and namespaces. Fumo source files use the `.fm` extension.
+
+---
+
 ## Quick Start
 
 ### Installation
 
-**Requirements:**
+**Prerequisites (install these first):**
 - LLVM 20+
-- C++23 compatible compiler (GCC 12+, Clang 16+)
+- GCC 12+ or Clang 16+ (C++23 compatible compiler)
 - CMake 3.20+
 
 **Build from source:**
@@ -192,7 +60,7 @@ error: struct 'Point' has no member 'z'
 git clone https://github.com/yourusername/fumo-compiler.git
 cd fumo-compiler
 ./initialize_build.sh
-./install.sh  # Optional: install 'fumo' command system-wide
+./install.sh  # Installs 'fumo' command system-wide
 ```
 
 ### Your First Program
@@ -219,6 +87,23 @@ fumo hello.fm -o hello # Compile to executable
 
 ## Language Tour
 
+### Comments
+
+Fumo supports C-style comments:
+```cpp
+// Single line comment
+
+/* 
+   Multi-line comment
+   block
+*/
+
+fn main() -> i32 {
+    // Comments can appear anywhere
+    return 0; /* even here */
+}
+```
+
 ### Variables and Types
 
 Fumo is statically typed with type inference support:
@@ -232,6 +117,9 @@ let pi: f64 = 3.14159;
 let count = 10;        // inferred as i32
 let name = "Fumo";     // inferred as i8*
 let flag = true;       // inferred as bool
+
+// Uninitialized declaration
+let value: i32;        // Must specify type when uninitialized
 ```
 
 **Primitive Types:**
@@ -240,6 +128,9 @@ let flag = true;       // inferred as bool
 - Boolean: `bool`
 - Character: `char`
 - Void: `void`
+
+**String Literals:**
+String literals support common escape sequences: `\n` (newline), `\t` (tab), `\"` (quote), `\\` (backslash).
 
 ### Control Flow
 
@@ -338,16 +229,17 @@ geometry::utils::print_circle(&circle);
 ### Pointers
 
 ```cpp
+// Basic pointer usage
 let value: i32 = 42;
 let ptr: i32* = &value;    // Address-of operator
 let deref: i32 = *ptr;     // Dereference
 
-// Pointer arithmetic
+// Note: Pointer arithmetic exists but should be used carefully
+// Separate variables aren't guaranteed to be adjacent in memory
 let first: i32 = 10;
 let second: i32 = 20;
 let ptr1: i32* = &first;
-let ptr2: i32* = &second;
-printf("First: %d, Second: %d\n", *ptr1, *(ptr1 + 1));
+// ptr1 + 1 may not point to 'second'
 ```
 
 ---
@@ -428,7 +320,7 @@ let ptr = &x;         // i32*
 let a: i32 = 42;
 let b: i64 = a;       // i32 -> i64 (safe)
 
-// TODO: Explicit casting syntax (planned feature)
+// Explicit casting syntax is planned but not yet implemented
 ```
 
 ### Composite Types
@@ -489,6 +381,40 @@ let buffer = Buffer::new(1024);
 buffer.destroy();
 ```
 
+### Complete Example Program
+```cpp
+fn printf(format: i8*, ...) -> i32;
+fn sqrt(x: f64) -> f64;
+
+struct Vector2D {
+    let x: f64;
+    let y: f64;
+    
+    fn static new(x: f64, y: f64) -> Vector2D {
+        return Vector2D {x, y};
+    }
+    
+    fn magnitude() -> f64 {
+        return sqrt(x * x + y * y);
+    }
+    
+    fn add(other: Vector2D) -> Vector2D {
+        return Vector2D {x + other.x, y + other.y};
+    }
+}
+
+fn main() -> i32 {
+    let v1 = Vector2D::new(3.0, 4.0);
+    let v2 = Vector2D {1.0, 2.0};
+    let v3 = v1.add(v2);
+    
+    printf("v1 magnitude: %.2f\n", v1.magnitude());
+    printf("v3 = (%.1f, %.1f)\n", v3.x, v3.y);
+    
+    return 0;
+}
+```
+
 ---
 
 ## Migrating from C/C++
@@ -497,25 +423,68 @@ buffer.destroy();
 
 | C/C++ | Fumo | Notes |
 |-------|------|-------|
-| `int x = 5;` | `let x: i32 = 5;` | Explicit `let` keyword |
-| `void func()` | `fn func() -> void` | Different function syntax |
+| `int x = 5;` | `let x: i32 = 5;` | Explicit `let` keyword required |
+| `int x;` | `let x: i32;` | Must specify type when uninitialized |
+| `void func() {}` | `fn func() -> void {}` | Different function syntax |
+| `// comment` | `// comment` | Same comment syntax |
+| `/* comment */` | `/* comment */` | Same block comment syntax |
 | `struct.member` | `struct.member` | Same for direct access |
 | `ptr->member` | `ptr->member` | Same for pointer access |
-| `MyClass obj;` | `let obj = MyClass {};` | Explicit initialization |
+| `MyClass obj;` | `let obj = MyClass {};` | Must use initializer syntax |
+| `int arr[5];` | *No direct equivalent* | Use pointers and manual allocation |
 
 ### What's Similar
 - Pointer syntax and semantics
-- Struct member access
+- Struct member access (`.` and `->`)
 - C calling convention for external functions
 - Manual memory management
+- Comment syntax
+- Operator precedence
 
 ### What's Different
 - Static typing with inference
 - `let` keyword for all variable declarations
 - `fn` keyword for functions
 - Static methods instead of constructors
-- Namespace syntax
-- No implicit conversions
+- Namespace syntax (`::`-based)
+- No implicit narrowing conversions
+- Explicit type annotation required for uninitialized variables
+- No built-in array types
+
+---
+
+## Operator Precedence
+
+From highest to lowest precedence:
+
+1. **Postfix**: `()` `.` `->`
+2. **Unary**: `&` `*` `-` `!` (right-to-left)
+3. **Multiplicative**: `*` `/` `%` (left-to-right)
+4. **Additive**: `+` `-` (left-to-right)
+5. **Relational**: `<` `<=` `>` `>=` (left-to-right)
+6. **Equality**: `==` `!=` (left-to-right)
+7. **Logical AND**: `&&` (left-to-right)
+8. **Logical OR**: `||` (left-to-right)
+9. **Assignment**: `=` (right-to-left)
+
+---
+
+## Current Limitations
+
+### Planned Features
+- Explicit type casting syntax
+- Generic types and functions
+- Pattern matching
+- Module system improvements
+- Standard library expansion
+- Array types
+
+### Known Limitations
+- No built-in array types (use pointers and manual allocation)
+- No automatic memory management (manual `malloc`/`free` required)
+- Limited standard library
+- No exception handling mechanism
+- Single-threaded compilation only
 
 ---
 
@@ -571,7 +540,6 @@ The Fumo compiler provides detailed error messages with file location and contex
 
 ---
 
-
 ## Grammar Specification
 
 ```bnf
@@ -588,7 +556,7 @@ namespace_decl ::= 'namespace' IDENTIFIER '{' (namespace_decl | function_decl | 
 var_decl ::= 'let' IDENTIFIER (':' type)? ('=' expression)? ';'
 
 type ::= primitive_type | pointer_type | qualified_type
-primitive_type ::= 'i8' | 'i16' | 'i32' | 'i64' | 'f32' | 'f64' | 'void' | 'bool'
+primitive_type ::= 'i8' | 'i16' | 'i32' | 'i64' | 'f32' | 'f64' | 'void' | 'bool' | 'char'
 pointer_type ::= type '*'
 qualified_type ::= (IDENTIFIER '::')* IDENTIFIER
 
@@ -604,7 +572,7 @@ additive_expr ::= multiplicative_expr (('+' | '-') multiplicative_expr)*
 multiplicative_expr ::= unary_expr (('*' | '/' | '%') unary_expr)*
 unary_expr ::= postfix_expr | ('&' | '*' | '-' | '!') unary_expr
 postfix_expr ::= primary_expr postfix_suffix*
-postfix_suffix ::= '.' IDENTIFIER | '->' IDENTIFIER | '(' argument_list? ')' | '[' expression ']'
+postfix_suffix ::= '.' IDENTIFIER | '->' IDENTIFIER | '(' argument_list? ')'
 
 primary_expr ::= IDENTIFIER | INTEGER_LITERAL | FLOAT_LITERAL | STRING_LITERAL | 
                 CHAR_LITERAL | 'true' | 'false' | '(' expression ')' | 
@@ -643,7 +611,7 @@ src/
 ### Compiler Architecture
 
 ```
-Source Code
+Source Code (.fm)
      ↓
    Lexer (Tokenization)
      ↓
@@ -673,4 +641,3 @@ tests/
 ├── structs-and-postfix/    # Valid struct usage
 └── fail-static-functions/  # Invalid static method usage
 ```
-

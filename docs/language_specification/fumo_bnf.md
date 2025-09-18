@@ -105,7 +105,6 @@
 <unary-operator> ::= "&" | "*" | "+" | "-" | "!" | "~"
 
 <postfix-expression> ::= <primary-expression>
-                       | <postfix-expression> "[" <expression> "]"
                        | <postfix-expression> "(" <argument-list>? ")"
                        | <postfix-expression> "." <identifier>
                        | <postfix-expression> "->" <identifier>
