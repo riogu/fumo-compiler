@@ -112,7 +112,7 @@ fn main() -> i32 {
 ## Implementation
 
 ### Frontend
-- Hand-written tokenizer and recursive descent parser with AST generation
+- Hand-written lexer and recursive descent parser with AST generation
 - Symbol table with scoped resolution
 - Type checking and semantic analysis
 
@@ -123,7 +123,7 @@ fn main() -> i32 {
 
 ### Compiler Pipeline
 ```
-Source → Tokenizer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
+Source → Lexer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
 ```
 ## Testing
 The compiler includes tests organized by feature:
@@ -185,5 +185,5 @@ fumo --help                   # Show all compiler options
 - Generic array and vector types (`fm::vec<T>, fm::array<T>`)
 - String manipulation library (`fm::str`)
 - Memory management utilities and `unique_ptr<T>` implementation
-- Optional<T>
+- `Optional<T>` impllementation
 - Basic I/O beyond C interop
