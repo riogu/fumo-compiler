@@ -1,0 +1,174 @@
+// External memory functions (assume these exist)
+fn malloc(size: i64) -> i8*;
+fn free(ptr: i8*) -> void;
+fn memcpy(dest: i8*, src: i8*, n: i64) -> void;
+fn memset(ptr: i8*, value: i8, n: i64) -> void;
+fn printf(format: const i8*, ...) -> i32;
+fn scanf(format: const i8*, ...) -> i32;
+
+namespace fm {
+    // Helper function
+    fn cstr_length(cstr: i8*) -> i32 {
+        let len: i32 = 0;
+        while *(cstr + len) != '\0' {
+            len = len + 1;
+        }
+        return len;
+    }
+    struct str {
+        let data: i8*;
+        let length: i32;
+        let capacity: i32;
+        
+        // Static constructors
+        fn static new() -> str {
+            let data: i8* = malloc(1);
+            *data = '\0';  // null terminate
+            return str {data, 0, 1};
+        }
+        
+        fn static from_cstr(cstr: i8*) -> str {
+            let len: i32 = cstr_length(cstr);
+            let cap: i32 = len + 1;
+            let data: i8* = malloc(cap);
+            memcpy(data, cstr, len);
+            *(data + len) = '\0';  // null terminate
+            return str {data, len, cap};
+        }
+        
+        // Core methods
+        fn c_str() -> i8* {
+            return data;
+        }
+        
+        fn size() -> i32 {
+            return length;
+        }
+        
+        fn empty() -> bool {
+            return length == '\0';
+        }
+        
+        fn at(index: i32) -> i8 {
+            if index >= 0 && index < length {
+                return *(data + index);
+            }
+            return 0;  // safe fallback
+        }
+        
+        fn equals(other: str*) -> bool {
+            if length != other->length {
+                return false;
+            }
+            let i: i32 = '\0';
+            while i < length {
+                if *(data + i) != *(other->data + i) {
+                    return false;
+                }
+                i = i + 1;
+            }
+            return true;
+        }
+        
+        fn append(other: str*) -> void {
+            let new_len: i32 = length + other->length;
+            
+            if new_len + 1 > capacity {
+                // Need to grow
+                let new_cap: i32 = (new_len + 1) * 2;  // double capacity
+                let new_data: i8* = malloc(new_cap);
+                memcpy(new_data, data, length);
+                free(data);
+                data = new_data;
+                capacity = new_cap;
+            }
+            
+            memcpy(data + length, other->data, other->length);
+            length = new_len;
+            *(data + length) = '\0'; // null terminate
+        }
+        
+        fn append_cstr(cstr: i8*) -> void {
+            let cstr_len: i32 = cstr_length(cstr);
+            let new_len: i32 = length + cstr_len;
+            
+            if new_len + 1 > capacity {
+                let new_cap: i32 = (new_len + 1) * 2;
+                let new_data: i8* = malloc(new_cap);
+                memcpy(new_data, data, length);
+                free(data);
+                data = new_data;
+                capacity = new_cap;
+            }
+            
+            memcpy(data + length, cstr, cstr_len);
+            length = new_len;
+            *(data + length) = '\0';
+        }
+        
+        fn clear() -> void {
+            length = '\0';
+            *data = '\0';
+        }
+        
+        fn destroy() -> void {
+            free(data);
+            // data = null;
+            length = '\0';
+            capacity = '\0';
+        }
+        
+        // utility for finding substring
+        fn find_in(haystack: str*) -> i32 {
+            if length > haystack->length {
+                return -1;
+            }
+            let i: i32 = '\0';
+            while i <= haystack->length - length {
+                let j: i32 = '\0';
+                let found: bool = true;
+                
+                while j < length {
+                    if *(haystack->data + i + j) != *(data + j) {
+                        found = false;
+                        j = length;  // break out
+                    } else {
+                        j = j + 1;
+                    }
+                }
+                
+                if found {
+                    return i;
+                }
+                i = i + 1;
+            }
+            return -1;
+        }
+    }
+}
+
+
+// Usage example
+fn printf(format: i8*, ...) -> i32;
+
+fn main() -> i32 {
+    let s1 = fm::str::new();
+    let s2 = fm::str::from_cstr("Hello");
+    let s3 = fm::str::from_cstr(" World");
+    
+    s2.append(&s3);
+    s1.append_cstr("Test: ");
+    s1.append(&s2);
+    
+    printf("Result: %s\n", s1.c_str());
+    printf("Length: %d\n", s1.size());
+    
+    let pos: i32 = s2.find_in(&s1);
+    printf("Found at position: %d\n", pos);
+    
+    s1.destroy();
+    s2.destroy();
+    s3.destroy();
+    
+    return 0;
+}
