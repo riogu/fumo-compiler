@@ -4,7 +4,7 @@
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
 
-    create_libc_functions();
+    // create_libc_functions();
 
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,

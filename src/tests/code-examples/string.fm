@@ -142,10 +142,6 @@ namespace fm {
     }
 }
 
-
-// Usage example
-fn printf(format: i8*, ...) -> i32;
-
 fn main() -> void {
     let s1 = fm::str::new();
     let s2 = fm::str::from_cstr("Hello");
