@@ -57,7 +57,7 @@
                    | <pointer-type>
                    | <qualified-type>
 
-<primitive-type> ::= "void" | "i8" | "i16" | "i32" | "i64" 
+<primitive-type> ::= "void" | "i8" | "i16" | "i32" | "i64" | "u8" | "u16" | "u32" | "u64" 
                    | "f32" | "f64" | "bool" | "char"
 
 <pointer-type> ::= <type-specifier> "*"
