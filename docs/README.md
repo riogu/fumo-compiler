@@ -22,7 +22,6 @@
 ### Examples and Tutorials
 - [Common Patterns](#common-patterns)
 - [Comparisons to C/C++](#comparisons-to-cc)
-- [Best Practices](#best-practices)
 
 ### Reference
 - [Grammar Specification](#grammar-specification)
@@ -45,8 +44,6 @@ Fumo is a statically-typed systems programming language that compiles to native 
 It implements what i consider to be the "basic essential" features of a systems programming language.
 I made this compiler to be a "base" for my future language development ideas/compiler backend optimization exploration.
 Fumo source files use the `.fm` extension.
-
----
 
 ## Quick Start
 
