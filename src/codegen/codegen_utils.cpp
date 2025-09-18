@@ -66,7 +66,7 @@ void Codegen::create_libc_main() {
         // NOTE: maybe using other names shouldn't be an error. theres no particular harm in allowing it
         if (!(get_id(get<VariableDecl>(argc_node)).mangled_name != "argc"
            && get_id(get<VariableDecl>(argv_node)).mangled_name != "argv"
-           && argc_node->type.kind == Type::i32_ && argv_node->type.kind == Type::str_)) {
+           && argc_node->type.kind == Type::i32_ && argv_node->type.kind == Type::i8_ && argv_node->type.ptr_count == 2)) {
             report_error(symbol_tree.function_decls["main"]->source_token,
                          "main has wrong types for arguments. NOTE: use main(i32 argc, str* argv) or main()");
         }

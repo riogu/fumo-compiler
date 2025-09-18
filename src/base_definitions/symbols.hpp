@@ -65,7 +65,6 @@
     u64              ,                  \
     f32              ,                  \
     f64              ,                  \
-    str              ,                  \
     void             ,                  \
     Any              ,                  \
     bool

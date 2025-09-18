@@ -11,16 +11,6 @@
 #include <print>
 #include "llvm/Support/Signals.h"
 
-struct foo {
-    int x;
-    void func() {}
-
-    static foo make() {
-        return foo {};
-    }
-};
-
-
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
 llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O2;
@@ -70,31 +60,6 @@ void custom_handler(int sig) {
     std::exit(1);
 }
 
-// #define fn auto
-// #define i64 int64_t
-//
-// fn fib(i64 n) -> i64 {
-//     //1
-//     if (n < 2) {
-//         return 0;
-//     } else {
-//         //2
-//         if(n > 2) return fib(n - 1) + fib(n - 2);
-//         //3
-//         else return 0;
-//     }
-// }
-// fn e() -> int {
-//     i64 var;
-//     scanf("%ld", &var);
-//     printf("%ld\n", fib(var));
-//     return 0;
-// }
-// while loops
-// control flow analysis
-// void*
-// casting
-// var as i32*;
 auto main(int argc, char** argv) -> int {
     // TODO: warn users if they provide a non existent source file
     llvm::InitLLVM init(argc, argv); 
