@@ -1,128 +1,156 @@
-Current structure for the AST parser in BNF format
-- Top level
+# Complete Fumo Language BNF Grammar
 
-<translation-unit> ::= <declaration>
-                     | <statement>
+## Top Level
+```bnf
+<translation-unit> ::= <declaration>*
 
-- Statements
+<declaration> ::= <variable-declaration>
+                | <function-declaration>  
+                | <struct-declaration>
+                | <namespace-declaration>
+```
 
-<statement> ::= <jump-statement>
-              | <expression-statement>
+## Statements
+```bnf
+<statement> ::= <expression-statement>
               | <if-statement>
+              | <while-statement>
+              | <jump-statement>
+              | <compound-statement>
+              | <variable-declaration>
 
-<if-statement> ::= "if" { "(" }? <expression> { ")" }? <compound-statement> { "else" (<compound-statement> | <if-statement>) }?
+<compound-statement> ::= "{" <statement>* "}"
 
-<jump-statement> ::= "return" {<expression>}? ";"
+<if-statement> ::= "if" "("? <expression> ")"? <compound-statement> 
+                   ( "else" ( <if-statement> | <compound-statement> ) )?
+
+<while-statement> ::= "while" <expression> <compound-statement>
+
+<jump-statement> ::= "return" <expression>? ";"
                    | "continue" ";"
                    | "break" ";"
 
-<expression-statement> = <expression> ";"
+<expression-statement> ::= <expression> ";"
+```
 
----
----
----
-- Declarations
+## Declarations
+```bnf
+<variable-declaration> ::= "let" <identifier> ( ":" <type-specifier> )? ( "=" <initializer> )? ";"
 
-<declaration> ::= "let"         <variable-declaration>  ";"
-                | "fn"          <function-declaration>  ";"
-                | "struct"      <struct-declaration>    ";"
-                | "namespace"   <namespace-declaration> ";"
-                | "enum"        <enum-declaration>      ";"
+<function-declaration> ::= "fn" ( "static" )? <identifier> "(" <parameter-list>? ")" "->" <type-specifier> <compound-statement>?
 
----
+<struct-declaration> ::= "struct" <identifier> "{" <struct-member>* "}"
 
-<struct-declaration>      ::= <named-scope-declaration>
-<namespace-declaration>   ::= <named-scope-declaration>
-<enum-declaration>        ::= [TODO]
+<namespace-declaration> ::= "namespace" <identifier> "{" <declaration>* "}"
 
-<named-scope-declaration> ::= <identifier> "{" {<declaration>}* "}"
+<struct-member> ::= <variable-declaration>
+                  | <function-declaration>
 
-<variable-declaration>    ::= <declarator-list> {":"}? {<declaration-specifier>}+ {"=" <initializer>}?
-<function-declaration>    ::=  <declarator> "(" {<parameter-list>}? ")" "->" {<declaration-specifier>}+ {<compound-statement>}?
+<parameter-list> ::= <parameter> ( "," <parameter> )*
 
----
-<compound-statement> ::= { {<declaration>}* {<statement>}* {<compound-statement>}* }
+<parameter> ::= <identifier> ":" <type-specifier>
+```
 
-<declarator> ::= <identifier>
-               | <declarator> "(" {<parameter-list>}? ")"
-               | <declarator> "\[" {<constant-expression>}? "]"
+## Types
+```bnf
+<type-specifier> ::= <primitive-type>
+                   | <pointer-type>
+                   | <qualified-type>
 
-<declaration-specifier> ::= {<type-qualifier> | <type-specifier>}+ {<pointer>}*
+<primitive-type> ::= "void" | "i8" | "i16" | "i32" | "i64" 
+                   | "f32" | "f64" | "bool" | "char"
 
-<declarator-list> ::= <declarator>
-                    | <declarator> "," <declarator-list>
+<pointer-type> ::= <type-specifier> "*"
 
+<qualified-type> ::= <qualified-identifier>
 
-<parameter-list> ::= <parameter>
-                   | <parameter-list> "," <parameter> 
+<type-qualifier> ::= "const"
+```
 
-<parameter> ::=  <identifier> ":" <declarator-specifier>
+## Expressions
+```bnf
+<expression> ::= <assignment-expression>
 
----
----
----
-- Expressions
+<assignment-expression> ::= <logical-or-expression>
+                          | <logical-or-expression> "=" <assignment-expression>
 
-<expression> ::= <assignment> 
+<logical-or-expression> ::= <logical-and-expression> 
+                          | <logical-or-expression> "||" <logical-and-expression>
 
-<assignment> ::= <equality> | {"=" <initializer>}?
+<logical-and-expression> ::= <equality-expression>
+                           | <logical-and-expression> "&&" <equality-expression>
 
-<initializer> ::= "{" <initializer-list> "}"
-                | <equality>
+<equality-expression> ::= <relational-expression>
+                        | <equality-expression> "==" <relational-expression>
+                        | <equality-expression> "!=" <relational-expression>
 
-<initializer-list> ::= <initializer> {","}?
-                     | <initializer> , <initializer-list>
+<relational-expression> ::= <additive-expression>
+                          | <relational-expression> "<" <additive-expression>
+                          | <relational-expression> ">" <additive-expression>
+                          | <relational-expression> "<=" <additive-expression>
+                          | <relational-expression> ">=" <additive-expression>
 
-<equality> ::= <relational> {"==" <relational> | "!=" <relational> }*
+<additive-expression> ::= <multiplicative-expression>
+                        | <additive-expression> "+" <multiplicative-expression>
+                        | <additive-expression> "-" <multiplicative-expression>
 
-<relational> ::= <add> { <relational-op>  <add> }*
+<multiplicative-expression> ::= <unary-expression>
+                              | <multiplicative-expression> "*" <unary-expression>
+                              | <multiplicative-expression> "/" <unary-expression>
+                              | <multiplicative-expression> "%" <unary-expression>
 
-<add> ::=  <multiplication> { "+" <multiplication> | "-" <multiplication> }*
+<unary-expression> ::= <postfix-expression>
+                     | <unary-operator> <unary-expression>
 
-<multiplication> ::=  <unary> { \"*" <unary> |"/" <unary> }*
+<unary-operator> ::= "&" | "*" | "+" | "-" | "!" | "~"
 
-<unary> ::= <unary-op> <unary> 
-          | <postfix>
+<postfix-expression> ::= <primary-expression>
+                       | <postfix-expression> "[" <expression> "]"
+                       | <postfix-expression> "(" <argument-list>? ")"
+                       | <postfix-expression> "." <identifier>
+                       | <postfix-expression> "->" <identifier>
 
-<postfix> ::= <primary>
-            | <postfix> "->" <postfix>
-            | <postfix> "." <postfix>
-            | <postfix> "(" {<initializer>}* ")" <postfix>
+<primary-expression> ::= <identifier>
+                       | <qualified-identifier>
+                       | <literal>
+                       | "(" <expression> ")"
+                       | <initializer-list>
 
-<primary> ::= "(" <equality> ")"
-            | <qualified-identifier> 
-            | <literal>
+<argument-list> ::= <assignment-expression> ( "," <assignment-expression> )*
+```
 
+## Initializers
+```bnf
+<initializer> ::= <assignment-expression>
+                | <initializer-list>
 
-<qualified-identifier> ::= <identifier> {"::" <identifier>}*
+<initializer-list> ::= <qualified-identifier> "{" <initializer-element-list>? "}"
 
----
----
----
-- Misc definitions
-<pointer> ::= " * "
-<unary-op> ::= - 
-             | ! 
-             | ~ 
-             | +
-             | *
-<relational-op> ::= < 
-                  | > 
-                  | <=
-                  | >=
-<type-specifier> ::= void
-                   | u8
-                   | i32
-                   | i64
-                   | f32
-                   | f64
-                   | str
-                   | bool
-                   | <struct-specifier>
-                   | <enum-specifier>
-                   | <typedef-name>
-<type-qualifier> ::= const
-                   | volatile
-                   | static
-                   | extern
+<initializer-element-list> ::= <initializer> ( "," <initializer> )* ","?
+```
 
+## Identifiers and Literals
+```bnf
+<qualified-identifier> ::= <identifier> ( "::" <identifier> )*
+
+<identifier> ::= [a-zA-Z_][a-zA-Z0-9_]*
+
+<literal> ::= <integer-literal>
+            | <floating-literal>
+            | <character-literal>
+            | <string-literal>
+            | <boolean-literal>
+            | <null-literal>
+
+<integer-literal> ::= [0-9]+
+
+<floating-literal> ::= [0-9]+ "." [0-9]+
+
+<character-literal> ::= "'" <character> "'"
+
+<string-literal> ::= "\"" <string-character>* "\""
+
+<boolean-literal> ::= "true" | "false"
+
+<null-literal> ::= "null"
+```
