@@ -97,9 +97,16 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             }
             analyze(*un.expr.value());
             switch (un.kind) {
+                case UnaryExpr::logic_not:
+                    if (!is_arithmetic_t(un.expr.value()->type) && !is_ptr_t(un.expr.value()->type)) {
+                        report_error(node.source_token,
+                                     "invalid type '{}' for unary expression.",
+                                     type_name(un.expr.value()->type));
+                    }
+                    node.type = un.expr.value()->type;
+                    break;
                 case UnaryExpr::negate:
                 case UnaryExpr::bitwise_not:
-                case UnaryExpr::logic_not:
                     if (!is_arithmetic_t(un.expr.value()->type)) {
                         report_error(node.source_token,
                                      "invalid type '{}' for unary expression.",
@@ -181,6 +188,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 }
                 case BinaryExpr::multiply:
                 case BinaryExpr::divide:
+                case BinaryExpr::modulus:
                     if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break; 

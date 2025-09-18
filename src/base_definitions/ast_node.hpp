@@ -70,6 +70,7 @@ struct BinaryExpr {
         sub,                     /* -                                 */ \
         multiply,                /* *                                 */ \
         divide,                  /* /                                 */ \
+        modulus,                 /* /                                 */ \
         equal,                   /* ==                                */ \
         not_equal,               /* !=                                */ \
         less_than,               /* < | >                             */ \

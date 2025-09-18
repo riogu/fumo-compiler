@@ -1,0 +1,293 @@
+fn printf(format: const i8*, ...) -> i32;
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+fn rand() -> i32;
+fn srand(seed: i32) -> void;
+fn time(t: i32*) -> i32;
+
+struct IntArray {
+    let data: i32*;
+    let size: i32;
+    
+    fn static new(size: i32) -> IntArray {
+        let data: i32* = malloc(size * 4); // sizeof(i32) = 4
+        return IntArray {data, size};
+    }
+    
+    fn get(index: i32) -> i32 {
+        return *(data + index);
+    }
+    
+    fn set(index: i32, value: i32) -> void {
+        *(data + index) = value;
+    }
+    
+    fn swap(i: i32, j: i32) -> void {
+        let temp: i32 = *(data + i);
+        *(data + i) = *(data + j);
+        *(data + j) = temp;
+    }
+    
+    fn print() -> void {
+        printf("[");
+        let i: i32 = 0;
+        while i < size {
+            if i > 0 {
+                printf(", ");
+            }
+            printf("%d", *(data + i));
+            i = i + 1;
+        }
+        printf("]\n");
+    }
+    
+    fn fill_random(min: i32, max: i32) -> void {
+        let i: i32 = 0;
+        while i < size {
+            *(data + i) = min + (rand() % (max - min + 1));
+            i = i + 1;
+        }
+    }
+    
+    fn copy_from(other: IntArray*) -> void {
+        let i: i32 = 0;
+        while i < size && i < other->size {
+            *(data + i) = *(other->data + i);
+            i = i + 1;
+        }
+    }
+    
+    fn is_sorted() -> bool {
+        let i: i32 = 1;
+        while i < size {
+            if *(data + i) < *(data + i - 1) {
+                return false;
+            }
+            i = i + 1;
+        }
+        return true;
+    }
+    
+    fn destroy() -> void {
+        free(data);
+    }
+}
+
+// Bubble Sort - O(n²)
+fn bubble_sort(arr: IntArray*) -> void {
+    let i: i32 = 0;
+    while i < arr->size - 1 {
+        let j: i32 = 0;
+        let swapped: bool = false;
+        
+        while j < arr->size - 1 - i {
+            if arr->get(j) > arr->get(j + 1) {
+                arr->swap(j, j + 1);
+                swapped = true;
+            }
+            j = j + 1;
+        }
+        
+        // Early termination if no swaps occurred
+        if !swapped {
+            i = arr->size; // Break out of outer loop
+        }
+        i = i + 1;
+    }
+}
+
+// Selection Sort - O(n²)
+fn selection_sort(arr: IntArray*) -> void {
+    let i: i32 = 0;
+    while i < arr->size - 1 {
+        let min_idx: i32 = i;
+        let j: i32 = i + 1;
+        
+        while j < arr->size {
+            if arr->get(j) < arr->get(min_idx) {
+                min_idx = j;
+            }
+            j = j + 1;
+        }
+        
+        if min_idx != i {
+            arr->swap(i, min_idx);
+        }
+        i = i + 1;
+    }
+}
+
+// Insertion Sort - O(n²)
+fn insertion_sort(arr: IntArray*) -> void {
+    let i: i32 = 1;
+    while i < arr->size {
+        let key: i32 = arr->get(i);
+        let j: i32 = i - 1;
+        
+        while j >= 0 && arr->get(j) > key {
+            arr->set(j + 1, arr->get(j));
+            j = j - 1;
+        }
+        arr->set(j + 1, key);
+        i = i + 1;
+    }
+}
+
+// Quick Sort - O(n log n) average, O(n²) worst case
+fn partition(arr: IntArray*, low: i32, high: i32) -> i32 {
+    let pivot: i32 = arr->get(high);
+    let i: i32 = low - 1;
+    let j: i32 = low;
+    
+    while j < high {
+        if arr->get(j) <= pivot {
+            i = i + 1;
+            arr->swap(i, j);
+        }
+        j = j + 1;
+    }
+    
+    arr->swap(i + 1, high);
+    return i + 1;
+}
+
+fn quick_sort_recursive(arr: IntArray*, low: i32, high: i32) -> void {
+    if low < high {
+        let pi: i32 = partition(arr, low, high);
+        quick_sort_recursive(arr, low, pi - 1);
+        quick_sort_recursive(arr, pi + 1, high);
+    }
+}
+
+fn quick_sort(arr: IntArray*) -> void {
+    if arr->size > 1 {
+        quick_sort_recursive(arr, 0, arr->size - 1);
+    }
+}
+
+// Merge Sort - O(n log n)
+fn merge(arr: IntArray*, left: i32, mid: i32, right: i32) -> void {
+    let left_size: i32 = mid - left + 1;
+    let right_size: i32 = right - mid;
+    
+    let left_arr: IntArray = IntArray::new(left_size);
+    let right_arr: IntArray = IntArray::new(right_size);
+    
+    // Copy data to temporary arrays
+    let i: i32 = 0;
+    while i < left_size {
+        left_arr.set(i, arr->get(left + i));
+        i = i + 1;
+    }
+    
+    let j: i32 = 0;
+    while j < right_size {
+        right_arr.set(j, arr->get(mid + 1 + j));
+        j = j + 1;
+    }
+    
+    // Merge the temporary arrays back
+    i = 0;
+    j = 0;
+    let k: i32 = left;
+    
+    while i < left_size && j < right_size {
+        if left_arr.get(i) <= right_arr.get(j) {
+            arr->set(k, left_arr.get(i));
+            i = i + 1;
+        } else {
+            arr->set(k, right_arr.get(j));
+            j = j + 1;
+        }
+        k = k + 1;
+    }
+    
+    // Copy remaining elements
+    while i < left_size {
+        arr->set(k, left_arr.get(i));
+        i = i + 1;
+        k = k + 1;
+    }
+    
+    while j < right_size {
+        arr->set(k, right_arr.get(j));
+        j = j + 1;
+        k = k + 1;
+    }
+    
+    left_arr.destroy();
+    right_arr.destroy();
+}
+
+fn merge_sort_recursive(arr: IntArray*, left: i32, right: i32) -> void {
+    if left < right {
+        let mid: i32 = left + (right - left) / 2;
+        merge_sort_recursive(arr, left, mid);
+        merge_sort_recursive(arr, mid + 1, right);
+        merge(arr, left, mid, right);
+    }
+}
+
+fn merge_sort(arr: IntArray*) -> void {
+    if arr->size > 1 {
+        merge_sort_recursive(arr, 0, arr->size - 1);
+    }
+}
+
+fn main() -> i32 {
+    srand(time(null));
+    
+    printf("=== Sorting Algorithms Demo ===\n\n");
+    
+    // Test with small array first
+    printf("--- Small Array Test (10 elements) ---\n");
+    let small_arr = IntArray::new(10);
+    small_arr.fill_random(1, 100);
+    
+    // Test with larger array
+    printf("--- Large Array Test (1000 elements) ---\n");
+    let large_arr = IntArray::new(1000);
+    large_arr.fill_random(1, 1000);
+    
+    printf("Original array: [1000 random elements]\n\n");
+    
+    // For large arrays, only test efficient algorithms
+    
+    // Test edge cases
+    printf("--- Edge Cases ---\n");
+    
+    // Already sorted array
+    let sorted_arr = IntArray::new(5);
+    sorted_arr.set(0, 1);
+    sorted_arr.set(1, 2);
+    sorted_arr.set(2, 3);
+    sorted_arr.set(3, 4);
+    sorted_arr.set(4, 5);
+    
+    printf("Already sorted array:\n");
+    
+    // Reverse sorted array
+    let reverse_arr = IntArray::new(5);
+    reverse_arr.set(0, 5);
+    reverse_arr.set(1, 4);
+    reverse_arr.set(2, 3);
+    reverse_arr.set(3, 2);
+    reverse_arr.set(4, 1);
+    
+    printf("Reverse sorted array:\n");
+    
+    // Single element
+    let single_arr = IntArray::new(1);
+    single_arr.set(0, 42);
+    
+    printf("Single element array:\n");
+    
+    // Cleanup
+    small_arr.destroy();
+    large_arr.destroy();
+    sorted_arr.destroy();
+    reverse_arr.destroy();
+    single_arr.destroy();
+    
+    return 0;
+}

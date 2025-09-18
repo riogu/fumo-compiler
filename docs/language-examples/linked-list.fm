@@ -1,0 +1,120 @@
+struct Node;
+fn malloc(size: i64) -> Node*;
+fn free(ptr: Node*) -> void;
+fn printf(format: const i8*, ...) -> i32;
+
+struct Node {
+    let value: i32;
+    let next: Node*;
+    
+    fn static new(val: i32) -> Node* {
+        let node: Node* = malloc(8 + 8); // sizeof(Node) = sizeof(i32) + sizeof(Node*)
+        node->value = val;
+        node->next = null;
+        return node;
+    }
+}
+
+struct List {
+    let head: Node*;
+    let size: i32;
+    
+    fn static new() -> List {
+        return List {null, 0}; 
+    }
+    
+    fn push_front(value: i32) -> void {
+        let new_node: Node* = Node::new(value);
+        new_node->next = head;
+        head = new_node;
+        size = size + 1;
+    }
+    
+    fn pop_front() -> i32 {
+        if !head {
+            return -1; // Error value
+        }
+        
+        let value: i32 = head->value;
+        let old_head: Node* = head;
+        head = head->next;
+        free(old_head);
+        size = size - 1;
+        return value;
+    }
+    
+    fn print() -> void {
+        printf("[");
+        let current: Node* = head;
+        let first: bool = true;
+        
+        while current {
+            if !first {
+                printf(", ");
+            }
+            printf("%d", current->value);
+            current = current->next;
+            first = false;
+        }
+        printf("]\n");
+    }
+    
+    fn length() -> i32 {
+        return size;
+    }
+    
+    fn find(value: i32) -> bool {
+        let current: Node* = head;
+        while current {
+            if current->value == value {
+                return true;
+            }
+            current = current->next;
+        }
+        return false;
+    }
+    
+    fn clear() -> void {
+        while head {
+            let temp: Node* = head;
+            head = head->next;
+            free(temp);
+        }
+        size = 0;
+    }
+}
+
+fn main() -> i32 {
+    let list = List::new();
+    
+    printf("Adding elements to list...\n");
+    list.push_front(10);
+    list.push_front(20);
+    list.push_front(30);
+    list.push_front(40);
+    
+    printf("List contents: ");
+    list.print();
+    printf("List size: %d\n", list.length());
+    
+    if list.find(20) {
+        printf("Looking for 20: %s\n", "found");
+    } else {
+        printf("Looking for 20: %s\n", "not found");
+    }
+    if list.find(99) {
+        printf("Looking for 99: %s\n", "found");
+    } else {
+        printf("Looking for 99: %s\n", "not found");
+    }
+    
+    printf("Popping elements:\n");
+    while list.length() > 0 {
+        let value: i32 = list.pop_front();
+        printf("Popped: %d, remaining: ", value);
+        list.print();
+    }
+    
+    list.clear();
+    return 0;
+}

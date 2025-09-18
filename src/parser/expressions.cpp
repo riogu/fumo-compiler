@@ -277,6 +277,11 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             node = push(ASTNode {temp_tkn, BinaryExpr {BinaryExpr::divide, node, temp}});
             continue;
         }
+        if (token_is(%)) {
+            auto temp = if_value(unary()) else_error((*curr_tkn), "expected expression.");
+            node = push(ASTNode {temp_tkn, BinaryExpr {BinaryExpr::divide, node, temp}});
+            continue;
+        }
         return node;
     }
 }

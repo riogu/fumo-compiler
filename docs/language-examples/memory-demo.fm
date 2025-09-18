@@ -1,0 +1,184 @@
+fn malloc(size: i64) -> i32*;
+fn free(ptr: i32*) -> void;
+fn memset(ptr: i32*, value: i8, n: i64) -> void;
+fn printf(format: const i8*, ...) -> i32;
+
+struct IntBuffer {
+    let data: i32*;
+    let size: i32;
+    let capacity: i32;
+    
+    fn static new(initial_capacity: i32) -> IntBuffer {
+        let data_size: i64 = initial_capacity * 4; // sizeof(i32) = 4
+        let data: i32* = malloc(data_size);
+        
+        // Initialize to zero
+        memset(data, 0, data_size);
+        
+        return IntBuffer {data, 0, initial_capacity};
+    }
+    
+    fn push(value: i32) -> bool {
+        if size >= capacity {
+            return false; // Buffer full
+        }
+        
+        *(data + size) = value;
+        size = size + 1;
+        return true;
+    }
+    
+    fn get(index: i32) -> i32 {
+        if index < 0 || index >= size {
+            return -1; // Error value
+        }
+        return *(data + index);
+    }
+    
+    fn set(index: i32, value: i32) -> bool {
+        if index < 0 || index >= size {
+            return false;
+        }
+        *(data + index) = value;
+        return true;
+    }
+    
+    fn find(value: i32) -> i32 {
+        let i: i32 = 0;
+        while i < size {
+            if *(data + i) == value {
+                return i;
+            }
+            i = i + 1;
+        }
+        return -1; // Not found
+    }
+    
+    fn print() -> void {
+        printf("[");
+        let i: i32 = 0;
+        while i < size {
+            if i > 0 {
+                printf(", ");
+            }
+            printf("%d", *(data + i));
+            i = i + 1;
+        }
+        printf("]\n");
+    }
+    
+    fn sum() -> i32 {
+        let total: i32 = 0;
+        let i: i32 = 0;
+        while i < size {
+            total = total + *(data + i);
+            i = i + 1;
+        }
+        return total;
+    }
+    
+    fn reverse() -> void {
+        let left: i32 = 0;
+        let right: i32 = size - 1;
+        
+        while left < right {
+            let temp: i32 = *(data + left);
+            *(data + left) = *(data + right);
+            *(data + right) = temp;
+            
+            left = left + 1;
+            right = right - 1;
+        }
+    }
+    
+    fn destroy() -> void {
+        free(data);
+    }
+}
+
+fn demonstrate_pointers() -> void {
+    printf("=== Pointer Demonstration ===\n");
+    
+    let value: i32 = 42;
+    let ptr: i32* = &value;
+    let ptr_to_ptr: i32** = &ptr;
+    
+    printf("Original value: %d\n", value);
+    printf("Value through pointer: %d\n", *ptr);
+    printf("Value through pointer to pointer: %d\n", **ptr_to_ptr);
+    
+    // Modify through pointer
+    *ptr = 100;
+    printf("After modifying through pointer: %d\n", value);
+    
+    // Pointer arithmetic
+    let numbers: i32 = 10;
+    let more_numbers: i32 = 20;
+    let even_more: i32 = 30;
+    
+    let p: i32* = &numbers;
+    printf("First number: %d\n", *p);
+    
+    // Note: This is unsafe unless the variables are guaranteed to be adjacent
+    // which they're not in this case, but demonstrates the syntax
+    printf("Address of numbers: %p\n", p);
+    printf("Address + 1: %p\n", p + 1);
+    
+    printf("\n");
+}
+
+fn main() -> i32 {
+    demonstrate_pointers();
+    
+    printf("=== Dynamic Buffer Example ===\n");
+    
+    let buffer = IntBuffer::new(10);
+    
+    printf("Adding numbers to buffer...\n");
+    buffer.push(5);
+    buffer.push(15);
+    buffer.push(25);
+    buffer.push(10);
+    buffer.push(30);
+    
+    printf("Buffer contents: ");
+    buffer.print();
+    printf("Buffer size: %d/%d\n", buffer.size, buffer.capacity);
+    printf("Sum of all elements: %d\n", buffer.sum());
+    
+    printf("\nModifying element at index 2 from %d to 99\n", buffer.get(2));
+    buffer.set(2, 99);
+    printf("Buffer after modification: ");
+    buffer.print();
+    
+    printf("Finding value 15: index %d\n", buffer.find(15));
+    printf("Finding value 99: index %d\n", buffer.find(99));
+    printf("Finding value 999: index %d\n", buffer.find(999));
+    
+    printf("\nReversing buffer...\n");
+    buffer.reverse();
+    printf("Reversed buffer: ");
+    buffer.print();
+    
+    printf("\nFilling buffer to capacity...\n");
+    let i: i32 = buffer.size;
+    while i < buffer.capacity {
+        buffer.push(i * 10);
+        i = i + 1;
+    }
+    
+    printf("Full buffer: ");
+    buffer.print();
+    
+    printf("Trying to add one more (should fail): ");
+    if buffer.push(999) {
+        printf("Success\n");
+    } else {
+        printf("Failed - buffer full\n");
+    }
+    
+    buffer.destroy();
+    
+    printf("\nMemory demonstration complete!\n");
+    return 0;
+}

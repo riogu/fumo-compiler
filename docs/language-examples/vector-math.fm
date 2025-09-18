@@ -1,0 +1,84 @@
+fn printf(format: const i8*, ...) -> i32;
+fn sqrt(x: f64) -> f64;
+
+struct Vector2D {
+    let x: f64;
+    let y: f64;
+    
+    fn static new(x: f64, y: f64) -> Vector2D {
+        return Vector2D {x, y};
+    }
+    
+    fn static zero() -> Vector2D {
+        return Vector2D {0.0, 0.0};
+    }
+    
+    fn magnitude() -> f64 {
+        return sqrt(x * x + y * y);
+    }
+    
+    fn add(other: Vector2D) -> Vector2D {
+        return Vector2D {x + other.x, y + other.y};
+    }
+    
+    fn subtract(other: Vector2D) -> Vector2D {
+        return Vector2D {x - other.x, y - other.y};
+    }
+    
+    fn scale(factor: f64) -> Vector2D {
+        return Vector2D {x * factor, y * factor};
+    }
+    
+    fn dot(other: Vector2D) -> f64 {
+        return x * other.x + y * other.y;
+    }
+    
+    fn normalize() -> Vector2D {
+        let mag: f64 = magnitude();
+        if mag > 0.0 {
+            return Vector2D {x / mag, y / mag};
+        }
+        return Vector2D {0.0, 0.0};
+    }
+    
+    fn print() -> void {
+        printf("(%.2f, %.2f)", x, y);
+    }
+}
+
+fn main() -> i32 {
+    let v1 = Vector2D::new(3.0, 4.0);
+    let v2 = Vector2D {6.0, 8.0};
+    let v3 = v1.add(v2);
+    let v4 = v2.subtract(v1);
+    
+    printf("v1 = ");
+    v1.print();
+    printf(" (magnitude: %.2f)\n", v1.magnitude());
+    
+    printf("v2 = ");
+    v2.print();
+    printf(" (magnitude: %.2f)\n", v2.magnitude());
+    
+    printf("v1 + v2 = ");
+    v3.print();
+    printf("\n");
+    
+    printf("v2 - v1 = ");
+    v4.print();
+    printf("\n");
+    
+    printf("v1 · v2 = %.2f\n", v1.dot(v2));
+    
+    let v1_norm = v1.normalize();
+    printf("v1 normalized = ");
+    v1_norm.print();
+    printf(" (magnitude: %.2f)\n", v1_norm.magnitude());
+    
+    let scaled = v1.scale(2.5);
+    printf("v1 * 2.5 = ");
+    scaled.print();
+    printf("\n");
+    
+    return 0;
+}

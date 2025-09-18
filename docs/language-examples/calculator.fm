@@ -1,0 +1,111 @@
+fn printf(format: const i8*, ...) -> i32;
+fn scanf(format: const i8*, ...) -> i32;
+
+struct Calculator {
+    let result: f64;
+    let history_count: i32;
+    
+    fn static new() -> Calculator {
+        return Calculator {0.0, 0};
+    }
+    
+    fn add(value: f64) -> f64 {
+        result = result + value;
+        history_count = history_count + 1;
+        return result;
+    }
+    
+    fn subtract(value: f64) -> f64 {
+        result = result - value;
+        history_count = history_count + 1;
+        return result;
+    }
+    
+    fn multiply(value: f64) -> f64 {
+        result = result * value;
+        history_count = history_count + 1;
+        return result;
+    }
+    
+    fn divide(value: f64) -> f64 {
+        if value == 0.0 {
+            printf("Error: Division by zero!\n");
+            return result;
+        }
+        result = result / value;
+        history_count = history_count + 1;
+        return result;
+    }
+    
+    fn clear() -> void {
+        result = 0.0;
+        history_count = 0;
+    }
+    
+    fn get_result() -> f64 {
+        return result;
+    }
+    
+    fn get_operation_count() -> i32 {
+        return history_count;
+    }
+}
+
+fn print_menu() -> void {
+    printf("\n=== Simple Calculator ===\n");
+    printf("1. Add\n");
+    printf("2. Subtract\n");
+    printf("3. Multiply\n");
+    printf("4. Divide\n");
+    printf("5. Clear\n");
+    printf("6. Show result\n");
+    printf("7. Exit\n");
+    printf("Current result: %.2f\n");
+    printf("Enter choice (1-7): ");
+}
+
+fn main() -> i32 {
+    let calc = Calculator::new();
+    let choice: i32;
+    let value: f64;
+    let running: bool = true;
+    
+    printf("Welcome to Fumo Calculator!\n");
+    
+    while running {
+        print_menu();
+        printf("%.2f\n", calc.get_result());
+        printf("Enter choice (1-7): ");
+        scanf("%d", &choice);
+        
+        if choice >= 1 && choice <= 4 {
+            printf("Enter value: ");
+            scanf("%lf", &value);
+            
+            if choice == 1 {
+                printf("%.2f + %.2f = %.2f\n", calc.get_result(), value, calc.add(value));
+            } else if choice == 2 {
+                printf("%.2f - %.2f = %.2f\n", calc.get_result() + value, value, calc.subtract(value));
+            } else if choice == 3 {
+                let old_result: f64 = calc.get_result();
+                printf("%.2f * %.2f = %.2f\n", old_result, value, calc.multiply(value));
+            } else if choice == 4 {
+                let old_result: f64 = calc.get_result();
+                printf("%.2f / %.2f = %.2f\n", old_result, value, calc.divide(value));
+            }
+        } else if choice == 5 {
+            calc.clear();
+            printf("Calculator cleared.\n");
+        } else if choice == 6 {
+            printf("Current result: %.2f\n", calc.get_result());
+            printf("Operations performed: %d\n", calc.get_operation_count());
+        } else if choice == 7 {
+            running = false;
+            printf("Thank you for using Fumo Calculator!\n");
+        } else {
+            printf("Invalid choice. Please enter 1-7.\n");
+        }
+    }
+    
+    return 0;
+}

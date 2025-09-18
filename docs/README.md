@@ -147,6 +147,7 @@ if score >= 90 {
 }
 
 // Condition with declaration
+// you can only declare variables in if statements if you sorround them in parentheses
 if (let result = calculate_something()) {
     printf("Got result: %d\n", result);
 }

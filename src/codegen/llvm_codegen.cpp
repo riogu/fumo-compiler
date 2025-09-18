@@ -322,6 +322,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     auto* rhs_val = if_value(codegen_value(*bin.rhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
                     llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
+
+                    auto* rhs_block_after = ir_builder->GetInsertBlock(); // block after RHS evaluation (might have changed!)
                     ir_builder->CreateBr(end_block);
 
                     ir_builder->SetInsertPoint(end_block);
@@ -331,7 +333,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     // (basically, its how we make temporaries have multiple values while still in SSA form)
                     llvm::PHINode* phi = ir_builder->CreatePHI(ir_builder->getInt1Ty(), 2, "phi.result");
                     phi->addIncoming(ir_builder->getFalse(), lhs_block); // came from lhs (so we had false)
-                    phi->addIncoming(rhs_bool, rhs_block); // came from rhs
+                    phi->addIncoming(rhs_bool, rhs_block_after); // came from rhs
                     return phi;
                 }
                 case BinaryExpr::logical_or: {
@@ -352,13 +354,15 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     auto* rhs_val = if_value(codegen_value(*bin.rhs))
                                     else_panic_error(bin.rhs->source_token, "can't get rvalue for argument of '{}'.", node.name());
                     llvm::Value* rhs_bool = llvm_value_to_bool(rhs_val);
+
+                    auto* rhs_block_after = ir_builder->GetInsertBlock(); // curr block might have changed
                     ir_builder->CreateBr(end_block);
 
                     ir_builder->SetInsertPoint(end_block);
                     ir_builder->SetCurrentDebugLocation(llvm::DebugLoc());
                     llvm::PHINode* phi = ir_builder->CreatePHI(ir_builder->getInt1Ty(), 2, "phi.result");
                     phi->addIncoming(ir_builder->getTrue(), lhs_block); // lhs was true
-                    phi->addIncoming(rhs_bool, rhs_block);
+                    phi->addIncoming(rhs_bool, rhs_block_after);
                     return phi;
                 }
                 default: // the rest of the cases work the same
@@ -400,6 +404,10 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case BinaryExpr::sub:
                     if (op_type->isIntegerTy()) return ir_builder->CreateSub(lhs_val, rhs_val);
                     if (op_type->isFloatingPointTy())   return ir_builder->CreateFSub(lhs_val, rhs_val);
+                    break;
+                case BinaryExpr::modulus:
+                    if (op_type->isIntegerTy()) return ir_builder->CreateSRem(lhs_val, rhs_val);
+                    if (op_type->isFloatingPointTy()) return ir_builder->CreateFRem(lhs_val, rhs_val);
                     break;
                 case BinaryExpr::multiply:
                     if (op_type->isIntegerTy()) return ir_builder->CreateMul(lhs_val, rhs_val);
