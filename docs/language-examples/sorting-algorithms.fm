@@ -234,6 +234,38 @@ fn merge_sort(arr: IntArray*) -> void {
     }
 }
 
+fn test_sorting_algorithm(name: const i8*, test_arr: IntArray*, original: IntArray*) -> void {
+    printf("Testing %s...\n", name);
+    
+    // Copy original data to test array
+    test_arr->copy_from(original);
+    
+    printf("Before: ");
+    test_arr->print();
+    
+    if *name == 'B' { // Bubble Sort
+        bubble_sort(test_arr);
+    } else if *name == 'S' { // Selection Sort
+        selection_sort(test_arr);
+    } else if *name == 'I' { // Insertion Sort
+        insertion_sort(test_arr);
+    } else if *name == 'Q' { // Quick Sort
+        quick_sort(test_arr);
+    } else if *name == 'M' { // Merge Sort
+        merge_sort(test_arr);
+    }
+    
+    printf("After:  ");
+    test_arr->print();
+    
+    if test_arr->is_sorted() {
+        printf("✓ Correctly sorted!\n");
+    } else {
+        printf("✗ NOT correctly sorted!\n");
+    }
+    printf("\n");
+}
+
 fn main() -> i32 {
     srand(time(null));
     
@@ -244,14 +276,34 @@ fn main() -> i32 {
     let small_arr = IntArray::new(10);
     small_arr.fill_random(1, 100);
     
-    // Test with larger array
-    printf("--- Large Array Test (1000 elements) ---\n");
-    let large_arr = IntArray::new(1000);
+    let test_arr = IntArray::new(10);
+    
+    printf("Original small array: ");
+    small_arr.print();
+    printf("\n");
+    
+    // Test all algorithms on small array
+    test_sorting_algorithm("Bubble Sort", &test_arr, &small_arr);
+    test_sorting_algorithm("Selection Sort", &test_arr, &small_arr);
+    test_sorting_algorithm("Insertion Sort", &test_arr, &small_arr);
+    test_sorting_algorithm("Quick Sort", &test_arr, &small_arr);
+    test_sorting_algorithm("Merge Sort", &test_arr, &small_arr);
+    
+    test_arr.destroy();
+    
+    // Test with larger array (only efficient algorithms)
+    printf("--- Large Array Test (100 elements) ---\n");
+    let large_arr = IntArray::new(100);
     large_arr.fill_random(1, 1000);
     
-    printf("Original array: [1000 random elements]\n\n");
+    let large_test_arr = IntArray::new(100);
     
-    // For large arrays, only test efficient algorithms
+    printf("Testing efficient algorithms on large array (100 elements)...\n\n");
+    
+    test_sorting_algorithm("Quick Sort", &large_test_arr, &large_arr);
+    test_sorting_algorithm("Merge Sort", &large_test_arr, &large_arr);
+    
+    large_test_arr.destroy();
     
     // Test edge cases
     printf("--- Edge Cases ---\n");
@@ -264,7 +316,10 @@ fn main() -> i32 {
     sorted_arr.set(3, 4);
     sorted_arr.set(4, 5);
     
+    let edge_test_arr = IntArray::new(5);
+    
     printf("Already sorted array:\n");
+    test_sorting_algorithm("Quick Sort", &edge_test_arr, &sorted_arr);
     
     // Reverse sorted array
     let reverse_arr = IntArray::new(5);
@@ -275,12 +330,29 @@ fn main() -> i32 {
     reverse_arr.set(4, 1);
     
     printf("Reverse sorted array:\n");
+    test_sorting_algorithm("Merge Sort", &edge_test_arr, &reverse_arr);
     
     // Single element
     let single_arr = IntArray::new(1);
     single_arr.set(0, 42);
     
+    let single_test_arr = IntArray::new(1);
+    
     printf("Single element array:\n");
+    test_sorting_algorithm("Bubble Sort", &single_test_arr, &single_arr);
+    
+    // All same elements
+    let same_arr = IntArray::new(5);
+    let i: i32 = 0;
+    while i < 5 {
+        same_arr.set(i, 7);
+        i = i + 1;
+    }
+    
+    printf("All same elements:\n");
+    test_sorting_algorithm("Selection Sort", &edge_test_arr, &same_arr);
+    
+    printf("=== All tests completed! ===\n");
     
     // Cleanup
     small_arr.destroy();
@@ -288,6 +360,9 @@ fn main() -> i32 {
     sorted_arr.destroy();
     reverse_arr.destroy();
     single_arr.destroy();
+    single_test_arr.destroy();
+    same_arr.destroy();
+    edge_test_arr.destroy();
     
     return 0;
 }
