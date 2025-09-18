@@ -69,7 +69,6 @@ namespace fm {
             let new_len: i32 = length + other->length;
             
             if new_len + 1 > capacity {
-                // Need to grow
                 let new_cap: i32 = (new_len + 1) * 2;  
                 let new_data: i8* = malloc(new_cap);
                 memcpy(new_data, data, length);
