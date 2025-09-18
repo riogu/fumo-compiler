@@ -2,6 +2,9 @@
 
 A statically-typed systems programming language compiler targeting LLVM IR, implemented in C++23.
 
+
+For more detailed information, please check [docs/](docs/) for language specification, compiler architecture, and usage documentation.
+
 ## Example Program
 ```cpp
 fn printf(format: i8*, ...) -> i32;

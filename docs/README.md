@@ -21,7 +21,7 @@
 
 ### Examples and Tutorials
 - [Common Patterns](#common-patterns)
-- [Migrating from C/C++](#migrating-from-cc)
+- [Comparisons to C/C++](#comparisons-to-cc)
 - [Best Practices](#best-practices)
 
 ### Reference
@@ -41,7 +41,10 @@
 
 ## Overview
 
-Fumo is a statically-typed systems programming language that compiles to native code via LLVM. It combines C-like performance and memory control with modern language features like type inference and namespaces. Fumo source files use the `.fm` extension.
+Fumo is a statically-typed systems programming language that compiles to native code via LLVM. 
+It implements what i consider to be the "basic essential" features of a systems programming language.
+I made this compiler to be a "base" for my future language development ideas/compiler backend optimization exploration.
+Fumo source files use the `.fm` extension.
 
 ---
 
@@ -419,7 +422,7 @@ fn main() -> i32 {
 
 ---
 
-## Migrating from C/C++
+## Comparisons to C/C++
 
 ### Key Differences
 
