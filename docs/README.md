@@ -35,7 +35,6 @@
 ### Development
 - [Development Setup](#development-setup)
 - [Compiler Architecture](#compiler-architecture)
-- [Testing Guidelines](#testing-guidelines)
 - [Feedback and Issues](#feedback-and-issues)
 
 ---
@@ -93,14 +92,10 @@ Fumo supports C-style comments:
 ```cpp
 // Single line comment
 
-/* 
-   Multi-line comment
-   block
-*/
 
 fn main() -> i32 {
     // Comments can appear anywhere
-    return 0; /* even here */
+    return 0; 
 }
 ```
 
@@ -274,6 +269,12 @@ struct Name {
     fn static static_method() -> return_type {
         // static method body
     }
+
+    fn other_method() -> return_type;
+}
+// allows out-of-line definitions
+fn Name::other_method() -> return_type { 
+    // definition of this function
 }
 ```
 
@@ -428,7 +429,6 @@ fn main() -> i32 {
 | `int x;` | `let x: i32;` | Must specify type when uninitialized |
 | `void func() {}` | `fn func() -> void {}` | Different function syntax |
 | `// comment` | `// comment` | Same comment syntax |
-| `/* comment */` | `/* comment */` | Same block comment syntax |
 | `struct.member` | `struct.member` | Same for direct access |
 | `ptr->member` | `ptr->member` | Same for pointer access |
 | `MyClass obj;` | `let obj = MyClass {};` | Must use initializer syntax |
@@ -448,8 +448,6 @@ fn main() -> i32 {
 - `fn` keyword for functions
 - Static methods instead of constructors
 - Namespace syntax (`::`-based)
-- No implicit narrowing conversions
-- Explicit type annotation required for uninitialized variables
 - No built-in array types
 
 ---
@@ -473,13 +471,22 @@ From highest to lowest precedence:
 ## Current Limitations
 
 ### Planned Features
-- Explicit type casting syntax
-- Generic types and functions
-- Pattern matching
-- Module system improvements
-- Standard library expansion
-- Array types
+### Core Language
+- Type casting system
+- Generics/templates for containers and functions
+- Sum types (tagged unions) with exhaustiveness checking
+- Pattern matching for control flow and destructuring
 
+### Control Flow
+- `foreach` iteration over generic containers
+- `break` and `continue` statements
+
+### Standard Library
+- Generic array and vector types (`fm::vec<T>, fm::array<T>`)
+- String manipulation library (`fm::str`)
+- Memory management utilities and `unique_ptr<T>` implementation
+- `Optional<T>` impllementation
+- Basic I/O beyond C interop
 ### Known Limitations
 - No built-in array types (use pointers and manual allocation)
 - No automatic memory management (manual `malloc`/`free` required)
@@ -543,42 +550,7 @@ The Fumo compiler provides detailed error messages with file location and contex
 
 ## Grammar Specification
 
-```bnf
-program ::= (namespace_decl | function_decl | struct_decl | var_decl)*
-
-function_decl ::= 'fn' IDENTIFIER '(' param_list? ')' '->' type block_stmt
-
-struct_decl ::= 'struct' IDENTIFIER '{' struct_member* '}'
-
-struct_member ::= var_decl | function_decl
-
-namespace_decl ::= 'namespace' IDENTIFIER '{' (namespace_decl | function_decl | struct_decl)* '}'
-
-var_decl ::= 'let' IDENTIFIER (':' type)? ('=' expression)? ';'
-
-type ::= primitive_type | pointer_type | qualified_type
-primitive_type ::= 'i8' | 'i16' | 'i32' | 'i64' | 'f32' | 'f64' | 'void' | 'bool' | 'char'
-pointer_type ::= type '*'
-qualified_type ::= (IDENTIFIER '::')* IDENTIFIER
-
-statement ::= expression_stmt | if_stmt | while_stmt | return_stmt | block_stmt | var_decl
-
-expression ::= assignment_expr
-assignment_expr ::= logical_or_expr ('=' assignment_expr)?
-logical_or_expr ::= logical_and_expr ('||' logical_and_expr)*
-logical_and_expr ::= equality_expr ('&&' equality_expr)*
-equality_expr ::= relational_expr (('==' | '!=') relational_expr)*
-relational_expr ::= additive_expr (('<' | '<=' | '>' | '>=') additive_expr)*
-additive_expr ::= multiplicative_expr (('+' | '-') multiplicative_expr)*
-multiplicative_expr ::= unary_expr (('*' | '/' | '%') unary_expr)*
-unary_expr ::= postfix_expr | ('&' | '*' | '-' | '!') unary_expr
-postfix_expr ::= primary_expr postfix_suffix*
-postfix_suffix ::= '.' IDENTIFIER | '->' IDENTIFIER | '(' argument_list? ')'
-
-primary_expr ::= IDENTIFIER | INTEGER_LITERAL | FLOAT_LITERAL | STRING_LITERAL | 
-                CHAR_LITERAL | 'true' | 'false' | '(' expression ')' | 
-                qualified_type '{' initializer_list? '}'
-```
+Please check [language_specification/fumo_bnf.md](language_specification/fumo_bnf.md) for the language specification
 
 ---
 
