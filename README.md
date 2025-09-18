@@ -190,3 +190,11 @@ fumo --help                   # Show all compiler options
 - Memory management utilities and `unique_ptr<T>` implementation
 - `Optional<T>` impllementation
 - Basic I/O beyond C interop
+
+## Final Note
+
+As it is, this compiler only implements the "basic essential" features of a systems programming language.
+
+The goal of this compiler is to have a working compiler with all the basics well tested and implemented,
+so that i can later use it as a base to explore language design decisions, compiler backend optimizations,
+and generally use it to continue learning about compilers.

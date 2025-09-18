@@ -41,8 +41,13 @@
 ## Overview
 
 Fumo is a statically-typed systems programming language that compiles to native code via LLVM. 
+
 It implements what i consider to be the "basic essential" features of a systems programming language.
-I made this compiler to be a "base" for my future language development ideas/compiler backend optimization exploration.
+
+The goal of this compiler is to have a working compiler with all the basics well tested and implemented,
+so that i can later use it as a base to explore language design decisions, compiler backend optimizations,
+and generally use it to continue learning about compilers.
+
 Fumo source files use the `.fm` extension.
 
 ## Quick Start
@@ -601,7 +606,7 @@ Source Code (.fm)
 
 ### Testing Strategy
 
-Tests are organized by feature in the `src/tests/` directory:
+Tests are organized by feature in the `tests/` directory:
 
 - **Positive Tests**: Valid programs in directories like `if-statements/`, `while-tests/`, `structs-and-postfix/`
 - **Negative Tests**: Invalid programs in `fail-*` directories that should produce specific errors
