@@ -1,9 +1,45 @@
-// namespace fumo {
-//     struct str {
-//         let data: i8*;
-//         let size: u64;
-//         // fn static new() -> str {
-//         //     //
-//         // }
-//     }
-// }
+fn printf(format: const i8*, ...) -> i32;
+fn scanf(format: const i8*, ...) -> i32;
+
+namespace Thing {
+    struct Thing {
+        let Thing: i32*;
+    }
+}
+
+namespace fm {
+
+    fn len(literal: i8*) -> i32 {
+        let curr_length = 0;
+        while literal {
+            literal = literal + 1;
+            curr_length = curr_length + 1;
+        }
+        return curr_length;
+    }
+    struct str {
+        let data: i8*;
+        let length: i32;
+
+        fn  new() -> str {
+            return str {"", 0};
+        }
+
+        
+        fn static from(literal: i8*) -> str {
+            return str {literal, len(literal)};
+
+        }
+    }
+}
+
+
+fn main() -> void {
+    printf("testing testing %s\n", "is this working yes it is");
+    let number = 0;
+    if scanf("%d", &number) {
+        printf("%d\n", number);
+        let Thing: Thing::Thing = {&number};
+        printf("%p\n", Thing.Thing);
+    }
+}

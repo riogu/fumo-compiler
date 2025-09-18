@@ -713,6 +713,8 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
             ir_builder->SetInsertPoint(cond_block); // evalute condition inside the cond block
             auto* cond_val = if_value(codegen_value(*while_stmt.condition))
                              else_panic_error(node.source_token, "couldn't generate while loop condition");
+            cond_val = llvm_value_to_bool(cond_val);
+
             ir_builder->CreateCondBr(cond_val, body_block, end_block);
 
             ir_builder->SetInsertPoint(body_block);
