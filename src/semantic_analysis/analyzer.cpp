@@ -169,7 +169,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case BinaryExpr::sub:
                     if (is_int_t(bin.lhs->type) && is_ptr_t(bin.rhs->type)) {
                         report_error(bin.rhs->source_token,
-                                     "pointer arithmetic is only allowed on the rhs of an expression ex: (ptr + 3).")
+                                     "pointer arithmetic is only allowed on the rhs of an expression ex: (ptr + 3).");
                     }
                     // special cases for pointer arithmetic
                     if (is_ptr_t(bin.lhs->type) && is_int_t(bin.rhs->type)) {} 
