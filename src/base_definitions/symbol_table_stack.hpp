@@ -33,6 +33,7 @@ struct Scope {
     int inner_scope_count = 0;
 };
 #include <map>
+#include <utility>
 #include "utils/tsl/ordered_map.h"
 
 struct SymbolTableStack {
@@ -98,6 +99,7 @@ struct SymbolTableStack {
             case ScopeKind::MemberCompoundStatement:
                 return local_variable_decls.insert({identifier.mangled_name, &node});
         }
+        std::unreachable();
     }
     auto push_type_decl(Identifier& identifier, ASTNode& node) {
         identifier.mangled_name = curr_scope_name + identifier.name;
@@ -132,6 +134,7 @@ struct SymbolTableStack {
                 }
                 return function_decls.insert({identifier.mangled_name, &node});
         }
+        std::unreachable();
     }
 
     [[nodiscard]] Opt<ASTNode*> find_declaration(Identifier& id);

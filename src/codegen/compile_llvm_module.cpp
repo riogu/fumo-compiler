@@ -186,4 +186,3 @@ void link_object_files(vec<str> obj_files, fs::path exec_name) {
         std::cerr << "Linking failed: " << result.error() << std::endl;
     }
 }
-

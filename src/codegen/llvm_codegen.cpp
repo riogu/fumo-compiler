@@ -365,9 +365,9 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     phi->addIncoming(rhs_bool, rhs_block_after);
                     return phi;
                 }
-                default: ;
-                // the rest of the cases work the same
-                // implemented below
+                default:; // the rest of the cases work the same
+                          // implemented below
+
             }
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);
             auto* rhs_val = codegen_value(*bin.rhs).value_or(nullptr);
@@ -519,7 +519,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                         arg_values.push_back(node.llvm_value);
                     } else {
                         if (!node.llvm_value) internal_error(node.source_token, "didn't set llvm::Value for '{}'", node.name());
-                        if(!current_this_ptr.value())  internal_error(node.source_token, "didn't set curr_this_ptr '{}'", node.name());
+                        if (!current_this_ptr.value()) internal_error(node.source_token, "didn't set curr_this_ptr '{}'", node.name());
                     }
                 }
                 auto& func_decl = get<FunctionDecl>(symbol_tree.all_declarations[get_id(func_call).mangled_name]);

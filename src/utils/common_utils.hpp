@@ -30,7 +30,7 @@ struct File {
 #define internal_panic(fmt, ...) PANIC(std::format("internal fumo error: " fmt "\n[INFO] please report this error to https://github.com/riogu/fumo-compiler/issues with this crash."\
                                                    __VA_OPT__(, __VA_ARGS__)))
 #define internal_error(tok, ...)                                                                \
-{                                                                                               \
+do {                                                                                            \
     file_stream.seekg(file_stream.beg);                                                         \
     std::string line;                                                                           \
     if (tok.line_number != 1) {                                                                 \
@@ -52,11 +52,11 @@ struct File {
                              std::string(tok.line_offset, ' ') + "^ ",                          \
                              std::format(__VA_ARGS__));                                         \
     internal_panic("reported above.");                                                          \
-}
+} while (false)
 
 // print nice errors
 #define report_error(tok, ...)                                                                  \
-{                                                                                               \
+do {                                                                                            \
     file_stream.seekg(file_stream.beg);                                                         \
     std::string line;                                                                           \
     if (tok.line_number != 1) {                                                                 \
@@ -78,7 +78,7 @@ struct File {
                              std::string(tok.line_offset, ' ') + "^ ",                          \
                              std::format(__VA_ARGS__));                                         \
     std::exit(1);                                                                               \
-}
+} while (false)
 
 #define make_runtime_error(tok, ...)                                                            \
 ({                                                                                              \
@@ -103,4 +103,4 @@ struct File {
                              std::string(tok.line_offset, ' ') + "^ ",                          \
                              std::format(__VA_ARGS__));                                         \
     output;                                                                                     \
-});
+})

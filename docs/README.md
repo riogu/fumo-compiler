@@ -25,7 +25,6 @@
 
 ### Reference
 - [Grammar Specification](#grammar-specification)
-- [Standard Library](#standard-library)
 - [Compiler Options](#compiler-options)
 - [Error Messages](#error-messages)
 - [Operator Precedence](#operator-precedence)
