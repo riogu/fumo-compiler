@@ -35,9 +35,9 @@
 
 ## Declarations
 ```bnf
-<variable-declaration> ::= "let" <identifier> ( ":" <type-specifier> )? ( "=" <initializer> )? ";"
+<variable-declaration> ::= "let" ("extern")? <identifier> ( ":" <type-specifier> )? ( "=" <initializer> )? ";"
 
-<function-declaration> ::= "fn" ( "static" )? <identifier> "(" <parameter-list>? ")" "->" <type-specifier> <compound-statement>?
+<function-declaration> ::= "fn" ("static")? <identifier> "(" <parameter-list>? ")" "->" <type-specifier> <compound-statement>?
 
 <struct-declaration> ::= "struct" <identifier> "{" <struct-member>* "}"
 

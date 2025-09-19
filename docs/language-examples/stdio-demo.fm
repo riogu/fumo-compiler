@@ -1,0 +1,188 @@
+// Forward declare the opaque FILE type
+struct FILE;
+
+// Declare the global standard streams (external linkage from libc)
+// NOTE: extern keyword is required. will segfault otherwise on usage
+let extern stdin: FILE*; 
+let extern stdout: FILE*;
+let extern stderr: FILE*;
+
+// File I/O functions
+fn fopen(filename: const i8*, mode: const i8*) -> FILE*;
+fn fclose(stream: FILE*) -> i32;
+fn fprintf(stream: FILE*, format: const i8*, ...) -> i32;
+fn fgets(str: i8*, n: i32, stream: FILE*) -> i8*;
+fn fputs(str: const i8*, stream: FILE*) -> i32;
+fn feof(stream: FILE*) -> i32;
+fn fflush(stream: FILE*) -> i32;
+
+fn printf(format: const i8*, ...) -> i32;
+fn scanf(format: const i8*, ...) -> i32;
+
+fn malloc(size: i64) -> i8*;
+fn free(ptr: i8*) -> void;
+
+struct Logger {
+    let log_file: FILE*;
+    let enable_console: bool;
+    
+    fn static new(filename: const i8*, console_output: bool) -> Logger {
+        let file: FILE* = fopen(filename, "a"); 
+        return Logger {file, console_output};
+    }
+    
+    fn log_info(message: const i8*) -> void {
+        if log_file { 
+            fprintf(log_file, "[INFO] %s\n", message);
+            fflush(log_file);
+        }
+        
+        if enable_console {
+            fprintf(stdout, "[INFO] %s\n", message);
+            fflush(stdout);
+        }
+    }
+    
+    fn log_warning(message: const i8*) -> void {
+        if log_file {
+            fprintf(log_file, "[WARNING] %s\n", message);
+            fflush(log_file);
+        }
+        
+        if enable_console {
+            fprintf(stderr, "[WARNING] %s\n", message);
+            fflush(stderr);
+        }
+    }
+    
+    fn log_error(message: const i8*) -> void {
+        if log_file {
+            fprintf(log_file, "[ERROR] %s\n", message);
+            fflush(log_file);
+        }
+        
+        fprintf(stderr, "[ERROR] %s\n", message);
+        fflush(stderr);
+    }
+    
+    fn close() -> void {
+        if log_file {
+            fclose(log_file);
+        }
+    }
+}
+
+fn read_user_input(buffer: i8*, size: i32) -> bool {
+    fprintf(stdout, "Enter some text: ");
+    fflush(stdout); 
+    
+    let result: i8* = fgets(buffer, size, stdin);
+    return result != null; 
+}
+
+fn demonstrate_file_operations() -> void {
+    fprintf(stdout, "=== File Operations Demo ===\n");
+    
+    let file: FILE* = fopen("test_output.txt", "w");
+    if !file {
+        fprintf(stderr, "Failed to open file for writing\n");
+        return;
+    }
+    
+    fprintf(file, "Hello from Fumo!\n");
+    fprintf(file, "This is a test file.\n");
+    fprintf(file, "Line number: %d\n", 3);
+    fclose(file);
+    
+    fprintf(stdout, "Successfully wrote to test_output.txt\n");
+    
+    file = fopen("test_output.txt", "r");
+    if !file {
+        fprintf(stderr, "Failed to open file for reading\n");
+        return;
+    }
+    
+    fprintf(stdout, "File contents:\n");
+    let buffer: i8* = malloc(256);
+    
+    while !feof(file) {
+        if fgets(buffer, 256, file) {
+            fprintf(stdout, "  %s", buffer); 
+        }
+    }
+    
+    fclose(file);
+    free(buffer);
+}
+
+fn demonstrate_stream_redirection() -> void {
+    fprintf(stdout, "=== Stream Demonstration ===\n");
+    
+    printf("Using printf (stdout): Hello World\n");
+    fprintf(stdout, "Using fprintf(stdout): Hello World\n");
+    fprintf(stderr, "Using fprintf(stderr): This goes to error stream\n");
+    
+    fprintf(stderr, "Error message 1\n");
+    fprintf(stderr, "Error message 2\n");
+    fprintf(stdout, "Regular message (this might be buffered)\n");
+    
+    fflush(stdout);
+}
+
+fn interactive_session() -> void {
+    let buffer: i8* = malloc(256);
+    let continue_session: bool = true;
+    
+    fprintf(stdout, "=== Interactive Session ===\n");
+    fprintf(stdout, "Type 'quit' to exit\n\n");
+    
+    while continue_session {
+        if read_user_input(buffer, 256) {
+            if *(buffer + 0) == 'q' && *(buffer + 1) == 'u' && 
+               *(buffer + 2) == 'i' && *(buffer + 3) == 't' {
+                continue_session = false;
+                fprintf(stdout, "Goodbye!\n");
+            } else {
+                fprintf(stdout, "You entered: %s", buffer); 
+            }
+        } else {
+            fprintf(stderr, "Error reading input\n");
+            continue_session = false;
+        }
+    }
+    
+    free(buffer);
+}
+
+
+fn main() -> i32 {
+    // Test basic stream operations
+    demonstrate_stream_redirection();
+    fprintf(stdout, "\n");
+    
+    // Test file operations
+    demonstrate_file_operations();
+    fprintf(stdout, "\n");
+    
+    // Test logging system
+    let logger = Logger::new("application.log", true);
+    logger.log_info("Application started");
+    logger.log_warning("This is a warning message");
+    logger.log_error("This is an error message");
+    logger.log_info("Logging test complete");
+    logger.close();
+    
+    fprintf(stdout, "Check 'application.log' for logged messages\n\n");
+    
+    interactive_session();
+    
+    let bad_file: FILE* = fopen("nonexistent_directory/file.txt", "r");
+    if !bad_file {
+        fprintf(stderr, "Expected error: Could not open nonexistent file\n");
+    } else {
+        fclose(bad_file);
+    }
+    
+    fprintf(stdout, "Standard I/O demonstration complete!\n");
+    return 0;
+}

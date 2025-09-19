@@ -792,9 +792,14 @@ void Codegen::register_declaration(ASTNode& node) {
                 internal_panic("should only register globals, found local variable '{}'.",
                                get_id(var).mangled_name);
             }
+            llvm::Constant* initializer = nullptr;
+            if (!node.type.qualifiers.contains(Type::extern_)) {
+                // externed variables shouldnt be 0 initialized
+                initializer = llvm::Constant::getNullValue(fumo_to_llvm_type(node.type));
+            }
             auto* global_var = new llvm::GlobalVariable(fumo_to_llvm_type(node.type), false,
                                                         llvm::GlobalValue::ExternalLinkage,
-                                                        llvm::Constant::getNullValue(fumo_to_llvm_type(node.type)),
+                                                        initializer,
                                                         get_id(var).mangled_name);
             llvm_module->insertGlobalVariable(global_var);
             node.llvm_value = global_var;

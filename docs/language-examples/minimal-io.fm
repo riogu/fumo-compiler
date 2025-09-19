@@ -1,0 +1,32 @@
+// Forward declare the opaque FILE type
+struct FILE;
+
+// Declare the global standard streams
+let extern stdout: FILE*;
+let extern stderr: FILE*;
+
+fn printf(format: const i8*, ...) -> i32;
+fn fprintf(stream: FILE*, format: const i8*, ...) -> i32;
+fn fopen(filename: const i8*, mode: const i8*) -> FILE*;
+fn fclose(stream: FILE*) -> i32;
+fn malloc(size: i64) -> i8*;
+fn free(ptr: i8*) -> void;
+
+fn main() -> i32 {
+    printf("=== Basic I/O Test ===\n");
+    
+    fprintf(stdout, "Number: %d\n", 42);
+    fprintf(stderr, "This is stderr\n");
+    
+    let file: FILE* = fopen("test.txt", "w");
+    if !file {
+        fprintf(stderr, "Failed to open file\n");
+        return 1;
+    }
+    
+    fprintf(file, "Test file content\n");
+    fclose(file);
+    
+    printf("File test complete\n");
+    return 0;
+}

@@ -4,6 +4,12 @@
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
 [[nodiscard]] ASTNode* Parser::variable_declaration(bool optional_comma) {
     // TODO: should allow declarating multiple identifiers with separating commas (add later)
+
+
+    bool was_extern = false;
+    if (token_is_keyword(extern)) {
+        was_extern = true;
+    }
     expect_token(identifier);
     auto* node = push(ASTNode {*prev_tkn});
 
@@ -15,6 +21,9 @@
     }
 
     if (token_is(:)) node->type = declaration_specifier();
+    if (was_extern) {
+        node->type.qualifiers.insert(Type::extern_);
+    }
 
     node->branch = std::move(variable);
 
@@ -125,9 +134,10 @@
     Type type {};
 
     // TODO: add extern later
-    while (token_is_keyword(const) || token_is_keyword(volatile)
-           || token_is_keyword(static) || token_is_keyword(extern)) {}
+    // while (token_is_keyword(const) || token_is_keyword(static)) {}
     // we recognize but ignore these keywords atm
+    if (token_is_keyword(const)) {
+    }
     
     if (token_is(builtin_type)) {
         type.identifier = push(ASTNode {*prev_tkn, 

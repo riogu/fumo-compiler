@@ -118,6 +118,10 @@ let flag = true;       // inferred as bool
 
 // Uninitialized declaration
 let value: i32;        // Must specify type when uninitialized
+// external declarations. if "extern" keyword is not added, globals are 0 initialized.
+// this means that to link with libc globals, you need to use extern.
+let extern stdin: FILE*; 
+let extern stdout: FILE*;
 ```
 
 **Primitive Types:**
