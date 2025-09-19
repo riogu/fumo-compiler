@@ -367,6 +367,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 }
                 default:; // the rest of the cases work the same
                           // implemented below
+
             }
             auto* lhs_val = codegen_value(*bin.lhs).value_or(nullptr);
             auto* rhs_val = codegen_value(*bin.rhs).value_or(nullptr);

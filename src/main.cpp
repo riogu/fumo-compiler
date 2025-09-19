@@ -38,15 +38,15 @@ opt<bool> print_ASM   {"print-asm",    desc("Prints the output ASM to the termin
 
 opt<bool> verbose     {"v",            desc("Show commands executed during compilation and linking"), cat(fumo_category)};
 
-opt<str>  out_file    {"o",            desc("Output filename"), value_desc("filename"),               cat(fumo_category)};
-list<str> input_files {Positional,    desc("Input source files"), value_desc("filenames"), OneOrMore, cat(fumo_category)};
+opt<str>  out_file    {"o",            desc("Output filename"),    value_desc("filename"),            cat(fumo_category)};
+list<str> input_files {Positional,     desc("Input source files"), value_desc("filenames"), OneOrMore,cat(fumo_category)};
 
 // Linking control
 opt<bool> no_link     {"c",            desc("Compile only, do not link (produces .o files)"),         cat(fumo_category)};
 opt<bool> static_link {"static",       desc("Create a statically linked executable"),                 cat(fumo_category)};
 opt<bool> strip_syms  {"s",            desc("Strip symbol table from executable"),                    cat(fumo_category)};
 // Linker selection
-opt<str>  linker_name  {"linker",      desc("Specify which linker to use (auto/gcc/clang)"), 
+opt<str>  linker_name {"linker",      desc("Specify which linker to use (auto/gcc/clang)"), 
                        value_desc("linker"), init("auto"),                                            cat(fumo_category)};
 list<str> libraries   {"l",            desc("Link with library"), 
                        value_desc("library"), ZeroOrMore,                                             cat(fumo_category)};
@@ -61,7 +61,6 @@ void custom_handler(int sig) {
 }
 
 auto main(int argc, char** argv) -> int {
-    // TODO: warn users if they provide a non existent source file
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
     signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);
