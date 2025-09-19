@@ -573,19 +573,19 @@ cd fumo-compiler
 
 # Development cycle
 ./rebuild.sh        # Rebuild after changes
-./test.sh           # Run test suite
+./test.sh           # Run test suite (use ./test.sh -help for more information)
 ```
 
 ### Project Structure
 
 ```
 src/
-├── lexer/          # Tokenization
-├── parser/         # AST generation
+├── lexer/              # Tokenization
+├── parser/             # AST generation
 ├── semantic_analysis/  # Type checking, symbol resolution
-├── codegen/        # LLVM IR generation
+├── codegen/            # LLVM IR generation
 ├── base_definitions/   # Core types and utilities
-└── tests/          # Compiler tests
+└── tests/              # Compiler tests
 ```
 
 ### Compiler Architecture
@@ -620,4 +620,23 @@ tests/
 ├── fail-control-flow/      # Invalid control flow tests
 ├── structs-and-postfix/    # Valid struct usage
 └── fail-static-functions/  # Invalid static method usage
+```
+the test script has a '-help' option for displaying all the options available for testing.
+
+it allows passing individual files, passing specific directories, passing flags directly to the compiler, etc.
+
+check '-help' for more info:
+```
+Test Runner Usage:
+  ./test_runner [options] [test_directories...]
+  ./test_runner --test <file_path> [options]
+
+Options:
+  --test <file>       - Run a single test file (can be relative or absolute path)
+  --config <name>     - Use predefined configuration
+  --opt <option>      - Add compiler option (can be used multiple times)
+  --verbose, -v       - Show compiler output for passing tests
+  --clear-outputs     - Clear all *-outputs directories and exit
+  --list-configs      - List available configurations
+  --help              - Show this help
 ```
