@@ -185,7 +185,7 @@ fumo --help                   # Show all compiler options
 - Generic array and vector types (`fm::vec<T>, fm::array<T>`)
 - String manipulation library (`fm::str`)
 - Memory management utilities and `unique_ptr<T>` implementation
-- `Optional<T>` impllementation
+- `optional<T>` implementation
 - Basic I/O beyond C interop
 
 ## Final Note

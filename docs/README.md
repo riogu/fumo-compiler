@@ -443,6 +443,7 @@ fn main() -> i32 {
 - Struct member access (`.` and `->`)
 - C calling convention for external functions
 - Manual memory management
+- Namespace syntax (`::`-based)
 - Comment syntax
 - Operator precedence
 
@@ -451,7 +452,6 @@ fn main() -> i32 {
 - `let` keyword for all variable declarations
 - `fn` keyword for functions
 - Static methods instead of constructors
-- Namespace syntax (`::`-based)
 - No built-in array types
 
 ---
