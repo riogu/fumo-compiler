@@ -58,7 +58,7 @@ void Codegen::compile_module(llvm::OptimizationLevel opt_level) {
     llvm::InitializeAllAsmParsers();
     llvm::InitializeAllAsmPrinters();
 
-    llvm_module->setTargetTriple(llvm::Triple(llvm::sys::getDefaultTargetTriple()));
+    llvm_module->setTargetTriple(llvm::sys::getDefaultTargetTriple());
     std::string Error;
     auto target = llvm::TargetRegistry::lookupTarget(llvm_module->getTargetTriple(), Error);
     if (!target) internal_panic("{}", Error);
