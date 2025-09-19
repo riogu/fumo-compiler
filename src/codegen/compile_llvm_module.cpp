@@ -173,7 +173,7 @@ void link_object_files(vec<str> obj_files, fs::path exec_name) {
 
     // only compiling a single object file for now
 
-    exec_name.replace_extension(".out");
+    exec_name.replace_extension("");
 
     LinkOptions link_opts = build_link_options(exec_name, obj_files);
 

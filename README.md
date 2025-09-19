@@ -158,7 +158,7 @@ The compiler includes tests organized by feature:
 ```bash
 ./initialize_build.sh    # Initial setup
 ./rebuild.sh             # Rebuild after changes
-./test.sh                # Run test suite
+./test.sh                # Run test suite (use ./test.sh -help for more information)
 ./install.sh             # Install 'fumo' command system-wide
 ```
 
