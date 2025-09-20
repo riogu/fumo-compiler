@@ -7,7 +7,7 @@ For more detailed information, please check [docs/](docs/) for language specific
 
 ## Example Program
 ```cpp
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 
 namespace math {
     struct Point {

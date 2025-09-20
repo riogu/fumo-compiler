@@ -70,7 +70,7 @@ cd fumo-compiler
 
 Create `hello.fm`:
 ```cpp
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 
 fn main() -> void {
     printf("Hello, Fumo!\n");
@@ -113,7 +113,7 @@ let pi: f64 = 3.14159;
 
 // Type inference
 let count = 10;        // inferred as i32
-let name = "Fumo";     // inferred as i8*
+let name = "Fumo";     // inferred as char*
 let flag = true;       // inferred as bool
 
 // Uninitialized declaration
@@ -173,12 +173,12 @@ fn add(a: i32, b: i32) -> i32 {
 }
 
 // Function with no return value
-fn print_message(msg: i8*) -> void {
+fn print_message(msg: char*) -> void {
     printf("Message: %s\n", msg);
 }
 
 // External function declaration (for C interop)
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 ```
 
 ### Structs and Methods
@@ -369,11 +369,11 @@ let counter2 = Counter::with_value(10);
 
 ### Memory Management
 ```cpp
-fn malloc(size: i64) -> i8*;
-fn free(ptr: i8*) -> void;
+fn malloc(size: i64) -> char*;
+fn free(ptr: char*) -> void;
 
 struct Buffer {
-    let data: i8*;
+    let data: char*;
     let size: i64;
     
     fn static new(size: i64) -> Buffer {
@@ -392,7 +392,7 @@ buffer.destroy();
 
 ### Complete Example Program
 ```cpp
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 fn sqrt(x: f64) -> f64;
 
 struct Vector2D {
