@@ -124,9 +124,37 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         }
         return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, initializer()}});
     }
-
+    if (token_is(+=)) {
+        if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
+            report_error(node->source_token, "expression is not assignable.");
+        }
+        auto* temp = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::add, node, initializer()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, temp}});
+    }
+    if (token_is(-=)) {
+        if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
+            report_error(node->source_token, "expression is not assignable.");
+        }
+        auto* temp = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::sub, node, initializer()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, temp}});
+    }
+    if (token_is(*=)) {
+        if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
+            report_error(node->source_token, "expression is not assignable.");
+        }
+        auto* temp = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::multiply, node, initializer()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, temp}});
+    }
+    if (token_is(/=)) {
+        if (!is_branch<Identifier, PostfixExpr, UnaryExpr>(node)) {
+            report_error(node->source_token, "expression is not assignable.");
+        }
+        auto* temp = push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::divide, node, initializer()}});
+        return push(ASTNode {*prev_tkn, BinaryExpr {BinaryExpr::assignment, node, temp}});
+    }
     return node;
 }
+
 [[nodiscard]] ASTNode* Parser::initializer() {
     auto temp_node = logical();
 
