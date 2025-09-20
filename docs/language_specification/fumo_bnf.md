@@ -73,6 +73,10 @@
 
 <assignment-expression> ::= <logical-or-expression>
                           | <logical-or-expression> "=" <assignment-expression>
+                          | <logical-or-expression> "+=" <assignment-expression>
+                          | <logical-or-expression> "-=" <assignment-expression>
+                          | <logical-or-expression> "*=" <assignment-expression>
+                          | <logical-or-expression> "/=" <assignment-expression>
 
 <logical-or-expression> ::= <logical-and-expression> 
                           | <logical-or-expression> "||" <logical-and-expression>
