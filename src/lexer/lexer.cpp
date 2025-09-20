@@ -99,6 +99,15 @@
                     add_token(-);
                 break;
 
+            case '+': 
+                if(next_char_is(+)) 
+                    add_and_consume_token(++);
+                else if (next_char_is(=))
+                    add_and_consume_token(+=);
+                else
+                    add_token(+);
+                break;
+
             case '/':
                 if (next_char_is(/))
                     while (file_stream.peek() != EOF && !next_char_is(\n)) curr = get_curr();

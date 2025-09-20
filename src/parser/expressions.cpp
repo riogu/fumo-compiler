@@ -321,6 +321,10 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::negate, temp.value()}});
         return std::nullopt;
     }
+    if (token_is(+)) {
+        if (auto temp = unary()) return temp.value();
+        return std::nullopt;
+    }
     if (token_is(!)) {
         if (auto temp = unary()) return push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::logic_not, temp.value()}});
         return std::nullopt;

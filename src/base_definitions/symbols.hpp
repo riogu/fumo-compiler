@@ -222,10 +222,10 @@ enum struct Symbol {
 #define has_double_and_equals       \
     ampersand       ,               \
     bar,                            \
-    plus            ,               \
     equals
 #define has_triple                  \
     colon           ,               \
+    plus            ,               \
     minus           ,               \
     dot             ,               \
     greater         ,               \
