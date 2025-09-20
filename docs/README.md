@@ -244,6 +244,95 @@ let second: i32 = 20;
 let ptr1: i32* = &first;
 // ptr1 + 1 may not point to 'second'
 ```
+# The `any*` Type
+
+The `any*` type in Fumo is equivalent to C's `void*` - a type-erased pointer that can store the address of any object. It exists only for C interoperability.
+
+## Semantics
+
+### Implicit Conversions
+`any*` supports bidirectional implicit conversion with all single-level pointer types:
+
+```fumo
+let x: i32 = 42;
+let s: char* = "hello";
+
+let generic: any*;
+generic = &x;     // i32* -> any* (implicit)
+generic = s;      // char* -> any* (implicit)
+
+let int_ptr: i32* = generic;   // any* -> i32* (implicit)
+let str_ptr: char* = generic;  // any* -> char* (implicit)
+```
+
+### Null Compatibility
+The `null` literal is of type `any*`, allowing it to be assigned to any pointer type:
+
+```fumo
+let int_ptr: i32* = null;     // any* -> i32* (implicit)
+let str_ptr: char* = null;    // any* -> char* (implicit)
+let any_ptr: any* = null;     // Direct assignment
+
+if !any_ptr {                 // Null check with !
+    printf("Pointer is null\n");
+}
+
+```
+
+### Comparisons
+`any*` can be compared with any pointer type for equality:
+
+```fumo
+let x: i32 = 10;
+let int_ptr: i32* = &x;
+let any_ptr: any* = &x;
+
+if int_ptr == any_ptr {       // i32* == any* comparison
+    printf("Same address\n");
+}
+
+if any_ptr == null {          // any* == null comparison
+    printf("Pointer is null\n");
+}
+```
+
+## Restrictions
+
+`any*` cannot be used for operations that require knowing the pointed-to type:
+
+```fumo
+let any_ptr: any* = &some_value;
+
+// ❌ These operations are forbidden:
+*any_ptr              // Cannot dereference
+any_ptr->member       // Cannot access members
+any_ptr + 1           // Cannot do pointer arithmetic
+```
+
+## Use Cases
+
+C interoperability:
+
+```fumo
+extern fn malloc(size: i64) -> any*;
+extern fn memcpy(dst: any*, src: any*, size: i64) -> any*;
+extern fn free(ptr: any*) -> void;
+
+let buffer: any* = malloc(1024);
+let data: i32 = 42;
+memcpy(buffer, &data, 4);
+free(buffer);
+```
+
+## Design Philosophy
+
+`any*` exists solely for C interoperability. C libraries use `void*` for generic pointers, and `any*` provides direct compatibility without requiring wrapper functions or type conversions.
+
+Avoid `any*` in application code. Use typed pointers instead. Once generics are added to Fumo, they will replace `any*` usage for type-safe generic programming.
+
+## Memory Layout
+
+`any*` is implemented as a raw pointer with the same size and alignment as any other pointer type (8 bytes on 64-bit systems). It carries no runtime type information - the programmer must track types manually.
 
 ---
 

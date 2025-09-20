@@ -46,7 +46,7 @@ namespace math {
 }
 let global_counter: i32 = 100;
 
-// 'any*' works like 'void*' in C (for compatibility)
+// 'any*' works like 'void*' in C (only exists for C compatibility)
 fn process_any_data(data: any*, name: char*) -> void {
     if data {
         printf("Processing %s data at %p\n", name, data);
@@ -110,7 +110,7 @@ fn main() -> i32 {
 
 ### Type System
 - Static typing with compile-time checking
-- Primitive types: `i8`, `i16`, `i32`, `i64`, `f32`, `f64`, `void`, `bool`, etc
+- Primitive types: `i8`, `i16`, `i32`, `i64`, `f32`, `f64`, `void`, `bool`, `any*` etc
 - Composite types: Pointers, structs with member functions
 - Integer promotion following C conversion rules
 - Null pointer dereference checking at runtime
