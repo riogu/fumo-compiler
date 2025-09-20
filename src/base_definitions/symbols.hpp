@@ -66,7 +66,7 @@
     f32              ,                  \
     f64              ,                  \
     void             ,                  \
-    Any              ,                  \
+    any              ,                  \
     bool
 #define keywords                        \
     namespace        ,                  \

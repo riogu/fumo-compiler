@@ -1,4 +1,6 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
+#include "utils/common_utils.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -23,6 +25,12 @@
     if (token_is(:)) node->type = declaration_specifier();
     if (was_extern) {
         node->type.qualifiers.insert(Type::extern_);
+    }
+    if (node->type.kind == Type::void_) {
+        if (node->type.ptr_count) {
+            report_error((*curr_tkn), "variable cannot have type '{}'. NOTE: did you mean to use 'any*'?", type_name(node->type));
+        }
+        report_error((*curr_tkn), "variable cannot have type 'void'. NOTE: only used in function return types.");
     }
 
     node->branch = std::move(variable);
@@ -91,7 +99,12 @@
 
             expect_token(:);
             node->type = declaration_specifier();
-
+            if (node->type.kind == Type::void_) {
+                if (node->type.ptr_count) {
+                    report_error((*curr_tkn), "parameter cannot have type '{}'. NOTE: did you mean to use 'any*'?", type_name(node->type));
+                }
+                report_error((*curr_tkn), "parameter cannot have type 'void'. NOTE: only used in function return types.");
+            }
             parameters.push_back(std::move(node));
         } else if (token_is(...)) {
             expect_token_str(")");
@@ -145,7 +158,9 @@
                                                     std::get<str>(prev_tkn->literal.value())}});
         type.kind = builtin_type_kind(get_name(type));
         while (token_is(*)) type.ptr_count++; // NOTE: consider redoing the ptr implementation
-        
+        if (type.kind == Type::any_ && !type.ptr_count) {
+            report_error((*curr_tkn), "type 'any' must be a pointer. NOTE: did you mean 'any*'?");
+        }
         return type;
     }
     if (token_is(identifier)) {
