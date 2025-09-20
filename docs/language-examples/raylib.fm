@@ -1,3 +1,4 @@
+fn printf(format: const char*, ...) -> i32;
 struct Color {
     let r: i8;
     let g: i8;
@@ -5,5 +6,16 @@ struct Color {
     let a: i8;
 }
 fn main() -> void {
-    let var = Color {};
+
+    let color = Color {123, 124, 125, 255};
+    
+    // Access individual members so LLVM can't optimize away
+    printf("Red: %d\n", color.r);
+    printf("Green: %d\n", color.g);
+    printf("Blue: %d\n", color.b);
+    printf("Alpha: %d\n", color.a);
+    
+    // Modify a member
+    color.r = 200;
+    printf("Modified red: %d\n", color.r);
 }

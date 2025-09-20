@@ -307,6 +307,9 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     auto* rhs_val  = if_value(codegen_value(*bin.rhs))
                                      else_panic("[Codegen] found null value in rhs of assignment for '{}'.", node.name());
 
+                    if (is_arithmetic_t(bin.rhs->type) && is_arithmetic_t(bin.lhs->type)) {
+                        rhs_val = convert_arithmetic_t(rhs_val, fumo_to_llvm_type(bin.lhs->type));
+                    }
                     ir_builder->CreateStore(rhs_val, lhs_addr);
 
                     if (auto* var = get_if<VariableDecl>(bin.lhs)) { // put the ir_builder back outside fumo.init
