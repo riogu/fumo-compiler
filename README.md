@@ -8,7 +8,6 @@ For more detailed information, please check [docs/](docs/) for language specific
 ## Example Program
 ```cpp
 fn printf(format: char*, ...) -> i32;
-
 namespace math {
     struct Point {
         let x: f64;
@@ -45,8 +44,16 @@ namespace math {
         }
     }
 }
-
 let global_counter: i32 = 100;
+
+// 'any*' works like 'void*' in C (for compatibility)
+fn process_any_data(data: any*, name: char*) -> void {
+    if data {
+        printf("Processing %s data at %p\n", name, data);
+    } else {
+        printf("No %s data provided\n", name);
+    }
+}
 
 fn process_point(pt: math::Point*) -> void {
     printf("Point: (%.2f, %.2f)\n", pt->x, pt->y);
@@ -85,6 +92,10 @@ fn main() -> i32 {
     
     process_point(&point1);
     process_point(&origin);
+    
+    process_any_data(&point1, "point");
+    process_any_data(&stats, "stats");
+    process_any_data(null, "empty");
     
     printf("Stats average: %.2f\n", stats.average());
     printf("Preset average: %.2f\n", preset_stats.average());
