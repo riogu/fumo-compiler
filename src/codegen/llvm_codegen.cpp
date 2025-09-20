@@ -219,19 +219,18 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), address);
             }
             if (un.kind == UnaryExpr::return_statement) {
-                if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
 
                 auto func_name = ir_builder->GetInsertBlock()->getParent()->getName().data();
                 Type func_type;
+
                 if find_value(func_name, symbol_tree.all_declarations) {
                     func_type = iter->second->type;
-                } else {
-                    internal_error(node.source_token, "'{}' function doesnt exist.", func_name);
-                }
+                } else { internal_error(node.source_token, "'{}' function doesnt exist.", func_name); }
 
-                // if (!un.expr) {
-                //     report_error(node.source_token, "non-void function must return a value.");
-                // }
+                if (!un.expr && func_type.kind != Type::void_) {
+                    report_error(node.source_token, "non-void function '{}' should return a value.", func_name);
+                }
+                if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
 
                 auto* val = if_value(codegen_value(*un.expr.value()))
                             else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());

@@ -18,7 +18,7 @@ ControlFlowResult combine_sequential_flow(ControlFlowResult one, ControlFlowResu
 void Analyzer::analyze_function_control_flow(ASTNode& node) {
     auto& func_decl = get<FunctionDecl>(&node);
     // we need to iterate through all the paths of this function and find out if we always have valid paths
-    if (node.type.kind == Type::void_ && !node.type.ptr_count) return; // void functions dont have to return in all control paths
+    // we still want to remove dead code for void functions
     
     auto* body = func_decl.body.value_or(nullptr);
     if (!body) return; // was a forward declaration of a function in another file (or libc function)
@@ -36,7 +36,8 @@ void Analyzer::analyze_function_control_flow(ASTNode& node) {
             return; // this function will always return (OK)
         }
     }
-    if (get_id(func_decl).mangled_name != "main") {
+    if (get_id(func_decl).mangled_name != "main" && node.type.kind != Type::void_) {
+        // void functions dont have to return in all control paths
         report_error(node.source_token, "non-void function does not return a value in all control paths.");
         // if we get here, function MayReturn or is NoReturn. therefore, its invalid
     }

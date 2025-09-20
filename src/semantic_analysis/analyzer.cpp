@@ -20,12 +20,12 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     symbol_tree.curr_scope_name = "::";
     symbol_tree.pop_scope();
 
-    auto map_node = symbol_tree.function_decls.extract("main");
 
     // analyze control flow
     for (auto& [_, func] : symbol_tree.function_decls) {
         analyze_function_control_flow(*func); 
     }
+    auto map_node = symbol_tree.function_decls.extract("main");
 
     if (!map_node.empty()) {
         // rename 'main' to link with libc later
