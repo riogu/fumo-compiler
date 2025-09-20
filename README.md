@@ -156,10 +156,10 @@ The compiler includes tests organized by feature:
 
 ### Building
 ```bash
-./initialize_build.sh    # Initial setup
-./rebuild.sh             # Rebuild after changes
-./test.sh                # Run test suite (use ./test.sh -help for more information)
-./install.sh             # Install 'fumo' command system-wide
+bash initialize_build.sh    # Initial setup
+bash rebuild.sh             # Rebuild after changes
+bash test.sh                # Run test suite (use ./test.sh -help for more information)
+bash install.sh             # Install 'fumo' command system-wide
 ```
 
 ### Usage

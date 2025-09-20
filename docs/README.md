@@ -569,11 +569,11 @@ Please check [language_specification/fumo_bnf.md](language_specification/fumo_bn
 # Initial setup
 git clone <repository>
 cd fumo-compiler
-./initialize_build.sh
+bash initialize_build.sh
 
 # Development cycle
-./rebuild.sh        # Rebuild after changes
-./test.sh           # Run test suite (use ./test.sh -help for more information)
+bash rebuild.sh        # Rebuild after changes
+bash test.sh           # Run test suite (use ./test.sh -help for more information)
 ```
 
 ### Project Structure
