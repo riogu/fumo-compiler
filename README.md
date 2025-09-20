@@ -147,19 +147,20 @@ The compiler includes tests organized by feature:
 - LLVM IR correctness verification
 - C interop compatibility testing
 
+
 ## Build and Usage
 
-### Requirements
+**Prerequisites:**
 - LLVM 20+
-- C++23 compiler
-- CMake
+- GCC 12+ or Clang 16+ (C++23 compatible compiler)
+- CMake 3.20+
 
-### Building
+**Build from source:**
 ```bash
-./initialize_build.sh    # Initial setup
-./rebuild.sh             # Rebuild after changes
-./test.sh                # Run test suite (use ./test.sh -help for more information)
-./install.sh             # Install 'fumo' command system-wide
+git clone https://github.com/yourusername/fumo-compiler.git
+cd fumo-compiler
+./initialize_build.sh
+./install.sh  # Installs 'fumo' command system-wide
 ```
 
 ### Usage
@@ -168,6 +169,14 @@ fumo source.fm                # Compile and run
 fumo source.fm -o output      # Compile to executable
 fumo --help                   # Show all compiler options
 ```
+
+## Development
+
+```bash
+./test.sh                # Run test suite (use ./test.sh -help for more information)
+./rebuild.sh             # Rebuild after changes
+```
+
 
 ## Planned Features
 
