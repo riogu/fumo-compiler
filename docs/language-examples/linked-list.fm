@@ -1,14 +1,14 @@
 struct Node;
 fn malloc(size: i64) -> any*;
-fn free(ptr: Node*) -> void;
+fn free(ptr: any*) -> void;
 fn printf(format: const char*, ...) -> i32;
 
 struct Node {
-    let value: i32;
+    let value: any*;
     let next: Node*;
     
-    fn static new(val: i32) -> Node* {
-        let node: Node* = malloc(8 + 8); // sizeof(Node) = sizeof(i32) + sizeof(Node*)
+    fn static new(val: any*) -> Node* {
+        let node: Node* = malloc(16); // sizeof(any*) + sizeof(Node*)
         node->value = val;
         node->next = null;
         return node;
@@ -23,19 +23,19 @@ struct List {
         return List {null, 0}; 
     }
     
-    fn push_front(value: i32) -> void {
+    fn push_front(value: any*) -> void {
         let new_node: Node* = Node::new(value);
         new_node->next = head;
         head = new_node;
         size = size + 1;
     }
     
-    fn pop_front() -> i32 {
+    fn pop_front() -> any* {
         if !head {
-            return -1; // Error value
+            return null; // Return null on empty list
         }
         
-        let value: i32 = head->value;
+        let value: any* = head->value;
         let old_head: Node* = head;
         head = head->next;
         free(old_head);
@@ -43,7 +43,8 @@ struct List {
         return value;
     }
     
-    fn print() -> void {
+    fn print_as_ints() -> void {
+        // Helper to print assuming all values are i32*
         printf("[");
         let current: Node* = head;
         let first: bool = true;
@@ -52,7 +53,34 @@ struct List {
             if !first {
                 printf(", ");
             }
-            printf("%d", current->value);
+            if current->value {
+                let int_ptr: i32* = current->value;
+                printf("%d", *int_ptr);
+            } else {
+                printf("null");
+            }
+            current = current->next;
+            first = false;
+        }
+        printf("]\n");
+    }
+    
+    fn print_as_strings() -> void {
+        // Helper to print assuming all values are char*
+        printf("[");
+        let current: Node* = head;
+        let first: bool = true;
+        
+        while current {
+            if !first {
+                printf(", ");
+            }
+            if current->value {
+                let str_ptr: char* = current->value;
+                printf("\"%s\"", str_ptr);
+            } else {
+                printf("null");
+            }
             current = current->next;
             first = false;
         }
@@ -63,7 +91,8 @@ struct List {
         return size;
     }
     
-    fn find(value: i32) -> bool {
+    fn find(value: any*) -> bool {
+        // This compares pointers, not values
         let current: Node* = head;
         while current {
             if current->value == value {
@@ -87,33 +116,53 @@ struct List {
 fn main() -> i32 {
     let list = List::new();
     
-    printf("Adding elements to list...\n");
-    list.push_front(10);
-    list.push_front(20);
-    list.push_front(30);
-    list.push_front(40);
+    // Create some data to store
+    let val1: i32 = 10;
+    let val2: i32 = 20;
+    let val3: i32 = 30;
+    let val4: i32 = 40;
     
-    printf("List contents: ");
-    list.print();
+    printf("Adding integer pointers to list...\n");
+    list.push_front(&val1);
+    list.push_front(&val2);
+    list.push_front(&val3);
+    list.push_front(&val4);
+    
+    printf("List contents (as ints): ");
+    list.print_as_ints();
     printf("List size: %d\n", list.length());
     
-    if list.find(20) {
-        printf("Looking for 20: %s\n", "found");
+    // Finding by pointer value
+    if list.find(&val2) {
+        printf("Looking for val2 pointer: found\n");
     } else {
-        printf("Looking for 20: %s\n", "not found");
-    }
-    if list.find(99) {
-        printf("Looking for 99: %s\n", "found");
-    } else {
-        printf("Looking for 99: %s\n", "not found");
+        printf("Looking for val2 pointer: not found\n");
     }
     
     printf("Popping elements:\n");
     while list.length() > 0 {
-        let value: i32 = list.pop_front();
-        printf("Popped: %d, remaining: ", value);
-        list.print();
+        let value: any* = list.pop_front();
+        if value {
+            let int_val: i32* = value;
+            printf("Popped: %d, remaining: ", *int_val);
+        } else {
+            printf("Popped: null, remaining: ");
+        }
+        list.print_as_ints();
     }
+    
+    // Now try with strings
+    printf("\nTesting with strings:\n");
+    let str1: char* = "hello";
+    let str2: char* = "world";
+    let str3: char* = "test";
+    
+    list.push_front(str1);
+    list.push_front(str2);
+    list.push_front(str3);
+    
+    printf("String list contents: ");
+    list.print_as_strings();
     
     list.clear();
     return 0;
