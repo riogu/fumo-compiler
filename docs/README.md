@@ -369,7 +369,7 @@ let counter2 = Counter::with_value(10);
 
 ### Memory Management
 ```cpp
-fn malloc(size: i64) -> char*;
+fn malloc(size: i64) -> any*;
 fn free(ptr: char*) -> void;
 
 struct Buffer {

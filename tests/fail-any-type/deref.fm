@@ -1,0 +1,11 @@
+fn printf(format: char*, ...) -> i32;
+
+fn main() -> i32 {
+    let x: i32 = 42;
+    let any_ptr: any* = &x;
+    
+    // This should FAIL - cannot dereference any*
+    let value: i32 = *any_ptr;  // ERROR: can't dereference any*
+    
+    return 0;
+}

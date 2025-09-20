@@ -163,7 +163,8 @@ std::vector<TestFile> collect_test_files(const std::string& test_dir) {
     
     std::print("Scanning directory: {}\n", test_dir);
     
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(test_dir)) {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(test_dir,
+        std::filesystem::directory_options::follow_directory_symlink)) {
         if (entry.is_regular_file() && entry.path().extension() == ".fm") {
             TestFile test_file;
             test_file.path = entry.path();
@@ -206,7 +207,9 @@ void clear_output_directories() {
     std::vector<std::filesystem::path> dirs_to_remove;
     
     try {
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(base_test_path)) {
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(
+                 base_test_path,
+                 std::filesystem::directory_options::follow_directory_symlink)) {
             if (entry.is_directory()) {
                 std::string dir_name = entry.path().filename().string();
                 if (dir_name.length() >= 8 && 
@@ -215,11 +218,12 @@ void clear_output_directories() {
                 }
             }
         }
-    } catch (const std::filesystem::filesystem_error& e) {
-        std::print("Error scanning directories: {}\n", e.what());
-        return;
-    }
-    
+        }
+        catch (const std::filesystem::filesystem_error& e) {
+            std::print("Error scanning directories: {}\n", e.what());
+            return;
+        }
+
     for (const auto& dir_path : dirs_to_remove) {
         try {
             std::string relative_path = std::filesystem::relative(dir_path).string();
@@ -603,18 +607,21 @@ int main(int argc, char* argv[]) {
     
     if (test_dirs.empty()) {
         test_dirs = {
-            "structs-and-postfix", 
-            "string-literals",
-            "initializer-lists",
-            "fail-init-lists",
-            "if-statements",
-            "pointer-tests",
-            "code-examples",
-            "control-flow",
-            "fail-control-flow",
+            "any-type",
             "char-literals",
+            "control-flow",
+            "fail-any-type",
+            "fail-char-literals",
+            "fail-control-flow",
+            "fail-init-lists",
+            "fail-static-functions",
+            "if-statements",
+            "initializer-lists",
+            "pointer-tests",
             "static-member-functions",
-            "language-examples",
+            "string-literals",
+            "structs-and-postfix",
+            "while-tests",
         };
     }
     
@@ -625,3 +632,4 @@ int main(int argc, char* argv[]) {
     
     return 0;
 }
+

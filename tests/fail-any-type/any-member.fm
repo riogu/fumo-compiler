@@ -1,0 +1,16 @@
+fn printf(format: i8*, ...) -> i32;
+
+struct Point {
+    let x: f64;
+    let y: f64;
+}
+
+fn main() -> i32 {
+    let pt: Point = Point {3.0, 4.0};
+    let any_ptr: any* = &pt;
+    
+    // This should FAIL - cannot access members through any*
+    let x_val: f64 = any_ptr->x;  // ERROR: can't access members of any*
+    
+    return 0;
+}

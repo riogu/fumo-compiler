@@ -1,0 +1,43 @@
+fn printf(format: char*, ...) -> i32;
+
+fn main() -> i32 {
+    let a: i32 = 10;
+    let b: f64 = 20.5;
+    let c: char = 'X';
+    
+    let any1: any*;
+    let any2: any*;
+    let any3: any*;
+    
+    // Chain assignments through any*
+    any1 = &a;       // i32* -> any*
+    any2 = any1;     // any* -> any*
+    any3 = any2;     // any* -> any*
+    
+    // Test null in chains
+    let null_any: any* = null;
+    any1 = null_any; // null any* -> any*
+    any2 = any1;     // null any* -> any*
+    
+    if !any2 {
+        printf("Null propagated through assignment chain\n");
+    }
+    
+    // Reset to valid pointers
+    any1 = &a;
+    any2 = any1;
+    any3 = any2;
+    
+    // Convert back through chain
+    let int_ptr: i32* = any3;    // any* -> i32*
+    let float_ptr: f64* = any2;  // any* -> f64* (type mismatch but should compile)
+    let char_ptr: char* = any1;  // any* -> char* (type mismatch but should compile)
+    
+    if int_ptr && float_ptr && char_ptr {
+        printf("All converted pointers are non-null\n");
+    }
+    
+    printf("Assignment chain completed\n");
+    
+    return 0;
+}

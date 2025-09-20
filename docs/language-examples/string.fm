@@ -1,4 +1,4 @@
-fn malloc(size: i64) -> char*;
+fn malloc(size: i64) -> any*;
 fn free(ptr: char*) -> void;
 fn memcpy(dest: char*, src: char*, n: i64) -> void;
 fn memset(ptr: char*, value: char, n: i64) -> void;

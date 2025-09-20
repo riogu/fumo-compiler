@@ -1,0 +1,50 @@
+fn printf(format: char*, ...) -> i32;
+
+struct Point {
+    let x: f64;
+    let y: f64;
+}
+
+struct Person {
+    let age: i32;
+    let height: f64;
+}
+
+fn store_any_struct(storage: any*) -> void {
+    if storage {
+        printf("Stored non-null struct as any*\n");
+    } else {
+        printf("Received null any* parameter\n");
+    }
+}
+
+fn main() -> i32 {
+    let pt: Point = Point {3.0, 4.0};
+    let person: Person = Person {25, 175.5};
+    
+    // Store different struct pointers as any*
+    let any_storage: any*;
+    
+    any_storage = &pt;      // Point* -> any*
+    printf("Point stored as any*\n");
+    
+    any_storage = &person;  // Person* -> any*
+    printf("Person stored as any*\n");
+    
+    // Pass struct pointers to any* parameter
+    store_any_struct(&pt);
+    store_any_struct(&person);
+    store_any_struct(null);  // Test null parameter
+    
+    // Get back as typed pointers
+    let point_ptr: Point* = any_storage;    // any* -> Point* (wrong, but should compile)
+    let person_ptr: Person* = any_storage;  // any* -> Person* (correct)
+    
+    // Test null assignment and checks
+    any_storage = null;
+    if !any_storage {
+        printf("any_storage is now null\n");
+    }
+    
+    return 0;
+}

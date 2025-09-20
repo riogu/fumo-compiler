@@ -1,0 +1,46 @@
+fn printf(format: char*, ...) -> i32;
+
+fn process_any_data(data: any*) -> void {
+    printf("Processing any* data at address\n");
+    // Cannot dereference, but can pass around and compare
+}
+
+fn return_any_ptr(choice: i32) -> any* {
+    let x: i32 = 42;
+    let y: f64 = 3.14;
+    
+    if choice == 1 {
+        return &x;  // Return i32* as any*
+    } else if choice == 2 {
+        return &y;  // Return f64* as any*
+    } else {
+        return null;  // Return null any*
+    }
+}
+
+fn main() -> i32 {
+    let num: i32 = 123;
+    let fnum: f64 = 45.67;
+    
+    // Pass different pointer types to any* parameter
+    process_any_data(&num);   // i32* -> any*
+    process_any_data(&fnum);  // f64* -> any*
+    
+    // Get any* return value and assign to typed pointers
+    let any_result: any* = return_any_ptr(1);
+    let int_result: i32* = return_any_ptr(1);  // any* -> i32*
+    let float_result: f64* = return_any_ptr(2);  // any* -> f64*
+    let null_result: any* = return_any_ptr(99);  // Should return null
+    
+    if !null_result {
+        printf("Returned null any* detected\n");
+    }
+    
+    if any_result {
+        printf("Non-null any* result confirmed\n");
+    }
+    
+    printf("Function parameter and return tests completed\n");
+    
+    return 0;
+}

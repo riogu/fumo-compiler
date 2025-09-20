@@ -178,8 +178,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                         report_error(bin.rhs->source_token,
                                      "pointer arithmetic is only allowed on the rhs of an expression ex: (ptr + 3).");
                     }
-                    // special cases for pointer arithmetic
-                    if (is_ptr_t(bin.lhs->type) && is_int_t(bin.rhs->type)) {} 
+                    if (is_ptr_t(bin.lhs->type) && is_int_t(bin.rhs->type) && bin.lhs->type.kind != Type::any_) {
+                        // special cases for pointer arithmetic
+                        // dont check compatibility for this case
+                    } 
                     else if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break;
