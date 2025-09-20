@@ -29,6 +29,16 @@ struct TypePromotion {
     bool is_signed;
 };
 
+// struct StructLayout {
+//     size_t total_size;
+//     size_t alignment;
+//     std::vector<size_t> field_offsets;
+// };
+// StructLayout calculate_struct_layout(const TypeDecl& type_decl);
+// size_t get_type_size(const Type& type);
+// size_t get_type_alignment(const Type& type);
+// size_t get_type_alignment(const Type& type);
+
 extern llvm::cl::opt<bool> output_IR, output_AST, output_ASM, output_OBJ, output_IR_O0, 
                            print_file, print_IR, print_AST, print_ASM,
                            verbose, no_link, static_link, strip_syms;
@@ -146,6 +156,7 @@ struct Codegen {
         }
     }
 
+    // size_t get_type_size(const Type& type) ;
     llvm::Function* get_or_create_fumo_runtime_error();
     llvm::Function* get_or_create_printf();
     llvm::Function* get_or_create_puts();
@@ -160,3 +171,4 @@ struct Codegen {
     llvm::Function* get_or_create_memcpy();
     llvm::Function* get_or_create_memset();
 };
+

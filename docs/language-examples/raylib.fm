@@ -1,0 +1,9 @@
+struct Color {
+    let r: i8;
+    let g: i8;
+    let b: i8;
+    let a: i8;
+}
+fn main() -> void {
+    let var = Color {};
+}
