@@ -1,4 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
+#include "utils/common_utils.hpp"
 #include <ranges>
 
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
@@ -188,6 +189,10 @@ void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
                     if (is_branch<VariableDecl, BinaryExpr>(member)) type_decl_body.push_back(member);
                 } // removing member structs and member functions from the comparison against init lists
             } else internal_error(node.source_token, "somehow didnt find type declaration.");
+
+            if (init_list->nodes.size() > type_decl_body.size()) {
+                report_error(node.source_token, "excess elements in initializer list.");
+            }
 
             for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
                 if (!is_compatible_t(arg->type, member->type)) {

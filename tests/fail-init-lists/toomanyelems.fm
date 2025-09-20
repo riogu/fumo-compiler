@@ -1,0 +1,7 @@
+struct Foo {
+    let a: i32;
+}
+
+fn main() -> void { 
+    let bar = Foo { 0, 0 };
+}

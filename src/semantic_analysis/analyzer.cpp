@@ -310,7 +310,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     for (auto& node : scope.nodes) analyze(*node);
                     symbol_tree.pop_scope();
                     break;
-                case BlockScope::initializer_list:
+                case BlockScope::initializer_list: {
                     for (auto& node : scope.nodes) analyze(*node);
                     if (node.type.kind == Type::Undetermined) {
                         analyze(*node.type.identifier);
@@ -319,6 +319,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                         }
                     }
                     break;
+                }
             }
         }
 
