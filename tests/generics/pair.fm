@@ -1,0 +1,13 @@
+struct Pair|T, U| {
+    let first: T;
+    let second: U;
+    
+    fn swap() -> Pair|U, T| {
+        return Pair|U, T|{second, first};
+    }
+}
+
+fn main() -> void {
+    let p = Pair|i32, char|{42, 'X'};
+    let swapped = p.swap();
+}

@@ -79,6 +79,10 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
         case Identifier::unknown_name:
             internal_panic("forgot to set identifier name kind for {}.", id.mangled_name);
 
+        case Identifier::generic_member_func_call_name:
+        case Identifier::generic_func_call_name:
+        case Identifier::generic_type_name:
+            internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
     }
     return std::nullopt;
 }

@@ -1,0 +1,20 @@
+fn max|T|(a: T, b: T) -> T {
+    if a > b {
+        return a;
+    }
+    return b;
+}
+
+fn create_ptr|T|(value: T) -> T* {
+    let ptr: T* = malloc(sizeof(T));
+    *ptr = value;
+    return ptr;
+}
+
+fn main() -> void {
+    let bigger = max|i32|(10, 20);
+    let bigger_float = max|f64|(1.5, 2.7);
+    
+    let int_ptr = create_ptr|i32|(42);
+    let char_ptr = create_ptr|char|('Z');
+}

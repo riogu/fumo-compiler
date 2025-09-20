@@ -371,7 +371,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             node = push(ASTNode {*prev_tkn, UnaryExpr {UnaryExpr::dereference, node}});
             nodes.push_back(node);
 
-            expect_token(identifier);
             node = identifier(Identifier::member_var_name);
 
             continue;
@@ -382,7 +381,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
             }
             nodes.push_back(node);
 
-            expect_token(identifier);
             node = identifier(Identifier::member_var_name);
             continue;
         }
@@ -474,16 +472,107 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         return push(ASTNode {*prev_tkn, PrimaryExpr {PrimaryExpr::void_, true}, make_type(Type::any_, "null", 1)});
 
     // NOTE: only variable names 
-    if (token_is(identifier)) return identifier(Identifier::var_name);
+    if (peek_token(identifier)) return identifier(Identifier::var_name);
 
     return std::nullopt;
 }
 
-[[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind, Opt<ASTNode*> declaration) {
-    if (id_kind == Identifier::declaration_name && !declaration) [[unlikely]]
-        internal_panic("forgot to provide declaration to identifier.");
+// FIXME: dont allow using the same name for 2 separate parameters on generics OR normal function calls
+// it should give the user an error
+
+// fn "foo::bar::<{}>::thing::<{}>()"     { ... }
+// fn  foo::bar::<i32>::thing::<f64>()    { ... }
+
+// struct "foo::bar::<{}, {}, {}>()"      { ... }
+// struct  foo::bar::<i32, f64, char*>()  { ... }
+[[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind) {
+    expect_token(identifier);
+
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
+
+    while (token_is(::)) {
+        if (token_is(identifier)) {
+            id.name += "::" + std::get<str>(prev_tkn->literal.value());
+            id.qualifier = Identifier::qualified;
+            id.scope_counts++;
+        } else if (token_is(<)) {
+            id.name += "::<{}"; // for filling later with formatted arguments
+
+            if (!peek_token(identifier)) report_error((*curr_tkn), "expected identifier in generic declaration.");
+            id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+            while (1) {
+                if (token_is_str(",")) {
+                    id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+                    id.name += ", {}"; // will be filled with the real type when instantiated.
+                    continue;
+                }
+                break;
+            }
+            expect_token(>);
+            id.name += ">";
+            if (!peek_token(identifier)) break; // "foo::<T>::<U>()" isn't valid
+            // we break so we don't allow parsing that case
+        }
+    }
+    // let var = foo::bar::<Vec::<i32>>(x, y);
+    id.mangled_name = id.name;
+    return push(ASTNode {token, id});
+}
+// fn  foo::bar::<T>::thing::<U>()    { ... }
+// fn "foo::bar::<{}>::thing::<{}>()" { ... }
+
+// struct  foo::bar::<T, U, V>()      { ... }
+// struct "foo::bar::<{}>()"          { ... }
+
+// the idea is that each identifer is solved normally for 'T', and then filled later
+// we need to make a full copy of the function's AST, and then fill that
+// a true copy with no pointer still belonging to the AST's generic declaration
+[[nodiscard]] ASTNode* Parser::declaration_identifier() {
+    expect_token(identifier);
+    auto token = *prev_tkn;
+    Identifier id {Identifier::declaration_name, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
+    while (token_is(::)) {
+        if (token_is(identifier)) {
+            id.name += "::" + std::get<str>(prev_tkn->literal.value());
+            id.qualifier = Identifier::qualified;
+            id.scope_counts++;
+
+        } else if (token_is(<)) {
+            id.name += "::<{}"; // for filling later with formatted arguments
+
+            if (!peek_token(identifier)) report_error((*curr_tkn), "expected identifier in generic declaration.");
+            id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+            while (1) {
+                if (token_is_str(",")) {
+                    id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+                    id.name += ", {}"; // will be filled with the real type when instantiated.
+                    continue;
+                }
+                break;
+            }
+            expect_token(>);
+            id.name += ">";
+            if (!peek_token(identifier)) break; // "foo::<T>::<U>()" isn't valid
+            // we break so we don't allow parsing that case
+        }
+    }
+    id.mangled_name = id.name;
+    return push(ASTNode {token, id});
+}
+
+[[nodiscard]] ASTNode* Parser::unqualified_identifier(Identifier::Kind id_kind) {
+    expect_token(identifier);
+    auto token = *prev_tkn;
+    Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
+    id.mangled_name = id.name;
+    return push(ASTNode {token, id});
+}
+
+[[nodiscard]] ASTNode* Parser::qualified_identifier() {
+    expect_token(identifier);
+    auto token = *prev_tkn;
+    Identifier id {Identifier::declaration_name, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     while (token_is(::)) {
         expect_token(identifier);
         id.name += "::" + std::get<str>(prev_tkn->literal.value());
@@ -493,3 +582,4 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     id.mangled_name = id.name;
     return push(ASTNode {token, id});
 }
+

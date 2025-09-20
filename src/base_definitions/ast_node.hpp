@@ -3,6 +3,19 @@
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
 #include <llvm/IR/Value.h>
+template<typename T>
+struct foo {
+    template<typename V>
+    void func();
+
+    template<typename V>
+    struct bar {
+        T var;
+        V oo;
+    };
+};
+constexpr auto e = foo<int>::bar<float> {};
+constexpr auto f = foo<str>::bar<float> {};
 
 struct ASTNode; 
 // NOTE: identifiers always hold declarations, but we distinguish the codegen for them
@@ -11,13 +24,16 @@ struct ASTNode;
 struct Identifier {
     enum Kind {
         #define Identifier_kinds                                         \
-        unknown_name,           /*                                   */  \
-        declaration_name,       /*                                   */  \
-        type_name,              /*                                   */  \
-        var_name,               /*                                   */  \
-        member_var_name,        /*                                   */  \
-        func_call_name,         /*                                   */  \
-        member_func_call_name   /*                                   */  \
+        unknown_name,                  /*                            */  \
+        declaration_name,              /*                            */  \
+        type_name,                     /*                            */  \
+        var_name,                      /*                            */  \
+        member_var_name,               /*                            */  \
+        func_call_name,                /*                            */  \
+        member_func_call_name,         /*                            */  \
+        generic_member_func_call_name, /*  foo::<T>(...)             */  \
+        generic_func_call_name,        /*  foo::<T>(...)             */  \
+        generic_type_name              /*  Vec::<T>                  */  \
 
         Identifier_kinds
     } kind;
@@ -28,9 +44,37 @@ struct Identifier {
     str mangled_name = name;
     int scope_counts = 0;
 
+    // generic identifiers only need to eventually become a flat instantiation of them
+    // given:
+    // node::<T> { ... }
+    // foo::bar::<>() { ... }
+    // it becomes
+    // node::<i32> { ... }
+    // foo::bar::<i32> { ... }
+    // and thats it, then its easy to link usage to the instantiations
+    // we want a "get or create" approach to template usage
+    bool is_generic() { return kind == generic_type_name || kind == generic_member_func_call_name || kind == generic_func_call_name; };
+    // we make a generic formatted name like:
+    //   -> "foo::bar::<{}>()" (this is stored normally in the 'name' variable)
+    // without anything inside "<{}>"
+    // that is what identifies uniquely each generic function
+    // then, we use runtime_format() to apply the typenames to this formatted string
+    // NOTE: this is used both for parameters in the declaration, and for arguments in the instantiation
+    vec<ASTNode*> generic_identifiers {};
+    str generic_alias = ""; // for keeping the original alias type names ('T', 'V', etc.)
+    // (might be unused later)
+    // each of these is an identifier
+    // these are filled into the identifier on instantiation
+    // (make a method to pass these into the non_generic_name)
+    // we need to recursively solve identifiers one by one and fill out the final formatted string
+
     str base_struct_name = ""; // only used by member_var_name and member_func_call_name
 
 };
+
+str runtime_format(const str& fmt, auto&&... args) {
+    return std::vformat(fmt, std::make_format_args(args...));
+}
 
 struct PrimaryExpr {
     enum Kind {

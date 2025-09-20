@@ -59,8 +59,8 @@ void custom_handler(int sig) {
     llvm::sys::PrintStackTrace(llvm::errs());
     std::exit(1);
 }
-
 auto main(int argc, char** argv) -> int {
+
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
     signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);

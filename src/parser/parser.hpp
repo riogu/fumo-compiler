@@ -52,8 +52,10 @@ struct Parser {
     [[nodiscard]] Opt<ASTNode*> postfix();
     [[nodiscard]] vec<ASTNode*> argument_list();
     [[nodiscard]] Opt<ASTNode*> primary();
-    [[nodiscard]] ASTNode* identifier(Identifier::Kind id_kind = Identifier::unknown_name,
-                                      Opt<ASTNode*> declaration = std::nullopt);
+    [[nodiscard]] ASTNode* identifier(Identifier::Kind id_kind);
+    [[nodiscard]] ASTNode* declaration_identifier();
+    [[nodiscard]] ASTNode* qualified_identifier();
+    [[nodiscard]] ASTNode* unqualified_identifier(Identifier::Kind id_kind);
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();

@@ -14,6 +14,10 @@
 //   fn f() -> void { struct bar {};     } => struct "foo()::bar"  {};
 //   fn f() -> void { let bar: i32;      } => let    "foo()::bar": i32;
 //
+//   for generics:
+//   we think of declarations vs instantiations as 2 separate cases
+//   fn f|T|() -> void { let bar: i32;      } => let    "foo|T|()::bar": i32;
+//
 // they are "global" but renamed internally
 #pragma once
 

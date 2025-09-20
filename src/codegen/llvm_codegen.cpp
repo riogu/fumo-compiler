@@ -184,6 +184,10 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 case Identifier::member_func_call_name:
                 case Identifier::unknown_name:
                     internal_panic("shouldn't codegen this identifier: '{}'.", node.name());
+                case Identifier::generic_member_func_call_name:
+                case Identifier::generic_func_call_name:
+                case Identifier::generic_type_name:
+                    internal_panic("codegen not implemented for '{}'.", node.name());
             }
         }
 

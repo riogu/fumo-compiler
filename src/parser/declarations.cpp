@@ -1,6 +1,4 @@
-#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
-#include "utils/common_utils.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}?
 //                            {<declaration-specifier>}+ {"=" <initializer>}?
@@ -12,10 +10,9 @@
     if (token_is_keyword(extern)) {
         was_extern = true;
     }
-    expect_token(identifier);
-    auto* node = push(ASTNode {*prev_tkn});
+    auto* node = push(ASTNode {*curr_tkn});
 
-    VariableDecl variable {VariableDecl::variable_declaration, identifier(Identifier::declaration_name, node)};
+    VariableDecl variable {VariableDecl::variable_declaration, unqualified_identifier(Identifier::declaration_name)};
 
     if (const auto& id = get_id(variable); id.qualifier == Identifier::qualified) {
         report_error(variable.identifier->source_token, 
@@ -60,12 +57,10 @@
     // }
     std::unordered_set<Type::TypeQualifier> qualifiers {};
     if (token_is_keyword(static)) qualifiers.insert(Type::static_); // adding static functions
-    
 
-    expect_token(identifier);
-    auto* node = push(ASTNode {*prev_tkn});
+    auto* node = push(ASTNode {*curr_tkn});
 
-    FunctionDecl function {FunctionDecl::function_declaration, identifier(Identifier::declaration_name, node)};
+    FunctionDecl function {FunctionDecl::function_declaration, declaration_identifier()};
 
     const auto& [params, is_variadic] = parameter_list(); // could be an empty vector
     function.parameters = params;
@@ -93,9 +88,9 @@
 
     vec<ASTNode*> parameters {};
     while (1) {
-        if(token_is(identifier)) {
+        if(peek_token(identifier)) {
             ASTNode* node = push(ASTNode {*prev_tkn});
-            node->branch = VariableDecl {VariableDecl::parameter, identifier(Identifier::declaration_name, node)};
+            node->branch = VariableDecl {VariableDecl::parameter, unqualified_identifier(Identifier::declaration_name)};
 
             expect_token(:);
             node->type = declaration_specifier();
@@ -163,7 +158,7 @@
         }
         return type;
     }
-    if (token_is(identifier)) {
+    if (peek_token(identifier)) {
         type.identifier = identifier(Identifier::type_name);
         type.kind = Type::Undetermined;
         while (token_is(*)) {
@@ -177,10 +172,9 @@
 
 [[nodiscard]] ASTNode* Parser::namespace_declaration() {
 
-    expect_token(identifier);
 
-    ASTNode* node = push(ASTNode {*prev_tkn});
-    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration, identifier(Identifier::declaration_name, node)};
+    ASTNode* node = push(ASTNode {*curr_tkn});
+    NamespaceDecl nmspace {NamespaceDecl::namespace_declaration, qualified_identifier()};
 
     expect_token_str("{");
     while (!token_is_str("}")) {
@@ -203,10 +197,9 @@
 }
 
 [[nodiscard]] ASTNode* Parser::struct_declaration() {
-    auto* node = push(ASTNode {*prev_tkn});
 
-    expect_token(identifier);
-    node->type = {identifier(Identifier::declaration_name, node), Type::struct_};
+    auto* node = push(ASTNode {*curr_tkn});
+    node->type = {declaration_identifier(), Type::struct_};
 
     TypeDecl type_decl {TypeDecl::struct_declaration};
     if (token_is_str("{")) {

@@ -1,7 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
 #include "utils/common_utils.hpp"
-#include <algorithm>
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -73,6 +72,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case Identifier::declaration_name:
                 case Identifier::type_name:
                     break;
+                case Identifier::generic_member_func_call_name:
+                case Identifier::generic_func_call_name:
+                case Identifier::generic_type_name:
+                    internal_error(node.source_token, "semantic analyis not implemented for '{}'", node.name());
             }
         }
 

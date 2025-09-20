@@ -1,21 +1,49 @@
-fn printf(format: const char*, ...) -> i32;
+// Raylib-compatible structs
 struct Color {
     let r: i8;
     let g: i8;
     let b: i8;
     let a: i8;
 }
-fn main() -> void {
 
-    let color = Color {123, 124, 125, 255};
+// Forward declare Raylib functions
+fn InitWindow(width: i32, height: i32, title: const char*) -> void;
+fn CloseWindow() -> void;
+fn WindowShouldClose() -> bool;
+fn BeginDrawing() -> void;
+fn EndDrawing() -> void;
+fn ClearBackground(color: Color) -> void;
+fn DrawRectangle(posX: i32, posY: i32, width: i32, height: i32, color: *Color) -> void;
+fn DrawText(text: const char*, posX: i32, posY: i32, fontSize: i32, color: *Color) -> void;
+
+fn main() -> i32 {
+    // Initialize window
+    InitWindow(800, 450, "Raylib Test - Fumo Language");
     
-    // Access individual members so LLVM can't optimize away
-    printf("Red: %d\n", color.r);
-    printf("Green: %d\n", color.g);
-    printf("Blue: %d\n", color.b);
-    printf("Alpha: %d\n", color.a);
+    // Define some colors
+    let red = Color{255, 0, 0, 255};
+    let blue = Color{0, 0, 255, 255};
+    let white = Color{255, 255, 255, 255};
+    let dark_gray = Color{80, 80, 80, 255};
     
-    // Modify a member
-    color.r = 200;
-    printf("Modified red: %d\n", color.r);
+    // Main game loop
+    while !WindowShouldClose() {
+        BeginDrawing();
+        
+        // Clear background with dark gray
+        // ClearBackground(dark_gray);
+        
+        // Draw some rectangles
+        DrawRectangle(100, 100, 200, 150, red);
+        DrawRectangle(350, 200, 150, 100, blue);
+        
+        // Draw text
+        DrawText("Hello from Fumo!", 250, 50, 20, white);
+        DrawText("Testing Raylib compatibility", 200, 350, 16, white);
+        
+        EndDrawing();
+    }
+    
+    CloseWindow();
+    return 0;
 }

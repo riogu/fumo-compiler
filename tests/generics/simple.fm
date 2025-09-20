@@ -1,0 +1,23 @@
+struct Box|T| {
+    let value: T;
+    
+    fn get() -> T {
+        return value;
+    }
+    
+    fn set(new_value: T) -> void {
+        value = new_value;
+    }
+    
+    fn static make(val: T) -> Box|T| {
+        return Box|T|{val};
+    }
+}
+
+fn main() -> void {
+    let int_box = Box|i32|::make(42);
+    let float_box = Box|f64|::make(3.14);
+    
+    int_box.set(100);
+    let result = int_box.get();
+}
