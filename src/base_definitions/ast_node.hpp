@@ -306,6 +306,8 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     return (a.kind == b.kind && type_name(a) == type_name(b));
 }
 [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+    if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
+
     if (is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count) return true;
     if (a.kind == b.kind) {
         if (type_name(a) == type_name(b)) {
