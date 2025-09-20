@@ -1,7 +1,7 @@
 // String literal with printf
-fn printf(string: i8*, ...) -> i32;
+fn printf(string: char*, ...) -> i32;
 fn main() -> i32 {
-    let fumofumo: i8* = "fumos";
+    let fumofumo: char* = "fumos";
     let amount: i32 = 69;
     printf("i have %d %s\n", amount, fumofumo);
     return 0;

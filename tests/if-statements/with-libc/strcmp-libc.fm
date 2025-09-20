@@ -1,6 +1,6 @@
 // Forward declare libc functions
-fn strcmp(s1: i8*, s2: i8*) -> i32;
-fn strlen(s: i8*) -> i64;
+fn strcmp(s1: char*, s2: char*) -> i32;
+fn strlen(s: char*) -> i64;
 
 fn main() -> i32 {
     let str1 = "hello";

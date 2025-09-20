@@ -1,4 +1,4 @@
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 
 // Test 1: Basic while loop with simple condition
 fn test_basic_while() -> void {

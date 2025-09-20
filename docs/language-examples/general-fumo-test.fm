@@ -1,4 +1,4 @@
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 
 namespace math {
     struct Point {

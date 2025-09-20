@@ -1,7 +1,7 @@
 // String literal with quotes escaped
-fn puts(s: i8*) -> i32;
+fn puts(s: char*) -> i32;
 fn main() -> i32 {
-    let quoted: i8* = "She said \"Hello\" to me.";
+    let quoted: char* = "She said \"Hello\" to me.";
     puts(quoted);
     return 0;
 }

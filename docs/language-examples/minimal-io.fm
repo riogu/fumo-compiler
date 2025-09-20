@@ -5,12 +5,12 @@ struct FILE;
 let extern stdout: FILE*;
 let extern stderr: FILE*;
 
-fn printf(format: const i8*, ...) -> i32;
-fn fprintf(stream: FILE*, format: const i8*, ...) -> i32;
-fn fopen(filename: const i8*, mode: const i8*) -> FILE*;
+fn printf(format: const char*, ...) -> i32;
+fn fprintf(stream: FILE*, format: const char*, ...) -> i32;
+fn fopen(filename: const char*, mode: const char*) -> FILE*;
 fn fclose(stream: FILE*) -> i32;
-fn malloc(size: i64) -> i8*;
-fn free(ptr: i8*) -> void;
+fn malloc(size: i64) -> char*;
+fn free(ptr: char*) -> void;
 
 fn main() -> i32 {
     printf("=== Basic I/O Test ===\n");

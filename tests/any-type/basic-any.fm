@@ -1,0 +1,27 @@
+fn printf(format: char*, ...) -> i32;
+
+fn main() -> i32 {
+    let x: i32 = 42;
+    let y: f64 = 3.14;
+    let c: char = 'A';
+    
+    // Basic assignment from typed pointers to any*
+    let any_ptr: any*;
+    any_ptr = &x;  // i32* -> any*
+    printf("any_ptr assigned from i32*\n");
+    
+    any_ptr = &y;  // f64* -> any*
+    printf("any_ptr assigned from f64*\n");
+    
+    any_ptr = &c;  // char* -> any*
+    printf("any_ptr assigned from char*\n");
+    
+    // Assignment back to typed pointers
+    let int_ptr: i32* = any_ptr;  // any* -> i32* (should work but be wrong type)
+    let float_ptr: f64* = any_ptr;  // any* -> f64*
+    let char_ptr: char* = any_ptr;  // any* -> char*
+    
+    printf("Implicit conversions completed\n");
+    
+    return 0;
+}

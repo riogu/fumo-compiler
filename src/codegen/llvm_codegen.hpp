@@ -138,6 +138,7 @@ struct Codegen {
             case Type::f64_:     return llvm::Type::getDoubleTy(*llvm_context); 
             case Type::bool_:    return llvm::Type::getInt1Ty(*llvm_context);   
             case Type::void_:    return llvm::Type::getVoidTy(*llvm_context);
+            case Type::char_:    return llvm::Type::getInt8Ty(*llvm_context);
             // case Type::str_:     return llvm::PointerType::getUnqual(*llvm_context);
                 break;
             default:

@@ -1,5 +1,5 @@
-fn scanf (format: i8* , ... ) -> i32;
-fn printf (format: i8* , ... ) -> i32;
+fn scanf (format: char* , ... ) -> i32;
+fn printf (format: char* , ... ) -> i32;
 
 fn fib(n: i64) -> i64 {
     if n < 2 {

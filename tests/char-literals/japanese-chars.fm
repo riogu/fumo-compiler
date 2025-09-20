@@ -1,5 +1,5 @@
-// fn printf(format: i8*, ...) -> i32;
-// fn sscanf(str: i8*, format: i8*, ...) -> i32;
+// fn printf(format: char*, ...) -> i32;
+// fn sscanf(str: char*, format: char*, ...) -> i32;
 //
 // fn test_japanese_hiragana() -> void {
 //     printf("\n=== Testing Japanese Hiragana Characters ===\n");
@@ -191,16 +191,16 @@
 //     printf("\n=== Testing Edge Cases ===\n");
 //     
 //     // Test minimum and maximum char values
-//     let min_char: i8 = 0;
-//     let max_printable: i8 = 126;  // '~'
+//     let min_char: char = 0;
+//     let max_printable: char = 126;  // '~'
 //     
 //     printf("Minimum char value: %d\n", min_char);
 //     printf("Maximum printable ASCII: %d ('%c')\n", max_printable, max_printable);
 //     
 //     // Test some non-printable characters
-//     let bell: i8 = '\a';  // Alert/bell
-//     let form_feed: i8 = '\f';
-//     let vertical_tab: i8 = '\v';
+//     let bell: char = '\a';  // Alert/bell
+//     let form_feed: char = '\f';
+//     let vertical_tab: char = '\v';
 //     
 //     printf("Bell character ASCII: %d\n", bell);
 //     printf("Form feed ASCII: %d\n", form_feed);
@@ -208,7 +208,7 @@
 //     
 //     // Test Unicode range differences
 //     printf("\nUnicode range comparison:\n");
-//     let ascii_a: i8 = 'a';         // ASCII: 97
+//     let ascii_a: char = 'a';         // ASCII: 97
 //     let hira_a: i32 = 'あ';        // Unicode: 12354
 //     let kata_a: i32 = 'ア';        // Unicode: 12450
 //     let kanji_one: i32 = '一';     // Unicode: 19968

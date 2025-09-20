@@ -1,13 +1,13 @@
-fn malloc(size: i64) -> i8*;
-fn free(ptr: i8*) -> void;
-fn memcpy(dest: i8*, src: i8*, n: i64) -> void;
-fn memset(ptr: i8*, value: i8, n: i64) -> void;
-fn printf(format: const i8*, ...) -> i32;
-fn scanf(format: const i8*, ...) -> i32;
+fn malloc(size: i64) -> char*;
+fn free(ptr: char*) -> void;
+fn memcpy(dest: char*, src: char*, n: i64) -> void;
+fn memset(ptr: char*, value: char, n: i64) -> void;
+fn printf(format: const char*, ...) -> i32;
+fn scanf(format: const char*, ...) -> i32;
 
 namespace fm {
     // Helper function
-    fn cstr_length(cstr: i8*) -> i32 {
+    fn cstr_length(cstr: char*) -> i32 {
         let len: i32 = 0;
         while *(cstr + len) != '\0' {
             len = len + 1;
@@ -15,27 +15,27 @@ namespace fm {
         return len;
     }
     struct str {
-        let data: i8*;
+        let data: char*;
         let length: i32;
         let capacity: i32;
         
         // Static constructors
         fn static new() -> str {
-            let data: i8* = malloc(1);
+            let data: char* = malloc(1);
             *data = '\0';  
             return str {data, 0, 1};
         }
         
-        fn static from_cstr(cstr: i8*) -> str {
+        fn static from_cstr(cstr: char*) -> str {
             let len: i32 = cstr_length(cstr);
             let cap: i32 = len + 1;
-            let data: i8* = malloc(cap);
+            let data: char* = malloc(cap);
             memcpy(data, cstr, len);
             *(data + len) = '\0';  
             return str {data, len, cap};
         }
         // Core methods
-        fn c_str() -> i8* {
+        fn c_str() -> char* {
             return data;
         }
         fn size() -> i32 {
@@ -44,7 +44,7 @@ namespace fm {
         fn empty() -> bool {
             return length == '\0';
         }
-        fn at(index: i32) -> i8 {
+        fn at(index: i32) -> char {
             if index >= 0 && index < length {
                 return *(data + index);
             }
@@ -70,7 +70,7 @@ namespace fm {
             
             if new_len + 1 > capacity {
                 let new_cap: i32 = (new_len + 1) * 2;  
-                let new_data: i8* = malloc(new_cap);
+                let new_data: char* = malloc(new_cap);
                 memcpy(new_data, data, length);
                 free(data);
                 data = new_data;
@@ -82,13 +82,13 @@ namespace fm {
             *(data + length) = '\0';
         }
         
-        fn append_cstr(cstr: i8*) -> void {
+        fn append_cstr(cstr: char*) -> void {
             let cstr_len: i32 = cstr_length(cstr);
             let new_len: i32 = length + cstr_len;
             
             if new_len + 1 > capacity {
                 let new_cap: i32 = (new_len + 1) * 2;
-                let new_data: i8* = malloc(new_cap);
+                let new_data: char* = malloc(new_cap);
                 memcpy(new_data, data, length);
                 free(data);
                 data = new_data;

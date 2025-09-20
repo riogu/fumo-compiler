@@ -1,7 +1,7 @@
 // String literal in struct
-fn printf(string: i8*, ...) -> i32;
+fn printf(string: char*, ...) -> i32;
 struct person {
-    let name: i8* = "Unknown";
+    let name: char* = "Unknown";
     let age: i32 = 0;
     fn introduce() -> void;
 };

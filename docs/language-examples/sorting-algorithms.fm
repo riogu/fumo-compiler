@@ -1,4 +1,4 @@
-fn printf(format: const i8*, ...) -> i32;
+fn printf(format: const char*, ...) -> i32;
 fn malloc(size: i64) -> i32*;
 fn free(ptr: i32*) -> void;
 fn rand() -> i32;
@@ -234,7 +234,7 @@ fn merge_sort(arr: IntArray*) -> void {
     }
 }
 
-fn test_sorting_algorithm(name: const i8*, test_arr: IntArray*, original: IntArray*) -> void {
+fn test_sorting_algorithm(name: const char*, test_arr: IntArray*, original: IntArray*) -> void {
     printf("Testing %s...\n", name);
     
     // Copy original data to test array

@@ -74,7 +74,6 @@ Opt<llvm::Value*> Codegen::codegen_address(ASTNode& node) {
         holds(UnaryExpr, const& un) {
             if (un.kind != UnaryExpr::dereference) report_error(node.source_token, "result of unary expression is not assignable.");
             if (!un.expr.value()->type.ptr_count) internal_panic("somehow passed non ptr type to '{}'", node.name());
-            // NOTE: might be able to use this to report errors on using function return values
 
             // pass the ptr to the original struct to member function calls that were dereferenced
             if (node.llvm_value && !un.expr.value()->llvm_value) un.expr.value()->llvm_value = node.llvm_value;

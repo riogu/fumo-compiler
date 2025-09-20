@@ -1,0 +1,61 @@
+fn printf(format: char*, ...) -> i32;
+
+fn main() -> i32 {
+    let x: i32 = 100;
+    let y: i32 = 200;
+    
+    let any_ptr1: any* = &x;
+    let any_ptr2: any* = &x;  // Same address
+    let any_ptr3: any* = &y;  // Different address
+    
+    let int_ptr: i32* = &x;
+    
+    // any* == any*
+    if any_ptr1 == any_ptr2 {
+        printf("any_ptr1 == any_ptr2: true (same address)\n");
+    }
+    
+    if any_ptr1 != any_ptr3 {
+        printf("any_ptr1 != any_ptr3: true (different addresses)\n");
+    }
+    
+    // any* == typed pointer
+    if any_ptr1 == int_ptr {
+        printf("any_ptr1 == int_ptr: true (same address)\n");
+    }
+    
+    // any* != typed pointer (different addresses)
+    let int_ptr2: i32* = &y;
+    if any_ptr1 != int_ptr2 {
+        printf("any_ptr1 != int_ptr2: true (different addresses)\n");
+    }
+    
+    // Null comparisons
+    let null_any: any* = null;
+    let null_any2: any*;  // Initialized to null by default
+    
+    if null_any == null {
+        printf("null any* == null: true\n");
+    }
+    
+    if null_any == null_any2 {
+        printf("null any* == null any*: true\n");
+    }
+    
+    if null_any != any_ptr1 {
+        printf("null any* != valid any*: true\n");
+    }
+    
+    // Null check with !
+    if !null_any {
+        printf("!null_any: true (null pointer)\n");
+    }
+    
+    if !any_ptr1 {
+        printf("This should not print (any_ptr1 is not null)\n");
+    } else {
+        printf("any_ptr1 is not null\n");
+    }
+    
+    return 0;
+}

@@ -1,8 +1,8 @@
 // String length calculation
-fn printf(format: i8*, ...) -> i32;
-fn strlen(s: i8*) -> i32;  // size_t is typically 64-bit
+fn printf(format: char*, ...) -> i32;
+fn strlen(s: char*) -> i32;  // size_t is typically 64-bit
 fn main() -> i32 {
-    let message: i8* = "Programming";
+    let message: char* = "Programming";
     let len: i32 = strlen(message);
     printf("Length of '%s' is %d\n", message, len);
     return len; // NOTE: add casting operator

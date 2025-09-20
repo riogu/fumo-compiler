@@ -1,8 +1,8 @@
 // Basic string literal assignment and usage
 t(
-"fn puts(s: i8*) -> i32;\n"
+"fn puts(s: char*) -> i32;\n"
 "fn main() -> i32 {\n"
-"    let message: i8* = \"Hello, World!\";\n"
+"    let message: char* = \"Hello, World!\";\n"
 "    puts(message);\n"
 "    return 0;\n"
 "}\n"
@@ -11,7 +11,7 @@ t(
 // String literal with printf
 t(
 "fn main() -> i32 {\n"
-"    let name: i8* = \"Alice\";\n"
+"    let name: char* = \"Alice\";\n"
 "    let age: i32 = 25;\n"
 "    printf(\"Name: %s, Age: %d\\n\", name, age);\n"
 "    return 0;\n"
@@ -21,7 +21,7 @@ t(
 // String literal with escape sequences
 t(
 "fn main() -> i32 {\n"
-"    let text: i8* = \"Line 1\\nLine 2\\tTabbed\";\n"
+"    let text: char* = \"Line 1\\nLine 2\\tTabbed\";\n"
 "    printf(\"%s\\n\", text);\n"
 "    return 0;\n"
 "}\n"
@@ -29,7 +29,7 @@ t(
 
 // String literal as function parameter
 t(
-"fn print_greeting(msg: i8*) -> void {\n"
+"fn print_greeting(msg: char*) -> void {\n"
 "    printf(\"Greeting: %s\\n\", msg);\n"
 "}\n"
 "fn main() -> i32 {\n"
@@ -41,7 +41,7 @@ t(
 // String literal in struct
 t(
 "struct person {\n"
-"    let name: i8* = \"Unknown\";\n"
+"    let name: char* = \"Unknown\";\n"
 "    let age: i32 = 0;\n"
 "    fn introduce() -> void;\n"
 "};\n"
@@ -58,9 +58,9 @@ t(
 // String comparison using strcmp
 t(
 "fn main() -> i32 {\n"
-"    let str1: i8* = \"hello\";\n"
-"    let str2: i8* = \"hello\";\n"
-"    let str3: i8* = \"world\";\n"
+"    let str1: char* = \"hello\";\n"
+"    let str2: char* = \"hello\";\n"
+"    let str3: char* = \"world\";\n"
 "    if (strcmp(str1, str2) == 0) {\n"
 "        puts(\"Strings match!\");\n"
 "    }\n"
@@ -74,7 +74,7 @@ t(
 // String length calculation
 t(
 "fn main() -> i32 {\n"
-"    let message: i8* = \"Programming\";\n"
+"    let message: char* = \"Programming\";\n"
 "    let len: i32 = strlen(message);\n"
 "    printf(\"Length of '%s' is %d\\n\", message, len);\n"
 "    return len;\n"
@@ -84,7 +84,7 @@ t(
 // Empty string literal
 t(
 "fn main() -> i32 {\n"
-"    let empty: i8* = \"\";\n"
+"    let empty: char* = \"\";\n"
 "    printf(\"Empty string length: %d\\n\", strlen(empty));\n"
 "    return 0;\n"
 "}\n"
@@ -93,7 +93,7 @@ t(
 // String literal with quotes escaped
 t(
 "fn main() -> i32 {\n"
-"    let quoted: i8* = \"She said \\\"Hello\\\" to me.\";\n"
+"    let quoted: char* = \"She said \\\"Hello\\\" to me.\";\n"
 "    puts(quoted);\n"
 "    return 0;\n"
 "}\n"
@@ -103,8 +103,8 @@ t(
 t(
 "namespace messages {\n"
 "    struct config {\n"
-"        let error_msg: i8* = \"Error occurred!\";\n"
-"        let success_msg: i8* = \"Operation successful!\";\n"
+"        let error_msg: char* = \"Error occurred!\";\n"
+"        let success_msg: char* = \"Operation successful!\";\n"
 "        fn print_error() -> void;\n"
 "        fn print_success() -> void;\n"
 "    };\n"

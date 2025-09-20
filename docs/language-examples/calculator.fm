@@ -1,5 +1,5 @@
-fn printf(format: const i8*, ...) -> i32;
-fn scanf(format: const i8*, ...) -> i32;
+fn printf(format: const char*, ...) -> i32;
+fn scanf(format: const char*, ...) -> i32;
 
 struct Calculator {
     let result: f64;

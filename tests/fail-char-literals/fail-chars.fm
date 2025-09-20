@@ -1,4 +1,4 @@
-fn printf(format: i8*, ...) -> i32;
+fn printf(format: char*, ...) -> i32;
 
 // These tests are designed to FAIL compilation
 // Each test function contains code that should cause compilation errors
@@ -8,12 +8,12 @@ fn test_multi_character_literals() -> void {
     printf("Testing multi-character literals (should fail):\n");
     
     // These should all cause compilation errors:
-    let fail1: i8 = 'ab';           // ERROR: Multi-character literal
-    let fail2: i8 = 'hello';        // ERROR: Multi-character literal
-    let fail3: i8 = 'test';         // ERROR: Multi-character literal
+    let fail1: char = 'ab';           // ERROR: Multi-character literal
+    let fail2: char = 'hello';        // ERROR: Multi-character literal
+    let fail3: char = 'test';         // ERROR: Multi-character literal
     let fail4: i32 = 'こん';         // ERROR: Multi-character Japanese literal
     let fail5: i32 = 'hello世界';    // ERROR: Multi-character mixed literal
-    let fail6: i8 = '123';          // ERROR: Multi-character numeric literal
+    let fail6: char = '123';          // ERROR: Multi-character numeric literal
     
     printf("Multi-character test complete\n");
 }
@@ -22,7 +22,7 @@ fn test_empty_character_literals() -> void {
     printf("Testing empty character literals (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = '';             // ERROR: Empty character literal
+    let fail1: char = '';             // ERROR: Empty character literal
     let fail2: i32 = '';            // ERROR: Empty character literal
     
     printf("Empty character test complete\n");
@@ -32,10 +32,10 @@ fn test_unclosed_character_literals() -> void {
     printf("Testing unclosed character literals (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = 'a;             // ERROR: Unclosed character literal
-    let fail2: i8 = a';             // ERROR: Missing opening quote
-    let fail3: i8 = 'あ;            // ERROR: Unclosed Japanese character
-    let fail4: i8 = '一;            // ERROR: Unclosed kanji character
+    let fail1: char = 'a;             // ERROR: Unclosed character literal
+    let fail2: char = a';             // ERROR: Missing opening quote
+    let fail3: char = 'あ;            // ERROR: Unclosed Japanese character
+    let fail4: char = '一;            // ERROR: Unclosed kanji character
     
     printf("Unclosed character test complete\n");
 }
@@ -44,15 +44,15 @@ fn test_invalid_escape_sequences() -> void {
     printf("Testing invalid escape sequences (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = '\z';           // ERROR: Invalid escape sequence
-    let fail2: i8 = '\';            // ERROR: Incomplete escape at end
-    let fail3: i8 = '\x';           // ERROR: Incomplete hex escape
-    let fail4: i8 = '\u';           // ERROR: Incomplete unicode escape
-    let fail5: i8 = '\u12';         // ERROR: Incomplete unicode escape
-    let fail6: i8 = '\u12G4';       // ERROR: Invalid hex digit in unicode
-    let fail7: i8 = '\xGG';         // ERROR: Invalid hex digits
-    let fail8: i8 = '\777';         // ERROR: Octal value too large
-    let fail9: i8 = '\400';         // ERROR: Octal value too large
+    let fail1: char = '\z';           // ERROR: Invalid escape sequence
+    let fail2: char = '\';            // ERROR: Incomplete escape at end
+    let fail3: char = '\x';           // ERROR: Incomplete hex escape
+    let fail4: char = '\u';           // ERROR: Incomplete unicode escape
+    let fail5: char = '\u12';         // ERROR: Incomplete unicode escape
+    let fail6: char = '\u12G4';       // ERROR: Invalid hex digit in unicode
+    let fail7: char = '\xGG';         // ERROR: Invalid hex digits
+    let fail8: char = '\777';         // ERROR: Octal value too large
+    let fail9: char = '\400';         // ERROR: Octal value too large
     
     printf("Invalid escape test complete\n");
 }
@@ -61,10 +61,10 @@ fn test_newlines_in_literals() -> void {
     printf("Testing newlines in character literals (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = '
+    let fail1: char = '
     ';                              // ERROR: Literal newline in character
     
-    let fail2: i8 = 'a
+    let fail2: char = 'a
     b';                             // ERROR: Multi-line character literal
     
     printf("Newline test complete\n");
@@ -74,10 +74,10 @@ fn test_wrong_quote_types() -> void {
     printf("Testing wrong quote types (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = "a";            // ERROR: String literal for character
-    let fail2: i8 = `a`;            // ERROR: Backtick literal for character
-    let fail3: i8 = "あ";           // ERROR: Japanese char in string quotes
-    let fail4: i8 = `一`;           // ERROR: Kanji in backticks
+    let fail1: char = "a";            // ERROR: String literal for character
+    let fail2: char = `a`;            // ERROR: Backtick literal for character
+    let fail3: char = "あ";           // ERROR: Japanese char in string quotes
+    let fail4: char = `一`;           // ERROR: Kanji in backticks
     
     printf("Wrong quote test complete\n");
 }
@@ -86,13 +86,13 @@ fn test_type_overflow() -> void {
     printf("Testing type overflow (should fail):\n");
     
     // These should cause compilation errors due to value overflow:
-    let fail1: i8 = 'あ';           // ERROR: Japanese character too large for i8
-    let fail2: i8 = 'ア';           // ERROR: Katakana too large for i8
-    let fail3: i8 = '一';           // ERROR: Kanji too large for i8
-    let fail4: i8 = '🎌';           // ERROR: Emoji definitely too large
-    let fail5: i8 = '\u1234';       // ERROR: Unicode value too large for i8
-    let fail6: i8 = '\x80';         // ERROR: Value 128 too large for signed i8
-    let fail7: i8 = '\xFF';         // ERROR: Value 255 too large for signed i8
+    let fail1: char = 'あ';           // ERROR: Japanese character too large for char
+    let fail2: char = 'ア';           // ERROR: Katakana too large for char
+    let fail3: char = '一';           // ERROR: Kanji too large for char
+    let fail4: char = '🎌';           // ERROR: Emoji definitely too large
+    let fail5: char = '\u1234';       // ERROR: Unicode value too large for char
+    let fail6: char = '\x80';         // ERROR: Value 128 too large for signed char
+    let fail7: char = '\xFF';         // ERROR: Value 255 too large for signed char
     
     printf("Type overflow test complete\n");
 }
@@ -101,16 +101,16 @@ fn test_invalid_character_operations() -> void {
     printf("Testing invalid character operations (should fail):\n");
     
     // These should cause compilation errors:
-    let char1: i8 = 'a';
-    let char2: i8 = 'b';
+    let char1: char = 'a';
+    let char2: char = 'b';
     
     // Depending on your language rules, these might fail:
-    let fail1: i8* = &'a';          // ERROR: Taking address of literal
-    let fail2: i8 = 'a' + 'b' + 'c' + 'd' + 'e'; // ERROR: Expression too complex or overflow
+    let fail1: char* = &'a';          // ERROR: Taking address of literal
+    let fail2: char = 'a' + 'b' + 'c' + 'd' + 'e'; // ERROR: Expression too complex or overflow
     
     // Array initialization errors
-    let fail3: i8[3] = {'ab', 'cd', 'ef'}; // ERROR: Multi-char elements
-    let fail4: i8[2] = {'', 'a'};          // ERROR: Empty char in array
+    let fail3: char[3] = {'ab', 'cd', 'ef'}; // ERROR: Multi-char elements
+    let fail4: char[2] = {'', 'a'};          // ERROR: Empty char in array
     
     printf("Invalid operations test complete\n");
 }
@@ -119,10 +119,10 @@ fn test_mixed_encoding_errors() -> void {
     printf("Testing mixed encoding errors (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = 'a\u3042';      // ERROR: Mixed ASCII and Unicode
-    let fail2: i8 = '\x41\u3042';   // ERROR: Mixed hex and Unicode
-    let fail3: i8 = 'A一';          // ERROR: Mixed ASCII and Kanji
-    let fail4: i8 = 'あア';         // ERROR: Mixed Hiragana and Katakana
+    let fail1: char = 'a\u3042';      // ERROR: Mixed ASCII and Unicode
+    let fail2: char = '\x41\u3042';   // ERROR: Mixed hex and Unicode
+    let fail3: char = 'A一';          // ERROR: Mixed ASCII and Kanji
+    let fail4: char = 'あア';         // ERROR: Mixed Hiragana and Katakana
     
     printf("Mixed encoding test complete\n");
 }
@@ -131,11 +131,11 @@ fn test_unterminated_escapes() -> void {
     printf("Testing unterminated escapes (should fail):\n");
     
     // These should cause compilation errors:
-    let fail1: i8 = '\u123';        // ERROR: Incomplete Unicode escape
-    let fail2: i8 = '\x1';          // ERROR: Incomplete hex escape  
-    let fail3: i8 = '\12';          // ERROR: Incomplete octal escape
-    let fail4: i8 = '\u{123';       // ERROR: Unterminated Unicode brace
-    let fail5: i8 = '\u{12345}';    // ERROR: Unicode value too large
+    let fail1: char = '\u123';        // ERROR: Incomplete Unicode escape
+    let fail2: char = '\x1';          // ERROR: Incomplete hex escape  
+    let fail3: char = '\12';          // ERROR: Incomplete octal escape
+    let fail4: char = '\u{123';       // ERROR: Unterminated Unicode brace
+    let fail5: char = '\u{12345}';    // ERROR: Unicode value too large
     
     printf("Unterminated escape test complete\n");
 }

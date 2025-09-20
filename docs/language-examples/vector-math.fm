@@ -1,4 +1,4 @@
-fn printf(format: const i8*, ...) -> i32;
+fn printf(format: const char*, ...) -> i32;
 fn sqrt(x: f64) -> f64;
 
 struct Vector2D {

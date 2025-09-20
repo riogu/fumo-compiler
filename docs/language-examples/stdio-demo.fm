@@ -8,30 +8,30 @@ let extern stdout: FILE*;
 let extern stderr: FILE*;
 
 // File I/O functions
-fn fopen(filename: const i8*, mode: const i8*) -> FILE*;
+fn fopen(filename: const char*, mode: const char*) -> FILE*;
 fn fclose(stream: FILE*) -> i32;
-fn fprintf(stream: FILE*, format: const i8*, ...) -> i32;
-fn fgets(str: i8*, n: i32, stream: FILE*) -> i8*;
-fn fputs(str: const i8*, stream: FILE*) -> i32;
+fn fprintf(stream: FILE*, format: const char*, ...) -> i32;
+fn fgets(str: char*, n: i32, stream: FILE*) -> char*;
+fn fputs(str: const char*, stream: FILE*) -> i32;
 fn feof(stream: FILE*) -> i32;
 fn fflush(stream: FILE*) -> i32;
 
-fn printf(format: const i8*, ...) -> i32;
-fn scanf(format: const i8*, ...) -> i32;
+fn printf(format: const char*, ...) -> i32;
+fn scanf(format: const char*, ...) -> i32;
 
-fn malloc(size: i64) -> i8*;
-fn free(ptr: i8*) -> void;
+fn malloc(size: i64) -> char*;
+fn free(ptr: char*) -> void;
 
 struct Logger {
     let log_file: FILE*;
     let enable_console: bool;
     
-    fn static new(filename: const i8*, console_output: bool) -> Logger {
+    fn static new(filename: const char*, console_output: bool) -> Logger {
         let file: FILE* = fopen(filename, "a"); 
         return Logger {file, console_output};
     }
     
-    fn log_info(message: const i8*) -> void {
+    fn log_info(message: const char*) -> void {
         if log_file { 
             fprintf(log_file, "[INFO] %s\n", message);
             fflush(log_file);
@@ -43,7 +43,7 @@ struct Logger {
         }
     }
     
-    fn log_warning(message: const i8*) -> void {
+    fn log_warning(message: const char*) -> void {
         if log_file {
             fprintf(log_file, "[WARNING] %s\n", message);
             fflush(log_file);
@@ -55,7 +55,7 @@ struct Logger {
         }
     }
     
-    fn log_error(message: const i8*) -> void {
+    fn log_error(message: const char*) -> void {
         if log_file {
             fprintf(log_file, "[ERROR] %s\n", message);
             fflush(log_file);
@@ -72,11 +72,11 @@ struct Logger {
     }
 }
 
-fn read_user_input(buffer: i8*, size: i32) -> bool {
+fn read_user_input(buffer: char*, size: i32) -> bool {
     fprintf(stdout, "Enter some text: ");
     fflush(stdout); 
     
-    let result: i8* = fgets(buffer, size, stdin);
+    let result: char* = fgets(buffer, size, stdin);
     return result != null; 
 }
 
@@ -103,7 +103,7 @@ fn demonstrate_file_operations() -> void {
     }
     
     fprintf(stdout, "File contents:\n");
-    let buffer: i8* = malloc(256);
+    let buffer: char* = malloc(256);
     
     while !feof(file) {
         if fgets(buffer, 256, file) {
@@ -130,7 +130,7 @@ fn demonstrate_stream_redirection() -> void {
 }
 
 fn interactive_session() -> void {
-    let buffer: i8* = malloc(256);
+    let buffer: char* = malloc(256);
     let continue_session: bool = true;
     
     fprintf(stdout, "=== Interactive Session ===\n");

@@ -298,7 +298,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
 }
 [[nodiscard]] constexpr bool is_ptr_t(const Type& type) { return type.ptr_count; }
 [[nodiscard]] constexpr bool is_arithmetic_t(const Type& type) {
-    return (type.kind == Type::u8_  || type.kind == Type::u32_ || type.kind == Type::u64_ ||
+    return (type.kind == Type::u8_  || type.kind == Type::u32_ || type.kind == Type::u64_ || type.kind == Type::char_ ||
             type.kind == Type::i8_  || type.kind == Type::i32_ || type.kind == Type::i64_ ||
             type.kind == Type::f32_ || type.kind == Type::f64_ || type.kind == Type::bool_) && !type.ptr_count;
 }
@@ -309,6 +309,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
 
     if (is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count) return true;
+
     if (a.kind == b.kind) {
         if (type_name(a) == type_name(b)) {
             return true;

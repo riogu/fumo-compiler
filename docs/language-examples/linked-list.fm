@@ -1,7 +1,7 @@
 struct Node;
 fn malloc(size: i64) -> Node*;
 fn free(ptr: Node*) -> void;
-fn printf(format: const i8*, ...) -> i32;
+fn printf(format: const char*, ...) -> i32;
 
 struct Node {
     let value: i32;

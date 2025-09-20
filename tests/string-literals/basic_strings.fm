@@ -1,7 +1,7 @@
 // Basic string literal assignment and usage
-fn puts(s: i8*) -> i32;
+fn puts(s: char*) -> i32;
 fn main() -> i32 {
-    let message: i8* = "Hello, World!";
+    let message: char* = "Hello, World!";
     puts(message);
     return 0;
 }

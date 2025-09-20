@@ -121,8 +121,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 // TODO: return should be moved to a new struct later
                 case UnaryExpr::dereference:
                     if (!un.expr.value()->type.ptr_count) {
-                        report_error(node.source_token, "Indirection requires pointer operand, '{}' is invalid.",
+                        report_error(node.source_token, "dereference requires pointer operand, '{}' is invalid.",
                                      type_name(un.expr.value()->type));
+                    }
+                    if(un.expr.value()->type.kind == Type::any_) {
+                        report_error(node.source_token, "can't deference value of type '{}'.", type_name(un.expr.value()->type));
                     }
                     node.type = un.expr.value()->type;
                     node.type.ptr_count--;
@@ -166,7 +169,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     // also allow those edge cases with pointers and initializer lists
                     check_initializer_lists(node, bin);
                     // ----------------------------------------------------------------------------
-                    node.type = bin.lhs->type;
+                    node.type = bin.lhs->type; // since we take the lhs type, any* is always cast correctly
                     break;
                 }
                 case BinaryExpr::add: 

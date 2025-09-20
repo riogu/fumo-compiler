@@ -23,8 +23,8 @@ struct SingleStruct {
 }
 
 struct StringStruct {
-    let s1: i8*;
-    let s2: i8*;
+    let s1: char*;
+    let s2: char*;
 }
 
 struct ExprStruct {

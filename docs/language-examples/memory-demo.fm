@@ -1,7 +1,7 @@
 fn malloc(size: i64) -> i32*;
 fn free(ptr: i32*) -> void;
-fn memset(ptr: i32*, value: i8, n: i64) -> void;
-fn printf(format: const i8*, ...) -> i32;
+fn memset(ptr: i32*, value: char, n: i64) -> void;
+fn printf(format: const char*, ...) -> i32;
 
 struct IntBuffer {
     let data: i32*;

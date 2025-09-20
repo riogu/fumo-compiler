@@ -1,6 +1,6 @@
 // String literal as function parameter
-fn printf(string: i8*, ...) -> i32;
-fn print_greeting(msg: i8*) -> void {
+fn printf(string: char*, ...) -> i32;
+fn print_greeting(msg: char*) -> void {
     printf("Greeting: %s\n", msg);
 }
 fn main() -> i32 {

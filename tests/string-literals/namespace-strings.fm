@@ -1,9 +1,9 @@
 // Multiple string literals in namespace
-fn puts(s: i8*) -> i32;
+fn puts(s: char*) -> i32;
 namespace messages {
     struct config {
-        let error_msg: i8* = "Error occurred!";
-        let success_msg: i8* = "Operation successful!";
+        let error_msg: char* = "Error occurred!";
+        let success_msg: char* = "Operation successful!";
         fn print_error() -> void;
         fn print_success() -> void;
     };

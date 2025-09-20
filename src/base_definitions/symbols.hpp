@@ -55,6 +55,7 @@
     colon_colon,                        \
     quotation_mark
 #define builtin_types                   \
+    char             ,                  \
     i8               ,                  \
     u8               ,                  \
     u16              ,                  \
