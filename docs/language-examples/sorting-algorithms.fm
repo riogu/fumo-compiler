@@ -1,5 +1,5 @@
 fn printf(format: const char*, ...) -> i32;
-fn malloc(size: i64) -> i32*;
+fn malloc(size: i64) -> any*;
 fn free(ptr: i32*) -> void;
 fn rand() -> i32;
 fn srand(seed: i32) -> void;

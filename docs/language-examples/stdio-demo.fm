@@ -19,7 +19,7 @@ fn fflush(stream: FILE*) -> i32;
 fn printf(format: const char*, ...) -> i32;
 fn scanf(format: const char*, ...) -> i32;
 
-fn malloc(size: i64) -> char*;
+fn malloc(size: i64) -> any*;
 fn free(ptr: char*) -> void;
 
 struct Logger {
