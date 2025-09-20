@@ -34,7 +34,7 @@ struct Scope {
 };
 #include <map>
 #include <utility>
-#include "utils/tsl/ordered_map.h"
+// #include "utils/tsl/ordered_map.h"
 
 struct SymbolTableStack {
     // --------------------------------------------
@@ -51,7 +51,7 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> member_variable_decls {};
     // --------------------------------------------
     // change this to only include the top level declarations so we can recursively codegen them.
-    tsl::ordered_map<str, ASTNode*> all_declarations {}; 
+    std::map<str, ASTNode*> all_declarations {}; 
     // NOTE: doesn't include namespaces or local variables or member variables
     // --------------------------------------------
     vec<Scope> scope_stack {};

@@ -1,6 +1,7 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
 #include "utils/common_utils.hpp"
+#include <algorithm>
 #include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
@@ -26,13 +27,16 @@ void Analyzer::semantic_analysis(ASTNode* file_root_node) {
         analyze_function_control_flow(*func); 
     }
 
-    if ( !map_node.empty()) {
+    if (!map_node.empty()) {
         // rename 'main' to link with libc later
         auto& id = get_id(get<FunctionDecl>(map_node.mapped()));
         map_node.key() = "fumo.user_main";
         id.mangled_name = "fumo.user_main";
         id.name = "fumo.user_main";
         symbol_tree.function_decls.insert(std::move(map_node));
+        map_node = symbol_tree.all_declarations.extract("main");
+        map_node.key() = "fumo.user_main";
+        symbol_tree.all_declarations.insert(std::move(map_node));
     }
     for(auto& [_, func]: symbol_tree.member_function_decls)  analyze_function_control_flow(*func); 
 }

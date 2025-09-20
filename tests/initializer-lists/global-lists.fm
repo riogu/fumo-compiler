@@ -1,0 +1,11 @@
+
+struct foo {
+    let x: i32;
+    let y: i32;
+}
+
+let x = 123;
+let var = foo {2, 3};
+    
+fn main() -> void {
+}

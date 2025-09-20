@@ -1,3 +1,4 @@
+#include "base_definitions/ast_node.hpp"
 #include "semantic_analysis/analyzer.hpp"
 #include "utils/common_utils.hpp"
 
@@ -35,8 +36,10 @@ void Analyzer::analyze_function_control_flow(ASTNode& node) {
             return; // this function will always return (OK)
         }
     }
-    // if we get here, function MayReturn or is NoReturn. therefore, its invalid
-    report_error(node.source_token, "non-void function does not return a value in all control paths.");
+    if (get_id(func_decl).mangled_name != "main") {
+        report_error(node.source_token, "non-void function does not return a value in all control paths.");
+        // if we get here, function MayReturn or is NoReturn. therefore, its invalid
+    }
 }
 
 ControlFlowResult Analyzer::control_flow_analysis(ASTNode& node) {

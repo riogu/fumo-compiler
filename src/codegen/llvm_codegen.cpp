@@ -1,5 +1,6 @@
 #include "codegen/llvm_codegen.hpp"
 #include "base_definitions/ast_node.hpp"
+#include "utils/common_utils.hpp"
 
 void Codegen::codegen_file(ASTNode* file_root_node) {
     this->file_root_node = file_root_node;
@@ -9,8 +10,8 @@ void Codegen::codegen_file(ASTNode* file_root_node) {
     llvm::FunctionType* func_type = llvm::FunctionType::get(llvm::Type::getVoidTy(*llvm_context), {}, false);
     llvm::Function* fumo_init = llvm::Function::Create(func_type, llvm::Function::InternalLinkage,
                                                        "fumo.init", llvm_module.get());
-    fumo_init->setDSOLocal(true);
-    fumo_init->addFnAttr("used");
+    // fumo_init->setDSOLocal(true);
+    // fumo_init->addFnAttr("used");
 
     llvm::BasicBlock* bblock = llvm::BasicBlock::Create(*llvm_context, "", fumo_init);
     fumo_init_builder->SetInsertPoint(bblock);
@@ -218,18 +219,30 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                 return ir_builder->CreateLoad(fumo_to_llvm_type(node.type), address);
             }
             if (un.kind == UnaryExpr::return_statement) {
-                if (node.type.kind == Type::void_ && !node.type.ptr_count) return ir_builder->CreateRetVoid();
+                if (node.type.kind == Type::void_) return ir_builder->CreateRetVoid();
+
+                auto func_name = ir_builder->GetInsertBlock()->getParent()->getName().data();
+                Type func_type;
+                if find_value(func_name, symbol_tree.all_declarations) {
+                    func_type = iter->second->type;
+                } else {
+                    internal_error(node.source_token, "'{}' function doesnt exist.", func_name);
+                }
+
+                // if (!un.expr) {
+                //     report_error(node.source_token, "non-void function must return a value.");
+                // }
 
                 auto* val = if_value(codegen_value(*un.expr.value()))
                             else_panic("[Codegen] found null value in UnaryExpr '{}'.", node.name());
+
                 if (ir_builder->getCurrentFunctionReturnType() == llvm::Type::getVoidTy(*llvm_context) && un.expr) {
                     report_error(node.source_token, "void function shouldn't return a value.");
                 }
                 if (ir_builder->getCurrentFunctionReturnType() != val->getType()) { 
                     // check if we can promote the returned value to the function return,
                     // otherwise we report an error
-                    auto func_name = ir_builder->GetInsertBlock()->getParent()->getName().data();
-                    Type func_type = symbol_tree.all_declarations[func_name]->type;
+
 
                     if (is_arithmetic_t(func_type) && is_arithmetic_t(node.type)) {
                         val = convert_arithmetic_t(val, ir_builder->getCurrentFunctionReturnType());
