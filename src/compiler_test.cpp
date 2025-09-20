@@ -23,6 +23,45 @@ std::pair<std::string, int> exec(const char* cmd) {
     return {result, status};
 }
 
+void force_permissions_recursive(const std::filesystem::path& path) {
+    std::error_code ec;
+    
+    // Set permissions on the directory itself
+    std::filesystem::permissions(path, 
+        std::filesystem::perms::owner_all, 
+        std::filesystem::perm_options::replace, ec);
+    
+    try {
+        // Recursively set permissions on all contents
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+            if (entry.is_directory()) {
+                std::filesystem::permissions(entry.path(), 
+                    std::filesystem::perms::owner_all, 
+                    std::filesystem::perm_options::replace, ec);
+            } else if (entry.is_regular_file()) {
+                std::filesystem::permissions(entry.path(), 
+                    std::filesystem::perms::owner_all, 
+                    std::filesystem::perm_options::replace, ec);
+            }
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        // Ignore permission errors during cleanup
+    }
+}
+
+bool try_force_remove(const std::filesystem::path& path) {
+    // Try using system commands as fallback
+#ifdef _WIN32
+    std::string cmd = std::format("rmdir /s /q \"{}\"", path.string());
+#else
+    std::string cmd = std::format("chmod -R 755 \"{}\" && rm -rf \"{}\"", 
+                                  path.string(), path.string());
+#endif
+    
+    auto [output, status] = exec(cmd.c_str());
+    return WEXITSTATUS(status) == 0;
+}
+
 bool run_rebuild() {
     std::print("Running rebuild script...\n");
     std::print("================================================\n");
@@ -185,10 +224,20 @@ void clear_output_directories() {
         try {
             std::string relative_path = std::filesystem::relative(dir_path).string();
             std::print("  Removing: {}\n", relative_path);
+            
+            // First, make sure we have permissions to delete everything
+            force_permissions_recursive(dir_path);
+            
             std::filesystem::remove_all(dir_path);
             cleared_count++;
         } catch (const std::filesystem::filesystem_error& e) {
             std::print("Error removing directory '{}': {}\n", dir_path.string(), e.what());
+            
+            // Try alternative removal method
+            if (try_force_remove(dir_path)) {
+                cleared_count++;
+                std::print("  Successfully removed using alternative method\n");
+            }
         }
     }
     
@@ -293,9 +342,16 @@ void run_single_test(const std::string& file_path, const TestConfig& config = Te
     std::string output_dir_name = input_filename + "-outputs";
     std::filesystem::path output_dir = test_dir / output_dir_name;
     std::filesystem::path output_file = output_dir / input_filename;
-    
+
     std::filesystem::create_directories(output_dir);
-    
+    std::error_code ec;
+    std::filesystem::permissions(output_dir,
+                                        std::filesystem::perms::owner_all | std::filesystem::perms::group_read
+                                     | std::filesystem::perms::group_exec | std::filesystem::perms::others_read
+                                     | std::filesystem::perms::others_exec,
+                                 std::filesystem::perm_options::replace,
+                                 ec);
+
     std::string cmd = std::format("./build/fumo '{}' {} -o '{}' 2>&1", 
                                   test_file.path.string(),
                                   config.get_options_string(),
@@ -372,9 +428,16 @@ void run_tests(const std::string& test_subdir, const TestConfig& config = TestCo
         std::string output_dir_name = input_filename + "-outputs";
         std::filesystem::path output_dir = test_dir / output_dir_name;
         std::filesystem::path output_file = output_dir / input_filename;
-        
+
         std::filesystem::create_directories(output_dir);
-        
+        std::error_code ec;
+        std::filesystem::permissions(output_dir,
+                                     std::filesystem::perms::owner_all | std::filesystem::perms::group_read
+                                         | std::filesystem::perms::group_exec | std::filesystem::perms::others_read
+                                         | std::filesystem::perms::others_exec,
+                                     std::filesystem::perm_options::replace,
+                                     ec);
+
         std::string cmd = std::format("./build/fumo '{}' {} -o '{}' 2>&1", 
                                       test_file.path.string(),
                                       config.get_options_string(),

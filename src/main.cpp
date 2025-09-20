@@ -71,6 +71,7 @@ auto main(int argc, char** argv) -> int {
 
     llvm::cl::HideUnrelatedOptions(fumo_category);
     llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
+    //
 
     for (const auto& file_name : input_files) {
         if (!std::filesystem::exists(file_name)) std::print("Error: file '{}' not found\n", file_name), std::exit(1); 
