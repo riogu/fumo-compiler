@@ -1,0 +1,51 @@
+struct Container[T] {
+    let value: T;
+    fn get() -> T { return value; }
+    fn static make(v: T) -> Container[T];
+}
+
+fn static Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
+
+struct Pair[T, U] {
+    let first: T;
+    let second: U;
+    
+    fn get_first() -> T { return first; }
+    fn get_second() -> U { return second; }
+    fn static make(a: T, b: U) -> Pair[T, U];
+}
+
+fn static Pair[T, U]::make(a: T, b: U) -> Pair[T, U] { return Pair[T, U]{a, b}; }
+
+fn process_nested[T](data: T) -> Container[Pair[T, Container[i32]]] {
+    // T is generic, i32 is concrete - should instantiate Container[i32] eagerly
+    let inner_container = Container[i32]::make(42);
+    // Create pair with generic T and concrete Container[i32]
+    let pair = Pair[T, Container[i32]]::make(data, inner_container);
+    // Wrap in another container - fully concrete once T is known
+    return Container[Pair[T, Container[i32]]]::make(pair);
+}
+
+fn combine[T, U](a: T, b: U) -> Pair[Container[T], Container[U]] {
+    // Both containers use generic types
+    let wrapped_a = Container[T]::make(a);
+    let wrapped_b = Container[U]::make(b);
+    // Concrete instantiation inside generic function
+    let debug_container = Container[i32]::make(999); // Should instantiate eagerly
+    return Pair[Container[T], Container[U]]::make(wrapped_a, wrapped_b);
+}
+
+fn main() -> void {
+    let simple = Container[i32]::make(10);
+    // This should instantiate: process_nested[f64], Container[i32], 
+    // Pair[f64, Container[i32]], Container[Pair[f64, Container[i32]]]
+    let complex = process_nested[f64](3.14);
+    // This should instantiate: combine[i32, f64], Container[i32], Container[f64],
+    // Pair[Container[i32], Container[f64]]
+    let combined = combine[i32, f64](42, 2.71);
+    // Access nested data
+    let inner_pair = complex.get();
+    let original_float = inner_pair.get_first();
+    let nested_container = inner_pair.get_second();
+    let inner_int = nested_container.get();
+}

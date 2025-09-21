@@ -61,7 +61,6 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 }
             } else {
                 // for (auto decl : symbol_tree.all_declarations) std::cerr << std::format("found decl: {}\n", decl.first);
-                
                 // we need better error reporting for generics:
                 if (id.is_generic_wrapper()) {
                     report_error(node.source_token, "couldn't instantiate generic {} '{}'.",
@@ -232,7 +231,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
             auto new_type_decl = get_or_create_generic_declaration(node);
             // try to create a generic instantiation IF we need it
-            if (new_type_decl) {}
+            if (new_type_decl) {
+                node.type = new_type_decl.value()->type;
+                // we take the type of the declaration, thats all we need
+            }
 
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
@@ -502,21 +504,26 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
-            // std::println("function '{}' had type {}", id.mangled_name, type_name(node.type));
-            // std::println("found function '{}' '{}'", id.mangled_name, node.name());
+            std::cerr << "added function: " << mangled_name(func.identifier) << "\n";
 
             if (was_inserted && id.qualifier == Identifier::qualified
                 && func.kind == FunctionDecl::member_func_declaration) {
-                str temp = id.mangled_name; while (temp.back() != ':') temp.pop_back(); 
+                str temp = mangled_name(func.identifier); while (temp.back() != ':') temp.pop_back(); 
                 temp.pop_back(), temp.pop_back(); // get parent name
-                report_error(node.source_token, "out-of-line definition of '{}' does not match any declaration in '{}'",
-                             id.mangled_name, temp);
+                str was_static = ""; // better errors for missing static qualifiers
+                if find_value(id.mangled_name, symbol_tree.function_decls) {
+                    if (iter->second->type.qualifiers.contains(Type::static_)) {
+                        was_static = "NOTE: did you mean to declare this function as 'static'?";
+                    }
+                }
+                report_error(node.source_token, "out-of-line definition of '{}' does not match any declaration in '{}'. {}",
+                             mangled_name(func.identifier), temp, was_static);
             }
             if (!was_inserted) {
                 str def_or_decl;
                 if (func.body) {
                     if (first_occurence.body)
-                        report_error(node.source_token, "Redefinition of '{}'.", id.mangled_name);
+                        report_error(node.source_token, "Redefinition of '{}'.", mangled_name(func.identifier));
                     def_or_decl = "Redefinition";
 
                     first_occurence.body = func.body;
@@ -528,25 +535,25 @@ void Analyzer::add_declaration(ASTNode& node) {
                 }
                 if (first_occurence.is_variadic != func.is_variadic) {
                     report_error(node.source_token, "'{}' of '{}' with different parameters (variadic)",
-                                 def_or_decl, id.mangled_name);
+                                 def_or_decl, mangled_name(func.identifier));
                 }
 
                 if (!is_same_t(node.type, node_iterator->second->type)) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different return type '{}' (expected '{}').",
-                                 def_or_decl, id.mangled_name,
+                                 def_or_decl, mangled_name(func.identifier),
                                  type_name(node.type), type_name(node_iterator->second->type));
                 }
                 if (func.parameters.size() != first_occurence.parameters.size()) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different parameter count.",
-                                 def_or_decl, id.mangled_name);
+                                 def_or_decl, mangled_name(func.identifier));
                 }
                 for (auto [arg1, arg2] : std::views::zip(func.parameters, first_occurence.parameters)) {
                     if (!is_same_t(arg1->type, arg2->type)) {
                         report_error(node.source_token,
                                      "{} of '{}' with different parameter types (was '{}', found '{}')",
-                                     def_or_decl, id.mangled_name,
+                                     def_or_decl, mangled_name(func.identifier),
                                      type_name(arg2->type), type_name(arg1->type));
                     }
                     // if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
@@ -620,10 +627,8 @@ void Analyzer::add_declaration(ASTNode& node) {
     // let var: Foo[i32, T];
     // cant instantiate this yet since we dont have T, so we delay it for later
     match (node) {
-        holds(VariableDecl, &var_decl) {
-        }
-        holds(FunctionCall, &func_call) {
-        }
+        holds(VariableDecl, &var_decl) {}
+        holds(FunctionCall, &func_call) {}
         holds(BlockScope, &scope) {
             // let var = Node[i32]{213}; // instantiated on the rhs of the assignment
         }

@@ -47,7 +47,7 @@ struct Identifier {
     // foo::bar[i32] { ... }
     // and thats it, then its easy to link usage to the instantiations
     // we want a "get or create" approach to template usage
-    bool is_generic_wrapper() { return generic_identifiers.size(); }
+    bool is_generic_wrapper() const { return generic_identifiers.size(); }
     bool is_func_call() { return kind == func_call_name || kind == member_func_call_name; }
     // we make a generic formatted name like:
     //   -> "foo::bar[{}]()" (this is stored normally in the 'name' variable)
@@ -319,7 +319,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     if (!is_branch<Identifier>(node)) {
         internal_panic("only identifiers have mangled names, recieved '{}'.", node->name());
     }
-    auto& id = get<Identifier>(node);
+    const auto& id = get<Identifier>(node);
     
     if (!id.is_generic_wrapper()) {
         return id.mangled_name; // Simple case: just "T" or "foo::bar::thing"

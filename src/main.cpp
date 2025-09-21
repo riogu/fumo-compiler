@@ -82,6 +82,8 @@ void custom_handler(int sig) {
     std::exit(1);
 }
 auto main(int argc, char** argv) -> int {
+    std::map<str, int> barrr{};
+    auto e = barrr["foo"];
 
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
