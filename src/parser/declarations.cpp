@@ -14,11 +14,6 @@
 
     VariableDecl variable {VariableDecl::variable_declaration, unqualified_identifier(Identifier::declaration_name)};
 
-    if (const auto& id = get_id(variable); id.qualifier == Identifier::qualified) {
-        report_error(variable.identifier->source_token, 
-                     "variable declaration '{}' can't be qualified.", id.mangled_name);
-    }
-
     if (token_is(:)) node->type = declaration_specifier();
     if (was_extern) {
         node->type.qualifiers.insert(Type::extern_);

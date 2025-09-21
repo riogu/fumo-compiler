@@ -239,6 +239,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             Identifier& id = get_id(func);
 
             vec<Scope> scopes = iterate_qualified_names(func, node);
+            func.scopes = scopes; // save for later
+            if (id.is_generic()) {
+                return; // dont check generic functions
+            }
             // -------------------------------------------------------------------
             // hack to get the type checked correctly
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
@@ -278,11 +282,19 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(FunctionCall, &func_call) {
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
+            // NOTE: function calls should instantiate their generic declarations
+            auto& id = get_id(func_call);
 
-            const auto& func_decl = get<FunctionDecl>(get_id(func_call).declaration.value());
+            const auto& func_decl = get<FunctionDecl>(id.declaration.value());
             if (func_decl.kind == FunctionDecl::member_func_declaration) {
                 func_call.kind = FunctionCall::member_function_call;
                 // as it is, we can call static member functions from instances of objects
+            }
+            if (id.is_generic()) {
+                // requires instantiating the original function (copying it)
+                // and then actually analyzing that copy as any other normal function,
+                // after replacing all instances of 'T' with the real 'T' type
+                report_error(node.source_token, "generic functions arent implemented yet.");
             }
             const auto& params = func_decl.parameters;
 
@@ -293,7 +305,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                              func_call.argument_list.size(), params.size(), is_variadic_str);
             }
 
-            for(auto* arg : func_call.argument_list) analyze(*arg);
+            for (auto* arg : func_call.argument_list) analyze(*arg);
 
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
                 if (!is_compatible_t(arg->type, param->type)) {

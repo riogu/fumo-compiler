@@ -1,13 +1,33 @@
-struct Pair|T, U| {
+struct Pair[T, U] {
     let first: T;
     let second: U;
     
-    fn swap() -> Pair|U, T| {
-        return Pair|U, T|{second, first};
-    }
+    fn get_first() -> T;
+    fn get_second() -> U;
+    fn swap() -> Pair[U, T];
+    fn static make(a: T, b: U) -> Pair[T, U];
 }
 
-fn main() -> void {
-    let p = Pair|i32, char|{42, 'X'};
+fn Pair[T, U]::get_first() -> T {
+    return first;
+}
+
+fn Pair[T, U, V]::get_second() -> U {
+    return second;
+}
+
+fn Pair[T, U]::swap() -> Pair[U, T] {
+    return Pair[U, T]{second, first};
+}
+
+fn Pair[T, U]::make(a: T, b: U) -> Pair[T, U] {
+    return Pair[T, U]{a, b};
+}
+
+fn main() -> i32 {
+    let p = Pair[i32, f64, Vec[i32]]::make(42, 3.14);
     let swapped = p.swap();
+    let first_val = p.get_first();
+    
+    return 0;
 }

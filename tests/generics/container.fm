@@ -1,0 +1,26 @@
+struct Container[T] {
+    let data: T*;
+    
+    fn get() -> T {
+        return *data;
+    }
+    
+    fn set(value: T) -> void {
+        *data = value;
+    }
+    
+    fn static new(value: T) -> Container[T] {
+        // let ptr: T* = malloc(sizeof(T));
+        *ptr = value;
+        return Container[T]{ptr};
+    }
+}
+
+fn main() -> i32 {
+    let simple_container = Container[i32]::new(42);
+    let nested_container = Container[Container[i32]]::new(simple_container);
+    
+    let inner_value = nested_container.get().get();
+    
+    return 0;
+}

@@ -1,0 +1,38 @@
+struct Triple[T, U, V] {
+    let first: T;
+    let second: U;
+    let third: V;
+    
+    fn rotate_left() -> Triple[U, V, T];
+    fn to_pair_first() -> Pair[T, U];
+    fn static make(a: T, b: U, c: V) -> Triple[T, U, V];
+}
+
+struct Pair[T, U] {
+    let first: T;
+    let second: U;
+    
+    fn static make(a: T, b: U) -> Pair[T, U] {
+        return Pair[T, U]{a, b};
+    }
+}
+
+fn Triple[T, U, V]::rotate_left() -> Triple[U, V, T] {
+    return Triple[U, V, T]{second, third, first};
+}
+
+fn Triple[T, U, V]::to_pair_first() -> Pair[T, U] {
+    return Pair[T, U]::make(first, second);
+}
+
+fn Triple[T, U, V]::make(a: T, b: U, c: V) -> Triple[T, U, V] {
+    return Triple[T, U, V]{a, b, c};
+}
+
+fn main() -> i32 {
+    let triple = Triple[i32, f64, char]::make(42, 3.14, 'A');
+    let rotated = triple.rotate_left();
+    let pair = triple.to_pair_first();
+    
+    return 0;
+}

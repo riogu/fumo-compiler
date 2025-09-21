@@ -1,23 +1,30 @@
-struct Box|T| {
-    let value: T;
-    
-    fn get() -> T {
-        return value;
-    }
-    
-    fn set(new_value: T) -> void {
-        value = new_value;
-    }
-    
-    fn static make(val: T) -> Box|T| {
-        return Box|T|{val};
-    }
+fn identity[T](x: T) -> T {
+    return x;
 }
 
-fn main() -> void {
-    let int_box = Box|i32|::make(42);
-    let float_box = Box|f64|::make(3.14);
+fn swap[T](a: T*, b: T*) -> void {
+    let temp: T = *a;
+    *a = *b;
+    *b = temp;
+}
+
+fn max[T](a: T, b: T) -> T {
+    if a < b {
+        return a;
+    }
+    return b;
+}
+
+fn main() -> i32 {
+    let x: i32 = identity[i32](42);
+    let y: f64 = identity[f64](3.14);
     
-    int_box.set(100);
-    let result = int_box.get();
+    let a: i32 = 10;
+    let b: i32 = 20;
+    swap[i32](&a, &b);
+    
+    let bigger = max[i32](a, b);
+    let bigger_float = max[f64](1.5, 2.7);
+    
+    return 0;
 }

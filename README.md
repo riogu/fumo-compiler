@@ -193,10 +193,10 @@ fumo --help                   # Show all compiler options
 - `break` and `continue` statements
 
 ### Standard Library
-- Generic array and vector types (`fm::vec<T>, fm::array<T>`)
+- Generic array and vector types (`fm::vec[T], fm::array[T]`)
 - String manipulation library (`fm::str`)
-- Memory management utilities and `unique_ptr<T>` implementation
-- `optional<T>` implementation
+- Memory management utilities and `unique_ptr[T]` implementation
+- `optional[T]` implementation
 - Basic I/O beyond C interop
 
 ## Final Note

@@ -480,51 +480,68 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // FIXME: dont allow using the same name for 2 separate parameters on generics OR normal function calls
 // it should give the user an error
 
-// fn "foo::bar::<{}>::thing::<{}>()"     { ... }
-// fn  foo::bar::<i32>::thing::<f64>()    { ... }
+// fn "foo::bar::[{}]::thing::[{}]()"     { ... }
+// fn  foo::bar::[i32]::thing::[f64]()    { ... }
 
-// struct "foo::bar::<{}, {}, {}>()"      { ... }
-// struct  foo::bar::<i32, f64, char*>()  { ... }
+// struct "foo::bar::[{}, {}, {}]()"      { ... }
+// struct  foo::bar::[i32, f64, char*]()  { ... }
 [[nodiscard]] ASTNode* Parser::identifier(Identifier::Kind id_kind) {
-    expect_token(identifier);
-
+    if (id_kind == Identifier::generic_type_name) {
+        if (!token_is(identifier) && !token_is(builtin_type)) {
+            report_error((*curr_tkn), "expected identifier in generic declaration.");
+        }
+    } else {
+        expect_token(identifier);
+    }
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
 
+    if (token_is([)) {
+        id.name += "[{}"; // for filling later with formatted arguments
+
+        id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+        while (1) {
+            if (token_is_str(",")) {
+                id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+                id.name += ", {}"; // will be filled with the real type when instantiated.
+                continue;
+            }
+            break;
+        }
+        expect_token(]); id.name += "]";
+    }
     while (token_is(::)) {
         if (token_is(identifier)) {
             id.name += "::" + std::get<str>(prev_tkn->literal.value());
             id.qualifier = Identifier::qualified;
             id.scope_counts++;
-        } else if (token_is(<)) {
-            id.name += "::<{}"; // for filling later with formatted arguments
+            if (token_is([)) {
+                id.name += "[{}"; // for filling later with formatted arguments
 
-            if (!peek_token(identifier)) report_error((*curr_tkn), "expected identifier in generic declaration.");
-            id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-            while (1) {
-                if (token_is_str(",")) {
-                    id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-                    id.name += ", {}"; // will be filled with the real type when instantiated.
-                    continue;
+                id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+                while (1) {
+                    if (token_is_str(",")) {
+                        id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+                        id.name += ", {}"; // will be filled with the real type when instantiated.
+                        continue;
+                    }
+                    break;
                 }
-                break;
-            }
-            expect_token(>);
-            id.name += ">";
-            if (!peek_token(identifier)) break; // "foo::<T>::<U>()" isn't valid
-            // we break so we don't allow parsing that case
+                expect_token(]); id.name += "]";
+            } 
+        } else {
+            report_error((*curr_tkn), "expected identifier after '::'.");
         }
+        
     }
-    // let var = foo::bar::<Vec::<i32>>(x, y);
+    // let var = foo::bar::[Vec::[i32]](x, y);
     id.mangled_name = id.name;
     return push(ASTNode {token, id});
 }
-// fn  foo::bar::<T>::thing::<U>()    { ... }
-// fn "foo::bar::<{}>::thing::<{}>()" { ... }
-
-// struct  foo::bar::<T, U, V>()      { ... }
-// struct "foo::bar::<{}>()"          { ... }
-
+// fn  foo::bar[T]::thing[U]()    { ... }
+// fn "foo::bar[{}]::thing[{}]()" { ... }
+// struct  foo::bar[T, U, V]()      { ... }
+// struct "foo::bar[{}]()"          { ... }
 // the idea is that each identifer is solved normally for 'T', and then filled later
 // we need to make a full copy of the function's AST, and then fill that
 // a true copy with no pointer still belonging to the AST's generic declaration
@@ -532,29 +549,42 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     expect_token(identifier);
     auto token = *prev_tkn;
     Identifier id {Identifier::declaration_name, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
+
+    if (token_is([)) {
+        id.name += "[{}"; // for filling later with formatted arguments
+        id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+        while (1) {
+            if (token_is_str(",")) {
+                id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+                id.name += ", {}"; // will be filled with the real type when instantiated.
+                continue;
+            }
+            break;
+        }
+        expect_token(]);
+        id.name += "]";
+    }
     while (token_is(::)) {
         if (token_is(identifier)) {
             id.name += "::" + std::get<str>(prev_tkn->literal.value());
             id.qualifier = Identifier::qualified;
             id.scope_counts++;
-
-        } else if (token_is(<)) {
-            id.name += "::<{}"; // for filling later with formatted arguments
-
-            if (!peek_token(identifier)) report_error((*curr_tkn), "expected identifier in generic declaration.");
-            id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
-            while (1) {
-                if (token_is_str(",")) {
-                    id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
-                    id.name += ", {}"; // will be filled with the real type when instantiated.
-                    continue;
+            if (token_is([)) {
+                id.name += "[{}"; // for filling later with formatted arguments
+                id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+                while (1) {
+                    if (token_is_str(",")) {
+                        id.generic_identifiers.push_back(unqualified_identifier(Identifier::generic_type_name));
+                        id.name += ", {}"; // will be filled with the real type when instantiated.
+                        continue;
+                    }
+                    break;
                 }
-                break;
+                expect_token(]);
+                id.name += "]";
             }
-            expect_token(>);
-            id.name += ">";
-            if (!peek_token(identifier)) break; // "foo::<T>::<U>()" isn't valid
-            // we break so we don't allow parsing that case
+        } else {
+            report_error((*curr_tkn), "expected identifier after '::'.");
         }
     }
     id.mangled_name = id.name;
@@ -562,7 +592,13 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 }
 
 [[nodiscard]] ASTNode* Parser::unqualified_identifier(Identifier::Kind id_kind) {
-    expect_token(identifier);
+    if (id_kind == Identifier::generic_type_name) {
+        if (!token_is(identifier) && !token_is(builtin_type)) {
+            report_error((*curr_tkn), "expected identifier in generic declaration.");
+        }
+    } else {
+        expect_token(identifier);
+    }
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     id.mangled_name = id.name;

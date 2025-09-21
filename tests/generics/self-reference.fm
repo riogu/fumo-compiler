@@ -1,0 +1,32 @@
+struct Node[T] {
+    let data: T;
+    let next: Node[T]*;
+    
+    fn get_data() -> T {
+        return data;
+    }
+    
+    fn set_next(next_node: Node[T]*) -> void {
+        next = next_node;
+    }
+    
+    fn static make(value: T) -> Node[T] {
+        return Node[T]{value, null};
+    }
+}
+
+fn create_chain[T](first: T, second: T) -> Node[T] {
+    let head = Node[T]::make(first);
+    let tail = Node[T]::make(second);
+    head.set_next(&tail);
+    return head;
+}
+
+fn main() -> i32 {
+    let int_node = Node[i32]::make(42);
+    let float_node = Node[f64]::make(3.14);
+    
+    let chain = create_chain[i32](1, 2);
+    
+    return 0;
+}

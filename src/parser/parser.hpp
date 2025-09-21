@@ -83,7 +83,11 @@ struct Parser {
     #define peek_token(tok) peek_is_tkn(tkn(tok))
 
     constexpr bool peek_is_tkn(const TokenType& type) {
-        return curr_tkn != tokens.end() && ((curr_tkn)->type == type);
+        return curr_tkn != tokens.end() && (curr_tkn->type == type);
+    }
+    constexpr bool peek_token_amount(const TokenType& type, int increase) {
+        auto next = curr_tkn + increase;
+        return next != tokens.end() && (next->type == type);
     }
     constexpr bool peek_keyword_amount(str_view keyword, int increase) {
         auto next = curr_tkn + increase;
@@ -110,5 +114,16 @@ struct Parser {
     #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error((*prev_tkn), "expected '{}'.", repr);
+    }
+
+    // helper method for expecting '>' in generic contexts
+    void expect_closing_angle() {
+        if (token_is(>)) {
+            return;
+        } else if (peek_token(>>)) { // we need to "put back" one > for the next parse
+            curr_tkn->type = tkn(>); // so we change the token type and dont advance
+            return;
+        }
+        report_error((*curr_tkn), "expected '>'");
     }
 };

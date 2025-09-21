@@ -3,6 +3,7 @@
 // we pop the current std::map when leaving a scope
 
 // all declarations are flattened and identifiers are changed to match them
+// they are "global" but renamed internally
 // for example:
 //
 //   struct    foo  { struct bar {};     } => struct "foo::bar"    {};
@@ -15,10 +16,12 @@
 //   fn f() -> void { let bar: i32;      } => let    "foo()::bar": i32;
 //
 //   for generics:
-//   we think of declarations vs instantiations as 2 separate cases
-//   fn f|T|() -> void { let bar: i32;      } => let    "foo|T|()::bar": i32;
+//   struct  foo::bar[T, U, V]()      { ... }
+//   struct "foo::bar[{}]()"          { ... }
 //
-// they are "global" but renamed internally
+//   fn  foo::bar[T]::thing[U]()      { ... }
+//   fn "foo::bar[{}]::thing[{}]()"   { ... }
+//
 #pragma once
 
 #include "base_definitions/ast_node.hpp"
@@ -29,16 +32,8 @@
 #undef cases
 #define case(...) map_macro(each_case_label, __VA_ARGS__)
 
-enum struct ScopeKind { Namespace, TypeBody, CompoundStatement, FunctionBody, MemberFuncBody, MemberCompoundStatement};
-struct Scope {
-    str name;
-    ScopeKind kind;
-    str isolated_name;
-    int inner_scope_count = 0;
-};
 #include <map>
 #include <utility>
-// #include "utils/tsl/ordered_map.h"
 
 struct SymbolTableStack {
     // --------------------------------------------

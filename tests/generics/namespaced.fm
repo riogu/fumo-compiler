@@ -1,0 +1,26 @@
+namespace math {
+    struct Vector[T] {
+        let x: T;
+        let y: T;
+        
+        fn magnitude_squared() -> T {
+            return x * x + y * y;
+        }
+        
+        fn static make(x_val: T, y_val: T) -> Vector[T] {
+            return Vector[T]{x_val, y_val};
+        }
+    }
+    
+    fn add[T](a: Vector[T], b: Vector[T]) -> Vector[T] {
+        return Vector[T]::make(a.x + b.x, a.y + b.y);
+    }
+}
+
+fn main() -> i32 {
+    let v1 = math::Vector[f64]::make(1.0, 2.0);
+    let v2 = math::Vector[f64]::make(3.0, 4.0);
+    let sum = math::add[f64](v1, v2);
+    
+    return 0;
+}

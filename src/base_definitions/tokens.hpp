@@ -68,15 +68,9 @@ struct Token {
                 return enum_green(escaped);
             }
             case TokenType::char_literal: {
-                std::string raw{std::get<std::string>(literal.value())};
-                std::string escaped {};
-                escaped.reserve(raw.length());
-                for (char &c : raw) {
-                    escaped += (c == '\n') ? "\\n" :
-                               (c == '\t') ? "\\t" :
-                               std::string(1, c);
-                }
-                return enum_green(escaped);
+                str temp = "";
+                temp += std::get<int64_t>(literal.value());
+                return enum_green(temp);
             }
 
             case TokenType::is_EOF:
@@ -108,8 +102,108 @@ struct Token {
 
 #define tkn(tok) str_to_tkn_type(#tok)
 [[nodiscard]] constexpr TokenType str_to_tkn_type(std::string_view str) {
-    zip_to_macro(each_str_to_tkn, symbol_reprs_, punctuators_)
-    if (str == "keyword")       return TokenType::keyword;
+    if (str == "<") {
+        return TokenType ::less;
+    } else if (str == ">") {
+        return TokenType ::greater;
+    } else if (str == "!") {
+        return TokenType ::exclamation;
+    } else if (str == "+") {
+        return TokenType ::plus;
+    } else if (str == "-") {
+        return TokenType ::minus;
+    } else if (str == "*") {
+        return TokenType ::asterisk;
+    } else if (str == "&") {
+        return TokenType ::ampersand;
+    } else if (str == "~") {
+        return TokenType ::negate;
+    } else if (str == "%") {
+        return TokenType ::percent;
+    } else if (str == "#") {
+        return TokenType ::hashtag;
+    } else if (str == "^") {
+        return TokenType ::hat;
+    } else if (str == "|") {
+        return TokenType ::bar;
+    } else if (str == "/") {
+        return TokenType ::division;
+    } else if (str == "=") {
+        return TokenType ::equals;
+    } else if (str == "?") {
+        return TokenType ::question_mark;
+    } else if (str == ":") {
+        return TokenType ::colon;
+    } else if (str == ".") {
+        return TokenType ::dot;
+    } else if (str == "[") {
+        return TokenType ::open_bracket;
+    } else if (str == "]") {
+        return TokenType ::close_bracket;
+    } else if (str == "(") {
+        return TokenType ::open_paren;
+    } else if (str == ")") {
+        return TokenType ::close_paren;
+    } else if (str == "{") {
+        return TokenType ::open_brace;
+    } else if (str == "}") {
+        return TokenType ::close_brace;
+    } else if (str == ";") {
+        return TokenType ::semicolon;
+    } else if (str == ",") {
+        return TokenType ::comma;
+    } else if (str == "==") {
+        return TokenType ::equals_equals;
+    } else if (str == ">=") {
+        return TokenType ::greater_equals;
+    } else if (str == "<=") {
+        return TokenType ::less_equals;
+    } else if (str == "!=") {
+        return TokenType ::exclamation_equals;
+    } else if (str == "+=") {
+        return TokenType ::plus_equals;
+    } else if (str == "-=") {
+        return TokenType ::minus_equals;
+    } else if (str == "*=") {
+        return TokenType ::asterisk_equals;
+    } else if (str == "/=") {
+        return TokenType ::division_equals;
+    } else if (str == "%=") {
+        return TokenType ::percent_equals;
+    } else if (str == "&=") {
+        return TokenType ::ampersand_equals;
+    } else if (str == "^=") {
+        return TokenType ::hat_equals;
+    } else if (str == "|=") {
+        return TokenType ::bar_equals;
+    } else if (str == "||") {
+        return TokenType ::bar_bar;
+    } else if (str == "--") {
+        return TokenType ::minus_minus;
+    } else if (str == "++") {
+        return TokenType ::plus_plus;
+    } else if (str == "##") {
+        return TokenType ::hashtag_hashtag;
+    } else if (str == "&&") {
+        return TokenType ::ampersand_ampersand;
+    } else if (str == ">>") {
+        return TokenType ::greater_greater;
+    } else if (str == "<<") {
+        return TokenType ::less_less;
+    } else if (str == "<<=") {
+        return TokenType ::less_less_equals;
+    } else if (str == ">>=") {
+        return TokenType ::greater_greater_equals;
+    } else if (str == "...") {
+        return TokenType ::dot_dot_dot;
+    } else if (str == "->") {
+        return TokenType ::minus_greater;
+    } else if (str == "::") {
+        return TokenType ::colon_colon;
+    } else if (str == "\"") {
+        return TokenType ::quotation_mark;
+    } else if (str == "keyword")
+        return TokenType::keyword;
     if (str == "int")           return TokenType::integer;
     if (str == "float")         return TokenType::floating_point;
     if (str == "string")        return TokenType::string;
