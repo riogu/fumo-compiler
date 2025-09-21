@@ -1,6 +1,7 @@
 #pragma once
 #include "base_definitions/tokens.hpp"
 #include "base_definitions/types.hpp"
+#include "utils/common_utils.hpp"
 #include "utils/match_construct.hpp"
 #include <format>
 #include <llvm/IR/Value.h>
@@ -47,6 +48,7 @@ struct Identifier {
     // and thats it, then its easy to link usage to the instantiations
     // we want a "get or create" approach to template usage
     bool is_generic_wrapper() { return generic_identifiers.size(); }
+    bool is_func_call() { return kind == func_call_name || kind == member_func_call_name; }
     // we make a generic formatted name like:
     //   -> "foo::bar[{}]()" (this is stored normally in the 'name' variable)
     // without anything inside "[{}]"
@@ -313,7 +315,10 @@ template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
 
 
-[[nodiscard]] constexpr str flatten_generic_id(ASTNode* node) {
+[[nodiscard]] constexpr str mangled_name(ASTNode* node) {
+    if (!is_branch<Identifier>(node)) {
+        internal_panic("only identifiers have mangled names, recieved '{}'.", node->name());
+    }
     auto& id = get<Identifier>(node);
     
     if (!id.is_generic_wrapper()) {
@@ -325,10 +330,9 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     
     std::vector<str> string_args;
     for (auto* child_node : id.generic_identifiers) {
-        string_args.push_back(flatten_generic_id(child_node)); // Recursive
+        string_args.push_back(mangled_name(child_node)); 
     }
     
-    // Manual format replacement since std::format is giving you trouble
     str result = id.mangled_name;
     size_t pos = 0;
     for (size_t i = 0; i < string_args.size(); ++i) {
@@ -348,7 +352,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     if (id.is_generic_wrapper()) {
         std::vector<str> string_args;
         for (auto* node : id.generic_identifiers) {
-            string_args.push_back(flatten_generic_id(node));
+            string_args.push_back(mangled_name(node));
         }
         // Manual format replacement (same as flatten_generic_id)
         size_t pos = 0;

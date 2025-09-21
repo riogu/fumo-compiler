@@ -38,6 +38,7 @@ struct Analyzer {
     }
     void add_declaration(ASTNode& node);
     vec<Scope> iterate_qualified_names(FunctionDecl& func, ASTNode& node);
+    [[nodiscard]] Opt<ASTNode*> get_or_create_generic_declaration(ASTNode& node);
 
     ASTNode* push(const ASTNode& node) {
         extra_nodes.push_back(std::make_unique<ASTNode>(node));

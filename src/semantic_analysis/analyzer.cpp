@@ -60,10 +60,15 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     id.base_struct_name = temp;
                 }
             } else {
-                for (auto decl : symbol_tree.all_declarations) {
-                    std::cerr << std::format("found decl: {}\n", decl.first);
+                // for (auto decl : symbol_tree.all_declarations) std::cerr << std::format("found decl: {}\n", decl.first);
+                
+                // we need better error reporting for generics:
+                if (id.is_generic_wrapper()) {
+                    report_error(node.source_token, "couldn't instantiate generic {} '{}'.",
+                                 id.is_func_call() ? "function" : "struct", 
+                                 mangled_name(&node));
                 }
-                report_error(node.source_token, "use of undeclared identifier '{}'.", id.mangled_name);
+                report_error(node.source_token, "use of undeclared identifier '{}'.", mangled_name(&node));
             }
             switch (id.kind) {
                 case Identifier::var_name:
@@ -225,11 +230,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
 
-            // if (!get_id(node.type).is_generic()) {
-            //     // generic declarations dont get type checked, only generic instantiations like: 
-            //     // let var: Vec[i32];
-            //     //
-            // }
+            auto new_type_decl = get_or_create_generic_declaration(node);
+            // try to create a generic instantiation IF we need it
+            if (new_type_decl) {}
+
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
@@ -247,10 +251,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             Identifier& id = get_id(func);
 
             vec<Scope> scopes = iterate_qualified_names(func, node);
-            func.scopes = scopes; // save for later
+            // func.scopes = scopes; // save for later
             push_generic_context(id.generic_identifiers);
             // -------------------------------------------------------------------
             // hack to get the type checked correctly
+            // will also work even if its a generic return type
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
 
             if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
@@ -294,17 +299,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             // NOTE: function calls should instantiate their generic declarations
             auto& id = get_id(func_call);
 
+            auto new_func_decl = get_or_create_generic_declaration(node);
+            // NOTE: later use this new function declaration if it exists
+            // like any other function declaration, but it was instantiated on usage (generic)
             const auto& func_decl = get<FunctionDecl>(id.declaration.value());
             if (func_decl.kind == FunctionDecl::member_func_declaration) {
                 func_call.kind = FunctionCall::member_function_call;
                 // as it is, we can call static member functions from instances of objects
             }
-            // if (id.is_generic()) {
-            //     // requires instantiating the original function (copying it)
-            //     // and then actually analyzing that copy as any other normal function,
-            //     // after replacing all instances of 'T' with the real 'T' type
-            //     report_error(node.source_token, "generic functions arent implemented yet.");
-            // }
             const auto& params = func_decl.parameters;
 
             if (func_call.argument_list.size() != params.size()
@@ -341,6 +343,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     break;
                 case BlockScope::initializer_list: {
                     for (auto& node : scope.nodes) analyze(*node);
+                    auto type_decl = get_or_create_generic_declaration(node);
                     if (node.type.kind == Type::Undetermined) {
                         analyze(*node.type.identifier);
                         if (auto decl = get_id(node.type).declaration) {
@@ -381,6 +384,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             }
         }
         // TODO: replace this with the code below it (after debugging that version)
+        // also note this might break when we add generics and someone calls a generic member function
         holds(PostfixExpr, &postfix) { // nodes is never empty
             str prev_name = "";
             str curr_base_name = "";
@@ -602,4 +606,30 @@ void Analyzer::add_declaration(ASTNode& node) {
 
         _default internal_panic("expected variable, got '{}'.", node.kind_name());
     }
+}
+
+[[nodiscard]] Opt<ASTNode*> Analyzer::get_or_create_generic_declaration(ASTNode& node) {
+    // TODO: write code that:
+    // copies the original declaration of the generic type/function
+    // replaces all instances of T, U, etc with the passed in types
+    // and then runs analyze(new_decl) on that instantiation (to validate it)
+    // analyze() should take care of everything else and "just work" like any other function/type declaration
+    if (symbol_tree.curr_generic_context.empty()) return std::nullopt;
+    // we arent in a generic context
+    // first we check if we can instantiate or if we depend on a generic
+    // let var: Foo[i32, T];
+    // cant instantiate this yet since we dont have T, so we delay it for later
+    match (node) {
+        holds(VariableDecl, &var_decl) {
+        }
+        holds(FunctionCall, &func_call) {
+        }
+        holds(BlockScope, &scope) {
+            // let var = Node[i32]{213}; // instantiated on the rhs of the assignment
+        }
+        _default internal_panic("cant create declaration for '{}'. (passed wrong NodeKind)", node.kind_name());
+        
+    }
+    return std::nullopt;
+    internal_panic("not implemented");
 }

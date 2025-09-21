@@ -14,8 +14,7 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
-    if (id.is_generic_wrapper()) {
-        id.kind = Identifier::generic_wrapper_type_name;
+    if (id.is_generic_wrapper()) { // could be typedecl or func decl
         // internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
     }
     // NOTE: we must promote the type_name to generic_type_name
@@ -30,6 +29,9 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
         }
     }
     switch (id.kind) {
+        case Identifier::generic_type_name:
+            search_maps(curr_generic_context);
+            break;
         case Identifier::generic_wrapper_type_name: // should go here
         case Identifier::type_name:
             search_maps(type_decls);
@@ -93,9 +95,6 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
             internal_panic("declaration '{}' shouldn't search for itself", id.mangled_name);
         case Identifier::unknown_name:
             internal_panic("forgot to set identifier name kind for {}.", id.mangled_name);
-
-        case Identifier::generic_type_name:
-            internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
     }
     return std::nullopt;
 }

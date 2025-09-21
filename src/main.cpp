@@ -26,11 +26,11 @@ void func() {
     int y = 123;
     x = y;
     ff<int> ea;
-    // ea.wow();
+    ea.wow();
     // x.foo();
 }
 void e() {
-    func<int>();
+    // func<int>();
 }
 
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
