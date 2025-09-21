@@ -1,16 +1,13 @@
+struct Foo {};
+
 struct Container[T] {
     let data: T*;
+    let var: Vec[Foo]; // is this an instantion or a declaration
     
-    fn get() -> T {
-        return *data;
-    }
-    
-    fn set(value: T) -> void {
-        *data = value;
-    }
-    
+    fn get() -> T { return *data; }
+    fn set(value: T) -> void { *data = value; }
     fn static new(value: T) -> Container[T] {
-        // let ptr: T* = malloc(sizeof(T));
+        let ptr: T* = malloc(sizeof(T));
         *ptr = value;
         return Container[T]{ptr};
     }

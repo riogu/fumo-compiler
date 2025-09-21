@@ -49,6 +49,7 @@ struct SymbolTableStack {
     std::map<str, ASTNode*> member_function_decls {};
     std::map<str, ASTNode*> member_variable_decls {};
     // --------------------------------------------
+    std::map<str, ASTNode*> curr_generic_context {}; // holds all the generic types we can use
     // change this to only include the top level declarations so we can recursively codegen them.
     std::map<str, ASTNode*> all_declarations {}; 
     // NOTE: doesn't include namespaces or local variables or member variables

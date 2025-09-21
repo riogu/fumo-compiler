@@ -2,6 +2,7 @@
 #include "base_definitions/tokens.hpp"
 #include "base_definitions/types.hpp"
 #include "utils/match_construct.hpp"
+#include <format>
 #include <llvm/IR/Value.h>
 enum struct ScopeKind { Namespace, TypeBody, CompoundStatement, FunctionBody, MemberFuncBody, MemberCompoundStatement};
 struct Scope {
@@ -18,15 +19,14 @@ struct Identifier {
     enum Kind {
         #define Identifier_kinds                                         \
         unknown_name,                  /*                            */  \
-        declaration_name,              /*                            */  \
-        type_name,                     /*                            */  \
-        var_name,                      /*                            */  \
         member_var_name,               /*                            */  \
+        var_name,                      /*                            */  \
+        type_name,                     /*                            */  \
         func_call_name,                /*                            */  \
+        declaration_name,              /*                            */  \
         member_func_call_name,         /*                            */  \
-        generic_type_name,             /*  Vec[T]                    */  \
-        generic_func_call_name,        /*  foo[T](...)               */  \
-        generic_member_func_call_name  /*  foo[T](...)               */  \
+        generic_wrapper_type_name,     /*                            */  \
+        generic_type_name              /*                            */  \
 
         Identifier_kinds
     } kind;
@@ -46,7 +46,7 @@ struct Identifier {
     // foo::bar[i32] { ... }
     // and thats it, then its easy to link usage to the instantiations
     // we want a "get or create" approach to template usage
-    bool is_generic() { return kind == generic_type_name || kind == generic_member_func_call_name || kind == generic_func_call_name; };
+    bool is_generic_wrapper() { return generic_identifiers.size(); }
     // we make a generic formatted name like:
     //   -> "foo::bar[{}]()" (this is stored normally in the 'name' variable)
     // without anything inside "[{}]"
@@ -313,10 +313,56 @@ template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
 
 
+[[nodiscard]] constexpr str flatten_generic_id(ASTNode* node) {
+    auto& id = get<Identifier>(node);
+    
+    if (!id.is_generic_wrapper()) {
+        return id.mangled_name; // Simple case: just "T" or "foo::bar::thing"
+    }
+    
+    // id.mangled_name might be: "foo[{}]::bar[{}]::thing"
+    // We need to fill all the {} placeholders
+    
+    std::vector<str> string_args;
+    for (auto* child_node : id.generic_identifiers) {
+        string_args.push_back(flatten_generic_id(child_node)); // Recursive
+    }
+    
+    // Manual format replacement since std::format is giving you trouble
+    str result = id.mangled_name;
+    size_t pos = 0;
+    for (size_t i = 0; i < string_args.size(); ++i) {
+        pos = result.find("{}", pos);
+        if (pos != str::npos) {
+            result.replace(pos, 2, string_args[i]); // Replace "{}" with actual type
+            pos += string_args[i].length();
+        }
+    }
+    
+    return result;
+}
 [[nodiscard]] constexpr str type_name(const Type& type) {
-    str temp = get_id(type).mangled_name;
+    auto& id = get_id(type);
+    str temp = id.mangled_name;
+    
+    if (id.is_generic_wrapper()) {
+        std::vector<str> string_args;
+        for (auto* node : id.generic_identifiers) {
+            string_args.push_back(flatten_generic_id(node));
+        }
+        // Manual format replacement (same as flatten_generic_id)
+        size_t pos = 0;
+        for (size_t i = 0; i < string_args.size(); ++i) {
+            pos = temp.find("{}", pos);
+            if (pos != str::npos) {
+                temp.replace(pos, 2, string_args[i]); // Replace "{}" with actual type
+                pos += string_args[i].length();
+            }
+        }
+    }
     int ptr_count = type.ptr_count;
     while (ptr_count--) temp += "*";
+    std::cerr << "created type_name: " << temp << "\n";
     return temp;
 }
 // Type checking functions
@@ -342,6 +388,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     return (a.kind == b.kind && type_name(a) == type_name(b));
 }
 [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+
     if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
 
     if (is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count) return true;
@@ -358,3 +405,4 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     }
     return false;
 }
+

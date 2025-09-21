@@ -10,6 +10,28 @@
 #include <llvm/Support/InitLLVM.h>
 #include <print>
 #include "llvm/Support/Signals.h"
+template<typename  T>
+struct ff {
+    T a;
+    void wow() {
+        a = "321313";
+    }
+};
+struct ee {
+    void foo();
+};
+template <typename  T>
+void func() {
+    T x;
+    int y = 123;
+    x = y;
+    ff<int> ea;
+    // ea.wow();
+    // x.foo();
+}
+void e() {
+    func<int>();
+}
 
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     
@@ -86,17 +108,17 @@ auto main(int argc, char** argv) -> int {
         auto file_root_node = parser.parse_tokens(tokens);
         //--------------------------------------------------------------------------
         // Semantic Analysis
+        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
+        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
+        // }
         Analyzer analyzer {file};
         analyzer.semantic_analysis(file_root_node);
         // //--------------------------------------------------------------------------
         // // recursive structs will crash the AST printing until after semantic analysis
-        // // Codegen
-        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-        // }
         Codegen codegen {file, analyzer.symbol_tree};
         codegen.codegen_file(file_root_node);
         obj_files.push_back(codegen.compile_file(opt_level));
     }
     link_object_files(obj_files, out_file.getNumOccurrences()? out_file.getValue() : "fumo.out");
 }
+        // // Codegen

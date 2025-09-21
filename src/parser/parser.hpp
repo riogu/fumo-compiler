@@ -56,6 +56,8 @@ struct Parser {
     [[nodiscard]] ASTNode* declaration_identifier();
     [[nodiscard]] ASTNode* qualified_identifier();
     [[nodiscard]] ASTNode* unqualified_identifier(Identifier::Kind id_kind);
+    void parse_generic_parameters(Identifier& id) ;
+
     // --------------------------------------------------------------
     // declarations
     [[nodiscard]] Type declaration_specifier();
@@ -114,16 +116,5 @@ struct Parser {
     #define expect_token_str(tok) consume_tkn_or_error(str_to_tkn_type(tok), tok)
     void consume_tkn_or_error(const TokenType& type, std::string_view repr) {
         if (!is_tkn(type)) report_error((*prev_tkn), "expected '{}'.", repr);
-    }
-
-    // helper method for expecting '>' in generic contexts
-    void expect_closing_angle() {
-        if (token_is(>)) {
-            return;
-        } else if (peek_token(>>)) { // we need to "put back" one > for the next parse
-            curr_tkn->type = tkn(>); // so we change the token type and dont advance
-            return;
-        }
-        report_error((*curr_tkn), "expected '>'");
     }
 };

@@ -1,6 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "utils/common_utils.hpp"
-#include <ranges>
 
 #define find_value(key, map) (const auto& iter = map.find(key); iter != map.end())
 #define find_in_each_map(map)                                                       \
@@ -15,7 +14,23 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
+    if (id.is_generic_wrapper()) {
+        id.kind = Identifier::generic_wrapper_type_name;
+        // internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
+    }
+    // NOTE: we must promote the type_name to generic_type_name
+    // if the are found in the generic_type_context;
+    // if so, treat it as if 'T' existed, and then apply the type checking rules
+    // between generics (must be the same generic, must be wrapped, etc)
+
+    if (id.kind == Identifier::type_name) {
+        if find_value(id.mangled_name, curr_generic_context) {
+            id.kind = Identifier::generic_type_name;
+            return iter->second;
+        }
+    }
     switch (id.kind) {
+        case Identifier::generic_wrapper_type_name: // should go here
         case Identifier::type_name:
             search_maps(type_decls);
             break;
@@ -79,8 +94,6 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
         case Identifier::unknown_name:
             internal_panic("forgot to set identifier name kind for {}.", id.mangled_name);
 
-        case Identifier::generic_member_func_call_name:
-        case Identifier::generic_func_call_name:
         case Identifier::generic_type_name:
             internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
     }
@@ -180,7 +193,7 @@ void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
         }
         if (bin.lhs->type.ptr_count && init_list->nodes.size() == 1) {
             auto* first_elem = init_list->nodes[0];
-            if (!is_compatible_t(bin.lhs->type, first_elem->type)) {
+            if (!is_compatible_or_generic_t(bin.lhs->type, first_elem->type)) {
                 report_error(first_elem->source_token,
                              "cannot assign to variable of type '{}' with expression of type '{}'.",
                              type_name(bin.lhs->type), type_name(first_elem->type));
@@ -199,7 +212,7 @@ void Analyzer::check_initializer_lists(const ASTNode& node, BinaryExpr& bin) {
             }
 
             for (auto [arg, member] : std::views::zip(init_list->nodes, type_decl_body)) {
-                if (!is_compatible_t(arg->type, member->type)) {
+                if (!is_compatible_or_generic_t(arg->type, member->type)) {
                     report_error(arg->source_token,
                                  "cannot initialize member variable of type '{}' with argument of type '{}'.",
                                  type_name(member->type), type_name(arg->type));

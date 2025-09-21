@@ -9,10 +9,10 @@ struct ASTNode;
 
 
 struct Type {
-    ASTNode* identifier;
+    ASTNode* identifier; // will get mapped to the declaration
     enum Kind {
         Undetermined, // should be converted in the type checker or give error
-        // Any,       // generic Any type (unused atm)
+        // Generic,      // generic Any type (unused atm)
         // Function,  // add this later if you want function objects/pointers
         struct_,
         enum_,

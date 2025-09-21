@@ -60,6 +60,9 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     id.base_struct_name = temp;
                 }
             } else {
+                for (auto decl : symbol_tree.all_declarations) {
+                    std::cerr << std::format("found decl: {}\n", decl.first);
+                }
                 report_error(node.source_token, "use of undeclared identifier '{}'.", id.mangled_name);
             }
             switch (id.kind) {
@@ -67,15 +70,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case Identifier::member_var_name:
                 case Identifier::func_call_name:
                 case Identifier::member_func_call_name:
+                case Identifier::generic_wrapper_type_name:
                     curr_postfix_id = &id; // for solving postfix expression identifiers
                 case Identifier::unknown_name:
                 case Identifier::declaration_name:
                 case Identifier::type_name:
-                    break;
-                case Identifier::generic_member_func_call_name:
-                case Identifier::generic_func_call_name:
                 case Identifier::generic_type_name:
-                    internal_error(node.source_token, "semantic analyis not implemented for '{}'", node.name());
+                    break;
+                default: internal_error(node.source_token, "semantic analyis not implemented for '{}'", node.name());
             }
         }
 
@@ -166,7 +168,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     if (bin.lhs->type.kind == Type::Undetermined) bin.lhs->type = bin.rhs->type;
                     if (bin.rhs->type.kind == Type::Undetermined) bin.rhs->type = bin.lhs->type;
                     // this extra check avoids the case where you use another type with the same layout on the rhs
-                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_or_generic_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     // ----------------------------------------------------------------------------
                     // checks for initializer lists (make sure they match the original type)
                     // also allow those edge cases with pointers and initializer lists
@@ -185,13 +187,13 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                         // special cases for pointer arithmetic
                         // dont check compatibility for this case
                     } 
-                    else if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    else if (!is_compatible_or_generic_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break;
 
                 case BinaryExpr::equal: {
                 case BinaryExpr::not_equal:// we can compare pointers and numbers only
-                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_or_generic_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     // we know they are equal so we only check lhs
                     if (!is_ptr_t(bin.lhs->type) && !is_arithmetic_t(bin.lhs->type)) report_binary_error(node, bin);
                     node.type.kind = Type::bool_;
@@ -201,12 +203,12 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 case BinaryExpr::multiply:
                 case BinaryExpr::divide:
                 case BinaryExpr::modulus:
-                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_or_generic_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type = bin.lhs->type;
                     break; 
                 case BinaryExpr::less_than:
                 case BinaryExpr::less_equals: {
-                    if (!is_compatible_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
+                    if (!is_compatible_or_generic_t(bin.lhs->type, bin.rhs->type)) report_binary_error(node, bin);
                     node.type.kind = Type::bool_;
                     auto& id = get_id(node.type); id.name = "bool"; id.mangled_name = "bool";
                     break; 
@@ -220,6 +222,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(VariableDecl, &var) {
+            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
+            if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
+
+            // if (!get_id(node.type).is_generic()) {
+            //     // generic declarations dont get type checked, only generic instantiations like: 
+            //     // let var: Vec[i32];
+            //     //
+            // }
             if (node.type.kind == Type::Undetermined) {
                 analyze(*node.type.identifier);
                 // this is pretty bad, consider refactoring type inference later
@@ -228,8 +238,6 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     node.type.kind = decl.value()->type.kind;
                 }
             }
-            if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
-            if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
 
             add_declaration(node);
         }
@@ -240,9 +248,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
 
             vec<Scope> scopes = iterate_qualified_names(func, node);
             func.scopes = scopes; // save for later
-            if (id.is_generic()) {
-                return; // dont check generic functions
-            }
+            push_generic_context(id.generic_identifiers);
             // -------------------------------------------------------------------
             // hack to get the type checked correctly
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
@@ -252,6 +258,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 if (auto decl = get_id(node.type).declaration) {
                     node.type.identifier = decl.value()->type.identifier;
                     node.type.kind = decl.value()->type.kind;
+                    // we lose the pointers because of the declaration not having any
+                    // if we simply assign the whole type
                 }
             }
             for (auto& param : func.parameters) analyze(*param);
@@ -267,6 +275,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 if (func.body_should_move) func.body = std::nullopt;
             }
             for (int i = 0; i <= id.scope_counts; i++) symbol_tree.pop_scope();
+            pop_generic_context(id.generic_identifiers);
             // -------------------------------------------------------------------
             // checks for static member functions (only allowed in structs for now)
             if (node.type.qualifiers.contains(Type::static_)) {
@@ -290,12 +299,12 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 func_call.kind = FunctionCall::member_function_call;
                 // as it is, we can call static member functions from instances of objects
             }
-            if (id.is_generic()) {
-                // requires instantiating the original function (copying it)
-                // and then actually analyzing that copy as any other normal function,
-                // after replacing all instances of 'T' with the real 'T' type
-                report_error(node.source_token, "generic functions arent implemented yet.");
-            }
+            // if (id.is_generic()) {
+            //     // requires instantiating the original function (copying it)
+            //     // and then actually analyzing that copy as any other normal function,
+            //     // after replacing all instances of 'T' with the real 'T' type
+            //     report_error(node.source_token, "generic functions arent implemented yet.");
+            // }
             const auto& params = func_decl.parameters;
 
             if (func_call.argument_list.size() != params.size()
@@ -308,7 +317,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             for (auto* arg : func_call.argument_list) analyze(*arg);
 
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
-                if (!is_compatible_t(arg->type, param->type)) {
+                if (!is_compatible_or_generic_t(arg->type, param->type)) {
                     report_error(arg->source_token,
                                  "argument of type '{}' is not compatible with function declaration signature.",
                                  type_name(arg->type));
@@ -354,7 +363,9 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             switch (type_decl.kind) {
                 case TypeDecl::struct_declaration: {
                     add_declaration(node);
-
+                    // if (get_id(node.type).is_generic_wrapper()) return;
+                    push_generic_context(get_id(node.type).generic_identifiers);
+                    
                     symbol_tree.push_scope(get_name(node.type), ScopeKind::TypeBody);
                     if (type_decl.definition_body) {
                         for (auto& node : type_decl.definition_body.value()) analyze(*node);
@@ -362,6 +373,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                         if (type_decl.body_should_move) type_decl.definition_body = std::nullopt;
                     }
                     symbol_tree.pop_scope();
+                    pop_generic_context(get_id(node.type).generic_identifiers);
                     break;
                 }
                 default:
@@ -374,7 +386,6 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             str curr_base_name = "";
             Identifier* curr_id = nullptr;
             for (auto* curr_node: postfix.nodes) {
-                // TODO:
                 if (auto* un = get_if<UnaryExpr>(curr_node)) {
                     if (auto* id = get_if<Identifier>(un->expr.value())) curr_id = id;
                     else if (auto* func_call = get_if<FunctionCall>(un->expr.value())) {
@@ -394,9 +405,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 analyze(*curr_node);
                 // we add the type name to the string, for lookup in the symbol table
                 // struct gaming { let foo: i32; };
-                // x.foo => "gaming::foo"
-                // we find the declaration of the member variable, or error
-                
+                // x.foo => "gaming::foo". we find the declaration of the member variable, or error
                 auto& id = get_id(curr_node->type);
                 prev_name += id.mangled_name;
                 curr_base_name = prev_name;

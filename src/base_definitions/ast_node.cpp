@@ -1,6 +1,5 @@
 #include "base_definitions/ast_node.hpp"
 #include "utils/map-macro.hpp"
-#include "utils/sequence-for.hpp"
 
 [[nodiscard]] std::string ASTNode::to_str(int64_t depth) const {
     depth++;

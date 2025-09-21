@@ -1,3 +1,4 @@
+#include "base_definitions/ast_node.hpp"
 #include "parser/parser.hpp"
 
 // <variable-declaration> ::= <declarator-list> {":"}?
@@ -156,10 +157,8 @@
     if (peek_token(identifier)) {
         type.identifier = identifier(Identifier::type_name);
         type.kind = Type::Undetermined;
-        while (token_is(*)) {
-            type.ptr_count++;
-            // std::println("found pointer for '{}'", get_id(type).name);
-        }
+        while (token_is(*)) type.ptr_count++;
+        if(get_id(type).is_generic_wrapper()) get_id(type).kind = Identifier::generic_wrapper_type_name;
         return type;
     }
     report_error((*curr_tkn), "expected type, found '{}'.", curr_tkn->to_str());
@@ -208,7 +207,6 @@
                 } else if (auto* assign = get_if<BinaryExpr>(nodes.back())) {
                     get<VariableDecl>(assign->lhs).member_index = member_index++;
                 }
-
             } else if (token_is_keyword(fn)) {
                 nodes.push_back(function_declaration());
                 auto& function = get<FunctionDecl>(nodes.back());
@@ -217,7 +215,6 @@
                     report_error(function.identifier->source_token, 
                                  "member function declaration '{}' can't be qualified.", id.mangled_name);
                 }
-
             } else if (token_is_keyword(struct))
                 nodes.push_back(struct_declaration());
             else if (token_is_keyword(enum))

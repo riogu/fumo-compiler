@@ -1,5 +1,6 @@
 struct Box[T] {
     let value: T;
+    let x: i32;
     
     fn get() -> T {
         return value;

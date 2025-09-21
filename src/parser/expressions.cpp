@@ -162,7 +162,13 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         auto init_list = initializer_list();
         if (temp_node) {
             if (auto* id = get_if<Identifier>(temp_node.value())) {
-                id->kind = Identifier::type_name;
+                if (id->is_generic_wrapper()) {
+                    id->kind = Identifier::generic_wrapper_type_name;
+                } else {
+                    id->kind = Identifier::type_name;
+                    // NOTE: we must promote this to generic_type_name if it turns out to be
+                    // for example, 'T' taken from the current generic context
+                }
             } else {
                 report_error(temp_node.value()->source_token, "expected identifier before initializer list.");
             }
@@ -480,7 +486,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // FIXME: dont allow using the same name for 2 separate parameters on generics OR normal function calls
 // it should give the user an error
 
-// fn "foo::bar::[{}]::thing::[{}]()"     { ... }
+// fn "foo::bar::[{Node[{}]}]::thing::[{}]()"     { ... }
 // fn  foo::bar::[i32]::thing::[f64]()    { ... }
 
 // struct "foo::bar::[{}, {}, {}]()"      { ... }
@@ -496,39 +502,17 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
 
-    if (token_is([)) {
-        id.name += "[{}"; // for filling later with formatted arguments
 
-        id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-        while (1) {
-            if (token_is_str(",")) {
-                id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-                id.name += ", {}"; // will be filled with the real type when instantiated.
-                continue;
-            }
-            break;
-        }
-        expect_token(]); id.name += "]";
-    }
+    if (peek_token([)) id.kind = Identifier::generic_wrapper_type_name;
+    parse_generic_parameters(id);
+
     while (token_is(::)) {
         if (token_is(identifier)) {
             id.name += "::" + std::get<str>(prev_tkn->literal.value());
             id.qualifier = Identifier::qualified;
             id.scope_counts++;
-            if (token_is([)) {
-                id.name += "[{}"; // for filling later with formatted arguments
-
-                id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-                while (1) {
-                    if (token_is_str(",")) {
-                        id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
-                        id.name += ", {}"; // will be filled with the real type when instantiated.
-                        continue;
-                    }
-                    break;
-                }
-                expect_token(]); id.name += "]";
-            } 
+            if (peek_token([)) id.kind = Identifier::generic_wrapper_type_name;
+            parse_generic_parameters(id);
         } else {
             report_error((*curr_tkn), "expected identifier after '::'.");
         }
@@ -588,6 +572,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
         }
     }
     id.mangled_name = id.name;
+    
     return push(ASTNode {token, id});
 }
 
@@ -602,6 +587,8 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     id.mangled_name = id.name;
+    // if (id_kind == Identifier::generic_type_name) {
+    // }
     return push(ASTNode {token, id});
 }
 
@@ -618,4 +605,19 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     id.mangled_name = id.name;
     return push(ASTNode {token, id});
 }
-
+void Parser::parse_generic_parameters(Identifier& id) {
+    if (token_is([)) {
+        id.name += "[{}"; // for filling later with formatted arguments
+        id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+        while (1) {
+            if (token_is_str(",")) {
+                id.generic_identifiers.push_back(identifier(Identifier::generic_type_name));
+                id.name += ", {}"; // will be filled with the real type when instantiated.
+                continue;
+            }
+            break;
+        }
+        expect_token(]);
+        id.name += "]";
+    }
+}

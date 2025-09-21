@@ -1,13 +1,18 @@
+
 struct Node[T] {
     let data: T;
-    let next: Node[T]*;
+    let next: Node[Node[T]]*; // is not generic type name, "Node[{}]" is solvable
     
     fn get_data() -> T {
         return data;
     }
     
-    fn set_next(next_node: Node[T]*) -> void {
-        next = next_node;
+    // push generic context(); becomes T and U
+    fn set_next[U](next_node: Node[U]*) -> void {
+        next = next_node;  // NOTE: should error but isnt because its not finding it as Node[U]
+        // should error
+        let var: Node[Node[T]];
+        let b: Node[Node[U]] = var; // FIXME: this should error but doesn't
     }
     
     fn static make(value: T) -> Node[T] {
@@ -15,14 +20,23 @@ struct Node[T] {
     }
 }
 
-fn create_chain[T](first: T, second: T) -> Node[T] {
-    let head = Node[T]::make(first);
-    let tail = Node[T]::make(second);
+// solve every identifier, unless they are a generic_type_name
+fn create_chain[T](first: T, second: T) -> T {
+    // only T in generic context
+    let head = Node[T]::make(first); 
+    let tail = Node[T]::make(second); // no typechecking
+
+    let int_node = Node[i32]::make(42); // no typechecking?
+
+    let e: T; e = 123; // what to do here?
+    int_node = head; // what now?
+    head.set_next(&int_node); // and now?
     head.set_next(&tail);
     return head;
 }
 
 fn main() -> i32 {
+    // no generic context
     let int_node = Node[i32]::make(42);
     let float_node = Node[f64]::make(3.14);
     

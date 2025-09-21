@@ -1,33 +1,25 @@
+struct Container[T] {
+    let value: T;
+    fn get() -> T { return value; }
+    fn static make(v: T) -> Container[T];
+}
+fn Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
+
 struct Pair[T, U] {
     let first: T;
     let second: U;
     
-    fn get_first() -> T;
-    fn get_second() -> U;
-    fn swap() -> Pair[U, T];
     fn static make(a: T, b: U) -> Pair[T, U];
 }
-
-fn Pair[T, U]::get_first() -> T {
-    return first;
-}
-
-fn Pair[T, U, V]::get_second() -> U {
-    return second;
-}
-
-fn Pair[T, U]::swap() -> Pair[U, T] {
-    return Pair[U, T]{second, first};
-}
-
 fn Pair[T, U]::make(a: T, b: U) -> Pair[T, U] {
     return Pair[T, U]{a, b};
 }
 
-fn main() -> i32 {
-    let p = Pair[i32, f64, Vec[i32]]::make(42, 3.14);
-    let swapped = p.swap();
-    let first_val = p.get_first();
-    
-    return 0;
+fn main() -> void {
+    let nested = 
+         Container[Pair[i32, Container[f64]]]::make(Pair[i32,
+                                                    Container[f64]]::make(42, Container[f64]::make(3.14)));
+    let inner_pair = nested.get();
+    let wrapped_float = inner_pair.second;
+    let actual_float = wrapped_float.get();
 }
