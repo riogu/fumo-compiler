@@ -564,9 +564,7 @@ From highest to lowest precedence:
 
 ---
 
-## Current Limitations
-
-### Planned Features
+## Planned Features
 ### Core Language
 - Type casting system
 - Generics/templates for containers and functions
@@ -583,6 +581,7 @@ From highest to lowest precedence:
 - Memory management utilities and `unique_ptr<T>` implementation
 - `Optional<T>` impllementation
 - Basic I/O beyond C interop
+
 ### Known Limitations
 - No built-in array types (use pointers and manual allocation)
 - No automatic memory management (manual `malloc`/`free` required)
@@ -646,7 +645,7 @@ The Fumo compiler provides detailed error messages with file location and contex
 
 ## Grammar Specification
 
-Please check [language_specification/fumo_bnf.md](language_specification/fumo_bnf.md) for the language specification
+Please check [the language specification](language_specification/fumo_bnf.md) for the language specification.
 
 ---
 
@@ -710,11 +709,11 @@ tests/
 ├── structs-and-postfix/    # Valid struct usage
 └── fail-static-functions/  # Invalid static method usage
 ```
-the test script has a '-help' option for displaying all the options available for testing.
+the test script has a `-help` option for displaying all the options available for testing.
 
 it allows passing individual files, passing specific directories, passing flags directly to the compiler, etc.
 
-check '-help' for more info:
+check `-help` for more info:
 ```
 Test Runner Usage:
   ./test_runner [options] [test_directories...]
