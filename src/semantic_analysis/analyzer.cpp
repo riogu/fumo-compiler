@@ -152,6 +152,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 default: internal_panic("semantic analysis missing for '{}'.", node.name());
             }
         }
+
         holds(BinaryExpr, &bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
@@ -627,7 +628,8 @@ void Analyzer::add_declaration(ASTNode& node) {
     // let var: Foo[i32, T];
     // cant instantiate this yet since we dont have T, so we delay it for later
     match (node) {
-        holds(VariableDecl, &var_decl) {}
+        holds(VariableDecl, &var_decl) {
+        }
         holds(FunctionCall, &func_call) {}
         holds(BlockScope, &scope) {
             // let var = Node[i32]{213}; // instantiated on the rhs of the assignment

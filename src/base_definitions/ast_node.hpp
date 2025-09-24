@@ -366,7 +366,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     }
     int ptr_count = type.ptr_count;
     while (ptr_count--) temp += "*";
-    std::cerr << "created type_name: " << temp << "\n";
+    // std::cerr << "created type_name: " << temp << "\n";
     return temp;
 }
 // Type checking functions

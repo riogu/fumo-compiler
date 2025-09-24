@@ -32,7 +32,7 @@ fn combine[T, U](a: T, b: U) -> Pair[Container[T], Container[U]] {
     let wrapped_b = Container[U]::make(b);
     // Concrete instantiation inside generic function
     let debug_container = Container[i32]::make(999); // Should instantiate eagerly
-    return Pair[Container[T], Container[U]]::make(wrapped_a, wrapped_b);
+    return Pair[Container[T], Container[U]]::make[T](wrapped_a, wrapped_b);
 }
 
 fn main() -> void {
