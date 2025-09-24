@@ -505,7 +505,6 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
-            std::cerr << "added function: " << mangled_name(func.identifier) << "\n";
 
             if (was_inserted && id.qualifier == Identifier::qualified
                 && func.kind == FunctionDecl::member_func_declaration) {
