@@ -152,6 +152,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 default: internal_panic("semantic analysis missing for '{}'.", node.name());
             }
         }
+
         holds(BinaryExpr, &bin) {
             analyze(*bin.lhs);
             analyze(*bin.rhs);
@@ -504,7 +505,6 @@ void Analyzer::add_declaration(ASTNode& node) {
             // TODO: dont allow redeclarations of struct member functions inside the struct body itself
             auto [node_iterator, was_inserted] = symbol_tree.push_function_decl(id, node);
             auto& first_occurence = get<FunctionDecl>(node_iterator->second);
-            std::cerr << "added function: " << mangled_name(func.identifier) << "\n";
 
             if (was_inserted && id.qualifier == Identifier::qualified
                 && func.kind == FunctionDecl::member_func_declaration) {
@@ -627,7 +627,8 @@ void Analyzer::add_declaration(ASTNode& node) {
     // let var: Foo[i32, T];
     // cant instantiate this yet since we dont have T, so we delay it for later
     match (node) {
-        holds(VariableDecl, &var_decl) {}
+        holds(VariableDecl, &var_decl) {
+        }
         holds(FunctionCall, &func_call) {}
         holds(BlockScope, &scope) {
             // let var = Node[i32]{213}; // instantiated on the rhs of the assignment

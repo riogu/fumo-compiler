@@ -10,28 +10,6 @@
 #include <llvm/Support/InitLLVM.h>
 #include <print>
 #include "llvm/Support/Signals.h"
-template<typename  T>
-struct ff {
-    T a;
-    void wow() {
-        a = "321313";
-    }
-};
-struct ee {
-    void foo();
-};
-template <typename  T>
-void func() {
-    T x;
-    int y = 123;
-    x = y;
-    ff<int> ea;
-    ea.wow();
-    // x.foo();
-}
-void e() {
-    // func<int>();
-}
 
 extern "C" const char* __asan_default_options() { return "detect_leaks=0"; }
     

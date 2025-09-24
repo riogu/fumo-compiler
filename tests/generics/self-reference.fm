@@ -1,3 +1,9 @@
+
+struct Foo[T, U] {
+    let gaming = T {};
+    let bar: U = {};
+}
+
 struct Node[T] {
     let data: T;
     let next: Node[T]*; // is not generic type name, "Node[{}]" is solvable
@@ -20,8 +26,8 @@ fn create_chain[T](first: T, second: T) -> T {
     let head = Node[T]::make(first); // no typechecking
     let tail = Node[Foo]::make(second); // no typechecking
 
-    let int_no = Node[i32]{T{}}; // no typechecking?
-    // let int_noe = Foo[i32, T]{23}; // this is partially generic,what to do?
+    let int_no = Node[i32]{23}; // no typechecking?
+    let int_no = Foo[i32, T]{23}; // this is partially generic,what to do?
 
     let int_node = Node[i32]::make(42); // no typechecking?
 
