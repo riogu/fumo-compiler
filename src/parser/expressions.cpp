@@ -486,6 +486,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // FIXME: dont allow using the same name for 2 separate parameters on generics OR normal function calls
 // it should give the user an error
 
+// TODO: next add 
 // fn "foo::bar::[{Node[{}]}]::thing::[{}]()"     { ... }
 // fn  foo::bar::[i32]::thing::[f64]()    { ... }
 
@@ -520,6 +521,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     }
     // let var = foo::bar::[Vec::[i32]](x, y);
     id.mangled_name = id.name;
+    if (id.is_generic_wrapper() || id.kind == Identifier::generic_type_name) {
+        auto* node = push(ASTNode {token, id});
+        node->type.identifier = node;
+        node->type.kind = Type::Generic;
+        return node;
+    }
     return push(ASTNode {token, id});
 }
 // fn  foo::bar[T]::thing[U]()    { ... }
@@ -587,8 +594,12 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     auto token = *prev_tkn;
     Identifier id {id_kind, std::get<str>(prev_tkn->literal.value()), Identifier::unqualified};
     id.mangled_name = id.name;
-    // if (id_kind == Identifier::generic_type_name) {
-    // }
+    if (id.is_generic_wrapper() || id.kind == Identifier::generic_type_name) {
+        auto* node = push(ASTNode {token, id});
+        node->type.identifier = node;
+        node->type.kind = Type::Generic;
+        return node;
+    }
     return push(ASTNode {token, id});
 }
 

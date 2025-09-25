@@ -30,6 +30,7 @@ fn combine[T, U](a: T, b: U) -> Pair[Container[T], Container[U]] {
     // Both containers use generic types
     let wrapped_a = Container[T]::make(a);
     let wrapped_b = Container[U]::make(b);
+    let var:i32 = T::make(a);
     // Concrete instantiation inside generic function
     let debug_container = Container[i32]::make(999); // Should instantiate eagerly
     return Pair[Container[T], Container[U]]::make[T](wrapped_a, wrapped_b);

@@ -1,7 +1,5 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
-#include "utils/common_utils.hpp"
-#include <ranges>
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     root_node = file_root_node;
@@ -53,19 +51,17 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 node.type = id.declaration.value()->type;
                 if find_value (id.mangled_name, symbol_tree.member_variable_decls) {
                     // this allows variables to implicitly be used as member variables in member functions
+                    // we store the base struct name for lookup later
                     id.kind = Identifier::member_var_name;
                     str temp = iter->first;
-                    while (temp.back() != ':') temp.pop_back();
-                    temp.pop_back(), temp.pop_back();
+                    while (temp.back() != ':') temp.pop_back(); temp.pop_back(), temp.pop_back();
                     id.base_struct_name = temp;
                 }
             } else {
-                // for (auto decl : symbol_tree.all_declarations) std::cerr << std::format("found decl: {}\n", decl.first);
                 // we need better error reporting for generics:
                 if (id.is_generic_wrapper()) {
                     report_error(node.source_token, "couldn't instantiate generic {} '{}'.",
-                                 id.is_func_call() ? "function" : "struct", 
-                                 mangled_name(&node));
+                                 id.is_func_call() ? "function" : "struct", mangled_name(&node));
                 }
                 report_error(node.source_token, "use of undeclared identifier '{}'.", mangled_name(&node));
             }
@@ -229,11 +225,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(VariableDecl, &var) {
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
-
-            auto new_type_decl = get_or_create_generic_declaration(node);
+            auto new_type_decl = get_or_instantiate_generic(node);
             // try to create a generic instantiation IF we need it
             if (new_type_decl) {
-                node.type = new_type_decl.value()->type;
+                node.type.identifier = new_type_decl.value()->type.identifier;
+                node.type.kind = new_type_decl.value()->type.kind;
                 // we take the type of the declaration, thats all we need
             }
 
@@ -299,22 +295,27 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(FunctionCall, &func_call) {
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
-            // NOTE: function calls should instantiate their generic declarations
             auto& id = get_id(func_call);
 
-            auto new_func_decl = get_or_create_generic_declaration(node);
+
             // NOTE: later use this new function declaration if it exists
             // like any other function declaration, but it was instantiated on usage (generic)
-            const auto& func_decl = get<FunctionDecl>(id.declaration.value());
-            if (func_decl.kind == FunctionDecl::member_func_declaration) {
+            FunctionDecl* func_decl;
+            if (auto new_func_decl = get_or_instantiate_generic(node)) {
+                func_decl = &get<FunctionDecl>(new_func_decl.value());
+            } else {
+                func_decl = &get<FunctionDecl>(id.declaration.value());
+            }
+
+            if (func_decl->kind == FunctionDecl::member_func_declaration) {
                 func_call.kind = FunctionCall::member_function_call;
                 // as it is, we can call static member functions from instances of objects
             }
-            const auto& params = func_decl.parameters;
+            const auto& params = func_decl->parameters;
 
             if (func_call.argument_list.size() != params.size()
-            && !(func_decl.is_variadic && func_call.argument_list.size() > params.size())) {
-                str is_variadic_str = func_decl.is_variadic? "or more" : "";
+            && !(func_decl->is_variadic && func_call.argument_list.size() > params.size())) {
+                str is_variadic_str = func_decl->is_variadic? "or more" : "";
                 report_error(node.source_token, "provided {} arguments, expected {} {}.",
                              func_call.argument_list.size(), params.size(), is_variadic_str);
             }
@@ -324,8 +325,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             for (auto [arg, param] : std::views::zip(func_call.argument_list, params)) {
                 if (!is_compatible_or_generic_t(arg->type, param->type)) {
                     report_error(arg->source_token,
-                                 "argument of type '{}' is not compatible with function declaration signature.",
-                                 type_name(arg->type));
+                                 "argument of type '{}' is not compatible with parameter of type '{}'.",
+                                 type_name(arg->type), type_name(param->type));
                 }
             }
         }
@@ -346,7 +347,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     break;
                 case BlockScope::initializer_list: {
                     for (auto& node : scope.nodes) analyze(*node);
-                    auto type_decl = get_or_create_generic_declaration(node);
+                    auto type_decl = get_or_instantiate_generic(node);
                     if (node.type.kind == Type::Undetermined) {
                         analyze(*node.type.identifier);
                         if (auto decl = get_id(node.type).declaration) {
@@ -417,12 +418,12 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                 prev_name += id.mangled_name;
                 curr_base_name = prev_name;
                 // report_error(curr_node->source_token, "found '{}'", prev_name);
+                // foo->(***bar.x)->
                 prev_name += "::";
             }
             node.type = postfix.nodes.back()->type;
         }
 
-        //
         // holds(PostfixExpr, &postfix) { // nodes is never empty
         //     // we add the type name to the string, for lookup in the symbol table
         //     // struct gaming { let foo: i32; }; // x.foo => "gaming::foo" (how its stored)
@@ -604,10 +605,10 @@ void Analyzer::add_declaration(ASTNode& node) {
                     }
                     first_occurence.definition_body = type_decl.definition_body;
                     type_decl.body_should_move = true;
-
-                } else {
-                    // type_decl.definition_body = first_occurence.definition_body;
                 }
+                // else {
+                //     type_decl.definition_body = first_occurence.definition_body;
+                // }
             }
         }
 
@@ -615,27 +616,107 @@ void Analyzer::add_declaration(ASTNode& node) {
     }
 }
 
-[[nodiscard]] Opt<ASTNode*> Analyzer::get_or_create_generic_declaration(ASTNode& node) {
+[[nodiscard]] Opt<ASTNode*> Analyzer::get_or_instantiate_generic(ASTNode& node) {
     // TODO: write code that:
     // copies the original declaration of the generic type/function
     // replaces all instances of T, U, etc with the passed in types
     // and then runs analyze(new_decl) on that instantiation (to validate it)
     // analyze() should take care of everything else and "just work" like any other function/type declaration
-    if (symbol_tree.curr_generic_context.empty()) return std::nullopt;
-    // we arent in a generic context
     // first we check if we can instantiate or if we depend on a generic
     // let var: Foo[i32, T];
     // cant instantiate this yet since we dont have T, so we delay it for later
     match (node) {
         holds(VariableDecl, &var_decl) {
+            // auto* new_type_decl = copy_ast(get_id(var_decl).declaration.value());
         }
-        holds(FunctionCall, &func_call) {}
-        holds(BlockScope, &scope) {
-            // let var = Node[i32]{213}; // instantiated on the rhs of the assignment
+        holds(FunctionCall, &func_call) {
         }
-        _default internal_panic("cant create declaration for '{}'. (passed wrong NodeKind)", node.kind_name());
+        holds(BlockScope, &scope) { // let var = Node[i32]{213}; // instantiated on the rhs of the assignment
+        }
+        _default internal_error(node.source_token, "cant instantiate generic declaration for '{}'.", node.kind_name());
         
     }
     return std::nullopt;
-    internal_panic("not implemented");
 }
+
+[[nodiscard]] ASTNode* Analyzer::copy_ast(ASTNode* node) {
+
+    ASTNode* new_node = push(*node);
+    // end recursion for type.identifier.type.identifier
+    if (new_node->type.identifier) new_node->type.identifier = copy_ast(new_node->type.identifier);
+
+    match(*new_node) {
+        holds(Identifier, &id) {
+            // dont forget that all ".declaration" will break and identifiers wont map correctly to the same base node
+            // unless you do this process before semantic analysis
+            // many identifiers map to the same declaration node, so copying each one will
+            // break that dependency between identifiers and declarations
+            // NOTE: im not copying the declaration because it will be assigned by create_generic_declaration()
+            // and it would be allocating a ton of unused nodes for no reason
+            // if (id.declaration) id.declaration.value() = copy_ast(id.declaration.value());
+            vec<ASTNode*> new_generic_ids {};
+            for (auto* node : id.generic_identifiers) new_generic_ids.push_back(copy_ast(node));
+            id.generic_identifiers = new_generic_ids;
+        }
+        holds(PrimaryExpr, &prim) {} // do nothing (nothing to copy)
+        holds(UnaryExpr, &un) {
+            if (un.expr) un.expr = copy_ast(un.expr.value());
+        }
+        holds(BinaryExpr, &bin) {
+            bin.lhs = copy_ast(bin.lhs);
+            bin.rhs = copy_ast(bin.rhs);
+        }
+        holds(PostfixExpr, &postfix) {
+            vec<ASTNode*> new_nodes{};
+            for (auto* node : postfix.nodes) new_nodes.push_back(copy_ast(node));
+            postfix.nodes = new_nodes;
+        }
+        holds(VariableDecl, &var_decl) {
+            var_decl.identifier = copy_ast(var_decl.identifier);
+        }
+        holds(FunctionDecl, &func) {
+            func.identifier = copy_ast(func.identifier);
+            vec<ASTNode*> new_params {};
+            for (auto* node : func.parameters) new_params.push_back(copy_ast(node));
+            func.parameters = new_params;
+            if (func.body) func.body = copy_ast(func.body.value());
+        }
+        holds(FunctionCall, &func_call) {
+            func_call.identifier = copy_ast(func_call.identifier);
+            vec<ASTNode*> new_args {};
+            for (auto* node : func_call.argument_list) new_args.push_back(copy_ast(node));
+            func_call.argument_list = new_args;
+        }
+        holds(BlockScope, &scope) {
+            vec<ASTNode*> new_nodes{};
+            for (auto* node : scope.nodes) new_nodes.push_back(copy_ast(node));
+            scope.nodes = new_nodes;
+        }
+        holds(NamespaceDecl, &nmspace) {
+            nmspace.identifier = copy_ast(nmspace.identifier);
+            vec<ASTNode*> new_nodes{};
+            for (auto* node : nmspace.nodes) new_nodes.push_back(copy_ast(node));
+            nmspace.nodes = new_nodes;
+        }
+        holds(TypeDecl, &type_decl) {
+            if (type_decl.definition_body) {
+                vec<ASTNode*> new_body {};
+                for (auto* node : type_decl.definition_body.value()) new_body.push_back(copy_ast(node));
+                type_decl.definition_body.value() = new_body;
+            }
+        }
+        holds(IfStmt, &if_stmt) {
+            if (if_stmt.condition) if_stmt.condition.value() = copy_ast(if_stmt.condition.value());
+            if_stmt.body = copy_ast(if_stmt.body);
+            if (if_stmt.else_stmt) if_stmt.else_stmt.value() = copy_ast(if_stmt.else_stmt.value());
+        }
+        holds(WhileStmt, &while_stmt) {
+            while_stmt.condition = copy_ast(while_stmt.condition);
+            while_stmt.body = copy_ast(while_stmt.body);
+        }
+        _default internal_error(node->source_token, "copy hasn't been implemented for '{}'", node->name());
+    }
+    
+    return new_node;
+}
+

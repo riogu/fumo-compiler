@@ -263,6 +263,19 @@ struct ASTNode {
     [[nodiscard]] std::string branch_name() const;
     [[nodiscard]] std::string name() const { return yellow(branch_name()) + gray("::") + enum_green(kind_name()); }
 };
+// holds(Identifier, &id){}
+// holds(PrimaryExpr, &prim){}
+// holds(UnaryExpr, &un){}
+// holds(BinaryExpr, &bin){}
+// holds(PostfixExpr, &postfix){}
+// holds(VariableDecl, &var_decl){}
+// holds(FunctionDecl, &func){}
+// holds(FunctionCall, &func_call){}
+// holds(BlockScope, &scope){}
+// holds(NamespaceDecl, &nmspace){}
+// holds(TypeDecl, &type_decl){}
+// holds(IfStmt, &if_stmt){}
+// holds(WhileStmt, &while_stmt){}
 
 #define get_name(branch_) get_id(branch_).name
 #define get_id(branch_)                                                             \
@@ -391,22 +404,22 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
 [[nodiscard]] constexpr bool is_same_t(const Type& a, const Type& b) {
     return (a.kind == b.kind && type_name(a) == type_name(b));
 }
-[[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
-
-    if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
-
-    if (is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count) return true;
-
-    if (a.kind == b.kind) {
-        if (type_name(a) == type_name(b)) {
-            return true;
-        }
-    } else {
-        if ((type_name(a) == "null*" && b.ptr_count) || (type_name(b) == "null*" && a.ptr_count)) {
-            // allow compatibility between any pointer to null
-            return true;
-        }
-    }
-    return false;
-}
+// [[nodiscard]] constexpr bool is_compatible_t(const Type& a, const Type& b) {
+//
+//     if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
+//
+//     if (is_arithmetic_t(a) && is_arithmetic_t(b) && a.ptr_count == b.ptr_count) return true;
+//
+//     if (a.kind == b.kind) {
+//         if (type_name(a) == type_name(b)) {
+//             return true;
+//         }
+//     } else {
+//         if ((type_name(a) == "null*" && b.ptr_count) || (type_name(b) == "null*" && a.ptr_count)) {
+//             // allow compatibility between any pointer to null
+//             return true;
+//         }
+//     }
+//     return false;
+// }
 

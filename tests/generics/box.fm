@@ -1,17 +1,19 @@
-struct Box[T] {
-    let value: T;
-    let x: i32;
-    
-    fn get() -> T {
-        return value;
-    }
-    
-    fn set(new_value: T) -> void {
-        value = new_value;
-    }
-    
-    fn static make(val: T) -> Box[T] {
-        return Box[T]{val};
+namespace Foo[T] {
+    struct Box {
+        let value: T;
+        let x: i32;
+        
+        fn get() -> T {
+            return value;
+        }
+        
+        fn set(new_value: T) -> void {
+            value = new_value;
+        }
+        
+        fn static make(val: T) -> Box[T] {
+            return Box[T]{val};
+        }
     }
 }
 

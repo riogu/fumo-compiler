@@ -38,9 +38,17 @@ struct Analyzer {
     }
     void add_declaration(ASTNode& node);
     vec<Scope> iterate_qualified_names(FunctionDecl& func, ASTNode& node);
-    [[nodiscard]] Opt<ASTNode*> get_or_create_generic_declaration(ASTNode& node);
+    [[nodiscard]] Opt<ASTNode*> get_or_instantiate_generic(ASTNode& node);
+    [[nodiscard]] ASTNode* copy_ast(ASTNode* node);
 
     ASTNode* push(const ASTNode& node) {
+        // NOTE: not creating the default type struct values
+        extra_nodes.push_back(std::make_unique<ASTNode>(node));
+        return extra_nodes.back().get();
+    }
+
+    ASTNode* allocate_node(const ASTNode& node) {
+        // NOTE: not creating the default type struct values
         extra_nodes.push_back(std::make_unique<ASTNode>(node));
         return extra_nodes.back().get();
     }
@@ -54,9 +62,7 @@ struct Analyzer {
         if (!(a_id.kind == Identifier::generic_type_name || b_id.kind == Identifier::generic_type_name)
          && !(a_id.kind == Identifier::generic_wrapper_type_name || b_id.kind == Identifier::generic_wrapper_type_name)) {
             // we dont want to allow:
-            // let a: any* = {};
-            // let var: T* = a;
-            // let var: Vec[T]* = a;
+            // let a: any* = {}; let var: T* = a; let var: Vec[T]* = a;
             // cant assign an any* to a generic.
             // only allow compatibility with 'any*' if it wasnt a generic type
             if ((a.kind == Type::any_ || b.kind == Type::any_) && a.ptr_count == b.ptr_count) return true;
@@ -93,7 +99,6 @@ struct Analyzer {
             if find_value(name, symbol_tree.curr_generic_context) {
                 symbol_tree.curr_generic_context.erase(iter);
             } else {
-                // this shouldn't happen if push/pop are balanced
                 report_error(node->source_token, "attempting to pop non-existent generic parameter '{}'.", name);
             }
         }
