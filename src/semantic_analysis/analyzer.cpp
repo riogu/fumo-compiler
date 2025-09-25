@@ -611,21 +611,12 @@ void Analyzer::add_declaration(ASTNode& node) {
 
 void Analyzer::check_for_generic_instantiation(ASTNode& node) {
     match(node) {
-        holds(VariableDecl, &var_decl) { 
-            // we take the type of the declaration, thats all we need
-            instantiate_or_replace_generic(*node.type.identifier);
-        }
-        holds(FunctionCall, &func_call) {
-            instantiate_or_replace_generic(*func_call.identifier);
-        }
-        holds(BlockScope, &scope) {
-            instantiate_or_replace_generic(*node.type.identifier);
-        }
-        holds(FunctionDecl, &func) {
-            instantiate_or_replace_generic(*node.type.identifier);
-            // function declaration might have a instantiation in its return type, for example:
-            // fn func() -> Pair[i32, f32] { ... }
-        }
+        holds(VariableDecl, &var_decl)  instantiate_or_replace_generic(*node.type.identifier);
+        holds(FunctionCall, &func_call) instantiate_or_replace_generic(*func_call.identifier);
+        holds(BlockScope,   &scope)     instantiate_or_replace_generic(*node.type.identifier);
+        holds(FunctionDecl, &func)      instantiate_or_replace_generic(*node.type.identifier);
+        // function declaration might have a instantiation in its return type, for example:
+        // fn func() -> Pair[i32, f32] { ... }
         _default internal_error(node.source_token, "'{}' can't instantiate generics.", node.kind_name());
     }
 }
@@ -634,6 +625,9 @@ void Analyzer::check_for_generic_instantiation(ASTNode& node) {
 // doesnt recursively instantiate anything. that is handled by the next time we find a generic
 // replacing T with i32 is one step, passing that onto a member with Node[T] is later handled
 void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
+    // TODO: check if we depend on a generic argument,
+    // we can only instantiate if we have no generics left
+    // let var: Pair[i32, T]; if T is generic, then we cant instantiate anything yet
     if (!is_branch<Identifier>(&id_node)) internal_error(id_node.source_token, "expected identifier, received '{}'.", id_node.name());
     auto& id = get<Identifier>(&id_node); // identifiers are tied to a possible instantiation
 
@@ -654,25 +648,18 @@ void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
     if (symbol_tree.find_declaration(id)) { // this means this specific instantiation already exists, so we skip it
         return;                             // (find declaration uses the "id.name" to find a declaration)
     }
-    match(*generic_declaration) {
+    auto* generic_copy = copy_ast(generic_declaration);
+    // all identifiers have been solved to the original 'T', etc
+    // that means we are ONLY missing identifier.declaration to be replaced correctly, everything else needs no changes
+    match(*generic_copy) {
+        // TODO: use copy_ast() and then iterate through our copy. then simply call add_declaration() with our new node
         holds(TypeDecl, &type_decl) {
-            // TODO: use copy_ast() and then iterate through our copy and create a new type
-            // then simply call add_declaration() with our new node
-            // and the code should "just work"
         }
         holds(FunctionDecl, &func) {}
         // maybe check if we will have issues with postfix expressions that have generics
         _default internal_error(id_node.source_token, "tried to instantiate invalid generic declaration for '{}'.", id_node.name());
     }
 }
-// TODO: write code that:
-// copies the original declaration of the generic type/function
-// replaces all instances of T, U, etc with the passed in types
-// and then runs analyze(new_decl) on that instantiation (to validate it)
-// analyze() should take care of everything else and "just work" like any other function/type declaration
-// first we check if we can instantiate or if we depend on a generic
-// let var: Foo[i32, T];
-// cant instantiate this yet since we dont have T, so we delay it for later
 
 [[nodiscard]] ASTNode* Analyzer::copy_ast(ASTNode* node) {
 
