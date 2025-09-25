@@ -53,8 +53,6 @@ struct Analyzer {
         extra_nodes.push_back(std::make_unique<ASTNode>(node));
         return extra_nodes.back().get();
     }
-    void determine_type(ASTNode& node);
-
     // let var: U = T{}; // should error
     // let var: Vec[U] = Vec[T]{}; // should error
     [[nodiscard]] bool is_compatible_or_generic_t(const Type& a, const Type& b) {

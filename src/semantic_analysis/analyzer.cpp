@@ -609,6 +609,8 @@ void Analyzer::add_declaration(ASTNode& node) {
     }
 }
 
+// FIXME: should error if generic argument names are used for any declaration
+// let T: i32 = 1321; // this would shadow the type parameter, which shouldn't be allowed
 void Analyzer::check_for_generic_instantiation(ASTNode& node) {
     match(node) {
         holds(VariableDecl, &var_decl)  instantiate_or_replace_generic(*node.type.identifier);
@@ -638,6 +640,16 @@ void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
         report_error(id_node.source_token, "failed generic instantiation: couldn't find base declaration for  {} '{}'.",
                      id.is_func_call() ? "function" : "struct", full_mangled_name(&id_node));
     }
+
+    vec<ASTNode*> generic_identifiers;
+    if (auto* func = get_if<FunctionDecl>(generic_declaration)) {
+        generic_identifiers = get<Identifier>(func->identifier).generic_identifiers;
+    } else if (is_branch<TypeDecl>(generic_declaration)) {
+        generic_identifiers = get<Identifier>(generic_declaration->type.identifier).generic_identifiers;
+    } else {
+        internal_error(id_node.source_token, "expected valid generic declaration, got '{}'.", id_node.name());
+    }
+
     // ---------------------------------
     // get rid of the old generic name, replace it with the actual declaration name
     // so that analyze() can work as if it was any other normal function/type name
@@ -662,7 +674,6 @@ void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
 }
 
 [[nodiscard]] ASTNode* Analyzer::copy_ast(ASTNode* node) {
-
     ASTNode* new_node = push(*node);
     // end recursion for type.identifier.type.identifier
     if (new_node->type.identifier) new_node->type.identifier = copy_ast(new_node->type.identifier);

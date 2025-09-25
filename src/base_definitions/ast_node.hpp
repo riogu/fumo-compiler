@@ -56,7 +56,6 @@ struct Identifier {
     // then, we use runtime_format() to apply the typenames to this formatted string
     // NOTE: this is used both for parameters in the declaration, and for arguments in the instantiation
     vec<ASTNode*> generic_identifiers {};
-    str generic_alias = ""; // for keeping the original alias type names ('T', 'V', etc.)
     // (might be unused later)
     // each of these is an identifier
     // these are filled into the identifier on instantiation
