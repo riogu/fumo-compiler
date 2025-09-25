@@ -14,23 +14,19 @@ for (const auto& scope : scope_stack | std::views::reverse) {                   
 // NOTE: change the implementation so we dont keep all locals to the end of the program
 
 [[nodiscard]] Opt<ASTNode*> SymbolTableStack::find_declaration(Identifier& id) {
-    if (id.is_generic_wrapper()) { // could be typedecl or func decl
-        // internal_panic("{} not implemented for '{}'", __func__, id.mangled_name);
-    }
-    // NOTE: we must promote the type_name to generic_type_name
-    // if the are found in the generic_type_context;
+    // we must promote the type_name to generic_type_name if they are found in the generic_type_context;
     // if so, treat it as if 'T' existed, and then apply the type checking rules
     // between generics (must be the same generic, must be wrapped, etc)
 
-    if (id.kind == Identifier::type_name) {
+    if (id.kind == Identifier::type_name) { // identify 'T' and such as being a generic type name
         if find_value(id.mangled_name, curr_generic_context) {
             id.kind = Identifier::generic_type_name;
             return iter->second;
         }
     }
     switch (id.kind) {
-        case Identifier::generic_type_name:
-            search_maps(curr_generic_context);
+        case Identifier::generic_type_name: // these are the generic parameters Foo[T, U, V, etc..]
+            search_maps(curr_generic_context);// only the ones found in a generic context
             break;
         case Identifier::generic_wrapper_type_name: // should go here
         case Identifier::type_name:

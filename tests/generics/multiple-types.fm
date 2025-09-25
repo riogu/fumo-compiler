@@ -1,3 +1,12 @@
+struct Pair[T, U] {
+    let first: T;
+    let second: U;
+    
+    fn static make(a: T, b: U) -> Pair[T, U] {
+        return Pair[T, U]{a, b};
+    }
+}
+
 struct Triple[T, U, V] {
     let first: T;
     let second: U;
@@ -6,15 +15,6 @@ struct Triple[T, U, V] {
     fn rotate_left() -> Triple[U, V, T];
     fn to_pair_first() -> Pair[T, U];
     fn static make(a: T, b: U, c: V) -> Triple[T, U, V];
-}
-
-struct Pair[T, U] {
-    let first: T;
-    let second: U;
-    
-    fn static make(a: T, b: U) -> Pair[T, U] {
-        return Pair[T, U]{a, b};
-    }
 }
 
 fn Triple[T, U, V]::rotate_left() -> Triple[U, V, T] {

@@ -48,7 +48,7 @@ struct Identifier {
     // and thats it, then its easy to link usage to the instantiations
     // we want a "get or create" approach to template usage
     bool is_generic_wrapper() const { return generic_identifiers.size(); }
-    bool is_func_call() { return kind == func_call_name || kind == member_func_call_name; }
+    bool is_func_call() const { return kind == func_call_name || kind == member_func_call_name; }
     // we make a generic formatted name like:
     //   -> "foo::bar[{}]()" (this is stored normally in the 'name' variable)
     // without anything inside "[{}]"
@@ -328,31 +328,27 @@ template<typename T> constexpr auto& get_elem(ASTNode& node) { return std::get<T
 template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std::get<T>(node.branch); }
 
 
-[[nodiscard]] constexpr str mangled_name(ASTNode* node) {
+[[nodiscard]] constexpr str full_mangled_name(ASTNode* node) {
     if (!is_branch<Identifier>(node)) {
         internal_panic("only identifiers have mangled names, recieved '{}'.", node->name());
     }
     const auto& id = get<Identifier>(node);
+    // Simple case: just "T" or "foo::bar::thing"
+    if (!id.is_generic_wrapper()) return id.mangled_name;
     
-    if (!id.is_generic_wrapper()) {
-        return id.mangled_name; // Simple case: just "T" or "foo::bar::thing"
-    }
     
     // id.mangled_name might be: "foo[{}]::bar[{}]::thing"
     // We need to fill all the {} placeholders
-    
-    std::vector<str> string_args;
-    for (auto* child_node : id.generic_identifiers) {
-        string_args.push_back(mangled_name(child_node)); 
-    }
-    
+    std::vector<str> generic_id_names;
+    for (auto* child_node : id.generic_identifiers) generic_id_names.push_back(full_mangled_name(child_node));
+
     str result = id.mangled_name;
     size_t pos = 0;
-    for (size_t i = 0; i < string_args.size(); ++i) {
+    for (size_t i = 0; i < generic_id_names.size(); ++i) {
         pos = result.find("{}", pos);
         if (pos != str::npos) {
-            result.replace(pos, 2, string_args[i]); // Replace "{}" with actual type
-            pos += string_args[i].length();
+            result.replace(pos, 2, generic_id_names[i]); // Replace "{}" with actual type
+            pos += generic_id_names[i].length();
         }
     }
     
@@ -365,7 +361,7 @@ template<typename T> constexpr auto& get_elem(const ASTNode& node) { return std:
     if (id.is_generic_wrapper()) {
         std::vector<str> string_args;
         for (auto* node : id.generic_identifiers) {
-            string_args.push_back(mangled_name(node));
+            string_args.push_back(full_mangled_name(node));
         }
         // Manual format replacement (same as flatten_generic_id)
         size_t pos = 0;

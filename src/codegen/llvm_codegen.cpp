@@ -804,7 +804,7 @@ void Codegen::register_declaration(ASTNode& node) {
         }
 
         holds(VariableDecl, const& var) {
-            // we only recieve globals here
+            // we only receive globals here
             if (var.kind != VariableDecl::global_var_declaration) {
                 internal_panic("should only register globals, found local variable '{}'.",
                                get_id(var).mangled_name);

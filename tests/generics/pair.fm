@@ -3,7 +3,7 @@ struct Container[T] {
     fn get() -> T { return value; }
     fn static make(v: T) -> Container[T];
 }
-fn Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
+fn static Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
 
 struct Pair[T, U] {
     let first: T;

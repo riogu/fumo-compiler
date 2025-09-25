@@ -486,7 +486,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
 // FIXME: dont allow using the same name for 2 separate parameters on generics OR normal function calls
 // it should give the user an error
 
-// TODO: next add 
 // fn "foo::bar::[{Node[{}]}]::thing::[{}]()"     { ... }
 // fn  foo::bar::[i32]::thing::[f64]()    { ... }
 

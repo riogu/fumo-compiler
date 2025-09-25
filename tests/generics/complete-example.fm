@@ -1,0 +1,21 @@
+
+struct Foo {
+    let data: i32;
+}
+
+struct Outer[T] {
+    let data: T;
+    struct Inner[U] {
+        let other: U;
+        fn static func[V](param: i32) -> V;
+    }
+}
+fn static Outer[T]::Inner[U]::func[V](param: i32) -> V {
+    let var = Outer[T]{};
+    return V{param};
+}
+fn main() -> void {
+    // let var: Outer[i32];
+    // let hm = Outer[f64]{123.0};
+    let ehh = Outer[i32]::Inner[f64]::func[Foo](69);
+}

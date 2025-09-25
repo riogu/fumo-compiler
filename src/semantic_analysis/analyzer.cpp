@@ -1,5 +1,6 @@
 #include "semantic_analysis/analyzer.hpp"
 #include "base_definitions/ast_node.hpp"
+#include "utils/common_utils.hpp"
 
 void Analyzer::semantic_analysis(ASTNode* file_root_node) {
     root_node = file_root_node;
@@ -60,10 +61,10 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             } else {
                 // we need better error reporting for generics:
                 if (id.is_generic_wrapper()) {
-                    report_error(node.source_token, "couldn't instantiate generic {} '{}'.",
-                                 id.is_func_call() ? "function" : "struct", mangled_name(&node));
+                    report_error(node.source_token, "failed generic instantiation: couldn't find base declaration for  {} '{}'.",
+                                 id.is_func_call() ? "function" : "struct", full_mangled_name(&node));
                 }
-                report_error(node.source_token, "use of undeclared identifier '{}'.", mangled_name(&node));
+                report_error(node.source_token, "couldn't find declaration for '{}'.", full_mangled_name(&node));
             }
             switch (id.kind) {
                 case Identifier::var_name:
@@ -225,17 +226,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(VariableDecl, &var) {
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
-            auto new_type_decl = get_or_instantiate_generic(node);
-            // try to create a generic instantiation IF we need it
-            if (new_type_decl) {
-                node.type.identifier = new_type_decl.value()->type.identifier;
-                node.type.kind = new_type_decl.value()->type.kind;
-                // we take the type of the declaration, thats all we need
-            }
 
-            if (node.type.kind == Type::Undetermined) {
+            check_for_generic_instantiation(node); // example: let var: Node[i32];
+
+            if (node.type.kind == Type::Undetermined || node.type.kind == Type::Generic) {
                 analyze(*node.type.identifier);
-                // this is pretty bad, consider refactoring type inference later
                 if (auto decl = get_id(node.type).declaration) {
                     node.type.identifier = decl.value()->type.identifier;
                     node.type.kind = decl.value()->type.kind;
@@ -246,10 +241,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(FunctionDecl, &func) {
-            // TODO: check if all returns in the body have the correct type of the function
-            Identifier& id = get_id(func);
-
             vec<Scope> scopes = iterate_qualified_names(func, node);
+
+            check_for_generic_instantiation(node);
+
+            Identifier& id = get_id(func);
             // func.scopes = scopes; // save for later
             push_generic_context(id.generic_identifiers);
             // -------------------------------------------------------------------
@@ -257,7 +253,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             // will also work even if its a generic return type
             for (auto& scope : scopes) symbol_tree.push_scope(scope.name, scope.kind);
 
-            if (node.type.kind == Type::Undetermined) { // NOTE: this should be moved to determine_type()
+            if (node.type.kind == Type::Undetermined || node.type.kind == Type::Generic) {
                 analyze(*node.type.identifier);
                 if (auto decl = get_id(node.type).declaration) {
                     node.type.identifier = decl.value()->type.identifier;
@@ -293,19 +289,14 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(FunctionCall, &func_call) {
+            check_for_generic_instantiation(node); // example: let var = foo[i32]();
+            
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
             auto& id = get_id(func_call);
-
-
-            // NOTE: later use this new function declaration if it exists
+            auto* func_decl = &get<FunctionDecl>(id.declaration.value());
+            // later use this new function declaration if it exists
             // like any other function declaration, but it was instantiated on usage (generic)
-            FunctionDecl* func_decl;
-            if (auto new_func_decl = get_or_instantiate_generic(node)) {
-                func_decl = &get<FunctionDecl>(new_func_decl.value());
-            } else {
-                func_decl = &get<FunctionDecl>(id.declaration.value());
-            }
 
             if (func_decl->kind == FunctionDecl::member_func_declaration) {
                 func_call.kind = FunctionCall::member_function_call;
@@ -346,9 +337,11 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     symbol_tree.pop_scope();
                     break;
                 case BlockScope::initializer_list: {
+                    check_for_generic_instantiation(node); // example: let var = Foo[i32]{};
+
                     for (auto& node : scope.nodes) analyze(*node);
-                    auto type_decl = get_or_instantiate_generic(node);
-                    if (node.type.kind == Type::Undetermined) {
+
+                    if (node.type.kind == Type::Undetermined || node.type.kind == Type::Generic) {
                         analyze(*node.type.identifier);
                         if (auto decl = get_id(node.type).declaration) {
                             node.type = decl.value()->type;
@@ -509,7 +502,7 @@ void Analyzer::add_declaration(ASTNode& node) {
 
             if (was_inserted && id.qualifier == Identifier::qualified
                 && func.kind == FunctionDecl::member_func_declaration) {
-                str temp = mangled_name(func.identifier); while (temp.back() != ':') temp.pop_back(); 
+                str temp = full_mangled_name(func.identifier); while (temp.back() != ':') temp.pop_back(); 
                 temp.pop_back(), temp.pop_back(); // get parent name
                 str was_static = ""; // better errors for missing static qualifiers
                 if find_value(id.mangled_name, symbol_tree.function_decls) {
@@ -518,13 +511,13 @@ void Analyzer::add_declaration(ASTNode& node) {
                     }
                 }
                 report_error(node.source_token, "out-of-line definition of '{}' does not match any declaration in '{}'. {}",
-                             mangled_name(func.identifier), temp, was_static);
+                             full_mangled_name(func.identifier), temp, was_static);
             }
             if (!was_inserted) {
                 str def_or_decl;
                 if (func.body) {
                     if (first_occurence.body)
-                        report_error(node.source_token, "Redefinition of '{}'.", mangled_name(func.identifier));
+                        report_error(node.source_token, "Redefinition of '{}'.", full_mangled_name(func.identifier));
                     def_or_decl = "Redefinition";
 
                     first_occurence.body = func.body;
@@ -536,25 +529,25 @@ void Analyzer::add_declaration(ASTNode& node) {
                 }
                 if (first_occurence.is_variadic != func.is_variadic) {
                     report_error(node.source_token, "'{}' of '{}' with different parameters (variadic)",
-                                 def_or_decl, mangled_name(func.identifier));
+                                 def_or_decl, full_mangled_name(func.identifier));
                 }
 
                 if (!is_same_t(node.type, node_iterator->second->type)) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different return type '{}' (expected '{}').",
-                                 def_or_decl, mangled_name(func.identifier),
+                                 def_or_decl, full_mangled_name(func.identifier),
                                  type_name(node.type), type_name(node_iterator->second->type));
                 }
                 if (func.parameters.size() != first_occurence.parameters.size()) {
                     report_error(node.source_token,
                                  "{} of '{}' with a different parameter count.",
-                                 def_or_decl, mangled_name(func.identifier));
+                                 def_or_decl, full_mangled_name(func.identifier));
                 }
                 for (auto [arg1, arg2] : std::views::zip(func.parameters, first_occurence.parameters)) {
                     if (!is_same_t(arg1->type, arg2->type)) {
                         report_error(node.source_token,
                                      "{} of '{}' with different parameter types (was '{}', found '{}')",
-                                     def_or_decl, mangled_name(func.identifier),
+                                     def_or_decl, full_mangled_name(func.identifier),
                                      type_name(arg2->type), type_name(arg1->type));
                     }
                     // if (get_id(get<VariableDecl>(arg1)).mangled_name != get_id(get<VariableDecl>(arg2)).mangled_name) {
@@ -616,28 +609,70 @@ void Analyzer::add_declaration(ASTNode& node) {
     }
 }
 
-[[nodiscard]] Opt<ASTNode*> Analyzer::get_or_instantiate_generic(ASTNode& node) {
-    // TODO: write code that:
-    // copies the original declaration of the generic type/function
-    // replaces all instances of T, U, etc with the passed in types
-    // and then runs analyze(new_decl) on that instantiation (to validate it)
-    // analyze() should take care of everything else and "just work" like any other function/type declaration
-    // first we check if we can instantiate or if we depend on a generic
-    // let var: Foo[i32, T];
-    // cant instantiate this yet since we dont have T, so we delay it for later
-    match (node) {
-        holds(VariableDecl, &var_decl) {
-            // auto* new_type_decl = copy_ast(get_id(var_decl).declaration.value());
+void Analyzer::check_for_generic_instantiation(ASTNode& node) {
+    match(node) {
+        holds(VariableDecl, &var_decl) { 
+            // we take the type of the declaration, thats all we need
+            instantiate_or_replace_generic(*node.type.identifier);
         }
         holds(FunctionCall, &func_call) {
+            instantiate_or_replace_generic(*func_call.identifier);
         }
-        holds(BlockScope, &scope) { // let var = Node[i32]{213}; // instantiated on the rhs of the assignment
+        holds(BlockScope, &scope) {
+            instantiate_or_replace_generic(*node.type.identifier);
         }
-        _default internal_error(node.source_token, "cant instantiate generic declaration for '{}'.", node.kind_name());
-        
+        holds(FunctionDecl, &func) {
+            instantiate_or_replace_generic(*node.type.identifier);
+            // function declaration might have a instantiation in its return type, for example:
+            // fn func() -> Pair[i32, f32] { ... }
+        }
+        _default internal_error(node.source_token, "'{}' can't instantiate generics.", node.kind_name());
     }
-    return std::nullopt;
 }
+
+// expects to receive the original generic declaration (ex: struct Foo[T, U])
+// doesnt recursively instantiate anything. that is handled by the next time we find a generic
+// replacing T with i32 is one step, passing that onto a member with Node[T] is later handled
+void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
+    if (!is_branch<Identifier>(&id_node)) internal_error(id_node.source_token, "expected identifier, received '{}'.", id_node.name());
+    auto& id = get<Identifier>(&id_node); // identifiers are tied to a possible instantiation
+
+    if (!id.is_generic_wrapper()) return; // wasnt generic
+
+    ASTNode* generic_declaration = symbol_tree.find_declaration(id).value_or(nullptr);
+    if (!generic_declaration) {
+        report_error(id_node.source_token, "failed generic instantiation: couldn't find base declaration for  {} '{}'.",
+                     id.is_func_call() ? "function" : "struct", full_mangled_name(&id_node));
+    }
+    // ---------------------------------
+    // get rid of the old generic name, replace it with the actual declaration name
+    // so that analyze() can work as if it was any other normal function/type name
+    str instantiation_name = full_mangled_name(&id_node); // get the actual generic we want to instantiate
+    id.name = instantiation_name; // we now have a concrete, non generic type instance
+    id.mangled_name = instantiation_name; 
+    // ---------------------------------
+    if (symbol_tree.find_declaration(id)) { // this means this specific instantiation already exists, so we skip it
+        return;                             // (find declaration uses the "id.name" to find a declaration)
+    }
+    match(*generic_declaration) {
+        holds(TypeDecl, &type_decl) {
+            // TODO: use copy_ast() and then iterate through our copy and create a new type
+            // then simply call add_declaration() with our new node
+            // and the code should "just work"
+        }
+        holds(FunctionDecl, &func) {}
+        // maybe check if we will have issues with postfix expressions that have generics
+        _default internal_error(id_node.source_token, "tried to instantiate invalid generic declaration for '{}'.", id_node.name());
+    }
+}
+// TODO: write code that:
+// copies the original declaration of the generic type/function
+// replaces all instances of T, U, etc with the passed in types
+// and then runs analyze(new_decl) on that instantiation (to validate it)
+// analyze() should take care of everything else and "just work" like any other function/type declaration
+// first we check if we can instantiate or if we depend on a generic
+// let var: Foo[i32, T];
+// cant instantiate this yet since we dont have T, so we delay it for later
 
 [[nodiscard]] ASTNode* Analyzer::copy_ast(ASTNode* node) {
 
