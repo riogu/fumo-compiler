@@ -227,7 +227,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
             if (symbol_tree.curr_scope_kind == ScopeKind::Namespace) var.kind = VariableDecl::global_var_declaration;
             if (symbol_tree.curr_scope_kind == ScopeKind::TypeBody)  var.kind = VariableDecl::member_var_declaration;
 
-            check_for_generic_instantiation(node); // example: let var: Node[i32];
+            instantiate_or_replace_generic(*node.type.identifier); // example: let var: Node[i32];
 
             if (node.type.kind == Type::Undetermined || node.type.kind == Type::Generic) {
                 analyze(*node.type.identifier);
@@ -243,7 +243,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         holds(FunctionDecl, &func) {
             vec<Scope> scopes = iterate_qualified_names(func, node);
 
-            check_for_generic_instantiation(node);
+            instantiate_or_replace_generic(*node.type.identifier);
 
             Identifier& id = get_id(func);
             // func.scopes = scopes; // save for later
@@ -289,7 +289,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
         }
 
         holds(FunctionCall, &func_call) {
-            check_for_generic_instantiation(node); // example: let var = foo[i32]();
+            instantiate_or_replace_generic(*func_call.identifier); // example: let var = foo[i32]();
             
             analyze(*func_call.identifier);
             node.type = func_call.identifier->type;
@@ -337,7 +337,7 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     symbol_tree.pop_scope();
                     break;
                 case BlockScope::initializer_list: {
-                    check_for_generic_instantiation(node); // example: let var = Foo[i32]{};
+                    instantiate_or_replace_generic(*node.type.identifier); // example: let var = Foo[i32]{};
 
                     for (auto& node : scope.nodes) analyze(*node);
 
@@ -611,29 +611,29 @@ void Analyzer::add_declaration(ASTNode& node) {
 
 // FIXME: should error if generic argument names are used for any declaration
 // let T: i32 = 1321; // this would shadow the type parameter, which shouldn't be allowed
-void Analyzer::check_for_generic_instantiation(ASTNode& node) {
-    match(node) {
-        holds(VariableDecl, &var_decl)  instantiate_or_replace_generic(*node.type.identifier);
-        holds(FunctionCall, &func_call) instantiate_or_replace_generic(*func_call.identifier);
-        holds(BlockScope,   &scope)     instantiate_or_replace_generic(*node.type.identifier);
-        holds(FunctionDecl, &func)      instantiate_or_replace_generic(*node.type.identifier);
-        // function declaration might have a instantiation in its return type, for example:
-        // fn func() -> Pair[i32, f32] { ... }
-        _default internal_error(node.source_token, "'{}' can't instantiate generics.", node.kind_name());
-    }
-}
-
-// expects to receive the original generic declaration (ex: struct Foo[T, U])
+//
 // doesnt recursively instantiate anything. that is handled by the next time we find a generic
 // replacing T with i32 is one step, passing that onto a member with Node[T] is later handled
-void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
-    // TODO: check if we depend on a generic argument,
-    // we can only instantiate if we have no generics left
+bool Analyzer::is_instantiable_generic_id(Identifier& id) {
+    // TODO: check if we depend on a generic argument, we can only instantiate if we have no generics left
     // let var: Pair[i32, T]; if T is generic, then we cant instantiate anything yet
+    for (auto* generic_id_node : id.generic_identifiers) {
+        auto& generic_id = get<Identifier>(generic_id_node);
+        if find_value (generic_id.mangled_name, symbol_tree.curr_generic_context) return false;
+        if (!is_instantiable_generic_id(generic_id)) return false;
+    }
+    return true;
+    // this actually needs to be recursive, AND check wrapper names
+    // Node[Epic[T], i32]; Node[Epic[{}], i32];
+    // Node[T[i32], i32]; Node[Epic[{}], i32];
+    // Node[Epic[f32], i32]; Node[Epic[{}], i32];
+}
+void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
     if (!is_branch<Identifier>(&id_node)) internal_error(id_node.source_token, "expected identifier, received '{}'.", id_node.name());
     auto& id = get<Identifier>(&id_node); // identifiers are tied to a possible instantiation
 
     if (!id.is_generic_wrapper()) return; // wasnt generic
+    if (!is_instantiable_generic_id(id)) return;
 
     ASTNode* generic_declaration = symbol_tree.find_declaration(id).value_or(nullptr);
     if (!generic_declaration) {
@@ -641,6 +641,8 @@ void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
                      id.is_func_call() ? "function" : "struct", full_mangled_name(&id_node));
     }
 
+    // TODO: missing checking original identifiers, then mapping 'T' to 'i32', and so on
+    // we need to then take these mappings and use them to replace every instance of 'T'
     vec<ASTNode*> generic_identifiers;
     if (auto* func = get_if<FunctionDecl>(generic_declaration)) {
         generic_identifiers = get<Identifier>(func->identifier).generic_identifiers;
@@ -660,9 +662,11 @@ void Analyzer::instantiate_or_replace_generic(ASTNode& id_node) {
     if (symbol_tree.find_declaration(id)) { // this means this specific instantiation already exists, so we skip it
         return;                             // (find declaration uses the "id.name" to find a declaration)
     }
-    auto* generic_copy = copy_ast(generic_declaration);
+
+
     // all identifiers have been solved to the original 'T', etc
     // that means we are ONLY missing identifier.declaration to be replaced correctly, everything else needs no changes
+    auto* generic_copy = copy_ast(generic_declaration);
     match(*generic_copy) {
         // TODO: use copy_ast() and then iterate through our copy. then simply call add_declaration() with our new node
         holds(TypeDecl, &type_decl) {

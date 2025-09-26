@@ -180,6 +180,34 @@ fumo source.fm -o output      # Compile to executable
 fumo --help                   # Show all compiler options
 ```
 
+## Currently Working On
+
+### Generics Implementation
+- Generic struct definitions with type parameters (`struct Container[T]`)
+- Multiple type parameters (`struct Pair[T, U]`)
+- Generic function definitions and static member functions
+- Template instantiation for concrete types
+- Nested generic types (`Container[Pair[T, Container[i32]]]`)
+- Type parameter resolution in method calls and initializers
+
+**Current Status:** Core generic syntax parsing and type system integration is working. 
+Currently finishing the monomorphization of each instance of a generic.
+
+```cpp
+struct Container[T] {
+    let value: T;
+    fn get() -> T { return value; }
+    fn static make(v: T) -> Container[T];
+}
+fn static Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
+
+fn main() -> void {
+    let int_container = Container[i32]::make(42);
+    let float_container = Container[f64]{3.14};
+    let nested = Container[Container[i32]]::make(int_container);
+}
+```
+
 ## Planned Features
 
 ### Core Language

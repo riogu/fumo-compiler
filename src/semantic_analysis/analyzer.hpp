@@ -38,8 +38,10 @@ struct Analyzer {
     }
     void add_declaration(ASTNode& node);
     vec<Scope> iterate_qualified_names(FunctionDecl& func, ASTNode& node);
+
     void instantiate_or_replace_generic(ASTNode& node);
-    void check_for_generic_instantiation(ASTNode& node);
+    bool is_instantiable_generic_id(Identifier& id);
+
     [[nodiscard]] ASTNode* copy_ast(ASTNode* node);
 
     ASTNode* push(const ASTNode& node) {
