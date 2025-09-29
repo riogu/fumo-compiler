@@ -125,7 +125,7 @@ let extern stdout: FILE*;
 ```
 
 **Primitive Types:**
-- Integers: `i8`, `i16`, `i32`, `i64`
+- Integers: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`
 - Floating point: `f32`, `f64`
 - Boolean: `bool`
 - Character: `char`
