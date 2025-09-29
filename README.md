@@ -110,7 +110,7 @@ fn main() -> i32 {
 
 ### Type System
 - Static typing with compile-time checking
-- Primitive types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `void`, `bool`, `any*` etc
+- Primitive types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `void`, `bool`, `char`, `any*` etc
 - Composite types: Pointers, structs with member functions
 - Integer promotion following C conversion rules
 - Null pointer dereference checking at runtime
