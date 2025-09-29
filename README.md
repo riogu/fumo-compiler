@@ -191,7 +191,7 @@ fumo --help                   # Show all compiler options
 - Type parameter resolution in method calls and initializers
 
 **Current Status:** Core generic syntax parsing and type system integration is working. 
-Currently finishing the monomorphization of each instance of a generic.
+Currently finishing the monomorphization of each instance of a generic and semantic analysis for them.
 
 ```cpp
 struct Container[T] {

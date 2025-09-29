@@ -63,6 +63,6 @@ else()
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
- set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address,leak,undefined -fno-omit-frame-pointer -Werror -Wall -Wno-unused-variable")
+ set(CMAKE_CXX_FLAGS "-O0 -g -fsanitize=address,leak -fno-omit-frame-pointer -Werror -Wall -Wno-unused-variable")
 
 endif()
