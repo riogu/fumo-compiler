@@ -57,6 +57,7 @@ Fumo source files use the `.fm` extension.
 - LLVM 20+
 - GCC 12+ or Clang 16+ (C++23 compatible compiler)
 - CMake 3.20+
+- Ninja
 
 **Build from source:**
 ```bash

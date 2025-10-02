@@ -59,6 +59,7 @@ void custom_handler(int sig) {
     llvm::sys::PrintStackTrace(llvm::errs());
     std::exit(1);
 }
+
 auto main(int argc, char** argv) -> int {
     std::map<str, int> barrr{};
     auto e = barrr["foo"];
