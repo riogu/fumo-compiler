@@ -13,7 +13,7 @@ fi
 
 mkdir "$BUILD_DIR"
 cd "$BUILD_DIR"
-cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake -S .. -B . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 ninja
 cd ..
 

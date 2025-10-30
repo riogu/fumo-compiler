@@ -8,7 +8,7 @@ include(FetchContent)
 # set(CMAKE_CXX_FLAGS_DEBUG "" CACHE STRING "" FORCE)
 # set(CMAKE_CXX_FLAGS_RELEASE "" CACHE STRING "" FORCE)
 option(USE_LIBASSERT "Use libassert" ON)
-
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 # enable ccache if available to speed up compilation
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)

@@ -491,7 +491,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     ir_builder->CreateStore(llvm_func->getArg(0), current_this_ptr.value());
                     //                      source value          destination address
                 }
-                for (int i = 0; i < func.parameters.size(); i++) {
+                for (std::size_t i = 0; i < func.parameters.size(); i++) {
                     auto* param = func.parameters[i];
                     codegen_address(*param);
                     // some notes because this is confusing to me:
@@ -540,7 +540,7 @@ Opt<llvm::Value*> Codegen::codegen_value(ASTNode& node) {
                     }
                 }
                 auto& func_decl = get<FunctionDecl>(symbol_tree.all_declarations[get_id(func_call).mangled_name]);
-                for (int i = 0; i < func_call.argument_list.size(); i++) {
+                for (std::size_t i = 0; i < func_call.argument_list.size(); i++) {
                     auto* arg = func_call.argument_list[i];
                     // All function arguments are rvalues
                     auto* val = if_value(codegen_value(*arg))
@@ -765,7 +765,6 @@ void Codegen::register_declaration(ASTNode& node) {
 
     match(node) {
         holds(TypeDecl, const& type_decl) {
-            // TODO: continue this codegen
             auto* struct_type = llvm::cast<llvm::StructType>(fumo_to_llvm_type(node.type));
 
             if (type_decl.definition_body) {

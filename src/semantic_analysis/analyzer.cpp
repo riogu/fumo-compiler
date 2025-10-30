@@ -55,7 +55,8 @@ void Analyzer::analyze(ASTNode& node) { // NOTE: also performs type checking
                     // we store the base struct name for lookup later
                     id.kind = Identifier::member_var_name;
                     str temp = iter->first;
-                    while (temp.back() != ':') temp.pop_back(); temp.pop_back(), temp.pop_back();
+                    while (temp.back() != ':') temp.pop_back();
+                    temp.pop_back(), temp.pop_back();
                     id.base_struct_name = temp;
                 }
             } else {

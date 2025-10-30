@@ -61,9 +61,6 @@ void custom_handler(int sig) {
 }
 
 auto main(int argc, char** argv) -> int {
-    std::map<str, int> barrr{};
-    auto e = barrr["foo"];
-
     llvm::InitLLVM init(argc, argv); 
     signal(SIGSEGV, custom_handler); signal(SIGABRT, custom_handler);
     signal(SIGFPE,  custom_handler); signal(SIGILL,  custom_handler);
@@ -74,7 +71,6 @@ auto main(int argc, char** argv) -> int {
 
     llvm::cl::HideUnrelatedOptions(fumo_category);
     llvm::cl::ParseCommandLineOptions(argc, argv, str(str("ᗜ") + gray("‿") + str("ᗜ Fumo Compiler\n")));
-    //
 
     for (const auto& file_name : input_files) {
         if (!std::filesystem::exists(file_name)) std::print("Error: file '{}' not found\n", file_name), std::exit(1); 
@@ -89,17 +85,12 @@ auto main(int argc, char** argv) -> int {
         auto file_root_node = parser.parse_tokens(tokens);
         //--------------------------------------------------------------------------
         // Semantic Analysis
-        // for (const auto& node : get<NamespaceDecl>(file_root_node).nodes) {
-        //     std::cerr << "node found:\n  " + node->to_str() + "\n";
-        // }
         Analyzer analyzer {file};
         analyzer.semantic_analysis(file_root_node);
         // //--------------------------------------------------------------------------
-        // // recursive structs will crash the AST printing until after semantic analysis
         Codegen codegen {file, analyzer.symbol_tree};
         codegen.codegen_file(file_root_node);
         obj_files.push_back(codegen.compile_file(opt_level));
     }
     link_object_files(obj_files, out_file.getNumOccurrences()? out_file.getValue() : "fumo.out");
 }
-        // // Codegen

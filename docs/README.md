@@ -254,7 +254,7 @@ The `any*` type in Fumo is equivalent to C's `void*` - a type-erased pointer tha
 ### Implicit Conversions
 `any*` supports bidirectional implicit conversion with all single-level pointer types:
 
-```fumo
+```cpp
 let x: i32 = 42;
 let s: char* = "hello";
 
@@ -269,7 +269,7 @@ let str_ptr: char* = generic;  // any* -> char* (implicit)
 ### Null Compatibility
 The `null` literal is of type `any*`, allowing it to be assigned to any pointer type:
 
-```fumo
+```cpp
 let int_ptr: i32* = null;     // any* -> i32* (implicit)
 let str_ptr: char* = null;    // any* -> char* (implicit)
 let any_ptr: any* = null;     // Direct assignment
@@ -283,7 +283,7 @@ if !any_ptr {                 // Null check with !
 ### Comparisons
 `any*` can be compared with any pointer type for equality:
 
-```fumo
+```cpp
 let x: i32 = 10;
 let int_ptr: i32* = &x;
 let any_ptr: any* = &x;
@@ -301,7 +301,7 @@ if any_ptr == null {          // any* == null comparison
 
 `any*` cannot be used for operations that require knowing the pointed-to type:
 
-```fumo
+```cpp
 let any_ptr: any* = &some_value;
 
 // ❌ These operations are forbidden:
@@ -314,7 +314,7 @@ any_ptr + 1           // Cannot do pointer arithmetic
 
 C interoperability:
 
-```fumo
+```cpp
 extern fn malloc(size: i64) -> any*;
 extern fn memcpy(dst: any*, src: any*, size: i64) -> any*;
 extern fn free(ptr: any*) -> void;

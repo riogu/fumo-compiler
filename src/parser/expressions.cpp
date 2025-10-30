@@ -64,7 +64,7 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     Token tkn = *prev_tkn;
 
     if (token_is_keyword(let)) {
-        report_error((*prev_tkn), "variable declarations in if conditions must be sorrounded by parentheses.");
+        report_error((*prev_tkn), "variable declarations in if conditions must be sorrounded by parenthesis.");
     }
     if (peek_token_str("(") && peek_keyword_amount("let", 1)) {
         // here to enforce parentheses around variable declarations in the condition
@@ -154,7 +154,6 @@ ASTNode* Parser::parse_tokens(vec<Token>& tkns) {
     }
     return node;
 }
-
 [[nodiscard]] ASTNode* Parser::initializer() {
     auto temp_node = logical();
 
