@@ -234,7 +234,6 @@ fn main() -> void {
 
 ### Control Flow
 - `foreach` iteration over generic containers
-- `break` and `continue` statements
 
 ### Standard Library
 - Generic array and vector types (`fm::vec[T]`, `fm::array[T]`)
