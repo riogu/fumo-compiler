@@ -2,12 +2,25 @@
 
 A statically-typed systems programming language compiler targeting LLVM IR, implemented in C++23.
 
+---
 
-For more detailed information, please check [docs/](docs/) for language specification and usage documentation.
+## Quick Overview
+
+Fumo is a systems programming language featuring:
+- Static typing with type inference
+- C++ Namespaces and structs with member functions  
+- Manual memory management with C/libc interoperability
+- LLVM-based compilation to native code
+- Generic types (in progress)
+
+For detailed information, see [docs/](docs/) for language specification and usage documentation.
+
+---
 
 ## Example Program
 ```cpp
 fn printf(format: char*, ...) -> i32;
+
 namespace math {
     struct Point {
         let x: f64;
@@ -16,13 +29,16 @@ namespace math {
         fn distance_from_origin() -> f64 {
             return x * x + y * y;
         }
+        
         fn static new(x: f64, y: f64) -> Point {
             return Point {x, y};
         }
+        
         fn static origin() -> Point {
             return Point {0.0, 0.0};
         }
     }
+    
     namespace utils {
         struct Stats {
             let count: i32;
@@ -32,28 +48,22 @@ namespace math {
                 count = count + 1;
                 sum = sum + val;
             }
+            
             fn average() -> f64 {
                 if count > 0 {
                     return sum / count;
                 }
                 return 0.0;
             }
+            
             fn static new() -> Stats {
                 return Stats {0, 0.0};
             }
         }
     }
 }
-let global_counter: i32 = 100;
 
-// 'any*' works like 'void*' in C (only exists for C compatibility)
-fn process_any_data(data: any*, name: char*) -> void {
-    if data {
-        printf("Processing %s data at %p\n", name, data);
-    } else {
-        printf("No %s data provided\n", name);
-    }
-}
+let global_counter: i32 = 100;
 
 fn process_point(pt: math::Point*) -> void {
     printf("Point: (%.2f, %.2f)\n", pt->x, pt->y);
@@ -70,13 +80,11 @@ fn process_point(pt: math::Point*) -> void {
 fn main() -> i32 {
     printf("Fumo language demonstration\n");
     
-    // static constructors and initializer lists
     let point1 = math::Point::new(3.0, 4.0);
     let point2 = math::Point {1.5, 2.5};
     let origin = math::Point::origin();
     
     let stats = math::utils::Stats::new();
-    let preset_stats = math::utils::Stats {2, 10.0};
     
     let i: i32 = 0;
     while i < 3 {
@@ -93,54 +101,58 @@ fn main() -> i32 {
     process_point(&point1);
     process_point(&origin);
     
-    process_any_data(&point1, "point");
-    process_any_data(&stats, "stats");
-    process_any_data(null, "empty");
-    
     printf("Stats average: %.2f\n", stats.average());
-    printf("Preset average: %.2f\n", preset_stats.average());
-    
-    let ptr: i32* = &global_counter;
-    printf("Global counter: %d\n", *ptr);
+    printf("Global counter: %d\n", global_counter);
     
     return 0;
 }
 ```
-## Language Specification
 
-### Type System
-- Static typing with compile-time checking
-- Primitive types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `void`, `bool`, `char`, `any*` etc
-- Composite types: Pointers, structs with member functions
-- Integer promotion following C conversion rules
-- Null pointer dereference checking at runtime
+---
+
+## Compiler Features
 
 ### Language Features
-- Hierarchical namespaces with qualified name resolution
-- Struct definitions with member functions
-- Control flow: `if/else` statements (parentheses optional)
-- Variable declarations with explicit typing and type inference
-- Function definitions with parameter passing
-- Pointer arithmetic and address-of operations
+- **Type System:** Static typing with compile-time checking and type inference
+- **Primitive Types:** `i8`-`i64`, `u8`-`u64`, `f32`, `f64`, `bool`, `char`, `void`, `any*`
+- **Composite Types:** Pointers, structs with member functions and static methods
+- **Namespaces:** Hierarchical namespaces with qualified name resolution
+- **Control Flow:** `if`/`else` statements (parentheses optional), `while` loops
+- **C Interoperability:** C calling convention for libc compatibility
+
+### Compiler Capabilities
+- **Output Formats:** LLVM IR (`.ll`), Assembly (`.asm`), Object files (`.o`), Executables
+- **Optimization Levels:** O0 (none), O1 (basic), O2 (default), O3 (aggressive)
+- **Debug Outputs:** AST dumps, IR dumps, verbose compilation mode
+- **Linking Options:** Static/dynamic linking, custom linker selection, library search paths
+
+See `fumo --help` for complete compiler options.
+
+---
 
 ## Implementation
 
 ### Frontend
-- Hand-written lexer and recursive descent parser with AST generation
-- Symbol table with scoped resolution
-- Type checking and semantic analysis
+- Hand-written lexer with full token support
+- Recursive descent parser generating typed AST
+- Symbol table with scoped resolution and namespace support
+- Comprehensive type checking and semantic analysis
 
 ### Backend
-- LLVM IR code generation
-- Integration with LLVM optimization passes
-- C calling convention for libc compatibility
+- LLVM IR code generation with optimization pipeline integration
+- Support for multiple optimization levels (O0-O3)
+- C calling convention for external function compatibility
 
 ### Compiler Pipeline
 ```
-Source → Lexer → Parser/AST → Semantic Analysis → LLVM IR Codegen → Object Code → Linking
+Source → Lexer → Parser/AST → Semantic Analysis → LLVM IR → Optimization → Object Code → Linking
 ```
+
+---
+
 ## Testing
-The compiler includes tests organized by feature:
+
+The compiler includes 200+ tests organized by feature:
 
 **Core Language Features:**
 - Control flow (`if-statements/`, `while-tests/`)
@@ -150,7 +162,7 @@ The compiler includes tests organized by feature:
 - Static member functions (`static-member-functions/`)
 
 **Error Handling:**
-- Correct parser errors (`fail-*` directories)
+- Parser error detection (`fail-*` directories)
 - Invalid syntax detection and reporting
 - Type system violation detection
 
@@ -158,18 +170,20 @@ The compiler includes tests organized by feature:
 - LLVM IR correctness verification
 - C interop compatibility testing
 
+---
+
 ## Build and Usage
 
 ### Requirements
 - LLVM 20+
-- C++23 compiler
-- CMake
+- C++23 compiler (GCC 12+ or Clang 16+)
+- CMake 3.20+
 
 ### Building
 ```bash
 bash initialize_build.sh    # Initial setup
 bash rebuild.sh             # Rebuild after changes
-bash test.sh                # Run test suite (use ./test.sh -help for more information)
+bash test.sh                # Run test suite (use ./test.sh -help for options)
 bash install.sh             # Install 'fumo' command system-wide
 ```
 
@@ -177,21 +191,19 @@ bash install.sh             # Install 'fumo' command system-wide
 ```bash
 fumo source.fm                # Compile and run
 fumo source.fm -o output      # Compile to executable
+fumo source.fm --emit-ir      # Generate LLVM IR
+fumo source.fm --O3 -o fast   # Compile with aggressive optimizations
 fumo --help                   # Show all compiler options
 ```
+
+---
 
 ## Currently Working On
 
 ### Generics Implementation
-- Generic struct definitions with type parameters (`struct Container[T]`)
-- Multiple type parameters (`struct Pair[T, U]`)
-- Generic function definitions and static member functions
-- Template instantiation for concrete types
-- Nested generic types (`Container[Pair[T, Container[i32]]]`)
-- Type parameter resolution in method calls and initializers
+Generic struct definitions with type parameters, multiple type parameters, generic function definitions, template instantiation for concrete types, and nested generic types.
 
-**Current Status:** Core generic syntax parsing and type system integration is working. 
-Currently finishing the monomorphization of each instance of a generic and semantic analysis for them.
+**Current Status:** Core generic syntax parsing and type system integration working. Currently finishing monomorphization and semantic analysis for generic instances.
 
 ```cpp
 struct Container[T] {
@@ -199,7 +211,10 @@ struct Container[T] {
     fn get() -> T { return value; }
     fn static make(v: T) -> Container[T];
 }
-fn static Container[T]::make(v: T) -> Container[T] { return Container[T]{v}; }
+
+fn static Container[T]::make(v: T) -> Container[T] { 
+    return Container[T]{v}; 
+}
 
 fn main() -> void {
     let int_container = Container[i32]::make(42);
@@ -208,11 +223,12 @@ fn main() -> void {
 }
 ```
 
+---
+
 ## Planned Features
 
 ### Core Language
 - Type casting system
-- Generics/templates for containers and functions
 - Sum types (tagged unions) with exhaustiveness checking
 - Pattern matching for control flow and destructuring
 
@@ -221,16 +237,42 @@ fn main() -> void {
 - `break` and `continue` statements
 
 ### Standard Library
-- Generic array and vector types (`fm::vec[T], fm::array[T]`)
+- Generic array and vector types (`fm::vec[T]`, `fm::array[T]`)
 - String manipulation library (`fm::str`)
-- Memory management utilities and `unique_ptr[T]` implementation
-- `optional[T]` implementation
+- Memory management utilities (`unique_ptr[T]`, `optional[T]`)
 - Basic I/O beyond C interop
 
-## Final Note
+---
 
-As it is, this compiler only implements the "basic essential" features of a systems programming language.
+## Project Goals
 
-The goal of this compiler is to have a working compiler with all the basics well tested and implemented,
-so that i can later use it as a base to explore language design decisions, compiler backend optimizations,
-and generally use it to continue learning about compilers.
+This compiler implements the "basic essential" features of a systems programming language with a focus on correctness and completeness.
+
+The goal is to have a working compiler with all fundamentals well-tested and implemented, serving as a foundation for exploring:
+- Language design decisions
+- Compiler optimization techniques
+- Advanced type system features
+
+---
+
+## Documentation
+
+Comprehensive documentation is available in the [docs/](docs/) directory:
+- Language specification and grammar
+- Type system details
+- Usage examples and patterns
+- Compiler architecture overview
+
+---
+
+## Project Structure
+
+```
+src/
+├── lexer/              # Tokenization
+├── parser/             # AST generation  
+├── semantic_analysis/  # Type checking, symbol resolution
+├── codegen/            # LLVM IR generation
+├── base_definitions/   # Core types and utilities
+└── tests/              # Compiler tests (200+)
+```
