@@ -11,6 +11,7 @@ Fumo is a systems programming language featuring:
 - C++ Namespaces and structs with member functions  
 - Manual memory management with C/libc interoperability
 - LLVM-based compilation to native code
+  
 For detailed information, see [docs/](docs/) for language specification and usage documentation.
 
 ---
