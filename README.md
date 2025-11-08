@@ -272,5 +272,5 @@ src/
 ├── semantic_analysis/  # Type checking, symbol resolution
 ├── codegen/            # LLVM IR generation
 ├── base_definitions/   # Core types and utilities
-└── tests/              # Compiler tests (200+)
+└── tests/              # Compiler tests (100+)
 ```
