@@ -151,7 +151,7 @@ Source → Lexer → Parser/AST → Semantic Analysis → LLVM IR → Optimizati
 
 ## Testing
 
-The compiler includes 200+ tests organized by feature:
+The compiler includes 100+ tests organized by feature:
 
 **Core Language Features:**
 - Control flow (`if-statements/`, `while-tests/`)
