@@ -61,7 +61,7 @@ Fumo source files use the `.fm` extension.
 
 **Build from source:**
 ```bash
-git clone https://github.com/yourusername/fumo-compiler.git
+git clone https://github.com/riogu/fumo-compiler.git
 cd fumo-compiler
 ./initialize_build.sh
 ./install.sh  # Installs 'fumo' command system-wide
