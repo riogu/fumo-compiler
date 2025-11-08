@@ -133,7 +133,7 @@ See `fumo --help` for complete compiler options.
 
 ### Frontend
 - Hand-written lexer with full token support
-- Recursive descent parser generating typed AST
+- Hand-written recursive descent parser generating typed AST
 - Symbol table with scoped resolution and namespace support
 - Comprehensive type checking and semantic analysis
 
